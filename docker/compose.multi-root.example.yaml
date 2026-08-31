@@ -1,0 +1,17 @@
+services:
+  app:
+    environment:
+      BOOKKIN_STORAGE_ROOTS_1_NAME: 旧书归档
+      BOOKKIN_STORAGE_ROOTS_1_PATH: /library/archive
+    volumes:
+      - type: bind
+        source: ${BOOKKIN_LIBRARY_ARCHIVE:?set BOOKKIN_LIBRARY_ARCHIVE in .env}
+        target: /library/archive
+  worker:
+    environment:
+      BOOKKIN_STORAGE_ROOTS_1_NAME: 旧书归档
+      BOOKKIN_STORAGE_ROOTS_1_PATH: /library/archive
+    volumes:
+      - type: bind
+        source: ${BOOKKIN_LIBRARY_ARCHIVE:?set BOOKKIN_LIBRARY_ARCHIVE in .env}
+        target: /library/archive

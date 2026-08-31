@@ -1,0 +1,75 @@
+spring:
+  application:
+    name: bookkin
+  profiles:
+    default: api
+  datasource:
+    url: ${BOOKKIN_DATABASE_URL:jdbc:postgresql://localhost:5432/bookkin}
+    username: ${BOOKKIN_DATABASE_USER:bookkin}
+    password: ${BOOKKIN_DATABASE_PASSWORD:bookkin-local-dev}
+    hikari:
+      maximum-pool-size: ${BOOKKIN_DB_POOL_SIZE:16}
+      minimum-idle: 2
+      connection-timeout: 5000
+  flyway:
+    enabled: true
+  session:
+    timeout: 30d
+    jdbc:
+      initialize-schema: never
+      cleanup-cron: "0 */15 * * * *"
+  batch:
+    jdbc:
+      initialize-schema: never
+    job:
+      enabled: false
+
+server:
+  shutdown: graceful
+  forward-headers-strategy: framework
+  servlet:
+    session:
+      cookie:
+        name: BOOKKIN_SESSION
+        http-only: true
+        same-site: strict
+        secure: ${BOOKKIN_COOKIE_SECURE:false}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: when_authorized
+
+bookkin:
+  public-base-url: ${BOOKKIN_PUBLIC_BASE_URL:http://localhost:8080}
+  file-operation-preview-ttl: 5m
+  file-lease-timeout: 30s
+  retention:
+    recycle-bin: 30d
+    file-versions: 30d
+  scan:
+    batch-size: 500
+    interval: 1m
+  storage:
+    roots: []
+  upload:
+    max-file-size: ${BOOKKIN_UPLOAD_MAX_FILE_SIZE:2147483648}
+    max-batch-files: ${BOOKKIN_UPLOAD_MAX_BATCH_FILES:20}
+    retention: ${BOOKKIN_UPLOAD_RETENTION:24h}
+    max-cover-size: ${BOOKKIN_UPLOAD_MAX_COVER_SIZE:20971520}
+  fonts:
+    storage-path: ${BOOKKIN_FONT_STORAGE_PATH:/var/lib/bookkin/fonts}
+    max-file-size: ${BOOKKIN_FONT_MAX_FILE_SIZE:26214400}
+  metadata-providers:
+    open-library-enabled: ${BOOKKIN_METADATA_OPEN_LIBRARY_ENABLED:true}
+    google-api-key: ${BOOKKIN_METADATA_GOOGLE_API_KEY:}
+
+logging:
+  pattern:
+    level: "%5p [trace=%X{traceId:-}]"

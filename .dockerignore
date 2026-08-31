@@ -1,0 +1,11 @@
+.git
+.idea
+.vscode
+.local
+.env
+node_modules
+**/node_modules
+**/target
+**/dist
+coverage
+*.log

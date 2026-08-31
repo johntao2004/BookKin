@@ -1,0 +1,81 @@
+@import "./theme/generated-tokens.css";
+@import url("/fonts/noto-fonts.css");
+
+@font-face {
+  font-family: "Source Han Serif SC";
+  src: url("/fonts/source-han-serif-sc-regular.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Source Han Sans SC";
+  src: url("/fonts/source-han-sans-sc-regular.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  min-width: 320px;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+a {
+  color: inherit;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+.reader-prose {
+  font-family: var(--typography-font-family-display);
+  color: var(--color-text-primary);
+  font-size: 19px;
+  line-height: 1.95;
+  letter-spacing: 0.01em;
+}
+
+.reader-viewport {
+  min-height: 0;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+.reader-paged-text {
+  height: 100%;
+  overflow: hidden;
+  column-fill: auto;
+  column-gap: var(--layout-reader-page-gap);
+  column-width: 100%;
+  column-rule: 0 solid transparent;
+}
+
+.reader-prose p {
+  margin: 0 0 var(--spacing-6);
+  text-indent: 2em;
+}
+
+.reader-prose mark {
+  color: inherit;
+  background: color-mix(in srgb, var(--color-primary-soft) 84%, transparent);
+  border-bottom: 2px solid var(--color-primary);
+}

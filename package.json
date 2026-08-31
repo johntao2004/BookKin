@@ -1,0 +1,24 @@
+{
+  "name": "bookkin",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@10.33.0",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @bookkin/web dev",
+    "build": "pnpm generate:tokens && pnpm --filter @bookkin/web build",
+    "test": "pnpm --filter @bookkin/web test",
+    "lint": "pnpm --filter @bookkin/web lint",
+    "typecheck": "pnpm --filter @bookkin/web typecheck",
+    "generate:tokens": "node scripts/generate-design-tokens.mjs",
+    "generate:client": "./apps/server/mvnw -f apps/server/pom.xml -Pgenerate-client generate-sources",
+    "check:tokens": "node scripts/generate-design-tokens.mjs --check",
+    "demo:library": "node scripts/create-demo-library.mjs",
+    "demo:seed": "bash scripts/seed-native-demo.sh",
+    "start:local": "bash scripts/start-local.sh",
+    "stop:local": "bash scripts/stop-local.sh",
+    "benchmark:catalog": "node tools/benchmark-catalog.mjs"
+  }
+}

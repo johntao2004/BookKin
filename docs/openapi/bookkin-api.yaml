@@ -1,0 +1,996 @@
+openapi: 3.1.0
+info:
+  title: BookKin API
+  version: 1.0.0
+  description: 家庭 NAS 电子图书馆的浏览、阅读、用户与受控文件事务 API。
+servers:
+  - url: /api/v1
+security:
+  - sessionCookie: []
+tags:
+  - name: Auth
+  - name: Users
+  - name: Catalog
+  - name: Categories
+  - name: Booklists
+  - name: Display catalog
+  - name: Reading
+  - name: Annotations
+  - name: File operations
+  - name: Book uploads
+  - name: Reader fonts
+
+paths:
+  /auth/csrf:
+    get:
+      tags: [Auth]
+      security: []
+      operationId: getCsrf
+      responses:
+        '200': { description: CSRF token, content: { application/json: { schema: { $ref: '#/components/schemas/CsrfToken' } } } }
+  /auth/setup:
+    post:
+      tags: [Auth]
+      security: []
+      operationId: setupOwner
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/SetupRequest' } } } }
+      responses:
+        '200': { description: Owner session, content: { application/json: { schema: { $ref: '#/components/schemas/SessionUser' } } } }
+        '409': { $ref: '#/components/responses/Problem' }
+  /auth/setup-status:
+    get:
+      tags: [Auth]
+      security: []
+      operationId: getSetupStatus
+      responses:
+        '200': { description: Whether owner initialization has already completed, content: { application/json: { schema: { $ref: '#/components/schemas/SetupStatus' } } } }
+  /auth/login:
+    post:
+      tags: [Auth]
+      security: []
+      operationId: login
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/LoginRequest' } } } }
+      responses:
+        '200': { description: Authenticated session, content: { application/json: { schema: { $ref: '#/components/schemas/SessionUser' } } } }
+        '401': { $ref: '#/components/responses/Problem' }
+        '429': { $ref: '#/components/responses/Problem' }
+  /auth/session:
+    get:
+      tags: [Auth]
+      operationId: getSession
+      responses:
+        '200': { description: Current user, content: { application/json: { schema: { $ref: '#/components/schemas/SessionUser' } } } }
+  /auth/password:
+    put:
+      tags: [Auth]
+      operationId: changePassword
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ChangePasswordRequest' } } } }
+      responses:
+        '200': { description: Updated session, content: { application/json: { schema: { $ref: '#/components/schemas/SessionUser' } } } }
+  /auth/logout:
+    post:
+      tags: [Auth]
+      operationId: logout
+      responses:
+        '200': { description: Logged out }
+  /users:
+    get:
+      tags: [Users]
+      operationId: listUsers
+      responses:
+        '200': { description: Managed users, content: { application/json: { schema: { type: object, properties: { items: { type: array, items: { $ref: '#/components/schemas/ManagedUser' } } } } } } }
+    post:
+      tags: [Users]
+      operationId: createUser
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/CreateUserRequest' } } } }
+      responses:
+        '200': { description: User and one-time password, content: { application/json: { schema: { type: object, required: [user, temporaryPassword], properties: { user: { $ref: '#/components/schemas/ManagedUser' }, temporaryPassword: { type: string } } } } } }
+  /users/{id}/status:
+    patch:
+      tags: [Users]
+      operationId: toggleUserStatus
+      parameters: [{ $ref: '#/components/parameters/Id' }]
+      responses:
+        '200': { description: Updated user, content: { application/json: { schema: { $ref: '#/components/schemas/ManagedUser' } } } }
+  /users/{id}/temporary-password:
+    post:
+      tags: [Users]
+      operationId: resetTemporaryPassword
+      parameters: [{ $ref: '#/components/parameters/Id' }]
+      responses:
+        '200': { description: One-time password, content: { application/json: { schema: { type: object, required: [username, temporaryPassword], properties: { username: { type: string }, temporaryPassword: { type: string } } } } } }
+  /users/{id}/sessions/revoke:
+    post:
+      tags: [Users]
+      operationId: revokeUserSessions
+      parameters: [{ $ref: '#/components/parameters/Id' }]
+      responses:
+        '200': { description: Sessions revoked }
+  /books:
+    get:
+      tags: [Catalog]
+      operationId: listBooks
+      parameters:
+        - { name: q, in: query, schema: { type: string } }
+        - { name: format, in: query, schema: { $ref: '#/components/schemas/BookFormat' } }
+        - { name: sort, in: query, schema: { type: string, enum: [RECENT, TITLE, AUTHOR], default: RECENT } }
+        - { name: cursor, in: query, schema: { type: string } }
+        - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 100, default: 60 } }
+      responses:
+        '200': { description: Cursor page, content: { application/json: { schema: { $ref: '#/components/schemas/BookPage' } } } }
+  /categories:
+    get:
+      tags: [Categories]
+      security: []
+      operationId: listCategories
+      parameters: [{ name: q, in: query, schema: { type: string } }]
+      responses:
+        '200': { description: Categories visible to the current audience, content: { application/json: { schema: { $ref: '#/components/schemas/CategoryList' } } } }
+    post:
+      tags: [Categories]
+      operationId: createCategory
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/CategoryRequest' } } } }
+      responses:
+        '200': { description: Created category, content: { application/json: { schema: { $ref: '#/components/schemas/CategoryDetail' } } } }
+        '409': { $ref: '#/components/responses/Problem' }
+  /categories/order:
+    put:
+      tags: [Categories]
+      operationId: reorderCategories
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/CategoryOrderRequest' } } } }
+      responses:
+        '200': { description: Reordered categories, content: { application/json: { schema: { $ref: '#/components/schemas/CategoryList' } } } }
+        '409': { $ref: '#/components/responses/Problem' }
+  /categories/{id}:
+    get:
+      tags: [Categories]
+      security: []
+      operationId: getCategory
+      parameters: [{ $ref: '#/components/parameters/Id' }]
+      responses:
+        '200': { description: Visible category, content: { application/json: { schema: { $ref: '#/components/schemas/CategoryDetail' } } } }
+        '404': { $ref: '#/components/responses/Problem' }
+    patch:
+      tags: [Categories]
+      operationId: updateCategory
+      parameters: [{ $ref: '#/components/parameters/Id' }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/CategoryRequest' } } } }
+      responses:
+        '200': { description: Updated category, content: { application/json: { schema: { $ref: '#/components/schemas/CategoryDetail' } } } }
+    delete:
+      tags: [Categories]
+      operationId: deleteCategory
+      parameters: [{ $ref: '#/components/parameters/Id' }]
+      responses:
+        '204': { description: Category relationship removed without deleting books }
+  /categories/{id}/books:
+    get:
+      tags: [Categories]
+      security: []
+      operationId: listCategoryBooks
+      parameters:
+        - { $ref: '#/components/parameters/Id' }
+        - { name: q, in: query, schema: { type: string } }
+        - { name: format, in: query, schema: { $ref: '#/components/schemas/BookFormat' } }
+        - { name: sort, in: query, schema: { type: string, enum: [RECENT, TITLE, AUTHOR], default: RECENT } }
+        - { name: cursor, in: query, schema: { type: string } }
+        - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 100, default: 36 } }
+      responses:
+        '200': { description: Books visible in the category, content: { application/json: { schema: { $ref: '#/components/schemas/BrowseBookPage' } } } }
+  /books/{id}/categories:
+    get:
+      tags: [Categories]
+      operationId: listBookCategories
+      parameters: [{ $ref: '#/components/parameters/Id' }]
+      responses:
+        '200': { description: Categories assigned to a book, content: { application/json: { schema: { $ref: '#/components/schemas/CategoryList' } } } }
+    put:
+      tags: [Categories]
+      operationId: replaceBookCategories
+      parameters: [{ $ref: '#/components/parameters/Id' }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/BookCategoriesRequest' } } } }
+      responses:
+        '200': { description: Updated category assignments, content: { application/json: { schema: { $ref: '#/components/schemas/CategoryList' } } } }
+  /booklists:
+    get:
+      tags: [Booklists]
+      security: []
+      operationId: listBooklists
+      parameters: [{ name: q, in: query, schema: { type: string } }]
+      responses:
+        '200': { description: Booklists visible to the current audience, content: { application/json: { schema: { $ref: '#/components/schemas/BooklistList' } } } }
+    post:
+      tags: [Booklists]
+      operationId: createBooklist
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/CreateBooklistRequest' } } } }
+      responses:
+        '200': { description: Created booklist, content: { application/json: { schema: { $ref: '#/components/schemas/BooklistDetail' } } } }
+  /booklists/{id}:
+    get:
+      tags: [Booklists]
+      security: []
+      operationId: getBooklist
+      parameters: [{ $ref: '#/components/parameters/Id' }]
+      responses:
+        '200': { description: Visible booklist, content: { application/json: { schema: { $ref: '#/components/schemas/BooklistDetail' } } } }
+        '404': { $ref: '#/components/responses/Problem' }
+    patch:
+      tags: [Booklists]
+      operationId: updateBooklist
+      parameters: [{ $ref: '#/components/parameters/Id' }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/UpdateBooklistRequest' } } } }
+      responses:
+        '200': { description: Updated booklist, content: { application/json: { schema: { $ref: '#/components/schemas/BooklistDetail' } } } }
+        '409': { $ref: '#/components/responses/Problem' }
+    delete:
+      tags: [Booklists]
+      operationId: deleteBooklist
+      parameters:
+        - { $ref: '#/components/parameters/Id' }
+        - { name: revision, in: query, required: true, schema: { type: integer, format: int64, minimum: 0 } }
+      responses:
+        '204': { description: Booklist relationship removed without deleting books }
+        '409': { $ref: '#/components/responses/Problem' }
+  /booklists/{id}/books:
+    get:
+      tags: [Booklists]
+      security: []
+      operationId: listBooklistBooks
+      parameters:
+        - { $ref: '#/components/parameters/Id' }
+        - { name: q, in: query, schema: { type: string } }
+        - { name: format, in: query, schema: { $ref: '#/components/schemas/BookFormat' } }
+        - { name: cursor, in: query, schema: { type: string } }
+        - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 100, default: 36 } }
+      responses:
+        '200': { description: Visible books in manual list order, content: { application/json: { schema: { $ref: '#/components/schemas/BrowseBookPage' } } } }
+    post:
+      tags: [Booklists]
+      operationId: addBooklistBooks
+      parameters: [{ $ref: '#/components/parameters/Id' }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/AddBooklistBooksRequest' } } } }
+      responses:
+        '200': { description: Updated booklist, content: { application/json: { schema: { $ref: '#/components/schemas/BooklistDetail' } } } }
+        '409': { $ref: '#/components/responses/Problem' }
+  /booklists/{id}/books/{bookId}:
+    delete:
+      tags: [Booklists]
+      operationId: removeBooklistBook
+      parameters:
+        - { $ref: '#/components/parameters/Id' }
+        - { name: bookId, in: path, required: true, schema: { type: string, format: uuid } }
+        - { name: revision, in: query, required: true, schema: { type: integer, format: int64, minimum: 0 } }
+      responses:
+        '200': { description: Updated booklist, content: { application/json: { schema: { $ref: '#/components/schemas/BooklistDetail' } } } }
+  /booklists/{id}/order:
+    put:
+      tags: [Booklists]
+      operationId: reorderBooklistBooks
+      parameters: [{ $ref: '#/components/parameters/Id' }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ReorderBooklistRequest' } } } }
+      responses:
+        '200': { description: Reordered booklist, content: { application/json: { schema: { $ref: '#/components/schemas/BooklistDetail' } } } }
+        '409': { $ref: '#/components/responses/Problem' }
+  /display-books:
+    get:
+      tags: [Display catalog]
+      security: []
+      operationId: listDisplayBooks
+      parameters:
+        - { name: q, in: query, schema: { type: string } }
+        - { name: cursor, in: query, schema: { type: string } }
+        - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 100, default: 60 } }
+      responses:
+        '200': { description: Public display catalog, content: { application/json: { schema: { $ref: '#/components/schemas/DisplayBookPage' } } } }
+    post:
+      tags: [Display catalog]
+      operationId: addDisplayBook
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/AddDisplayBookRequest' } } } }
+      responses:
+        '200': { description: Added public book, content: { application/json: { schema: { $ref: '#/components/schemas/DisplayBook' } } } }
+        '409': { $ref: '#/components/responses/Problem' }
+  /display-books/order:
+    put:
+      tags: [Display catalog]
+      operationId: reorderDisplayBooks
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ReorderDisplayBooksRequest' } } } }
+      responses:
+        '200': { description: Reordered public books, content: { application/json: { schema: { $ref: '#/components/schemas/DisplayBookPage' } } } }
+        '409': { $ref: '#/components/responses/Problem' }
+  /display-books/{id}:
+    get:
+      tags: [Display catalog]
+      security: []
+      operationId: getDisplayBook
+      parameters: [{ $ref: '#/components/parameters/Id' }]
+      responses:
+        '200': { description: Public book, content: { application/json: { schema: { $ref: '#/components/schemas/DisplayBook' } } } }
+    delete:
+      tags: [Display catalog]
+      operationId: removeDisplayBook
+      parameters: [{ $ref: '#/components/parameters/Id' }, { name: revision, in: query, required: true, schema: { type: integer, format: int64, minimum: 0 } }]
+      responses:
+        '204': { description: Removed from public display catalog }
+        '409': { $ref: '#/components/responses/Problem' }
+  /display-books/{id}/cover:
+    get:
+      tags: [Display catalog]
+      security: []
+      operationId: getDisplayBookCover
+      parameters: [{ $ref: '#/components/parameters/Id' }]
+      responses:
+        '200': { description: Public book cover, content: { image/jpeg: { schema: { type: string, format: binary } }, image/png: { schema: { type: string, format: binary } }, image/webp: { schema: { type: string, format: binary } } } }
+  /display-books/{id}/content:
+    get:
+      tags: [Display catalog]
+      security: []
+      operationId: streamDisplayBook
+      parameters:
+        - { $ref: '#/components/parameters/Id' }
+        - { name: Range, in: header, schema: { type: string }, example: bytes=0-1048575 }
+      responses:
+        '200': { description: Public read-only EPUB or PDF, content: { application/octet-stream: { schema: { type: string, format: binary } } } }
+        '206': { description: Partial public content, content: { application/octet-stream: { schema: { type: string, format: binary } } } }
+  /books/{id}:
+    get:
+      tags: [Catalog]
+      operationId: getBook
+      parameters: [{ $ref: '#/components/parameters/Id' }]
+      responses:
+        '200': { description: Book, content: { application/json: { schema: { $ref: '#/components/schemas/Book' } } } }
+  /books/{id}/content:
+    get:
+      tags: [Reading]
+      operationId: streamBook
+      parameters:
+        - { $ref: '#/components/parameters/Id' }
+        - { name: Range, in: header, schema: { type: string }, example: bytes=0-1048575 }
+      responses:
+        '200': { description: Complete EPUB or PDF, content: { application/octet-stream: { schema: { type: string, format: binary } } } }
+        '206': { description: Partial content, content: { application/octet-stream: { schema: { type: string, format: binary } } } }
+  /books/{id}/position:
+    get:
+      tags: [Reading]
+      operationId: getReadingPosition
+      parameters: [{ $ref: '#/components/parameters/Id' }]
+      responses:
+        '200': { description: Private position, content: { application/json: { schema: { $ref: '#/components/schemas/ReadingPosition' } } } }
+    put:
+      tags: [Reading]
+      operationId: saveReadingPosition
+      parameters: [{ $ref: '#/components/parameters/Id' }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ReadingPositionRequest' } } } }
+      responses:
+        '200': { description: Saved position, content: { application/json: { schema: { $ref: '#/components/schemas/ReadingPosition' } } } }
+  /books/{id}/reading-time:
+    post:
+      tags: [Reading]
+      operationId: addReadingTime
+      parameters: [{ $ref: '#/components/parameters/Id' }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ReadingTimeRequest' } } } }
+      responses:
+        '200': { description: Updated weekly reading statistics, content: { application/json: { schema: { $ref: '#/components/schemas/WeeklyReadingStats' } } } }
+  /reading-stats/weekly:
+    get:
+      tags: [Reading]
+      operationId: getWeeklyReadingStats
+      responses:
+        '200': { description: Current user's private weekly reading statistics, content: { application/json: { schema: { $ref: '#/components/schemas/WeeklyReadingStats' } } } }
+  /books/{id}/metadata:
+    get:
+      tags: [Catalog]
+      operationId: getBookMetadata
+      parameters: [{ $ref: '#/components/parameters/Id' }]
+      responses:
+        '200': { description: Editable metadata, content: { application/json: { schema: { $ref: '#/components/schemas/BookMetadata' } } } }
+    patch:
+      tags: [Catalog]
+      operationId: updateBookMetadata
+      parameters: [{ $ref: '#/components/parameters/Id' }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/MetadataRequest' } } } }
+      responses:
+        '200': { description: Database metadata and optional write-back preview, content: { application/json: { schema: { type: object, required: [metadata], properties: { metadata: { $ref: '#/components/schemas/BookMetadata' }, writeBackPreview: { $ref: '#/components/schemas/FileOperationPreview' } } } } } }
+  /books/{id}/cover:
+    get:
+      tags: [Catalog]
+      operationId: getBookCover
+      parameters: [{ $ref: '#/components/parameters/Id' }]
+      responses:
+        '200': { description: Current application cover, content: { image/jpeg: { schema: { type: string, format: binary } } } }
+    put:
+      tags: [Catalog]
+      operationId: replaceBookCover
+      parameters: [{ $ref: '#/components/parameters/Id' }]
+      requestBody: { required: true, content: { image/jpeg: { schema: { type: string, format: binary } }, image/png: { schema: { type: string, format: binary } }, image/webp: { schema: { type: string, format: binary } } } }
+      responses:
+        '200': { description: Custom cover normalized and activated, content: { application/json: { schema: { $ref: '#/components/schemas/BookMetadata' } } } }
+    delete:
+      tags: [Catalog]
+      operationId: restoreBookCover
+      parameters: [{ $ref: '#/components/parameters/Id' }]
+      responses:
+        '200': { description: Custom cover retired and generated or extracted cover restored, content: { application/json: { schema: { $ref: '#/components/schemas/BookMetadata' } } } }
+  /annotations:
+    get:
+      tags: [Annotations]
+      operationId: listAnnotations
+      parameters: [{ name: bookId, in: query, schema: { type: string, format: uuid } }]
+      responses:
+        '200': { description: Current user's annotations, content: { application/json: { schema: { type: object, properties: { items: { type: array, items: { $ref: '#/components/schemas/Annotation' } } } } } } }
+    post:
+      tags: [Annotations]
+      operationId: createAnnotation
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/AnnotationRequest' } } } }
+      responses:
+        '200': { description: Created annotation, content: { application/json: { schema: { $ref: '#/components/schemas/Annotation' } } } }
+  /annotations/books:
+    get:
+      tags: [Annotations]
+      operationId: listAnnotationBooks
+      parameters:
+        - { name: q, in: query, schema: { type: string } }
+        - { name: cursor, in: query, schema: { type: string } }
+        - { name: limit, in: query, schema: { type: integer, default: 36, maximum: 100 } }
+      responses:
+        '200':
+          description: Books containing the current user's private annotations
+          content: { application/json: { schema: { $ref: '#/components/schemas/AnnotationBookPage' } } }
+  /annotations/books/{bookId}/export/{format}:
+    get:
+      tags: [Annotations]
+      operationId: exportBookAnnotations
+      parameters:
+        - { name: bookId, in: path, required: true, schema: { type: string, format: uuid } }
+        - { name: format, in: path, required: true, schema: { type: string, enum: [DOCX, XLSX] } }
+      responses:
+        '200':
+          description: Current user's annotations for one book as an Office document
+          headers: { Content-Disposition: { schema: { type: string } } }
+          content:
+            application/vnd.openxmlformats-officedocument.wordprocessingml.document: { schema: { type: string, format: binary } }
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet: { schema: { type: string, format: binary } }
+  /annotations/{id}:
+    delete:
+      tags: [Annotations]
+      operationId: deleteAnnotation
+      parameters: [{ $ref: '#/components/parameters/Id' }]
+      responses: { '200': { description: Deleted } }
+  /file-operations/preview:
+    post:
+      tags: [File operations]
+      operationId: previewFileOperation
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/FileOperationPreviewRequest' } } } }
+      responses:
+        '200': { description: Server-validated preview, content: { application/json: { schema: { $ref: '#/components/schemas/FileOperationPreview' } } } }
+  /file-operations:
+    get:
+      tags: [File operations]
+      operationId: listFileOperations
+      parameters: [{ name: limit, in: query, schema: { type: integer, default: 50, maximum: 200 } }]
+      responses:
+        '200': { description: Operation journal, content: { application/json: { schema: { type: object, properties: { items: { type: array, items: { $ref: '#/components/schemas/FileOperation' } } } } } } }
+    post:
+      tags: [File operations]
+      operationId: executeFileOperation
+      parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/FileOperationExecuteRequest' } } } }
+      responses:
+        '200': { description: Queued or existing idempotent operation, content: { application/json: { schema: { $ref: '#/components/schemas/FileOperation' } } } }
+  /file-operations/{id}:
+    get:
+      tags: [File operations]
+      operationId: getFileOperation
+      parameters: [{ $ref: '#/components/parameters/Id' }]
+      responses:
+        '200': { description: Operation, content: { application/json: { schema: { $ref: '#/components/schemas/FileOperation' } } } }
+  /recycle-bin:
+    get:
+      tags: [File operations]
+      operationId: listRecycleBin
+      responses:
+        '200': { description: Active recycle entries, content: { application/json: { schema: { type: object, properties: { items: { type: array, items: { $ref: '#/components/schemas/RecycleBinEntry' } } } } } } }
+  /recycle-bin/{id}/restore:
+    post:
+      tags: [File operations]
+      operationId: restoreRecycleEntry
+      parameters: [{ $ref: '#/components/parameters/Id' }, { $ref: '#/components/parameters/IdempotencyKey' }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/FileOperationExecuteRequest' } } } }
+      responses:
+        '200': { description: Queued restore, content: { application/json: { schema: { $ref: '#/components/schemas/FileOperation' } } } }
+  /recycle-bin/{id}:
+    delete:
+      tags: [File operations]
+      operationId: purgeRecycleEntry
+      parameters: [{ $ref: '#/components/parameters/Id' }, { $ref: '#/components/parameters/IdempotencyKey' }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/FileOperationExecuteRequest' } } } }
+      responses:
+        '200': { description: Queued permanent purge, content: { application/json: { schema: { $ref: '#/components/schemas/FileOperation' } } } }
+  /library-roots:
+    get:
+      tags: [File operations]
+      operationId: listLibraryRoots
+      responses:
+        '200':
+          description: Root capabilities
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/LibraryRootList' }
+  /book-uploads:
+    get:
+      tags: [Book uploads]
+      operationId: listBookUploads
+      responses:
+        '200': { description: Upload queue owned by the current manager, content: { application/json: { schema: { type: object, required: [items], properties: { items: { type: array, items: { $ref: '#/components/schemas/BookUpload' } } } } } } }
+    post:
+      tags: [Book uploads]
+      operationId: createBookUpload
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/CreateBookUploadRequest' } } } }
+      responses:
+        '200': { description: Created staging session, content: { application/json: { schema: { $ref: '#/components/schemas/BookUpload' } } } }
+  /book-uploads/{id}:
+    get:
+      tags: [Book uploads]
+      operationId: getBookUpload
+      parameters: [{ $ref: '#/components/parameters/Id' }]
+      responses: { '200': { description: Upload state, content: { application/json: { schema: { $ref: '#/components/schemas/BookUpload' } } } } }
+    delete:
+      tags: [Book uploads]
+      operationId: cancelBookUpload
+      parameters: [{ $ref: '#/components/parameters/Id' }]
+      responses: { '200': { description: Upload cancelled } }
+  /book-uploads/{id}/content:
+    put:
+      tags: [Book uploads]
+      operationId: uploadBookContent
+      parameters: [{ $ref: '#/components/parameters/Id' }]
+      requestBody: { required: true, content: { application/octet-stream: { schema: { type: string, format: binary } } } }
+      responses: { '200': { description: File received and queued for inspection, content: { application/json: { schema: { $ref: '#/components/schemas/BookUpload' } } } } }
+  /book-uploads/{id}/metadata:
+    patch:
+      tags: [Book uploads]
+      operationId: updateBookUploadMetadata
+      parameters: [{ $ref: '#/components/parameters/Id' }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/BookMetadataDraft' } } } }
+      responses: { '200': { description: Reviewed metadata saved, content: { application/json: { schema: { $ref: '#/components/schemas/BookUpload' } } } } }
+  /book-uploads/{id}/enrich:
+    post:
+      tags: [Book uploads]
+      operationId: enrichBookUpload
+      parameters: [{ $ref: '#/components/parameters/Id' }]
+      responses: { '200': { description: Online enrichment retried, content: { application/json: { schema: { $ref: '#/components/schemas/BookUpload' } } } } }
+  /book-uploads/{id}/cover:
+    get:
+      tags: [Book uploads]
+      operationId: getBookUploadCover
+      parameters: [{ $ref: '#/components/parameters/Id' }]
+      responses: { '200': { description: Current staged cover, content: { image/jpeg: { schema: { type: string, format: binary } } } } }
+    put:
+      tags: [Book uploads]
+      operationId: uploadBookCover
+      parameters: [{ $ref: '#/components/parameters/Id' }]
+      requestBody: { required: true, content: { image/jpeg: { schema: { type: string, format: binary } }, image/png: { schema: { type: string, format: binary } }, image/webp: { schema: { type: string, format: binary } } } }
+      responses: { '200': { description: Cover normalized and selected, content: { application/json: { schema: { $ref: '#/components/schemas/BookUpload' } } } } }
+  /book-uploads/{id}/cover-selection:
+    post:
+      tags: [Book uploads]
+      operationId: selectBookUploadCover
+      parameters: [{ $ref: '#/components/parameters/Id' }]
+      requestBody: { required: true, content: { application/json: { schema: { type: object, required: [candidateId], properties: { candidateId: { type: string } } } } } }
+      responses: { '200': { description: Provider cover downloaded and selected, content: { application/json: { schema: { $ref: '#/components/schemas/BookUpload' } } } } }
+  /book-uploads/{id}/commit:
+    post:
+      tags: [Book uploads]
+      operationId: commitBookUpload
+      parameters: [{ $ref: '#/components/parameters/Id' }, { $ref: '#/components/parameters/IdempotencyKey' }]
+      requestBody: { required: false, content: { application/json: { schema: { $ref: '#/components/schemas/CommitBookUploadRequest' } } } }
+      responses: { '200': { description: Upload atomically committed, content: { application/json: { schema: { $ref: '#/components/schemas/BookUpload' } } } } }
+  /reader-fonts:
+    get:
+      tags: [Reader fonts]
+      operationId: listReaderFonts
+      parameters: [{ name: includeDisabled, in: query, schema: { type: boolean, default: false } }]
+      responses:
+        '200': { description: Enabled reader fonts, content: { application/json: { schema: { $ref: '#/components/schemas/ReaderFontList' } } } }
+    post:
+      tags: [Reader fonts]
+      operationId: createReaderFont
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/CreateReaderFontRequest' } } } }
+      responses: { '200': { description: Font upload session, content: { application/json: { schema: { $ref: '#/components/schemas/ReaderFont' } } } } }
+  /reader-fonts/{id}:
+    patch:
+      tags: [Reader fonts]
+      operationId: updateReaderFontStatus
+      parameters: [{ $ref: '#/components/parameters/Id' }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/UpdateReaderFontRequest' } } } }
+      responses: { '200': { description: Updated reader font, content: { application/json: { schema: { $ref: '#/components/schemas/ReaderFont' } } } } }
+  /reader-fonts/{id}/content:
+    put:
+      tags: [Reader fonts]
+      operationId: uploadReaderFontContent
+      parameters: [{ $ref: '#/components/parameters/Id' }]
+      requestBody: { required: true, content: { application/octet-stream: { schema: { type: string, format: binary } } } }
+      responses: { '200': { description: Font stored after validation, content: { application/json: { schema: { $ref: '#/components/schemas/ReaderFont' } } } } }
+    get:
+      tags: [Reader fonts]
+      operationId: getReaderFontContent
+      parameters: [{ $ref: '#/components/parameters/Id' }]
+      responses: { '200': { description: Enabled font file, content: { application/octet-stream: { schema: { type: string, format: binary } } } } }
+
+components:
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: BOOKKIN_SESSION
+  parameters:
+    Id: { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+    IdempotencyKey: { name: Idempotency-Key, in: header, required: true, schema: { type: string, minLength: 1, maxLength: 160 } }
+  responses:
+    Problem:
+      description: RFC 9457 problem
+      content: { application/problem+json: { schema: { $ref: '#/components/schemas/Problem' } } }
+  schemas:
+    Problem:
+      type: object
+      properties: { type: { type: string, format: uri }, title: { type: string }, status: { type: integer }, detail: { type: string }, code: { type: string } }
+    CsrfToken:
+      type: object
+      required: [token, headerName]
+      properties: { token: { type: string }, headerName: { type: string } }
+    UserRole: { type: string, enum: [OWNER, ADMIN, MEMBER] }
+    UserStatus: { type: string, enum: [ACTIVE, DISABLED] }
+    SessionUser:
+      type: object
+      required: [id, username, displayName, role, mustChangePassword]
+      properties: { id: { type: string, format: uuid }, username: { type: string }, displayName: { type: string }, role: { $ref: '#/components/schemas/UserRole' }, mustChangePassword: { type: boolean } }
+    ManagedUser:
+      allOf:
+        - { $ref: '#/components/schemas/SessionUser' }
+        - { type: object, required: [status, createdAt], properties: { status: { $ref: '#/components/schemas/UserStatus' }, createdAt: { type: string, format: date-time }, lastLoginAt: { type: [string, 'null'], format: date-time } } }
+    SetupRequest:
+      type: object
+      required: [username, displayName, password]
+      properties: { username: { type: string, pattern: '^[a-zA-Z0-9._-]{3,80}$' }, displayName: { type: string, maxLength: 120 }, password: { type: string, minLength: 12, maxLength: 200 } }
+    SetupStatus:
+      type: object
+      required: [initialized]
+      properties: { initialized: { type: boolean } }
+    LoginRequest: { type: object, required: [username, password], properties: { username: { type: string }, password: { type: string } } }
+    ChangePasswordRequest: { type: object, required: [currentPassword, newPassword], properties: { currentPassword: { type: string }, newPassword: { type: string, minLength: 12 } } }
+    CreateUserRequest: { type: object, required: [username, displayName, role], properties: { username: { type: string }, displayName: { type: string }, role: { type: string, enum: [ADMIN, MEMBER] } } }
+    BookFormat: { type: string, enum: [EPUB, PDF] }
+    BookFileStatus: { type: string, enum: [AVAILABLE, OPERATING, TRASHED, MISSING, DELETED] }
+    LibraryRootStatus: { type: string, enum: [ONLINE, READ_ONLY, OFFLINE] }
+    LibraryRoot:
+      type: object
+      required: [id, name, configuredPath, status, canRead, canWrite, canAtomicMove, canStage]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        configuredPath: { type: string }
+        canonicalPath: { type: [string, 'null'] }
+        status: { $ref: '#/components/schemas/LibraryRootStatus' }
+        canRead: { type: boolean }
+        canWrite: { type: boolean }
+        canAtomicMove: { type: boolean }
+        canStage: { type: boolean }
+        freeBytes: { type: [integer, 'null'], format: int64 }
+        lastCapabilityCheckAt: { type: [string, 'null'], format: date-time }
+        lastScanAt: { type: [string, 'null'], format: date-time }
+    LibraryRootList:
+      type: object
+      required: [items]
+      properties: { items: { type: array, items: { $ref: '#/components/schemas/LibraryRoot' } } }
+    Book:
+      type: object
+      required: [id, fileId, title, author, format, coverUrl, progress, addedAt, libraryRoot, relativePath, fingerprint, status, tags]
+      properties:
+        id: { type: string, format: uuid }
+        fileId: { type: string, format: uuid }
+        title: { type: string }
+        author: { type: string }
+        series: { type: [string, 'null'] }
+        description: { type: [string, 'null'] }
+        format: { $ref: '#/components/schemas/BookFormat' }
+        coverUrl: { type: string }
+        progress: { type: integer, minimum: 0, maximum: 100 }
+        wordCount: { type: [string, 'null'] }
+        addedAt: { type: string, format: date-time }
+        libraryRoot: { type: string }
+        relativePath: { type: string }
+        fingerprint: { type: string }
+        status: { $ref: '#/components/schemas/BookFileStatus' }
+        tags: { type: array, items: { type: string } }
+    BookPage: { type: object, required: [items], properties: { items: { type: array, items: { $ref: '#/components/schemas/Book' } }, nextCursor: { type: [string, 'null'] } } }
+    BrowseBook:
+      type: object
+      required: [id, title, author, coverUrl, available, addedAt]
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string }
+        author: { type: string }
+        description: { type: [string, 'null'] }
+        format: { oneOf: [{ $ref: '#/components/schemas/BookFormat' }, { type: 'null' }] }
+        coverUrl: { type: string }
+        available: { type: boolean }
+        addedAt: { type: string, format: date-time }
+    BrowseBookPage:
+      type: object
+      required: [items]
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/BrowseBook' } }
+        nextCursor: { type: [string, 'null'] }
+    CategorySummary:
+      type: object
+      required: [id, name, bookCount, previewBooks, editable]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        description: { type: [string, 'null'] }
+        bookCount: { type: integer, format: int64, minimum: 0 }
+        previewBooks: { type: array, maxItems: 3, items: { $ref: '#/components/schemas/BrowseBook' } }
+        editable: { type: boolean }
+    CategoryDetail:
+      allOf:
+        - { $ref: '#/components/schemas/CategorySummary' }
+    CategoryList:
+      type: object
+      required: [items, editable]
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/CategorySummary' } }
+        editable: { type: boolean }
+    CategoryRequest:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string, maxLength: 160 }
+        description: { type: [string, 'null'], maxLength: 2000 }
+    CategoryOrderRequest:
+      type: object
+      required: [categoryIds]
+      properties: { categoryIds: { type: array, items: { type: string, format: uuid } } }
+    BookCategoriesRequest:
+      type: object
+      required: [categoryIds]
+      properties: { categoryIds: { type: array, items: { type: string, format: uuid } } }
+    BooklistKind: { type: string, enum: [OFFICIAL, PERSONAL] }
+    BooklistVisibility: { type: string, enum: [PRIVATE, MEMBERS, PUBLIC] }
+    BooklistSummary:
+      type: object
+      required: [id, title, kind, visibility, ownerDisplayName, bookCount, previewBooks, ownedByViewer, editable, revision, hiddenPublicBookCount, updatedAt]
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string }
+        description: { type: [string, 'null'] }
+        kind: { $ref: '#/components/schemas/BooklistKind' }
+        visibility: { $ref: '#/components/schemas/BooklistVisibility' }
+        ownerDisplayName: { type: string }
+        bookCount: { type: integer, format: int64, minimum: 0 }
+        previewBooks: { type: array, maxItems: 4, items: { $ref: '#/components/schemas/BrowseBook' } }
+        ownedByViewer: { type: boolean }
+        editable: { type: boolean }
+        revision: { type: integer, format: int64, minimum: 0 }
+        hiddenPublicBookCount: { type: integer, minimum: 0 }
+        updatedAt: { type: string, format: date-time }
+    BooklistDetail:
+      allOf:
+        - { $ref: '#/components/schemas/BooklistSummary' }
+    BooklistList:
+      type: object
+      required: [items]
+      properties: { items: { type: array, items: { $ref: '#/components/schemas/BooklistSummary' } } }
+    CreateBooklistRequest:
+      type: object
+      required: [title, kind, visibility]
+      properties:
+        title: { type: string, maxLength: 240 }
+        description: { type: [string, 'null'], maxLength: 4000 }
+        kind: { $ref: '#/components/schemas/BooklistKind' }
+        visibility: { $ref: '#/components/schemas/BooklistVisibility' }
+    UpdateBooklistRequest:
+      type: object
+      required: [title, visibility, revision]
+      properties:
+        title: { type: string, maxLength: 240 }
+        description: { type: [string, 'null'], maxLength: 4000 }
+        visibility: { $ref: '#/components/schemas/BooklistVisibility' }
+        revision: { type: integer, format: int64, minimum: 0 }
+    AddBooklistBooksRequest:
+      type: object
+      required: [bookIds, revision]
+      properties:
+        bookIds: { type: array, items: { type: string, format: uuid } }
+        revision: { type: integer, format: int64, minimum: 0 }
+    ReorderBooklistRequest:
+      type: object
+      required: [bookIds, revision]
+      properties:
+        bookIds: { type: array, items: { type: string, format: uuid } }
+        revision: { type: integer, format: int64, minimum: 0 }
+    DisplayBook:
+      type: object
+      required: [id, title, author, coverUrl, available, sortOrder]
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string }
+        author: { type: string }
+        description: { type: [string, 'null'] }
+        format: { oneOf: [{ $ref: '#/components/schemas/BookFormat' }, { type: 'null' }] }
+        coverUrl: { type: string }
+        available: { type: boolean }
+        sortOrder: { type: integer, format: int64 }
+    DisplayBookPage:
+      type: object
+      required: [items, revision]
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/DisplayBook' } }
+        nextCursor: { type: [string, 'null'] }
+        revision: { type: integer, format: int64 }
+    AddDisplayBookRequest:
+      type: object
+      required: [bookId, revision]
+      properties: { bookId: { type: string, format: uuid }, revision: { type: integer, format: int64, minimum: 0 } }
+    ReorderDisplayBooksRequest:
+      type: object
+      required: [bookIds, revision]
+      properties: { bookIds: { type: array, minItems: 0, items: { type: string, format: uuid } }, revision: { type: integer, format: int64, minimum: 0 } }
+    CommitBookUploadRequest:
+      type: object
+      properties: { publishToDisplay: { type: boolean, default: false } }
+    MetadataSource: { type: string, enum: [FILE, FILENAME, OPEN_LIBRARY, GOOGLE_BOOKS, MANUAL] }
+    CoverSource: { type: string, enum: [EMBEDDED, PDF_FIRST_PAGE, OPEN_LIBRARY, GOOGLE_BOOKS, CUSTOM, GENERATED] }
+    BookUploadStatus: { type: string, enum: [RECEIVING, INSPECTING, ENRICHING, READY_FOR_REVIEW, COMMITTING, SUCCEEDED, DUPLICATE, FAILED, CANCELLED, EXPIRED] }
+    BookMetadata:
+      type: object
+      required: [id, title, authors, translators, tags, sources]
+      properties: { id: { type: string, format: uuid }, title: { type: string }, subtitle: { type: [string, 'null'] }, authors: { type: array, items: { type: string } }, translators: { type: array, items: { type: string } }, language: { type: [string, 'null'] }, publisher: { type: [string, 'null'] }, publishedDate: { type: [string, 'null'] }, isbn: { type: [string, 'null'] }, description: { type: [string, 'null'] }, series: { type: [string, 'null'] }, seriesIndex: { type: [number, 'null'] }, tags: { type: array, items: { type: string } }, coverCacheKey: { type: [string, 'null'] }, coverUrl: { type: [string, 'null'] }, sources: { type: object, additionalProperties: { $ref: '#/components/schemas/MetadataSource' } } }
+    BookMetadataDraft:
+      type: object
+      required: [title, authors, translators, tags, sources, targetPath]
+      properties:
+        title: { type: string, maxLength: 500 }
+        subtitle: { type: [string, 'null'], maxLength: 500 }
+        authors: { type: array, maxItems: 20, items: { type: string, maxLength: 300 } }
+        translators: { type: array, maxItems: 20, items: { type: string, maxLength: 300 } }
+        language: { type: [string, 'null'], maxLength: 32 }
+        publisher: { type: [string, 'null'], maxLength: 500 }
+        publishedDate: { type: [string, 'null'], maxLength: 40 }
+        isbn: { type: [string, 'null'], maxLength: 40 }
+        description: { type: [string, 'null'], maxLength: 20000 }
+        series: { type: [string, 'null'], maxLength: 500 }
+        seriesIndex: { type: [number, 'null'] }
+        tags: { type: array, maxItems: 50, items: { type: string, maxLength: 200 } }
+        pageCount: { type: [integer, 'null'] }
+        wordCount: { type: [integer, 'null'], format: int64 }
+        sources: { type: object, additionalProperties: { $ref: '#/components/schemas/MetadataSource' } }
+        targetPath: { type: string }
+    MetadataCandidate:
+      type: object
+      required: [id, provider]
+      properties: { id: { type: string }, provider: { $ref: '#/components/schemas/MetadataSource' }, title: { type: [string, 'null'] }, subtitle: { type: [string, 'null'] }, authors: { type: array, items: { type: string } }, publisher: { type: [string, 'null'] }, publishedDate: { type: [string, 'null'] }, isbn: { type: [string, 'null'] }, description: { type: [string, 'null'] }, tags: { type: array, items: { type: string } }, coverUrl: { type: [string, 'null'], format: uri } }
+    CreateBookUploadRequest:
+      type: object
+      required: [libraryRootId, filename, sizeBytes]
+      properties: { libraryRootId: { type: string, format: uuid }, filename: { type: string }, sizeBytes: { type: integer, format: int64, minimum: 1 } }
+    BookUpload:
+      type: object
+      required: [id, libraryRootId, libraryRootName, originalFilename, format, declaredSizeBytes, receivedBytes, status, encrypted, drmProtected, digitallySigned, metadataCandidates, similarBookIds, expiresAt, createdAt, updatedAt]
+      properties:
+        id: { type: string, format: uuid }
+        libraryRootId: { type: string, format: uuid }
+        libraryRootName: { type: string }
+        originalFilename: { type: string }
+        format: { $ref: '#/components/schemas/BookFormat' }
+        declaredSizeBytes: { type: integer, format: int64 }
+        receivedBytes: { type: integer, format: int64 }
+        fingerprint: { type: [string, 'null'] }
+        status: { $ref: '#/components/schemas/BookUploadStatus' }
+        encrypted: { type: boolean }
+        drmProtected: { type: boolean }
+        digitallySigned: { type: boolean }
+        detectedMetadata: { oneOf: [{ $ref: '#/components/schemas/BookMetadataDraft' }, { type: 'null' }] }
+        draftMetadata: { oneOf: [{ $ref: '#/components/schemas/BookMetadataDraft' }, { type: 'null' }] }
+        metadataCandidates: { type: array, items: { $ref: '#/components/schemas/MetadataCandidate' } }
+        coverUrl: { type: [string, 'null'] }
+        selectedCoverSource: { oneOf: [{ $ref: '#/components/schemas/CoverSource' }, { type: 'null' }] }
+        duplicateBookId: { type: [string, 'null'], format: uuid }
+        similarBookIds: { type: array, items: { type: string, format: uuid } }
+        targetPath: { type: [string, 'null'] }
+        errorCode: { type: [string, 'null'] }
+        errorDetail: { type: [string, 'null'] }
+        committedBookId: { type: [string, 'null'], format: uuid }
+        expiresAt: { type: string, format: date-time }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    ReaderFontKind: { type: string, enum: [SERIF, SANS] }
+    ReaderFontStatus: { type: string, enum: [ENABLED, DISABLED] }
+    ReaderFont:
+      type: object
+      required: [id, displayName, familyName, kind, source, status, format, contentUrl, createdAt]
+      properties:
+        id: { type: string, format: uuid }
+        displayName: { type: string }
+        familyName: { type: string }
+        kind: { $ref: '#/components/schemas/ReaderFontKind' }
+        source: { type: string, enum: [PRESET, CUSTOM] }
+        status: { $ref: '#/components/schemas/ReaderFontStatus' }
+        format: { type: [string, 'null'], enum: [WOFF2, WOFF, TTF, OTF, null] }
+        contentUrl: { type: [string, 'null'], format: uri }
+        licenseNote: { type: [string, 'null'] }
+        createdAt: { type: [string, 'null'], format: date-time }
+    ReaderFontList:
+      type: object
+      required: [items]
+      properties: { items: { type: array, items: { $ref: '#/components/schemas/ReaderFont' } } }
+    CreateReaderFontRequest:
+      type: object
+      required: [kind, filename, sizeBytes]
+      properties:
+        kind: { $ref: '#/components/schemas/ReaderFontKind' }
+        filename: { type: string, maxLength: 255 }
+        sizeBytes: { type: integer, format: int64, minimum: 1 }
+        displayName: { type: [string, 'null'], maxLength: 160 }
+        licenseNote: { type: [string, 'null'], maxLength: 2000 }
+    UpdateReaderFontRequest:
+      type: object
+      required: [status]
+      properties: { status: { $ref: '#/components/schemas/ReaderFontStatus' } }
+    ReadingPosition: { type: object, properties: { bookId: { type: string, format: uuid }, locator: { type: string }, progress: { type: number }, deviceId: { type: [string, 'null'] }, updatedAt: { type: string, format: date-time } } }
+    ReadingPositionRequest: { type: object, required: [locator, progress], properties: { locator: { type: string }, progress: { type: number, minimum: 0, maximum: 1 }, deviceId: { type: string } } }
+    ReadingTimeRequest: { type: object, required: [seconds], properties: { seconds: { type: integer, minimum: 1, maximum: 60 } } }
+    DailyReadingTime:
+      type: object
+      required: [date, seconds]
+      properties: { date: { type: string, format: date }, seconds: { type: integer, format: int64, minimum: 0 } }
+    WeeklyReadingStats:
+      type: object
+      required: [weekStart, weekEnd, totalSeconds, previousWeekSeconds, days]
+      properties: { weekStart: { type: string, format: date }, weekEnd: { type: string, format: date }, totalSeconds: { type: integer, format: int64, minimum: 0 }, previousWeekSeconds: { type: integer, format: int64, minimum: 0 }, days: { type: array, items: { $ref: '#/components/schemas/DailyReadingTime' } } }
+    AnnotationRequest: { type: object, required: [bookId, type, locator, style], properties: { bookId: { type: string, format: uuid }, type: { type: string, enum: [HIGHLIGHT, NOTE, BOOKMARK] }, locator: { type: string }, quote: { type: string }, note: { type: string }, style: { type: string, enum: [HIGHLIGHT, UNDERLINE, BOLD] }, color: { type: string } } }
+    Annotation: { allOf: [{ $ref: '#/components/schemas/AnnotationRequest' }, { type: object, required: [id, createdAt, updatedAt], properties: { id: { type: string, format: uuid }, bookTitle: { type: string }, bookAuthor: { type: string }, createdAt: { type: string, format: date-time }, updatedAt: { type: string, format: date-time } } }] }
+    AnnotationBookSummary:
+      type: object
+      required: [bookId, bookTitle, bookAuthor, coverUrl, annotationCount, noteCount, highlightCount, underlineCount, boldCount, latestAt]
+      properties:
+        bookId: { type: string, format: uuid }
+        bookTitle: { type: string }
+        bookAuthor: { type: string }
+        coverUrl: { type: string }
+        annotationCount: { type: integer }
+        noteCount: { type: integer }
+        highlightCount: { type: integer }
+        underlineCount: { type: integer }
+        boldCount: { type: integer }
+        latestAt: { type: string, format: date-time }
+    AnnotationBookPage:
+      type: object
+      required: [items]
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/AnnotationBookSummary' } }
+        nextCursor: { type: [string, 'null'] }
+    FileOperationType: { type: string, enum: [RENAME, MOVE, TRASH, RESTORE, WRITE_METADATA, PURGE] }
+    FileOperationStatus: { type: string, enum: [PLANNED, RUNNING, SUCCEEDED, FAILED, ROLLED_BACK] }
+    FileConflict: { type: object, required: [code, message], properties: { code: { type: string }, message: { type: string }, path: { type: [string, 'null'] } } }
+    FileOperationPreviewRequest:
+      type: object
+      required: [type, expectedFingerprint]
+      properties: { bookFileId: { type: [string, 'null'], format: uuid }, recycleBinEntryId: { type: [string, 'null'], format: uuid }, type: { $ref: '#/components/schemas/FileOperationType' }, targetRootId: { type: [string, 'null'], format: uuid }, targetPath: { type: [string, 'null'] }, expectedFingerprint: { type: string } }
+    FileOperationExecuteRequest:
+      type: object
+      required: [previewToken, expectedFingerprint]
+      properties: { previewToken: { type: string, format: uuid }, expectedFingerprint: { type: string } }
+    FileOperationPreview:
+      type: object
+      required: [previewToken, type, sourcePath, requiredBytes, expectedFingerprint, expiresAt, conflicts, warnings]
+      properties: { previewToken: { type: string, format: uuid }, type: { $ref: '#/components/schemas/FileOperationType' }, sourcePath: { type: string }, targetPath: { type: [string, 'null'] }, requiredBytes: { type: integer, format: int64 }, expectedFingerprint: { type: string }, expiresAt: { type: string, format: date-time }, conflicts: { type: array, items: { $ref: '#/components/schemas/FileConflict' } }, warnings: { type: array, items: { type: string } } }
+    FileOperation:
+      type: object
+      required: [id, type, status, sourcePath, createdAt, stage]
+      properties: { id: { type: string, format: uuid }, type: { $ref: '#/components/schemas/FileOperationType' }, status: { $ref: '#/components/schemas/FileOperationStatus' }, sourcePath: { type: string }, targetPath: { type: [string, 'null'] }, createdAt: { type: string, format: date-time }, stage: { type: string }, errorCode: { type: [string, 'null'] }, errorDetail: { type: [string, 'null'] } }
+    RecycleBinEntry:
+      type: object
+      required: [id, bookId, bookTitle, bookAuthor, format, coverUrl, originalPath, trashPath, sizeBytes, deletedBy, deletedAt, expiresAt, fingerprint]
+      properties: { id: { type: string, format: uuid }, bookId: { type: string, format: uuid }, bookTitle: { type: string }, bookAuthor: { type: string }, format: { $ref: '#/components/schemas/BookFormat' }, coverUrl: { type: string }, originalPath: { type: string }, trashPath: { type: string }, sizeBytes: { type: integer, format: int64 }, deletedBy: { type: string }, deletedAt: { type: string, format: date-time }, expiresAt: { type: string, format: date-time }, fingerprint: { type: string } }
+    MetadataRequest:
+      type: object
+      properties: { title: { type: string }, subtitle: { type: string }, authors: { type: array, items: { type: string } }, translators: { type: array, items: { type: string } }, language: { type: string }, publisher: { type: string }, publishedDate: { type: string }, isbn: { type: string }, description: { type: string }, series: { type: string }, seriesIndex: { type: number }, tags: { type: array, items: { type: string } }, manualFields: { type: array, items: { type: string } }, writeBack: { type: boolean }, bookFileId: { type: string, format: uuid }, expectedFingerprint: { type: string } }

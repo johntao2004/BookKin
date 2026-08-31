@@ -1,0 +1,6 @@
+spring:
+  main:
+    web-application-type: none
+bookkin:
+  worker:
+    poll-delay: 1s
