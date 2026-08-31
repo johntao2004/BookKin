@@ -182,17 +182,14 @@ export function AppShell({ children }: PropsWithChildren) {
               <MenuRounded />
             </IconButton>
             <Stack direction="row" sx={{ alignItems: "center", gap: 3, flexShrink: 0 }}>
-              <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexShrink: 0 }}>
-                <AutoStoriesOutlined sx={{ color: "primary.main", fontSize: 24 }} />
-                <Typography
-                  component={NavLink}
-                  to="/library"
-                  variant="h5"
-                  sx={{ color: "text.primary", textDecoration: "none", whiteSpace: "nowrap" }}
-                >
-                  BookKin
-                </Typography>
-              </Stack>
+              <Typography
+                component={NavLink}
+                to="/library"
+                variant="h5"
+                sx={{ color: "text.primary", textDecoration: "none", whiteSpace: "nowrap" }}
+              >
+                BookKin
+              </Typography>
 
               <Stack direction="row" spacing={0.5} sx={{ display: { xs: "none", lg: "flex" } }}>
                 {libraryNavigation.map(linkButton)}
@@ -321,10 +318,7 @@ export function AppShell({ children }: PropsWithChildren) {
 
         <Drawer open={drawerOpen} onClose={() => setDrawerOpen(false)}>
           <Box role="navigation" sx={{ width: 288, py: 2 }}>
-            <Stack direction="row" spacing={1} sx={{ alignItems: "center", px: 2, pb: 2 }}>
-              <AutoStoriesOutlined color="primary" />
-              <Typography variant="h5">BookKin</Typography>
-            </Stack>
+            <Typography variant="h5" sx={{ px: 2, pb: 2 }}>BookKin</Typography>
             <Divider />
             <List>
               {drawerLinks.map((item) => (

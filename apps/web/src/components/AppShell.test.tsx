@@ -46,7 +46,9 @@ describe("AppShell", () => {
     renderShell("/library");
 
     expect(screen.getByRole("banner")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "BookKin" })).toBeInTheDocument();
+    const wordmark = screen.getByRole("link", { name: "BookKin" });
+    expect(wordmark).toBeInTheDocument();
+    expect(wordmark.previousElementSibling).toBeNull();
     expect(screen.getByRole("link", { name: "分类" })).toHaveAttribute("href", "/categories");
     expect(screen.getByRole("link", { name: "书单" })).toHaveAttribute("href", "/booklists");
     expect(screen.getByRole("link", { name: "藏书库" })).toHaveAttribute("href", "/library/all");
@@ -61,6 +63,7 @@ describe("AppShell", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "打开导航" }));
     const drawer = screen.getByRole("navigation");
+    expect(within(drawer).getByText("BookKin").previousElementSibling).toBeNull();
     for (const label of managementLabels) expect(within(drawer).queryByText(label)).not.toBeInTheDocument();
     expect(within(drawer).getByText("分类")).toBeInTheDocument();
     expect(within(drawer).getByText("书单")).toBeInTheDocument();

@@ -1,4 +1,3 @@
-import { AutoStoriesOutlined } from "@mui/icons-material";
 import { Box, Stack, Typography } from "@mui/material";
 import type { ReactNode } from "react";
 import { tokens } from "../theme/generated-tokens";
@@ -49,10 +48,9 @@ export function AuthFrame({ children, title, description, greeting }: AuthFrameP
           }}
         >
           <Box sx={{ position: "relative", width: "fit-content", maxWidth: 480, height: "100%" }}>
-            <Stack direction="row" spacing={1} sx={{ position: "absolute", top: 0, left: 0, alignItems: "center", color: "secondary.dark", whiteSpace: "nowrap" }}>
-              <AutoStoriesOutlined color="primary" />
-              <Typography variant="h5">BookKin</Typography>
-            </Stack>
+            <Typography variant="h5" sx={{ position: "absolute", top: 0, left: 0, color: "secondary.dark", whiteSpace: "nowrap" }}>
+              BookKin
+            </Typography>
             <Box sx={{ display: "flex", alignItems: "center", height: "100%", textAlign: "center" }}>
               <Box>
                 <Typography variant="overline" sx={{ letterSpacing: "0.18em", opacity: 0.68 }}>PRIVATE LIBRARY</Typography>
@@ -67,10 +65,7 @@ export function AuthFrame({ children, title, description, greeting }: AuthFrameP
       </Box>
       <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", px: { xs: 2, sm: 6 }, py: 6 }}>
         <Box sx={{ width: "100%", maxWidth: 440 }}>
-          <Stack direction="row" spacing={1} sx={{ display: { xs: "flex", md: "none" }, alignItems: "center", mb: 7 }}>
-            <AutoStoriesOutlined color="primary" />
-            <Typography variant="h5">BookKin</Typography>
-          </Stack>
+          <Typography variant="h5" sx={{ display: { xs: "block", md: "none" }, mb: 7 }}>BookKin</Typography>
           {greeting && (
             <Typography variant="body2" color="primary" sx={{ mb: 1, fontWeight: tokens.typography.fontWeight.medium }}>
               {greeting}
