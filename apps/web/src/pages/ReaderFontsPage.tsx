@@ -1,5 +1,21 @@
-import { CloudUploadOutlined, FontDownloadRounded, ToggleOffOutlined, ToggleOnOutlined } from "@mui/icons-material";
-import { Alert, Box, Button, Card, CardContent, Chip, CircularProgress, Divider, FormControl, FormControlLabel, InputLabel, MenuItem, Select, Snackbar, Stack, Switch, TextField, Typography } from "@mui/material";
+import CloudUploadOutlined from "@mui/icons-material/CloudUploadOutlined";
+import Alert from "@mui/material/Alert";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
+import Chip from "@mui/material/Chip";
+import CircularProgress from "@mui/material/CircularProgress";
+import Divider from "@mui/material/Divider";
+import FormControl from "@mui/material/FormControl";
+import InputLabel from "@mui/material/InputLabel";
+import MenuItem from "@mui/material/MenuItem";
+import Select from "@mui/material/Select";
+import Snackbar from "@mui/material/Snackbar";
+import Stack from "@mui/material/Stack";
+import Switch from "@mui/material/Switch";
+import TextField from "@mui/material/TextField";
+import Typography from "@mui/material/Typography";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
 import { api } from "../api/client";
@@ -103,13 +119,23 @@ export function ReaderFontsPage() {
           <Card key={font.id} variant="outlined" sx={{ borderRadius: `${tokens.radius.xl}px`, opacity: font.status === "ENABLED" ? 1 : 0.62 }}>
             <CardContent sx={{ p: { xs: 2.5, sm: 3 } }}>
               <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ alignItems: { sm: "center" } }}>
-                <Box sx={{ width: 52, height: 52, display: "grid", placeItems: "center", borderRadius: `${tokens.radius.lg}px`, bgcolor: "action.selected", color: "primary.main" }}><FontDownloadRounded /></Box>
                 <Box sx={{ minWidth: 0, flex: 1 }}>
                   <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap", gap: 0.75 }}><Typography variant="h5" sx={{ fontFamily: readerFontFamily(font) }}>{font.displayName}</Typography><Chip size="small" label={font.kind === "SERIF" ? "衬线" : "无衬线"} /><Chip size="small" variant="outlined" label={font.source === "PRESET" ? "预设" : "自定义"} color={font.status === "ENABLED" ? "success" : "default"} /></Stack>
                   <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, fontFamily: readerFontFamily(font) }}>BookKin阅读正文预览：山高水长，文字应当顺着视线自然延续。</Typography>
                   {font.licenseNote && <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.5 }}>{font.licenseNote}</Typography>}
                 </Box>
-                <FormControlLabel control={<Switch checked={font.status === "ENABLED"} onChange={() => void toggle(font)} disabled={font.source === "PRESET"} />} label={font.status === "ENABLED" ? <><ToggleOnOutlined fontSize="small" /> 启用</> : <><ToggleOffOutlined fontSize="small" /> 已停用</>} labelPlacement="start" />
+                <Switch
+                  checked={font.status === "ENABLED"}
+                  onChange={() => void toggle(font)}
+                  disabled={font.source === "PRESET"}
+                  slotProps={{
+                    input: {
+                      "aria-label": font.source === "PRESET"
+                        ? `${font.displayName}为预设字体，已启用`
+                        : `${font.status === "ENABLED" ? "停用" : "启用"}${font.displayName}`,
+                    },
+                  }}
+                />
               </Stack>
             </CardContent>
           </Card>

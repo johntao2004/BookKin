@@ -1,16 +1,20 @@
-import { FormatQuoteRounded, NotesOutlined } from "@mui/icons-material";
-import { Box, Button, CircularProgress, Stack, Typography } from "@mui/material";
+import FormatQuoteRounded from "@mui/icons-material/FormatQuoteRounded";
+import NotesOutlined from "@mui/icons-material/NotesOutlined";
+import Box from "@mui/material/Box";
+import CircularProgress from "@mui/material/CircularProgress";
+import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { api } from "../api/client";
 import type { Annotation } from "../domain/types";
 import { tokens } from "../theme/generated-tokens";
+import { OverviewCardHeader } from "./OverviewCardHeader";
+import { OverviewEmptyState } from "./OverviewEmptyState";
 
 const annotationTimestamp = (annotation: Annotation) => annotation.updatedAt ?? annotation.createdAt;
 
-export function RecentAnnotationsPanel({ fallbackBookId, embedded = false }: { fallbackBookId?: string; embedded?: boolean }) {
-  const navigate = useNavigate();
+export function RecentAnnotationsPanel({ embedded = false }: { embedded?: boolean }) {
   const quoteAreaRef = useRef<HTMLDivElement>(null);
   const [quoteLineClamp, setQuoteLineClamp] = useState(2);
   const annotationsQuery = useQuery({
@@ -26,7 +30,7 @@ export function RecentAnnotationsPanel({ fallbackBookId, embedded = false }: { f
   useEffect(() => {
     if (!embedded || !quoteAreaRef.current || typeof ResizeObserver === "undefined") return;
     const quoteArea = quoteAreaRef.current;
-    const lineHeight = tokens.typography.fontSize.titleSm * tokens.typography.lineHeight.body;
+    const lineHeight = tokens.typography.fontSize.headingSm * tokens.typography.lineHeight.heading;
     const updateLineClamp = () => {
       const nextLineClamp = Math.max(1, Math.floor(quoteArea.clientHeight / lineHeight));
       setQuoteLineClamp((current) => current === nextLineClamp ? current : nextLineClamp);
@@ -46,40 +50,31 @@ export function RecentAnnotationsPanel({ fallbackBookId, embedded = false }: { f
         border: 1,
         borderColor: "divider",
         borderRadius: `${tokens.radius.xl}px`,
-        p: embedded ? { xs: `${tokens.spacing[4]}px`, md: `${tokens.spacing[5]}px` } : { xs: `${tokens.spacing[5]}px`, md: `${tokens.spacing[6]}px` },
+        p: embedded ? { xs: `${tokens.spacing[6]}px`, lg: `${tokens.spacing[8]}px` } : { xs: `${tokens.spacing[5]}px`, md: `${tokens.spacing[6]}px` },
         mb: embedded ? 0 : { xs: `${tokens.spacing[12]}px`, md: `${tokens.spacing[16]}px` },
         ...(embedded ? { display: "flex", flexDirection: "column", minHeight: 0, height: "100%" } : {}),
       }}
     >
-      <Box sx={{ mb: `${tokens.spacing[5]}px`, flexShrink: 0 }}>
-        <Stack direction="row" sx={{ alignItems: "center", gap: `${tokens.spacing[2]}px` }}>
-          <NotesOutlined color="primary" />
-          <Typography id="recent-annotations-title" variant="h5" component="h2">最近批注</Typography>
-        </Stack>
+      <Box sx={{ flexShrink: 0 }}>
+        <OverviewCardHeader id="recent-annotations-title" icon={<NotesOutlined />}>最近批注</OverviewCardHeader>
       </Box>
 
       {annotationsQuery.isPending ? (
-        <Stack role="status" direction="row" sx={{ minHeight: `${tokens.spacing[20]}px`, alignItems: "center", justifyContent: "center", gap: `${tokens.spacing[3]}px`, color: "text.secondary" }}>
+        <Stack role="status" direction="row" sx={{ minHeight: `${tokens.spacing[20]}px`, alignItems: "center", justifyContent: "center", gap: `${tokens.spacing[3]}px`, color: "text.secondary", mt: `${tokens.spacing[4]}px` }}>
           <CircularProgress size={20} />
           <Typography variant="body2">正在整理最近批注…</Typography>
         </Stack>
       ) : annotationsQuery.isError ? (
-        <Stack sx={{ minHeight: `${tokens.spacing[20]}px`, alignItems: "flex-start", justifyContent: "center" }}>
+        <Stack sx={{ minHeight: `${tokens.spacing[20]}px`, alignItems: "flex-start", justifyContent: "center", mt: `${tokens.spacing[4]}px` }}>
           <Typography color="text.secondary">暂时无法读取批注，不影响继续阅读。</Typography>
         </Stack>
       ) : recentAnnotations.length === 0 ? (
-        <Stack
-          direction={{ xs: "column", sm: "row" }}
-          sx={{ minHeight: `${tokens.spacing[20]}px`, alignItems: { xs: "flex-start", sm: "center" }, justifyContent: "space-between", gap: `${tokens.spacing[4]}px` }}
-        >
-          <Box>
-            <Typography sx={{ fontWeight: tokens.typography.fontWeight.semibold }}>还没有批注</Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: `${tokens.spacing[1]}px` }}>去书中划下第一句话，它会出现在这里。</Typography>
-          </Box>
-          {fallbackBookId && <Button variant="outlined" onClick={() => navigate(`/reader/${fallbackBookId}`)}>去阅读</Button>}
-        </Stack>
+        <OverviewEmptyState
+          title="还没有批注"
+          description="去书中划下第一句话，它会出现在这里。"
+        />
       ) : (
-        <Box sx={embedded ? { display: "flex", flex: 1, flexDirection: "column", minHeight: 0 } : undefined}>
+        <Box sx={embedded ? { display: "flex", flex: 1, flexDirection: "column", minHeight: 0, mt: `${tokens.spacing[4]}px` } : { mt: `${tokens.spacing[4]}px` }}>
           {recentAnnotations.map((annotation) => (
             <Box
               component="article"
@@ -94,12 +89,10 @@ export function RecentAnnotationsPanel({ fallbackBookId, embedded = false }: { f
                 <Stack direction="row" sx={{ alignItems: "flex-start", gap: `${tokens.spacing[2]}px`, width: "100%" }}>
                   <FormatQuoteRounded color="primary" aria-hidden="true" sx={{ flexShrink: 0 }} />
                   <Typography
+                    variant="h4"
                     sx={{
                       minWidth: 0,
                       flex: 1,
-                      fontFamily: tokens.typography.fontFamily.display,
-                      fontSize: `${tokens.typography.fontSize.titleSm}px`,
-                      lineHeight: tokens.typography.lineHeight.body,
                       display: "-webkit-box",
                       WebkitBoxOrient: "vertical",
                       WebkitLineClamp: embedded ? quoteLineClamp : 2,

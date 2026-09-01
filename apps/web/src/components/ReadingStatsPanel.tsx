@@ -1,7 +1,12 @@
-import { AccessTimeRounded, TrendingUpRounded } from "@mui/icons-material";
-import { Alert, Box, CircularProgress, Stack, Typography } from "@mui/material";
+import AccessTimeRounded from "@mui/icons-material/AccessTimeRounded";
+import Alert from "@mui/material/Alert";
+import Box from "@mui/material/Box";
+import CircularProgress from "@mui/material/CircularProgress";
+import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
 import type { WeeklyReadingStats } from "../domain/types";
 import { tokens } from "../theme/generated-tokens";
+import { OverviewCardHeader } from "./OverviewCardHeader";
 
 export function ReadingStatsPanel({ stats, loading, error }: {
   stats?: WeeklyReadingStats;
@@ -29,19 +34,15 @@ export function ReadingStatsPanel({ stats, loading, error }: {
       }}
     >
       <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "flex-start", gap: `${tokens.spacing[3]}px` }}>
-        <Stack direction="row" sx={{ alignItems: "center", gap: `${tokens.spacing[2]}px`, color: "primary.main" }}>
-          <AccessTimeRounded fontSize="small" />
-          <Typography id="reading-time-title" variant="h5" component="h2">本周阅读时长</Typography>
-        </Stack>
+        <OverviewCardHeader id="reading-time-title" icon={<AccessTimeRounded />}>本周阅读时长</OverviewCardHeader>
         {stats && <Typography variant="caption" color="text.secondary" sx={{ whiteSpace: "nowrap" }}>{formatDateRange(stats.weekStart, stats.weekEnd)}</Typography>}
       </Stack>
 
-      <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "flex-end", gap: `${tokens.spacing[4]}px`, mt: `${tokens.spacing[2]}px` }}>
-        {loading ? <CircularProgress size={tokens.spacing[6]} /> : <Typography variant="h3">{formatDuration(stats?.totalSeconds ?? 0)}</Typography>}
-        <Stack direction="row" sx={{ alignItems: "center", justifyContent: "flex-end", gap: `${tokens.spacing[1]}px`, color: "text.secondary", textAlign: "right" }}>
-          <TrendingUpRounded fontSize="small" />
-          <Typography variant="caption">上周阅读 {formatDuration(stats?.previousWeekSeconds ?? 0)}</Typography>
-        </Stack>
+      <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "flex-end", gap: `${tokens.spacing[4]}px`, mt: `${tokens.spacing[4]}px` }}>
+        {loading ? <CircularProgress size={tokens.spacing[6]} /> : <Typography variant="h4">{formatDuration(stats?.totalSeconds ?? 0)}</Typography>}
+        <Typography variant="caption" color="text.secondary" sx={{ textAlign: "right" }}>
+          {formatWeeklyComparison(stats?.totalSeconds ?? 0, stats?.previousWeekSeconds ?? 0)}
+        </Typography>
       </Stack>
 
       <Typography variant="body1" sx={{ fontWeight: tokens.typography.fontWeight.semibold, mt: `${tokens.spacing[5]}px`, mb: `${tokens.spacing[2]}px` }}>近 7 日阅读时长</Typography>
@@ -56,7 +57,6 @@ export function ReadingStatsPanel({ stats, loading, error }: {
           </Stack>
         ))}
       </Box>
-      {!loading && stats?.totalSeconds === 0 && <Typography variant="caption" color="text.disabled" sx={{ mt: `${tokens.spacing[2]}px` }}>开始阅读后，这里会自动累计真实时长。</Typography>}
     </Box>
   );
 }
@@ -68,6 +68,12 @@ export function formatDuration(seconds: number): string {
   const hours = Math.floor(minutes / 60);
   const remainder = minutes % 60;
   return remainder ? `${hours} 小时 ${remainder} 分钟` : `${hours} 小时`;
+}
+
+export function formatWeeklyComparison(currentSeconds: number, previousSeconds: number): string {
+  if (previousSeconds <= 0) return `较上周上涨 ${currentSeconds > 0 ? 100 : 0}%`;
+  const percentage = Math.round((currentSeconds - previousSeconds) / previousSeconds * 100);
+  return percentage < 0 ? `较上周下降 ${Math.abs(percentage)}%` : `较上周上涨 ${percentage}%`;
 }
 
 function formatCompactDuration(seconds: number): string {

@@ -1,27 +1,23 @@
-import {
-  ArrowForwardRounded,
-  AutoStoriesOutlined,
-  CategoryOutlined,
-  SearchRounded,
-  TuneRounded,
-} from "@mui/icons-material";
-import {
-  Alert,
-  Box,
-  Button,
-  Chip,
-  CircularProgress,
-  Divider,
-  FormControl,
-  InputAdornment,
-  InputLabel,
-  MenuItem,
-  Paper,
-  Select,
-  Stack,
-  TextField,
-  Typography,
-} from "@mui/material";
+import ArrowForwardRounded from "@mui/icons-material/ArrowForwardRounded";
+import AutoStoriesOutlined from "@mui/icons-material/AutoStoriesOutlined";
+import CategoryOutlined from "@mui/icons-material/CategoryOutlined";
+import SearchRounded from "@mui/icons-material/SearchRounded";
+import TuneRounded from "@mui/icons-material/TuneRounded";
+import Alert from "@mui/material/Alert";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Chip from "@mui/material/Chip";
+import CircularProgress from "@mui/material/CircularProgress";
+import Divider from "@mui/material/Divider";
+import FormControl from "@mui/material/FormControl";
+import InputAdornment from "@mui/material/InputAdornment";
+import InputLabel from "@mui/material/InputLabel";
+import MenuItem from "@mui/material/MenuItem";
+import Paper from "@mui/material/Paper";
+import Select from "@mui/material/Select";
+import Stack from "@mui/material/Stack";
+import TextField from "@mui/material/TextField";
+import Typography from "@mui/material/Typography";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useCallback, useDeferredValue, useMemo, type ReactNode } from "react";
 import { Link, useSearchParams } from "react-router-dom";

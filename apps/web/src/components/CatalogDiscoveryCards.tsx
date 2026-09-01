@@ -1,22 +1,18 @@
-import {
-  AddRounded,
-  AutoStoriesOutlined,
-  LockOutlined,
-  MenuBookRounded,
-  PeopleAltOutlined,
-  PublicOutlined,
-} from "@mui/icons-material";
-import {
-  Box,
-  Button,
-  Card,
-  CardActionArea,
-  Chip,
-  IconButton,
-  Stack,
-  Tooltip,
-  Typography,
-} from "@mui/material";
+import AddRounded from "@mui/icons-material/AddRounded";
+import AutoStoriesOutlined from "@mui/icons-material/AutoStoriesOutlined";
+import LockOutlined from "@mui/icons-material/LockOutlined";
+import MenuBookRounded from "@mui/icons-material/MenuBookRounded";
+import PeopleAltOutlined from "@mui/icons-material/PeopleAltOutlined";
+import PublicOutlined from "@mui/icons-material/PublicOutlined";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Card from "@mui/material/Card";
+import CardActionArea from "@mui/material/CardActionArea";
+import Chip from "@mui/material/Chip";
+import IconButton from "@mui/material/IconButton";
+import Stack from "@mui/material/Stack";
+import Tooltip from "@mui/material/Tooltip";
+import Typography from "@mui/material/Typography";
 import { Link } from "react-router-dom";
 import type { BooklistSummary, BooklistVisibility, BrowseBook, CategorySummary } from "../domain/types";
 import { tokens } from "../theme/generated-tokens";

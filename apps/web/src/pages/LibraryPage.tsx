@@ -1,35 +1,30 @@
-import {
-  ArrowForwardRounded,
-  AutoAwesomeOutlined,
-  BookmarkAddOutlined,
-  EditNoteRounded,
-  FilterListRounded,
-  DriveFileRenameOutlineRounded,
-  KeyboardArrowUpRounded,
-  MenuBookRounded,
-  CloudUploadOutlined,
-  ScheduleRounded,
-} from "@mui/icons-material";
-import {
-  Alert,
-  Box,
-  Button,
-  Chip,
-  CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  Divider,
-  Fab,
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Select,
-  Snackbar,
-  Stack,
-  Tooltip,
-  Typography,
-} from "@mui/material";
+import AutoAwesomeOutlined from "@mui/icons-material/AutoAwesomeOutlined";
+import BookmarkAddOutlined from "@mui/icons-material/BookmarkAddOutlined";
+import EditNoteRounded from "@mui/icons-material/EditNoteRounded";
+import FilterListRounded from "@mui/icons-material/FilterListRounded";
+import DriveFileRenameOutlineRounded from "@mui/icons-material/DriveFileRenameOutlineRounded";
+import KeyboardArrowUpRounded from "@mui/icons-material/KeyboardArrowUpRounded";
+import MenuBookRounded from "@mui/icons-material/MenuBookRounded";
+import CloudUploadOutlined from "@mui/icons-material/CloudUploadOutlined";
+import ScheduleRounded from "@mui/icons-material/ScheduleRounded";
+import Alert from "@mui/material/Alert";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Chip from "@mui/material/Chip";
+import CircularProgress from "@mui/material/CircularProgress";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import Divider from "@mui/material/Divider";
+import Fab from "@mui/material/Fab";
+import FormControl from "@mui/material/FormControl";
+import InputLabel from "@mui/material/InputLabel";
+import MenuItem from "@mui/material/MenuItem";
+import Select from "@mui/material/Select";
+import Snackbar from "@mui/material/Snackbar";
+import Stack from "@mui/material/Stack";
+import Tooltip from "@mui/material/Tooltip";
+import Typography from "@mui/material/Typography";
 import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useDeferredValue, useEffect, useMemo, useState, type ReactNode } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -41,6 +36,8 @@ import { AddToBooklistDialog } from "../components/AddToBooklistDialog";
 import { BookUploadDialog } from "../components/BookUploadDialog";
 import { FileOperationDialog } from "../components/FileOperationDialog";
 import { MetadataDialog } from "../components/MetadataDialog";
+import { OverviewCardHeader } from "../components/OverviewCardHeader";
+import { OverviewEmptyState } from "../components/OverviewEmptyState";
 import { flattenUniquePaginatedItems, PaginatedItemReveal } from "../components/PaginatedItemReveal";
 import { PageContainer } from "../components/PageHeader";
 import { ReadingStatsPanel } from "../components/ReadingStatsPanel";
@@ -146,8 +143,9 @@ export function LibraryPage() {
                   minWidth: 0,
                   gridColumn: { sm: 1 },
                   gridRow: { sm: 1 },
-                  display: "grid",
-                  gridTemplateColumns: { xs: "1fr", sm: "0.78fr 1.22fr" },
+                  display: "flex",
+                  flexDirection: "column",
+                  p: { xs: `${tokens.spacing[6]}px`, lg: `${tokens.spacing[8]}px` },
                   bgcolor: "background.paper",
                   border: 1,
                   borderColor: "divider",
@@ -155,20 +153,30 @@ export function LibraryPage() {
                   overflow: "hidden",
                 }}
               >
-                <Box component="img" src={featured.coverUrl} alt={`${featured.title}封面`} loading="eager" decoding="async" fetchPriority="high" sx={{ width: "100%", height: "100%", aspectRatio: { xs: "16 / 10", sm: "auto" }, objectFit: "cover" }} />
-                <Stack sx={{ justifyContent: "center", alignItems: "flex-start", p: { xs: `${tokens.spacing[6]}px`, md: `${tokens.spacing[8]}px` } }}>
-                  <Typography variant="h6" component="p" color="primary.main" sx={{ fontWeight: tokens.typography.fontWeight.semibold }}>本周新藏</Typography>
-                  <Typography id="featured-book-title" variant="h3" component="h1" sx={{ mt: `${tokens.spacing[2]}px` }}>{featured.title}</Typography>
-                  <Typography color="text.secondary" sx={{ mt: `${tokens.spacing[2]}px` }}>{featured.author}</Typography>
-                  <Stack direction="row" sx={{ flexWrap: "wrap", gap: `${tokens.spacing[3]}px`, mt: `${tokens.spacing[6]}px` }}>
-                    <Button variant="contained" startIcon={<MenuBookRounded />} onClick={() => navigate(`/reader/${featured.id}`)}>开始阅读</Button>
-                    <Button variant="text" endIcon={<ArrowForwardRounded />} onClick={() => setSelectedBook(featured)}>查看详情</Button>
+                <OverviewCardHeader id="featured-card-title" icon={<AutoAwesomeOutlined />}>本周新藏</OverviewCardHeader>
+                <Box
+                  sx={{
+                    display: "grid",
+                    gridTemplateColumns: { xs: "minmax(0, 0.72fr) minmax(0, 1.28fr)", sm: "minmax(0, 0.68fr) minmax(0, 1.32fr)" },
+                    gap: { xs: `${tokens.spacing[4]}px`, md: `${tokens.spacing[6]}px` },
+                    flex: 1,
+                    minHeight: 0,
+                    mt: `${tokens.spacing[4]}px`,
+                  }}
+                >
+                  <Box component="img" src={featured.coverUrl} alt={`${featured.title}封面`} loading="eager" decoding="async" fetchPriority="high" sx={{ width: "100%", height: "100%", minHeight: 0, borderRadius: `${tokens.radius.lg}px`, objectFit: "cover" }} />
+                  <Stack sx={{ minWidth: 0, justifyContent: "center", alignItems: "flex-start" }}>
+                    <Typography id="featured-book-title" variant="h4" component="h3">{featured.title}</Typography>
+                    <Typography color="text.secondary" sx={{ mt: `${tokens.spacing[2]}px` }}>{featured.author}</Typography>
+                    <Stack direction="row" sx={{ flexWrap: "wrap", gap: `${tokens.spacing[3]}px`, mt: `${tokens.spacing[5]}px` }}>
+                      <Button variant="contained" startIcon={<MenuBookRounded />} onClick={() => navigate(`/reader/${featured.id}`)}>开始阅读</Button>
+                    </Stack>
                   </Stack>
-                </Stack>
+                </Box>
               </Box>
 
               <Box sx={{ minWidth: 0, gridColumn: { sm: 1 }, gridRow: { sm: 2 }, display: "flex", "& > *": { flex: 1 } }}>
-                <RecentAnnotationsPanel fallbackBookId={reading?.id ?? featured.id} embedded />
+                <RecentAnnotationsPanel embedded />
               </Box>
             </>
           )}
@@ -177,44 +185,52 @@ export function LibraryPage() {
             <Box sx={{ minWidth: 0, gridColumn: { sm: 2 }, gridRow: { sm: 1 }, display: "flex", "& > *": { flex: 1 } }}>
               <ReadingStatsPanel stats={readingStatsQuery.data} loading={readingStatsQuery.isPending} error={readingStatsQuery.isError} />
             </Box>
-            {reading && (
-              <Stack
-                component="article"
-                aria-labelledby="currently-reading-title"
-                sx={{
-                  gridColumn: { sm: 2 },
-                  gridRow: { sm: 2 },
-                  justifyContent: "space-between",
-                  gap: `${tokens.spacing[5]}px`,
-                  p: { xs: `${tokens.spacing[6]}px`, lg: `${tokens.spacing[8]}px` },
-                  bgcolor: "secondary.dark",
-                  color: "common.white",
-                  borderRadius: `${tokens.radius.xl}px`,
-                }}
-              >
-                <Stack sx={{ gap: `${tokens.spacing[3]}px` }}>
-                  <Typography variant="h6" component="p" sx={{ fontWeight: tokens.typography.fontWeight.semibold, opacity: 0.72 }}>正在阅读</Typography>
-                  <Typography id="currently-reading-title" variant="h4">{reading.title}</Typography>
-                  <Typography sx={{ opacity: 0.68 }}>{reading.author}</Typography>
-                  <Box sx={{ mt: `${tokens.spacing[2]}px` }}>
-                    <Box sx={{ height: `${tokens.spacing[1]}px`, bgcolor: "rgba(255,255,255,.18)", mb: `${tokens.spacing[2]}px`, borderRadius: `${tokens.radius.pill}px`, overflow: "hidden" }}>
-                      <Box sx={{ width: `${reading.progress}%`, height: "100%", bgcolor: "primary.light" }} />
+            <Stack
+              component="article"
+              aria-labelledby="currently-reading-title"
+              sx={{
+                gridColumn: { sm: 2 },
+                gridRow: { sm: 2 },
+                justifyContent: "flex-start",
+                p: { xs: `${tokens.spacing[6]}px`, lg: `${tokens.spacing[8]}px` },
+                bgcolor: "secondary.dark",
+                color: "common.white",
+                borderRadius: `${tokens.radius.xl}px`,
+              }}
+            >
+              <OverviewCardHeader id="reading-progress-card-title" icon={<MenuBookRounded />} inverse>阅读进度</OverviewCardHeader>
+              {reading ? (
+                <>
+                  <Stack sx={{ minWidth: 0, flex: 1, gap: `${tokens.spacing[3]}px`, mt: `${tokens.spacing[4]}px` }}>
+                    <Typography id="currently-reading-title" variant="h4">{reading.title}</Typography>
+                    <Typography sx={{ opacity: 0.68 }}>{reading.author}</Typography>
+                    <Box sx={{ mt: `${tokens.spacing[2]}px` }}>
+                      <Box sx={{ height: `${tokens.spacing[1]}px`, bgcolor: "rgba(255,255,255,.18)", mb: `${tokens.spacing[2]}px`, borderRadius: `${tokens.radius.pill}px`, overflow: "hidden" }}>
+                        <Box sx={{ width: `${reading.progress}%`, height: "100%", bgcolor: "primary.light" }} />
+                      </Box>
+                      <Stack direction="row" sx={{ justifyContent: "space-between", opacity: 0.64 }}>
+                        <Typography variant="caption">已读 {reading.progress}%</Typography>
+                        <Typography variant="caption">第 7 章</Typography>
+                      </Stack>
                     </Box>
-                    <Stack direction="row" sx={{ justifyContent: "space-between", opacity: 0.64 }}>
-                      <Typography variant="caption">已读 {reading.progress}%</Typography>
-                      <Typography variant="caption">第 7 章</Typography>
-                    </Stack>
-                  </Box>
-                </Stack>
-                <Button
-                  variant="contained"
-                  onClick={() => navigate(`/reader/${reading.id}`)}
-                  sx={{ bgcolor: "background.paper", color: "text.primary", "&:hover": { bgcolor: "background.default" } }}
-                >
-                  继续阅读
-                </Button>
-              </Stack>
-            )}
+                  </Stack>
+                  <Button
+                    variant="contained"
+                    onClick={() => navigate(`/reader/${reading.id}`)}
+                    sx={{ mt: "auto", bgcolor: "background.paper", color: "text.primary", "&:hover": { bgcolor: "background.default" } }}
+                  >
+                    继续阅读
+                  </Button>
+                </>
+              ) : (
+                <OverviewEmptyState
+                  titleId="currently-reading-title"
+                  title="请开始阅读"
+                  description="打开任意一本书后，阅读进度会显示在这里。"
+                  inverse
+                />
+              )}
+            </Stack>
           </>
         </Box>
 

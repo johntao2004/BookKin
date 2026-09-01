@@ -9,7 +9,7 @@ export default defineConfig({
     outDir: "dist/client",
   },
   optimizeDeps: {
-    include: ["react", "react-dom/client", "@mui/material", "@tanstack/react-query"],
+    include: ["react", "react-dom/client", "@tanstack/react-query"],
   },
   server: {
     host: "0.0.0.0",

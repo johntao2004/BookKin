@@ -65,14 +65,21 @@ describe("AppShell", () => {
     const drawer = screen.getByRole("navigation");
     expect(within(drawer).getByText("BookKin").previousElementSibling).toBeNull();
     for (const label of managementLabels) expect(within(drawer).queryByText(label)).not.toBeInTheDocument();
-    expect(within(drawer).getByText("分类")).toBeInTheDocument();
-    expect(within(drawer).getByText("书单")).toBeInTheDocument();
-    expect(within(drawer).getByText("展示书目设置")).toBeInTheDocument();
+    expect(within(drawer).queryByText("展示书目设置")).not.toBeInTheDocument();
+    expect(within(drawer).getAllByRole("button").map((button) => button.textContent)).toEqual([
+      "首页",
+      "藏书库",
+      "分类",
+      "书单",
+      "阅读笔记",
+      "虚拟书库",
+    ]);
 
     fireEvent.click(within(drawer).getByText("首页"));
     fireEvent.click(await screen.findByRole("button", { name: "账户菜单" }));
     const accountMenu = screen.getByRole("menu");
     for (const label of managementLabels) expect(within(accountMenu).getByRole("menuitem", { name: label })).toBeInTheDocument();
+    expect(within(accountMenu).getByRole("menuitem", { name: "展示书目设置" })).toBeInTheDocument();
   });
 
   it("prefetches the 3D catalog when the virtual-library link is approached", async () => {

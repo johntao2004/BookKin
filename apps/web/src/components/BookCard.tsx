@@ -1,14 +1,17 @@
-import { BookmarkAddOutlined, DeleteOutlined, DriveFileMoveOutlined, EditNoteRounded, MoreVert, PlayArrowRounded } from "@mui/icons-material";
-import {
-  Box,
-  Card,
-  CardActionArea,
-  IconButton,
-  Menu,
-  MenuItem,
-  Stack,
-  Typography,
-} from "@mui/material";
+import BookmarkAddOutlined from "@mui/icons-material/BookmarkAddOutlined";
+import DeleteOutlined from "@mui/icons-material/DeleteOutlined";
+import DriveFileMoveOutlined from "@mui/icons-material/DriveFileMoveOutlined";
+import EditNoteRounded from "@mui/icons-material/EditNoteRounded";
+import MoreVert from "@mui/icons-material/MoreVert";
+import PlayArrowRounded from "@mui/icons-material/PlayArrowRounded";
+import Box from "@mui/material/Box";
+import Card from "@mui/material/Card";
+import CardActionArea from "@mui/material/CardActionArea";
+import IconButton from "@mui/material/IconButton";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
+import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
 import { useState } from "react";
 import type { Book, FileOperationType } from "../domain/types";
 import { tokens } from "../theme/generated-tokens";

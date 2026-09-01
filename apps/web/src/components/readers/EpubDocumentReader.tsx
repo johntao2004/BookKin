@@ -1,5 +1,12 @@
-import { ArrowBackIosNewRounded, ArrowForwardIosRounded } from "@mui/icons-material";
-import { Alert, Box, CircularProgress, IconButton, Stack, Tooltip, Typography } from "@mui/material";
+import ArrowBackIosNewRounded from "@mui/icons-material/ArrowBackIosNewRounded";
+import ArrowForwardIosRounded from "@mui/icons-material/ArrowForwardIosRounded";
+import Alert from "@mui/material/Alert";
+import Box from "@mui/material/Box";
+import CircularProgress from "@mui/material/CircularProgress";
+import IconButton from "@mui/material/IconButton";
+import Stack from "@mui/material/Stack";
+import Tooltip from "@mui/material/Tooltip";
+import Typography from "@mui/material/Typography";
 import ePub, { type Book, type Contents, type NavItem, type Rendition } from "epubjs";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api } from "../../api/client";

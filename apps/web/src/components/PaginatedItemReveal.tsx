@@ -1,4 +1,4 @@
-import { Box } from "@mui/material";
+import Box from "@mui/material/Box";
 import { keyframes } from "@mui/material/styles";
 import type { PropsWithChildren } from "react";
 import { tokens } from "../theme/generated-tokens";

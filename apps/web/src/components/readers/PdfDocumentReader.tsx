@@ -1,5 +1,16 @@
-import { AddRounded, NavigateBeforeRounded, NavigateNextRounded, RemoveRounded } from "@mui/icons-material";
-import { Alert, Box, Button, ButtonBase, CircularProgress, IconButton, Popover, Stack, Typography } from "@mui/material";
+import AddRounded from "@mui/icons-material/AddRounded";
+import NavigateBeforeRounded from "@mui/icons-material/NavigateBeforeRounded";
+import NavigateNextRounded from "@mui/icons-material/NavigateNextRounded";
+import RemoveRounded from "@mui/icons-material/RemoveRounded";
+import Alert from "@mui/material/Alert";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import ButtonBase from "@mui/material/ButtonBase";
+import CircularProgress from "@mui/material/CircularProgress";
+import IconButton from "@mui/material/IconButton";
+import Popover from "@mui/material/Popover";
+import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
 import { getDocument, GlobalWorkerOptions, TextLayer, type PDFDocumentProxy, type RenderTask } from "pdfjs-dist";
 import pdfWorker from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 import "pdfjs-dist/web/pdf_viewer.css";

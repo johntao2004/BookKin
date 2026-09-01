@@ -66,7 +66,7 @@ createdb --owner=bookkin bookkin
 psql postgres -c "alter role bookkin password 'bookkin-local-dev'"
 ```
 
-Install dependencies and create the local demo library:
+Install dependencies and create the local cover-complete demo library. The default sample contains four books with four distinct polished covers; it does not seed reading activity, annotations, or text-only PDF placeholders:
 
 ```bash
 pnpm install

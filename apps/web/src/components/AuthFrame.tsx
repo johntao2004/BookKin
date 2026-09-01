@@ -1,4 +1,6 @@
-import { Box, Stack, Typography } from "@mui/material";
+import Box from "@mui/material/Box";
+import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
 import type { ReactNode } from "react";
 import { tokens } from "../theme/generated-tokens";
 
@@ -34,6 +36,19 @@ export function AuthFrame({ children, title, description, greeting }: AuthFrameP
             objectPosition: "center",
           }}
         />
+        <Typography
+          variant="h5"
+          sx={{
+            position: "absolute",
+            zIndex: 2,
+            top: { md: tokens.spacing[10], lg: tokens.spacing[12] },
+            left: { md: tokens.spacing[12], lg: tokens.spacing[16] },
+            color: "secondary.dark",
+            whiteSpace: "nowrap",
+          }}
+        >
+          BookKin
+        </Typography>
         <Stack
           sx={{
             position: "relative",
@@ -48,9 +63,6 @@ export function AuthFrame({ children, title, description, greeting }: AuthFrameP
           }}
         >
           <Box sx={{ position: "relative", width: "fit-content", maxWidth: 480, height: "100%" }}>
-            <Typography variant="h5" sx={{ position: "absolute", top: 0, left: 0, color: "secondary.dark", whiteSpace: "nowrap" }}>
-              BookKin
-            </Typography>
             <Box sx={{ display: "flex", alignItems: "center", height: "100%", textAlign: "center" }}>
               <Box>
                 <Typography variant="overline" sx={{ letterSpacing: "0.18em", opacity: 0.68 }}>PRIVATE LIBRARY</Typography>

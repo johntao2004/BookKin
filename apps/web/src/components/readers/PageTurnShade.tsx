@@ -1,4 +1,4 @@
-import { Box } from "@mui/material";
+import Box from "@mui/material/Box";
 import { alpha } from "@mui/material/styles";
 
 export function PageTurnShade() {

@@ -1,6 +1,5 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, vi } from "vitest";
-import { useLocation } from "react-router-dom";
 import { api } from "../api/client";
 import type { Annotation } from "../domain/types";
 import { TestProviders } from "../test/TestProviders";
@@ -43,11 +42,6 @@ const recent: Annotation[] = [
   },
 ];
 
-function LocationProbe() {
-  const location = useLocation();
-  return <output aria-label="当前路径">{location.pathname}{location.search}</output>;
-}
-
 describe("RecentAnnotationsPanel", () => {
   beforeEach(() => {
     vi.spyOn(api, "listAnnotations").mockResolvedValue(recent);
@@ -59,7 +53,7 @@ describe("RecentAnnotationsPanel", () => {
   });
 
   it("只展示最新的一条私人批注并排除书签", async () => {
-    render(<TestProviders><RecentAnnotationsPanel fallbackBookId="book-1" /></TestProviders>);
+    render(<TestProviders><RecentAnnotationsPanel /></TestProviders>);
 
     expect(await screen.findByRole("heading", { name: "最近批注" })).toBeInTheDocument();
     expect(await screen.findByText("河面先暗了一层。")).toBeInTheDocument();
@@ -70,13 +64,12 @@ describe("RecentAnnotationsPanel", () => {
     expect(api.listAnnotations).toHaveBeenCalledWith();
   });
 
-  it("无批注时引导用户进入阅读", async () => {
+  it("无批注时保留没有操作按钮的纯信息空状态", async () => {
     vi.mocked(api.listAnnotations).mockResolvedValueOnce([]);
-    render(<TestProviders><RecentAnnotationsPanel fallbackBookId="book-1" /><LocationProbe /></TestProviders>);
+    render(<TestProviders><RecentAnnotationsPanel /></TestProviders>);
 
     expect(await screen.findByText("还没有批注")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "去阅读" }));
-    expect(screen.getByRole("status", { name: "当前路径" })).toHaveTextContent("/reader/book-1");
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
   });
 
   it("异步加载批注后按卡片高度重新计算可展示行数", async () => {
@@ -87,7 +80,7 @@ describe("RecentAnnotationsPanel", () => {
       disconnect = disconnect;
     });
 
-    render(<TestProviders><RecentAnnotationsPanel fallbackBookId="book-1" embedded /></TestProviders>);
+    render(<TestProviders><RecentAnnotationsPanel embedded /></TestProviders>);
 
     expect(await screen.findByText("河面先暗了一层。")).toBeInTheDocument();
     await waitFor(() => expect(observe).toHaveBeenCalled());

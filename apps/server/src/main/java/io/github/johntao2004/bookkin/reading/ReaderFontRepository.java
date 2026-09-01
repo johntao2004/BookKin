@@ -30,7 +30,7 @@ public class ReaderFontRepository {
     }
 
     public List<ReaderFont> findStagingBefore(OffsetDateTime cutoff) {
-        return dsl.fetch("select * from reader_fonts where status = 'DISABLED' and content_path is null and fingerprint like 'pending:%' and created_at < ?", cutoff).map(this::map);
+        return dsl.fetch("select * from reader_fonts where status = 'DISABLED' and content_path is null and fingerprint like 'pending:%' and created_at < ?::timestamptz", cutoff).map(this::map);
     }
 
     public List<ReaderFont> findAll(boolean includeDisabled) {

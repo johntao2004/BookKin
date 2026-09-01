@@ -1,5 +1,12 @@
-import { VisibilityOffOutlined, VisibilityOutlined } from "@mui/icons-material";
-import { Alert, Button, IconButton, InputAdornment, Stack, TextField, Typography } from "@mui/material";
+import VisibilityOffOutlined from "@mui/icons-material/VisibilityOffOutlined";
+import VisibilityOutlined from "@mui/icons-material/VisibilityOutlined";
+import Alert from "@mui/material/Alert";
+import Button from "@mui/material/Button";
+import IconButton from "@mui/material/IconButton";
+import InputAdornment from "@mui/material/InputAdornment";
+import Stack from "@mui/material/Stack";
+import TextField from "@mui/material/TextField";
+import Typography from "@mui/material/Typography";
 import { useQuery } from "@tanstack/react-query";
 import { useState, type FormEvent } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -9,12 +16,19 @@ import { api } from "../api/client";
 import { AuthFrame } from "../components/AuthFrame";
 import { getLoginGreeting } from "./login-greeting";
 
+export function getLoginDefaults(isDemo: boolean) {
+  return isDemo
+    ? { username: "owner", password: "bookkin-demo", hint: "内存演示模式：owner / bookkin-demo" }
+    : { username: "owner", password: "", hint: "使用初始化时创建的账户登录" };
+}
+
 export function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [username, setUsername] = useState("owner");
-  const [password, setPassword] = useState(api.isDemo ? "bookkin-demo" : "bookkin-demo-2026");
+  const defaults = getLoginDefaults(api.isDemo);
+  const [username, setUsername] = useState(defaults.username);
+  const [password, setPassword] = useState(defaults.password);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -67,7 +81,7 @@ export function LoginPage() {
         </Typography>
       )}
       <Typography variant="caption" color="text.disabled" sx={{ display: "block", mt: 2 }}>
-        {api.isDemo ? "内存演示模式：owner / bookkin-demo" : "本机数据库演示账户：owner / bookkin-demo-2026"}
+        {defaults.hint}
       </Typography>
     </AuthFrame>
   );

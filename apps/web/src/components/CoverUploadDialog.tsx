@@ -1,16 +1,16 @@
-import { ImageOutlined, RestartAltOutlined, UploadFileOutlined } from "@mui/icons-material";
-import {
-  Alert,
-  Box,
-  Button,
-  CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Stack,
-  Typography,
-} from "@mui/material";
+import ImageOutlined from "@mui/icons-material/ImageOutlined";
+import RestartAltOutlined from "@mui/icons-material/RestartAltOutlined";
+import UploadFileOutlined from "@mui/icons-material/UploadFileOutlined";
+import Alert from "@mui/material/Alert";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import CircularProgress from "@mui/material/CircularProgress";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
+import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
 import { useEffect, useRef, useState } from "react";
 import { api } from "../api/client";
 import type { Book } from "../domain/types";

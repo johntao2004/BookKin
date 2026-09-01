@@ -1,41 +1,38 @@
-import {
-  AdminPanelSettingsOutlined,
-  AutoStoriesOutlined,
-  CategoryOutlined,
-  CheckRounded,
-  CollectionsBookmarkOutlined,
-  FontDownloadOutlined,
-  LibraryBooksOutlined,
-  LogoutOutlined,
-  MenuRounded,
-  NotesOutlined,
-  PaletteOutlined,
-  SearchRounded,
-  SettingsOutlined,
-  StorageRounded,
-  ThreeDRotationOutlined,
-} from "@mui/icons-material";
-import {
-  AppBar,
-  Avatar,
-  Box,
-  Button,
-  Divider,
-  Drawer,
-  IconButton,
-  InputAdornment,
-  List,
-  ListItemButton,
-  ListItemIcon,
-  ListItemText,
-  Menu,
-  MenuItem,
-  Stack,
-  TextField,
-  Toolbar,
-  Tooltip,
-  Typography,
-} from "@mui/material";
+import AdminPanelSettingsOutlined from "@mui/icons-material/AdminPanelSettingsOutlined";
+import AutoStoriesOutlined from "@mui/icons-material/AutoStoriesOutlined";
+import CategoryOutlined from "@mui/icons-material/CategoryOutlined";
+import CheckRounded from "@mui/icons-material/CheckRounded";
+import CollectionsBookmarkOutlined from "@mui/icons-material/CollectionsBookmarkOutlined";
+import FontDownloadOutlined from "@mui/icons-material/FontDownloadOutlined";
+import HomeOutlined from "@mui/icons-material/HomeOutlined";
+import LibraryBooksOutlined from "@mui/icons-material/LibraryBooksOutlined";
+import LogoutOutlined from "@mui/icons-material/LogoutOutlined";
+import MenuRounded from "@mui/icons-material/MenuRounded";
+import NotesOutlined from "@mui/icons-material/NotesOutlined";
+import PaletteOutlined from "@mui/icons-material/PaletteOutlined";
+import SearchRounded from "@mui/icons-material/SearchRounded";
+import SettingsOutlined from "@mui/icons-material/SettingsOutlined";
+import StorageRounded from "@mui/icons-material/StorageRounded";
+import ThreeDRotationOutlined from "@mui/icons-material/ThreeDRotationOutlined";
+import AppBar from "@mui/material/AppBar";
+import Avatar from "@mui/material/Avatar";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Divider from "@mui/material/Divider";
+import Drawer from "@mui/material/Drawer";
+import IconButton from "@mui/material/IconButton";
+import InputAdornment from "@mui/material/InputAdornment";
+import List from "@mui/material/List";
+import ListItemButton from "@mui/material/ListItemButton";
+import ListItemIcon from "@mui/material/ListItemIcon";
+import ListItemText from "@mui/material/ListItemText";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
+import Stack from "@mui/material/Stack";
+import TextField from "@mui/material/TextField";
+import Toolbar from "@mui/material/Toolbar";
+import Tooltip from "@mui/material/Tooltip";
+import Typography from "@mui/material/Typography";
 import { alpha } from "@mui/material/styles";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useState, type PropsWithChildren } from "react";
@@ -52,10 +49,10 @@ import { useBookKinTheme } from "../theme/BookKinThemeProvider";
 import { bookKinThemeOptions } from "../theme/theme";
 
 const navigation = [
-  { label: "首页", path: "/library", icon: <LibraryBooksOutlined /> },
+  { label: "首页", path: "/library", icon: <HomeOutlined /> },
+  { label: "藏书库", path: "/library/all", icon: <LibraryBooksOutlined /> },
   { label: "分类", path: "/categories", icon: <CategoryOutlined /> },
   { label: "书单", path: "/booklists", icon: <CollectionsBookmarkOutlined /> },
-  { label: "藏书库", path: "/library/all", icon: <LibraryBooksOutlined /> },
   { label: "阅读笔记", path: "/annotations", icon: <NotesOutlined /> },
   { label: "虚拟书库", path: "/virtual-library", icon: <ThreeDRotationOutlined /> },
 ];
@@ -80,8 +77,9 @@ export function AppShell({ children }: PropsWithChildren) {
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
   const [themeAnchor, setThemeAnchor] = useState<HTMLElement | null>(null);
   const canManage = user?.role === "OWNER" || user?.role === "ADMIN";
-  const libraryNavigation = user ? navigation : navigation.slice(0, 3);
-  const drawerLinks = user ? [...libraryNavigation, displaySettings] : libraryNavigation;
+  const libraryNavigation = user
+    ? navigation
+    : navigation.filter((item) => ["/library", "/categories", "/booklists"].includes(item.path));
   const searchableLibrary = ["/library", "/library/all", "/recycle-bin"].includes(location.pathname);
   const readerRoute = location.pathname.startsWith("/reader/");
   const query = searchableLibrary ? searchParams.get("q") ?? "" : "";
@@ -120,7 +118,7 @@ export function AppShell({ children }: PropsWithChildren) {
     }
   };
 
-  const linkButton = (item: (typeof drawerLinks)[number]) => (
+  const linkButton = (item: (typeof navigation)[number]) => (
     <Button
       key={item.path}
       component={NavLink}
@@ -321,7 +319,7 @@ export function AppShell({ children }: PropsWithChildren) {
             <Typography variant="h5" sx={{ px: 2, pb: 2 }}>BookKin</Typography>
             <Divider />
             <List>
-              {drawerLinks.map((item) => (
+              {libraryNavigation.map((item) => (
                 <ListItemButton
                   key={item.path}
                   selected={isActivePath(item.path)}

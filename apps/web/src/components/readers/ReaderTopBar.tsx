@@ -1,12 +1,16 @@
-import {
-  ArrowBackRounded,
-  BookmarkBorderRounded,
-  BookmarkRounded,
-  FormatListBulletedRounded,
-  NotesOutlined,
-  SettingsBrightnessOutlined,
-} from "@mui/icons-material";
-import { AppBar, Box, IconButton, Stack, Toolbar, Tooltip, Typography } from "@mui/material";
+import ArrowBackRounded from "@mui/icons-material/ArrowBackRounded";
+import BookmarkBorderRounded from "@mui/icons-material/BookmarkBorderRounded";
+import BookmarkRounded from "@mui/icons-material/BookmarkRounded";
+import FormatListBulletedRounded from "@mui/icons-material/FormatListBulletedRounded";
+import NotesOutlined from "@mui/icons-material/NotesOutlined";
+import SettingsBrightnessOutlined from "@mui/icons-material/SettingsBrightnessOutlined";
+import AppBar from "@mui/material/AppBar";
+import Box from "@mui/material/Box";
+import IconButton from "@mui/material/IconButton";
+import Stack from "@mui/material/Stack";
+import Toolbar from "@mui/material/Toolbar";
+import Tooltip from "@mui/material/Tooltip";
+import Typography from "@mui/material/Typography";
 import type { MouseEventHandler } from "react";
 import type { BookFormat } from "../../domain/types";
 import { tokens } from "../../theme/generated-tokens";

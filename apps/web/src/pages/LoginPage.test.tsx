@@ -4,7 +4,7 @@ import { afterEach, vi } from "vitest";
 import { api } from "../api/client";
 import { TestProviders } from "../test/TestProviders";
 import { getLoginGreeting } from "./login-greeting";
-import { LoginPage } from "./LoginPage";
+import { getLoginDefaults, LoginPage } from "./LoginPage";
 
 describe("LoginPage", () => {
   beforeEach(() => sessionStorage.clear());
@@ -17,6 +17,15 @@ describe("LoginPage", () => {
     expect(getLoginGreeting(17)).toBe("午安，忙里偷闲翻两页吧。");
     expect(getLoginGreeting(18)).toBe("晚安，今晚想和哪本书见面？");
     expect(getLoginGreeting(4)).toBe("晚安，今晚想和哪本书见面？");
+  });
+
+  it("never invents a database password outside demo mode", () => {
+    expect(getLoginDefaults(false)).toEqual({
+      username: "owner",
+      password: "",
+      hint: "使用初始化时创建的账户登录",
+    });
+    expect(getLoginDefaults(true).password).toBe("bookkin-demo");
   });
 
   it("logs into the demo owner account", async () => {
