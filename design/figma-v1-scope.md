@@ -24,15 +24,15 @@
 
 ## 代码映射
 
-| Figma | React/MUI | Token |
+| Figma | React/Ant Design | Token |
 |---|---|---|
-| Button | `BookKinButton` / MUI Button override | color/primary, radius/md, spacing |
-| Text Field | `BookKinTextField` / MUI TextField override | color/surface, border, focus |
+| Button | `BookKinButton` / Ant Design Button adaptation | color/primary, radius/md, spacing |
+| Text Field | `BookKinTextField` / Ant Design Input adaptation | color/surface, border, focus |
 | Book Card | `BookCard` | radius/lg, shadow/cover |
 | Status Chip | `StatusChip` | semantic status colors |
 | Operation Preview | `OperationPreviewDialog` | Dialog + DataTable |
 
-新文件不存在代码/Figma冲突。若可用 Material 库组件 API 与本地 Token/交互不兼容，保留 MUI 作为代码基础，Figma 组件本地自建并按映射命名。
+新文件不存在代码/Figma冲突。若 Ant Design 组件 API 与本地 Token/交互不兼容，优先在 `apps/web/src/ui/` 做窄适配，Figma 组件本地自建并按映射命名。
 
 ## 当前同步状态
 

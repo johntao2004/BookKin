@@ -18,3 +18,14 @@ Object.defineProperty(navigator, "clipboard", {
   value: { writeText: async () => undefined },
   configurable: true,
 });
+
+// Ant Design observes component bounds in the browser. jsdom does not expose
+// ResizeObserver, so provide the smallest deterministic test double.
+class TestResizeObserver {
+  observe() { return undefined; }
+  unobserve() { return undefined; }
+  disconnect() { return undefined; }
+}
+
+Object.defineProperty(window, "ResizeObserver", { writable: true, configurable: true, value: TestResizeObserver });
+(globalThis as unknown as { ResizeObserver?: typeof TestResizeObserver }).ResizeObserver = TestResizeObserver;

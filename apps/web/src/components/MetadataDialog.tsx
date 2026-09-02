@@ -1,17 +1,17 @@
-import Alert from "@mui/material/Alert";
-import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
-import Checkbox from "@mui/material/Checkbox";
-import CircularProgress from "@mui/material/CircularProgress";
-import Dialog from "@mui/material/Dialog";
-import DialogActions from "@mui/material/DialogActions";
-import DialogContent from "@mui/material/DialogContent";
-import DialogTitle from "@mui/material/DialogTitle";
-import Divider from "@mui/material/Divider";
-import FormControlLabel from "@mui/material/FormControlLabel";
-import Stack from "@mui/material/Stack";
-import TextField from "@mui/material/TextField";
-import Typography from "@mui/material/Typography";
+import { Alert } from "@/ui";
+import { Box } from "@/ui";
+import { Button } from "@/ui";
+import { Checkbox } from "@/ui";
+import { CircularProgress } from "@/ui";
+import { Dialog } from "@/ui";
+import { DialogActions } from "@/ui";
+import { DialogContent } from "@/ui";
+import { DialogTitle } from "@/ui";
+import { Divider } from "@/ui";
+import { FormControlLabel } from "@/ui";
+import { Stack } from "@/ui";
+import { TextField } from "@/ui";
+import { Typography } from "@/ui";
 import { useQuery, useQueryClient, type InfiniteData, type QueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { api } from "../api/client";
@@ -235,25 +235,25 @@ export function MetadataDialog({ book, onClose, onCompleted, onSavedImmediately,
                 <Button variant="outlined" onClick={() => coverInput.current?.click()}>更换封面</Button>
                 <Button color="inherit" onClick={async () => { if (!book) return; setBusy(true); try { await api.resetBookCover(book.id); onCompleted("已恢复文件内置封面"); await query.refetch(); } catch (reason) { setError(reason instanceof Error ? reason.message : "封面恢复失败"); } finally { setBusy(false); } }}>恢复默认封面</Button>
               </Stack>
-              <input ref={coverInput} hidden type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => { const file = event.target.files?.[0]; if (file) void replaceCover(file); event.target.value = ""; }} />
+              <input ref={coverInput} hidden type="file" accept="image/jpeg,image/png,image/webp" onChange={(event: any) => { const file = event.target.files?.[0]; if (file) void replaceCover(file); event.target.value = ""; }} />
             </Stack>
             <Divider />
             <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 2 }}>
-              <TextField label="书名" required value={form.title} onChange={(event) => update("title", event.target.value)} />
-              <TextField label="副标题" value={form.subtitle} onChange={(event) => update("subtitle", event.target.value)} />
-              <TextField label="作者" required value={form.authors} onChange={(event) => update("authors", event.target.value)} helperText="多位作者用逗号分隔" />
-              <TextField label="译者" value={form.translators} onChange={(event) => update("translators", event.target.value)} helperText="多位译者用逗号分隔" />
-              <TextField label="语言" value={form.language} onChange={(event) => update("language", event.target.value)} placeholder="zh-CN" />
-              <TextField label="出版社" value={form.publisher} onChange={(event) => update("publisher", event.target.value)} />
-              <TextField label="出版日期" value={form.publishedDate} onChange={(event) => update("publishedDate", event.target.value)} />
-              <TextField label="ISBN" value={form.isbn} onChange={(event) => update("isbn", event.target.value)} />
-              <TextField label="系列" value={form.series} onChange={(event) => update("series", event.target.value)} />
-              <TextField label="系列序号" type="number" value={form.seriesIndex} onChange={(event) => update("seriesIndex", event.target.value)} />
-              <TextField label="标签" value={form.tags} onChange={(event) => update("tags", event.target.value)} helperText="用逗号分隔" />
+              <TextField label="书名" required value={form.title} onChange={(event: any) => update("title", event.target.value)} />
+              <TextField label="副标题" value={form.subtitle} onChange={(event: any) => update("subtitle", event.target.value)} />
+              <TextField label="作者" required value={form.authors} onChange={(event: any) => update("authors", event.target.value)} helperText="多位作者用逗号分隔" />
+              <TextField label="译者" value={form.translators} onChange={(event: any) => update("translators", event.target.value)} helperText="多位译者用逗号分隔" />
+              <TextField label="语言" value={form.language} onChange={(event: any) => update("language", event.target.value)} placeholder="zh-CN" />
+              <TextField label="出版社" value={form.publisher} onChange={(event: any) => update("publisher", event.target.value)} />
+              <TextField label="出版日期" value={form.publishedDate} onChange={(event: any) => update("publishedDate", event.target.value)} />
+              <TextField label="ISBN" value={form.isbn} onChange={(event: any) => update("isbn", event.target.value)} />
+              <TextField label="系列" value={form.series} onChange={(event: any) => update("series", event.target.value)} />
+              <TextField label="系列序号" type="number" value={form.seriesIndex} onChange={(event: any) => update("seriesIndex", event.target.value)} />
+              <TextField label="标签" value={form.tags} onChange={(event: any) => update("tags", event.target.value)} helperText="用逗号分隔" />
             </Box>
-            <TextField label="简介" multiline minRows={4} value={form.description} onChange={(event) => update("description", event.target.value)} />
+            <TextField label="简介" multiline minRows={4} value={form.description} onChange={(event: any) => update("description", event.target.value)} />
             <Divider />
-            <FormControlLabel control={<Checkbox checked={form.writeBack} onChange={(event) => update("writeBack", event.target.checked)} />} label={`同时写回 ${book?.format ?? ""} 原文件`} />
+            <FormControlLabel control={<Checkbox checked={form.writeBack} onChange={(event: any) => update("writeBack", event.target.checked)} />} label={`同时写回 ${book?.format ?? ""} 原文件`} />
           </Stack>
         ) : (
           <Stack spacing={2.25} sx={{ pt: 1 }}>

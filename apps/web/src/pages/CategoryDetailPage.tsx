@@ -1,23 +1,23 @@
-import ArrowBackRounded from "@mui/icons-material/ArrowBackRounded";
-import AutoStoriesOutlined from "@mui/icons-material/AutoStoriesOutlined";
-import FilterListRounded from "@mui/icons-material/FilterListRounded";
-import SearchRounded from "@mui/icons-material/SearchRounded";
-import TuneRounded from "@mui/icons-material/TuneRounded";
-import Alert from "@mui/material/Alert";
-import Box from "@mui/material/Box";
-import Breadcrumbs from "@mui/material/Breadcrumbs";
-import Button from "@mui/material/Button";
-import CircularProgress from "@mui/material/CircularProgress";
-import FormControl from "@mui/material/FormControl";
-import InputAdornment from "@mui/material/InputAdornment";
-import InputLabel from "@mui/material/InputLabel";
-import MuiLink from "@mui/material/Link";
-import MenuItem from "@mui/material/MenuItem";
-import Select from "@mui/material/Select";
-import Snackbar from "@mui/material/Snackbar";
-import Stack from "@mui/material/Stack";
-import TextField from "@mui/material/TextField";
-import Typography from "@mui/material/Typography";
+import { ArrowBackRounded } from "@/ui/icons";
+import { AutoStoriesOutlined } from "@/ui/icons";
+import { FilterListRounded } from "@/ui/icons";
+import { SearchRounded } from "@/ui/icons";
+import { TuneRounded } from "@/ui/icons";
+import { Alert } from "@/ui";
+import { Box } from "@/ui";
+import { Breadcrumbs } from "@/ui";
+import { Button } from "@/ui";
+import { CircularProgress } from "@/ui";
+import { FormControl } from "@/ui";
+import { InputAdornment } from "@/ui";
+import { InputLabel } from "@/ui";
+import { Link as UiLink } from "@/ui";
+import { MenuItem } from "@/ui";
+import { Select } from "@/ui";
+import { Snackbar } from "@/ui";
+import { Stack } from "@/ui";
+import { TextField } from "@/ui";
+import { Typography } from "@/ui";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useCallback, useDeferredValue, useMemo, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
@@ -84,7 +84,7 @@ export function CategoryDetailPage() {
   return (
     <PageContainer>
       <Breadcrumbs sx={{ mb: `${tokens.spacing[5]}px` }}>
-        <MuiLink component={Link} to="/categories" underline="hover" color="inherit">分类</MuiLink>
+        <UiLink component={Link} to="/categories" underline="hover" color="inherit">分类</UiLink>
         <Typography color="text.primary">{category.name}</Typography>
       </Breadcrumbs>
       <PageHeader
@@ -96,16 +96,16 @@ export function CategoryDetailPage() {
       <Stack direction={{ xs: "column", md: "row" }} sx={{ justifyContent: "space-between", alignItems: { xs: "stretch", md: "center" }, gap: `${tokens.spacing[4]}px`, mb: `${tokens.spacing[8]}px` }}>
         <Typography color="text.secondary">{category.bookCount} 本可见藏书</Typography>
         <Stack direction={{ xs: "column", sm: "row" }} sx={{ gap: `${tokens.spacing[3]}px`, alignItems: { xs: "stretch", sm: "center" } }}>
-          <TextField size="small" label="搜索书名或作者" value={query} onChange={(event) => updateParam("q", event.target.value)} slotProps={{ input: { startAdornment: <InputAdornment position="start"><SearchRounded fontSize="small" /></InputAdornment> } }} />
+          <TextField size="small" label="搜索书名或作者" value={query} onChange={(event: any) => updateParam("q", event.target.value)} slotProps={{ input: { startAdornment: <InputAdornment position="start"><SearchRounded fontSize="small" /></InputAdornment> } }} />
           <FormControl size="small" sx={{ minWidth: 126 }}>
             <InputLabel id="category-format-label">格式</InputLabel>
-            <Select labelId="category-format-label" label="格式" value={format} onChange={(event) => updateParam("format", event.target.value, "ALL")} startAdornment={<FilterListRounded sx={{ mr: 1, color: "text.secondary" }} />}>
+            <Select labelId="category-format-label" label="格式" value={format} onChange={(event: any) => updateParam("format", event.target.value, "ALL")} startAdornment={<FilterListRounded sx={{ mr: 1, color: "text.secondary" }} />}>
               <MenuItem value="ALL">全部格式</MenuItem><MenuItem value="EPUB">EPUB</MenuItem><MenuItem value="PDF">PDF</MenuItem>
             </Select>
           </FormControl>
           <FormControl size="small" sx={{ minWidth: 126 }}>
             <InputLabel id="category-sort-label">排序</InputLabel>
-            <Select labelId="category-sort-label" label="排序" value={sort} onChange={(event) => updateParam("sort", event.target.value, "recent")}>
+            <Select labelId="category-sort-label" label="排序" value={sort} onChange={(event: any) => updateParam("sort", event.target.value, "recent")}>
               <MenuItem value="recent">最近入库</MenuItem><MenuItem value="title">按书名</MenuItem><MenuItem value="author">按作者</MenuItem>
             </Select>
           </FormControl>

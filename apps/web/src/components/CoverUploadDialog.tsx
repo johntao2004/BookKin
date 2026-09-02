@@ -1,16 +1,16 @@
-import ImageOutlined from "@mui/icons-material/ImageOutlined";
-import RestartAltOutlined from "@mui/icons-material/RestartAltOutlined";
-import UploadFileOutlined from "@mui/icons-material/UploadFileOutlined";
-import Alert from "@mui/material/Alert";
-import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
-import CircularProgress from "@mui/material/CircularProgress";
-import Dialog from "@mui/material/Dialog";
-import DialogActions from "@mui/material/DialogActions";
-import DialogContent from "@mui/material/DialogContent";
-import DialogTitle from "@mui/material/DialogTitle";
-import Stack from "@mui/material/Stack";
-import Typography from "@mui/material/Typography";
+import { ImageOutlined } from "@/ui/icons";
+import { RestartAltOutlined } from "@/ui/icons";
+import { UploadFileOutlined } from "@/ui/icons";
+import { Alert } from "@/ui";
+import { Box } from "@/ui";
+import { Button } from "@/ui";
+import { CircularProgress } from "@/ui";
+import { Dialog } from "@/ui";
+import { DialogActions } from "@/ui";
+import { DialogContent } from "@/ui";
+import { DialogTitle } from "@/ui";
+import { Stack } from "@/ui";
+import { Typography } from "@/ui";
 import { useEffect, useRef, useState } from "react";
 import { api } from "../api/client";
 import type { Book } from "../domain/types";
@@ -139,7 +139,7 @@ export function CoverUploadDialog({ book, onClose, onCompleted }: {
                   type="file"
                   aria-label="选择封面图片"
                   accept="image/jpeg,image/png,image/webp"
-                  onChange={(event) => {
+                  onChange={(event: any) => {
                     const file = event.target.files?.[0];
                     if (file) void choose(file);
                     event.target.value = "";

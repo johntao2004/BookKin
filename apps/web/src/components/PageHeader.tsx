@@ -1,7 +1,7 @@
-import Box from "@mui/material/Box";
-import Stack from "@mui/material/Stack";
-import Typography from "@mui/material/Typography";
-import type { SxProps, Theme } from "@mui/material/styles";
+import { Box } from "@/ui";
+import { Stack } from "@/ui";
+import { Typography } from "@/ui";
+import type { SxProps, Theme } from "@/ui";
 import type { ReactNode } from "react";
 import { tokens } from "../theme/generated-tokens";
 

@@ -103,7 +103,7 @@
   gap: var(--spacing-1);
 }
 
-.virtual-library-space-shortcuts .MuiButton-root {
+.virtual-library-space-shortcuts .bk-button {
   flex: 1 1 0;
   min-width: 0;
   min-height: var(--layout-touch-target);
@@ -115,7 +115,7 @@
   font-size: var(--typography-font-size-caption);
 }
 
-.virtual-library-space-shortcuts .MuiButton-root:hover {
+.virtual-library-space-shortcuts .bk-button:hover {
   border-color: color-mix(in srgb, var(--color-warning) 58%, transparent);
   background-color: color-mix(in srgb, var(--color-warning) 12%, transparent);
   color: var(--color-text-on-dark);
@@ -288,7 +288,7 @@
     display: none;
   }
 
-  .virtual-library-space-shortcuts .MuiButton-root {
+  .virtual-library-space-shortcuts .bk-button {
     padding: 0 var(--spacing-1);
   }
 

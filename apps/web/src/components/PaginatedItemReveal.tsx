@@ -1,5 +1,5 @@
-import Box from "@mui/material/Box";
-import { keyframes } from "@mui/material/styles";
+import { Box } from "@/ui";
+import { keyframes } from "@/ui";
 import type { PropsWithChildren } from "react";
 import { tokens } from "../theme/generated-tokens";
 

@@ -1,9 +1,8 @@
-import CssBaseline from "@mui/material/CssBaseline";
-import { ThemeProvider } from "@mui/material/styles";
+import { ConfigProvider, CssBaseline, UiThemeProvider } from "../ui";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type PropsWithChildren } from "react";
 import { useAuth } from "../auth/AuthContext";
 import { readReaderSettings, type ReaderTheme } from "../components/readers/reader-fonts";
-import { createBookKinTheme } from "./theme";
+import { bookKinThemeOptions, createAntdTheme, createBookKinTheme } from "./theme";
 
 const bookKinThemeStorageKey = "bookkin-site-theme";
 
@@ -21,6 +20,17 @@ function isReaderTheme(value: string | null): value is ReaderTheme {
 function readStoredTheme(readerSettingsKey: string): ReaderTheme {
   const stored = localStorage.getItem(bookKinThemeStorageKey);
   return isReaderTheme(stored) ? stored : readReaderSettings(readerSettingsKey).theme;
+}
+
+function applyColorVariables(mode: ReaderTheme) {
+  const colors = bookKinThemeOptions[mode].colors;
+  const root = document.documentElement;
+  Object.entries(colors).forEach(([key, value]) => {
+    const cssKey = key.replace(/[A-Z]/g, (match) => `-${match.toLowerCase()}`);
+    root.style.setProperty(`--color-${cssKey}`, value);
+  });
+  root.dataset.bookkinTheme = mode.toLowerCase();
+  root.style.colorScheme = mode === "NIGHT" ? "dark" : "light";
 }
 
 export function BookKinThemeProvider({ children }: PropsWithChildren) {
@@ -41,19 +51,21 @@ export function BookKinThemeProvider({ children }: PropsWithChildren) {
 
   useEffect(() => {
     localStorage.setItem(bookKinThemeStorageKey, mode);
-    document.documentElement.dataset.bookkinTheme = mode.toLowerCase();
-    document.documentElement.style.colorScheme = mode === "NIGHT" ? "dark" : "light";
+    applyColorVariables(mode);
   }, [mode]);
 
-  const muiTheme = useMemo(() => createBookKinTheme(mode), [mode]);
+  const uiTheme = useMemo(() => createBookKinTheme(mode), [mode]);
+  const antdTheme = useMemo(() => createAntdTheme(mode), [mode]);
   const value = useMemo<BookKinThemeContextValue>(() => ({ mode, setMode }), [mode, setMode]);
 
   return (
     <BookKinThemeContext.Provider value={value}>
-      <ThemeProvider theme={muiTheme}>
-        <CssBaseline />
-        {children}
-      </ThemeProvider>
+      <ConfigProvider theme={antdTheme} wave={{ disabled: true }}>
+        <UiThemeProvider theme={uiTheme}>
+          <CssBaseline />
+          {children}
+        </UiThemeProvider>
+      </ConfigProvider>
     </BookKinThemeContext.Provider>
   );
 }

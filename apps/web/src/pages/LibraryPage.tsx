@@ -1,30 +1,30 @@
-import AutoAwesomeOutlined from "@mui/icons-material/AutoAwesomeOutlined";
-import BookmarkAddOutlined from "@mui/icons-material/BookmarkAddOutlined";
-import EditNoteRounded from "@mui/icons-material/EditNoteRounded";
-import FilterListRounded from "@mui/icons-material/FilterListRounded";
-import DriveFileRenameOutlineRounded from "@mui/icons-material/DriveFileRenameOutlineRounded";
-import KeyboardArrowUpRounded from "@mui/icons-material/KeyboardArrowUpRounded";
-import MenuBookRounded from "@mui/icons-material/MenuBookRounded";
-import CloudUploadOutlined from "@mui/icons-material/CloudUploadOutlined";
-import ScheduleRounded from "@mui/icons-material/ScheduleRounded";
-import Alert from "@mui/material/Alert";
-import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
-import Chip from "@mui/material/Chip";
-import CircularProgress from "@mui/material/CircularProgress";
-import Dialog from "@mui/material/Dialog";
-import DialogActions from "@mui/material/DialogActions";
-import DialogContent from "@mui/material/DialogContent";
-import Divider from "@mui/material/Divider";
-import Fab from "@mui/material/Fab";
-import FormControl from "@mui/material/FormControl";
-import InputLabel from "@mui/material/InputLabel";
-import MenuItem from "@mui/material/MenuItem";
-import Select from "@mui/material/Select";
-import Snackbar from "@mui/material/Snackbar";
-import Stack from "@mui/material/Stack";
-import Tooltip from "@mui/material/Tooltip";
-import Typography from "@mui/material/Typography";
+import { AutoAwesomeOutlined } from "@/ui/icons";
+import { BookmarkAddOutlined } from "@/ui/icons";
+import { EditNoteRounded } from "@/ui/icons";
+import { FilterListRounded } from "@/ui/icons";
+import { DriveFileRenameOutlineRounded } from "@/ui/icons";
+import { KeyboardArrowUpRounded } from "@/ui/icons";
+import { MenuBookRounded } from "@/ui/icons";
+import { CloudUploadOutlined } from "@/ui/icons";
+import { ScheduleRounded } from "@/ui/icons";
+import { Alert } from "@/ui";
+import { Box } from "@/ui";
+import { Button } from "@/ui";
+import { Chip } from "@/ui";
+import { CircularProgress } from "@/ui";
+import { Dialog } from "@/ui";
+import { DialogActions } from "@/ui";
+import { DialogContent } from "@/ui";
+import { Divider } from "@/ui";
+import { Fab } from "@/ui";
+import { FormControl } from "@/ui";
+import { InputLabel } from "@/ui";
+import { MenuItem } from "@/ui";
+import { Select } from "@/ui";
+import { Snackbar } from "@/ui";
+import { Stack } from "@/ui";
+import { Tooltip } from "@/ui";
+import { Typography } from "@/ui";
 import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useDeferredValue, useEffect, useMemo, useState, type ReactNode } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -128,7 +128,11 @@ export function LibraryPage() {
               sm: "minmax(0, 1.18fr) minmax(0, 0.82fr)",
               lg: "minmax(0, 1.38fr) minmax(0, 0.62fr)",
             },
-            gridTemplateRows: { sm: "auto auto" },
+            // Keep the four overview cards on a shared two-row rhythm.  A
+            // fixed token-derived track prevents the compact empty states
+            // from collapsing while the featured cover and weekly chart set
+            // the height of the upper row.
+            gridTemplateRows: { sm: `repeat(2, ${tokens.spacing[24] * 5}px)` },
             gap: { xs: `${tokens.spacing[4]}px`, sm: `${tokens.spacing[6]}px` },
             mb: { xs: `${tokens.spacing[6]}px`, md: `${tokens.spacing[8]}px` },
             alignItems: "stretch",
@@ -252,7 +256,7 @@ export function LibraryPage() {
             {canManage && <Button variant="outlined" startIcon={<DriveFileRenameOutlineRounded />} onClick={() => setBatchRenameOpen(true)} sx={{ whiteSpace: "nowrap" }}>批量重命名</Button>}
             <FormControl size="small" sx={{ minWidth: 118 }}>
               <InputLabel id="format-label">格式</InputLabel>
-              <Select labelId="format-label" label="格式" value={format} onChange={(event) => updateParam("format", event.target.value, "ALL")} startAdornment={<FilterListRounded sx={{ mr: 1, color: "text.secondary" }} />}>
+              <Select labelId="format-label" label="格式" value={format} onChange={(event: any) => updateParam("format", event.target.value, "ALL")} startAdornment={<FilterListRounded sx={{ mr: 1, color: "text.secondary" }} />}>
                 <MenuItem value="ALL">全部格式</MenuItem>
                 <MenuItem value="EPUB">EPUB</MenuItem>
                 <MenuItem value="PDF">PDF</MenuItem>
@@ -260,7 +264,7 @@ export function LibraryPage() {
             </FormControl>
             <FormControl size="small" sx={{ minWidth: 126 }}>
               <InputLabel id="sort-label">排序</InputLabel>
-              <Select labelId="sort-label" label="排序" value={sort} onChange={(event) => updateParam("sort", event.target.value, "recent")}>
+              <Select labelId="sort-label" label="排序" value={sort} onChange={(event: any) => updateParam("sort", event.target.value, "recent")}>
                 <MenuItem value="recent">最近入库</MenuItem>
                 <MenuItem value="title">按书名</MenuItem>
                 <MenuItem value="author">按作者</MenuItem>
@@ -367,7 +371,7 @@ export function LibraryPage() {
               position: "fixed",
               right: { xs: `${tokens.spacing[4]}px`, sm: `${tokens.spacing[6]}px` },
               bottom: { xs: `${tokens.spacing[4]}px`, sm: `${tokens.spacing[6]}px` },
-              zIndex: (theme) => theme.zIndex.fab,
+              zIndex: (theme: any) => theme.zIndex.fab,
               boxShadow: tokens.shadow.popover,
             }}
           >
@@ -395,12 +399,10 @@ function BookDetailsDialog({ book, canManage, onClose, onRead, onOperation, onEd
       fullWidth
       maxWidth="md"
       sx={{
-        "& .MuiDialog-paper": {
-          width: { xs: `calc(100% - ${tokens.spacing[4]}px)`, sm: `calc(100% - ${tokens.spacing[12]}px)` },
-          maxWidth: { xs: "none", sm: `${tokens.layout.readingMax}px` },
-          maxHeight: { xs: `calc(100% - ${tokens.spacing[4]}px)`, sm: `calc(100% - ${tokens.spacing[12]}px)` },
-          m: { xs: `${tokens.spacing[2]}px`, sm: `${tokens.spacing[6]}px` },
-        },
+        width: { xs: `calc(100% - ${tokens.spacing[4]}px)`, sm: `calc(100% - ${tokens.spacing[12]}px)` },
+        maxWidth: { xs: "none", sm: `${tokens.layout.readingMax}px` },
+        maxHeight: { xs: `calc(100% - ${tokens.spacing[4]}px)`, sm: `calc(100% - ${tokens.spacing[12]}px)` },
+        m: { xs: `${tokens.spacing[2]}px`, sm: `${tokens.spacing[6]}px` },
       }}
     >
       {book && (

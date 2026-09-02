@@ -1,23 +1,23 @@
-import ArrowForwardRounded from "@mui/icons-material/ArrowForwardRounded";
-import AutoStoriesOutlined from "@mui/icons-material/AutoStoriesOutlined";
-import CategoryOutlined from "@mui/icons-material/CategoryOutlined";
-import SearchRounded from "@mui/icons-material/SearchRounded";
-import TuneRounded from "@mui/icons-material/TuneRounded";
-import Alert from "@mui/material/Alert";
-import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
-import Chip from "@mui/material/Chip";
-import CircularProgress from "@mui/material/CircularProgress";
-import Divider from "@mui/material/Divider";
-import FormControl from "@mui/material/FormControl";
-import InputAdornment from "@mui/material/InputAdornment";
-import InputLabel from "@mui/material/InputLabel";
-import MenuItem from "@mui/material/MenuItem";
-import Paper from "@mui/material/Paper";
-import Select from "@mui/material/Select";
-import Stack from "@mui/material/Stack";
-import TextField from "@mui/material/TextField";
-import Typography from "@mui/material/Typography";
+import { ArrowForwardRounded } from "@/ui/icons";
+import { AutoStoriesOutlined } from "@/ui/icons";
+import { CategoryOutlined } from "@/ui/icons";
+import { SearchRounded } from "@/ui/icons";
+import { TuneRounded } from "@/ui/icons";
+import { Alert } from "@/ui";
+import { Box } from "@/ui";
+import { Button } from "@/ui";
+import { Chip } from "@/ui";
+import { CircularProgress } from "@/ui";
+import { Divider } from "@/ui";
+import { FormControl } from "@/ui";
+import { InputAdornment } from "@/ui";
+import { InputLabel } from "@/ui";
+import { MenuItem } from "@/ui";
+import { Paper } from "@/ui";
+import { Select } from "@/ui";
+import { Stack } from "@/ui";
+import { TextField } from "@/ui";
+import { Typography } from "@/ui";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useCallback, useDeferredValue, useMemo, type ReactNode } from "react";
 import { Link, useSearchParams } from "react-router-dom";
@@ -139,7 +139,7 @@ export function CategoriesPage() {
             <TextField
               size="small"
               value={query}
-              onChange={(event) => updateParam("q", event.target.value)}
+              onChange={(event: any) => updateParam("q", event.target.value)}
               label="搜索书目"
               placeholder={`在“${selectedCategory.name}”中搜索书名或作者`}
               sx={{ width: "100%", maxWidth: { md: tokens.layout.readingMax / 2 } }}
@@ -147,7 +147,7 @@ export function CategoriesPage() {
             />
             <FormControl size="small" sx={{ minWidth: { md: tokens.spacing[24] + tokens.spacing[12] } }}>
               <InputLabel id="categories-sort-label">排序</InputLabel>
-              <Select labelId="categories-sort-label" label="排序" value={sort} onChange={(event) => updateParam("sort", event.target.value, "recent")}>
+              <Select labelId="categories-sort-label" label="排序" value={sort} onChange={(event: any) => updateParam("sort", event.target.value, "recent")}>
                 <MenuItem value="recent">最近入库</MenuItem>
                 <MenuItem value="title">按书名</MenuItem>
                 <MenuItem value="author">按作者</MenuItem>

@@ -91,3 +91,5 @@ Ordinary metadata edits must update the visible book and metadata caches and clo
 Keep `书库状态`, `用户管理`, `文件任务`, `阅读字体`, and `展示书目设置` exclusively in the signed-in account menu according to their existing role boundaries. Do not repeat them in the desktop primary navigation or mobile drawer, and preserve their protected routes. Order the authenticated reader-facing navigation as `首页`, `藏书库`, `分类`, `书单`, `阅读笔记`, `虚拟书库`.
 
 Use a distinct semantic icon for every reader-facing navigation item. In particular, `首页` uses the home icon while `藏书库` retains the library-books icon; do not reuse the same glyph for both destinations.
+
+Use Ant Design 6 as the only UI component library for new and migrated screens; keep shared adaptations in `src/ui/` and do not add a second component-library dependency. Use `src/charts/antv.ts` as the AntV G2 entry point for chart features, and feed charts from the same generated design tokens as the rest of the interface.

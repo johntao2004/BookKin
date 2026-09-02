@@ -1,16 +1,16 @@
-import AddRounded from "@mui/icons-material/AddRounded";
-import NavigateBeforeRounded from "@mui/icons-material/NavigateBeforeRounded";
-import NavigateNextRounded from "@mui/icons-material/NavigateNextRounded";
-import RemoveRounded from "@mui/icons-material/RemoveRounded";
-import Alert from "@mui/material/Alert";
-import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
-import ButtonBase from "@mui/material/ButtonBase";
-import CircularProgress from "@mui/material/CircularProgress";
-import IconButton from "@mui/material/IconButton";
-import Popover from "@mui/material/Popover";
-import Stack from "@mui/material/Stack";
-import Typography from "@mui/material/Typography";
+import { AddRounded } from "@/ui/icons";
+import { NavigateBeforeRounded } from "@/ui/icons";
+import { NavigateNextRounded } from "@/ui/icons";
+import { RemoveRounded } from "@/ui/icons";
+import { Alert } from "@/ui";
+import { Box } from "@/ui";
+import { Button } from "@/ui";
+import { ButtonBase } from "@/ui";
+import { CircularProgress } from "@/ui";
+import { IconButton } from "@/ui";
+import { Popover } from "@/ui";
+import { Stack } from "@/ui";
+import { Typography } from "@/ui";
 import { getDocument, GlobalWorkerOptions, TextLayer, type PDFDocumentProxy, type RenderTask } from "pdfjs-dist";
 import pdfWorker from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 import "pdfjs-dist/web/pdf_viewer.css";
@@ -592,7 +592,7 @@ function PdfInlineText({ text, pageNumber, blockIndex, onOpenFootnote }: { text:
         component="button"
         id={id}
         aria-label={`查看文中注释 ${part.marker}`}
-        onClick={(event) => onOpenFootnote(part.marker, event.currentTarget, id)}
+        onClick={(event: any) => onOpenFootnote(part.marker, event.currentTarget, id)}
         key={id}
         sx={{ display: "inline-flex", minWidth: 0, color: "primary.main", fontFamily: tokens.typography.fontFamily.body, fontSize: tokens.typography.fontSize.caption, fontWeight: tokens.typography.fontWeight.semibold, lineHeight: tokens.typography.lineHeight.tight, verticalAlign: "super", borderBottom: 1, borderColor: "currentColor", "&:focus-visible": { boxShadow: tokens.shadow.focus } }}
       >

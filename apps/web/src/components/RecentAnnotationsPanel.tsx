@@ -1,9 +1,9 @@
-import FormatQuoteRounded from "@mui/icons-material/FormatQuoteRounded";
-import NotesOutlined from "@mui/icons-material/NotesOutlined";
-import Box from "@mui/material/Box";
-import CircularProgress from "@mui/material/CircularProgress";
-import Stack from "@mui/material/Stack";
-import Typography from "@mui/material/Typography";
+import { FormatQuoteRounded } from "@/ui/icons";
+import { NotesOutlined } from "@/ui/icons";
+import { Box } from "@/ui";
+import { CircularProgress } from "@/ui";
+import { Stack } from "@/ui";
+import { Typography } from "@/ui";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { api } from "../api/client";

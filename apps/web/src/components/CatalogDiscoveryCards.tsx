@@ -1,18 +1,18 @@
-import AddRounded from "@mui/icons-material/AddRounded";
-import AutoStoriesOutlined from "@mui/icons-material/AutoStoriesOutlined";
-import LockOutlined from "@mui/icons-material/LockOutlined";
-import MenuBookRounded from "@mui/icons-material/MenuBookRounded";
-import PeopleAltOutlined from "@mui/icons-material/PeopleAltOutlined";
-import PublicOutlined from "@mui/icons-material/PublicOutlined";
-import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
-import Card from "@mui/material/Card";
-import CardActionArea from "@mui/material/CardActionArea";
-import Chip from "@mui/material/Chip";
-import IconButton from "@mui/material/IconButton";
-import Stack from "@mui/material/Stack";
-import Tooltip from "@mui/material/Tooltip";
-import Typography from "@mui/material/Typography";
+import { AddRounded } from "@/ui/icons";
+import { AutoStoriesOutlined } from "@/ui/icons";
+import { LockOutlined } from "@/ui/icons";
+import { MenuBookRounded } from "@/ui/icons";
+import { PeopleAltOutlined } from "@/ui/icons";
+import { PublicOutlined } from "@/ui/icons";
+import { Box } from "@/ui";
+import { Button } from "@/ui";
+import { Card } from "@/ui";
+import { CardActionArea } from "@/ui";
+import { Chip } from "@/ui";
+import { IconButton } from "@/ui";
+import { Stack } from "@/ui";
+import { Tooltip } from "@/ui";
+import { Typography } from "@/ui";
 import { Link } from "react-router-dom";
 import type { BooklistSummary, BooklistVisibility, BrowseBook, CategorySummary } from "../domain/types";
 import { tokens } from "../theme/generated-tokens";
@@ -63,7 +63,7 @@ export function CategoryCard({ category }: { category: CategorySummary }) {
       <CardActionArea
         component={Link}
         to={`/categories/${category.id}`}
-        sx={{ display: "block", borderRadius: `${tokens.radius.xl}px`, textAlign: "left", "&:hover .MuiCardActionArea-focusHighlight": { opacity: 0 } }}
+        sx={{ display: "block", borderRadius: `${tokens.radius.xl}px`, textAlign: "left", "&:hover": { opacity: 1 } }}
       >
         <CoverMosaic books={category.previewBooks} label={`${category.name}分类封面`} compact />
         <Stack sx={{ pt: `${tokens.spacing[4]}px`, gap: `${tokens.spacing[1]}px` }}>
@@ -95,7 +95,7 @@ export function BooklistCard({ booklist }: { booklist: BooklistSummary }) {
       <CardActionArea
         component={Link}
         to={`/booklists/${booklist.id}`}
-        sx={{ display: "block", borderRadius: `${tokens.radius.xl}px`, textAlign: "left", "&:hover .MuiCardActionArea-focusHighlight": { opacity: 0 } }}
+        sx={{ display: "block", borderRadius: `${tokens.radius.xl}px`, textAlign: "left", "&:hover": { opacity: 1 } }}
       >
         <CoverMosaic books={booklist.previewBooks} label={`${booklist.title}书单封面`} />
         <Stack sx={{ pt: `${tokens.spacing[4]}px`, gap: `${tokens.spacing[2]}px` }}>
@@ -126,7 +126,7 @@ export function BrowseBookCard({ book, onAdd, onRemove }: {
         component={book.available ? Link : "div"}
         to={book.available ? `/reader/${book.id}` : undefined}
         disabled={!book.available}
-        sx={{ borderRadius: `${tokens.radius.lg}px`, overflow: "hidden", "&:hover .MuiCardActionArea-focusHighlight": { opacity: 0 } }}
+        sx={{ borderRadius: `${tokens.radius.lg}px`, overflow: "hidden", "&:hover": { opacity: 1 } }}
       >
         <Box component="img" src={book.coverUrl} alt={`${book.title}封面`} loading="lazy" decoding="async" sx={{ width: "100%", aspectRatio: "2 / 3", display: "block", objectFit: "cover", bgcolor: "background.paper", boxShadow: tokens.shadow.cover, opacity: book.available ? 1 : 0.62 }} />
       </CardActionArea>

@@ -1,6 +1,6 @@
-import Box from "@mui/material/Box";
-import Stack from "@mui/material/Stack";
-import Typography from "@mui/material/Typography";
+import { Box } from "@/ui";
+import { Stack } from "@/ui";
+import { Typography } from "@/ui";
 import type { ReactElement, ReactNode } from "react";
 import { tokens } from "../theme/generated-tokens";
 
@@ -22,7 +22,11 @@ export function OverviewCardHeader({
         minHeight: `${tokens.typography.fontSize.title}px`,
         alignItems: "center",
         gap: `${tokens.spacing[2]}px`,
-        color: inverse ? "primary.light" : "primary.main",
+        // The progress card is a dark surface in every site theme.  Keep its
+        // heading/icon at the same size and rhythm as the other cards while
+        // switching to the high-contrast text token instead of a theme
+        // primary tint that becomes muddy in Night mode.
+        color: inverse ? "common.white" : "primary.main",
       }}
     >
       <Box
@@ -31,7 +35,7 @@ export function OverviewCardHeader({
         sx={{
           display: "inline-flex",
           flexShrink: 0,
-          "& .MuiSvgIcon-root": { fontSize: `${tokens.typography.fontSize.title}px` },
+          "& .bk-icon": { fontSize: `${tokens.typography.fontSize.title}px` },
         }}
       >
         {icon}

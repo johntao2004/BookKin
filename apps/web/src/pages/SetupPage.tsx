@@ -1,9 +1,9 @@
-import Alert from "@mui/material/Alert";
-import Button from "@mui/material/Button";
-import CircularProgress from "@mui/material/CircularProgress";
-import Stack from "@mui/material/Stack";
-import TextField from "@mui/material/TextField";
-import Typography from "@mui/material/Typography";
+import { Alert } from "@/ui";
+import { Button } from "@/ui";
+import { CircularProgress } from "@/ui";
+import { Stack } from "@/ui";
+import { TextField } from "@/ui";
+import { Typography } from "@/ui";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, type FormEvent } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
@@ -62,10 +62,10 @@ export function SetupPage() {
   return (
     <AuthFrame title="建立第一把钥匙" description="主人是唯一可永久清理文件的账户。初始化只允许执行一次。">
       <Stack component="form" spacing={2.5} onSubmit={submit}>
-        <TextField label="显示名称" value={form.displayName} onChange={(event) => setForm({ ...form, displayName: event.target.value })} required autoFocus />
-        <TextField label="用户名" value={form.username} onChange={(event) => setForm({ ...form, username: event.target.value })} required />
-        <TextField label="密码" type="password" autoComplete="new-password" value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} helperText="至少 12 位，建议使用密码管理器生成。" required slotProps={{ htmlInput: { minLength: 12 } }} />
-        <TextField label="确认密码" type="password" autoComplete="new-password" value={form.confirmPassword} onChange={(event) => setForm({ ...form, confirmPassword: event.target.value })} required />
+        <TextField label="显示名称" value={form.displayName} onChange={(event: any) => setForm({ ...form, displayName: event.target.value })} required autoFocus />
+        <TextField label="用户名" value={form.username} onChange={(event: any) => setForm({ ...form, username: event.target.value })} required />
+        <TextField label="密码" type="password" autoComplete="new-password" value={form.password} onChange={(event: any) => setForm({ ...form, password: event.target.value })} helperText="至少 12 位，建议使用密码管理器生成。" required slotProps={{ htmlInput: { minLength: 12 } }} />
+        <TextField label="确认密码" type="password" autoComplete="new-password" value={form.confirmPassword} onChange={(event: any) => setForm({ ...form, confirmPassword: event.target.value })} required />
         {error && <Alert severity="error">{error}</Alert>}
         <Button type="submit" variant="contained" size="large" disabled={loading}>{loading ? "正在初始化…" : "创建主人账户"}</Button>
       </Stack>

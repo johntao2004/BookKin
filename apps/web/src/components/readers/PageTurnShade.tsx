@@ -1,5 +1,5 @@
-import Box from "@mui/material/Box";
-import { alpha } from "@mui/material/styles";
+import { Box } from "@/ui";
+import { alpha } from "@/ui";
 
 export function PageTurnShade() {
   return (
@@ -29,7 +29,7 @@ export function PageTurnShade() {
           zIndex: 2,
           pointerEvents: "none",
           opacity: 0,
-          background: (theme) => `linear-gradient(90deg,
+          background: (theme: any) => `linear-gradient(90deg,
             transparent 24%,
             ${alpha(theme.palette.text.primary, 0.04)} 38%,
             ${alpha(theme.palette.text.primary, 0.22)} 48%,

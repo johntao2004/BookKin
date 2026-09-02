@@ -1,31 +1,31 @@
-import AddRounded from "@mui/icons-material/AddRounded";
-import ArrowDownwardRounded from "@mui/icons-material/ArrowDownwardRounded";
-import ArrowUpwardRounded from "@mui/icons-material/ArrowUpwardRounded";
-import CloudUploadOutlined from "@mui/icons-material/CloudUploadOutlined";
-import DeleteOutlineRounded from "@mui/icons-material/DeleteOutlineRounded";
-import DragIndicatorRounded from "@mui/icons-material/DragIndicatorRounded";
-import RefreshRounded from "@mui/icons-material/RefreshRounded";
-import Alert from "@mui/material/Alert";
-import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
-import Chip from "@mui/material/Chip";
-import CircularProgress from "@mui/material/CircularProgress";
-import Dialog from "@mui/material/Dialog";
-import DialogActions from "@mui/material/DialogActions";
-import DialogContent from "@mui/material/DialogContent";
-import DialogTitle from "@mui/material/DialogTitle";
-import IconButton from "@mui/material/IconButton";
-import List from "@mui/material/List";
-import ListItem from "@mui/material/ListItem";
-import ListItemButton from "@mui/material/ListItemButton";
-import ListItemIcon from "@mui/material/ListItemIcon";
-import ListItemText from "@mui/material/ListItemText";
-import Radio from "@mui/material/Radio";
-import Snackbar from "@mui/material/Snackbar";
-import Stack from "@mui/material/Stack";
-import TextField from "@mui/material/TextField";
-import Tooltip from "@mui/material/Tooltip";
-import Typography from "@mui/material/Typography";
+import { AddRounded } from "@/ui/icons";
+import { ArrowDownwardRounded } from "@/ui/icons";
+import { ArrowUpwardRounded } from "@/ui/icons";
+import { CloudUploadOutlined } from "@/ui/icons";
+import { DeleteOutlineRounded } from "@/ui/icons";
+import { DragIndicatorRounded } from "@/ui/icons";
+import { RefreshRounded } from "@/ui/icons";
+import { Alert } from "@/ui";
+import { Box } from "@/ui";
+import { Button } from "@/ui";
+import { Chip } from "@/ui";
+import { CircularProgress } from "@/ui";
+import { Dialog } from "@/ui";
+import { DialogActions } from "@/ui";
+import { DialogContent } from "@/ui";
+import { DialogTitle } from "@/ui";
+import { IconButton } from "@/ui";
+import { List } from "@/ui";
+import { ListItem } from "@/ui";
+import { ListItemButton } from "@/ui";
+import { ListItemIcon } from "@/ui";
+import { ListItemText } from "@/ui";
+import { Radio } from "@/ui";
+import { Snackbar } from "@/ui";
+import { Stack } from "@/ui";
+import { TextField } from "@/ui";
+import { Tooltip } from "@/ui";
+import { Typography } from "@/ui";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { api } from "../api/client";
@@ -148,7 +148,7 @@ export function DisplayBooksSettingsPage() {
             {orderedIds.map((id, index) => {
               const book = displayedById.get(id);
               if (!book) return null;
-              return <ListItem key={id} divider={index < orderedIds.length - 1} draggable onDragStart={(event) => event.dataTransfer.setData("text/display-book", id)} onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); if (busyId) return; const from = orderedIds.indexOf(event.dataTransfer.getData("text/display-book")); if (from >= 0 && from !== index) { const next = [...orderedIds]; next.splice(index, 0, ...next.splice(from, 1)); setOrderedIds(next); setBusyId("order"); void (async () => { try { const result = await api.reorderDisplayBooks(next, revision); setOrderedIds(result.items.map((book) => book.id)); setRevision(result.revision); } catch (error) { await displayQuery.refetch(); setNotice(errorMessage(error)); } finally { setBusyId(null); } })(); } }} sx={{ gap: `${tokens.spacing[2]}px`, py: `${tokens.spacing[3]}px`, px: { xs: `${tokens.spacing[2]}px`, sm: `${tokens.spacing[4]}px` } }}>
+              return <ListItem key={id} divider={index < orderedIds.length - 1} draggable onDragStart={(event: any) => event.dataTransfer.setData("text/display-book", id)} onDragOver={(event: any) => event.preventDefault()} onDrop={(event: any) => { event.preventDefault(); if (busyId) return; const from = orderedIds.indexOf(event.dataTransfer.getData("text/display-book")); if (from >= 0 && from !== index) { const next = [...orderedIds]; next.splice(index, 0, ...next.splice(from, 1)); setOrderedIds(next); setBusyId("order"); void (async () => { try { const result = await api.reorderDisplayBooks(next, revision); setOrderedIds(result.items.map((book) => book.id)); setRevision(result.revision); } catch (error) { await displayQuery.refetch(); setNotice(errorMessage(error)); } finally { setBusyId(null); } })(); } }} sx={{ gap: `${tokens.spacing[2]}px`, py: `${tokens.spacing[3]}px`, px: { xs: `${tokens.spacing[2]}px`, sm: `${tokens.spacing[4]}px` } }}>
                 <ListItemIcon sx={{ minWidth: tokens.spacing[8], color: "text.disabled", cursor: "grab" }}><DragIndicatorRounded aria-label={`拖动 ${book.title}`} /></ListItemIcon>
                 <Box component="img" src={book.coverUrl} alt="" sx={{ width: tokens.spacing[12], aspectRatio: "2 / 3", objectFit: "cover", borderRadius: `${tokens.radius.sm}px`, flexShrink: 0 }} />
                 <ListItemText primary={book.title} secondary={<>{book.author}{!book.available && " · 文件暂不可用"}</>} sx={{ minWidth: 0, ml: `${tokens.spacing[2]}px` }} />
@@ -166,7 +166,7 @@ export function DisplayBooksSettingsPage() {
         <DialogTitle>新增展示书目</DialogTitle>
         <DialogContent>
           <Typography color="text.secondary" sx={{ mb: `${tokens.spacing[5]}px` }}>搜索藏书库并选择一本书；加入展示不会修改原书或 NAS 文件。</Typography>
-          <TextField autoFocus fullWidth label="搜索书名或作者" value={sourceQuery} onChange={(event) => setSourceQuery(event.target.value)} />
+          <TextField autoFocus fullWidth label="搜索书名或作者" value={sourceQuery} onChange={(event: any) => setSourceQuery(event.target.value)} />
           {booksQuery.isPending ? <Stack sx={{ alignItems: "center", py: `${tokens.spacing[10]}px` }}><CircularProgress size={28} /></Stack> : booksQuery.isError ? <Alert severity="error" sx={{ mt: `${tokens.spacing[4]}px` }} action={<Button color="inherit" onClick={() => void booksQuery.refetch()}>重试</Button>}>书库暂时无法读取。</Alert> : sourceBooks.length ? (
             <List aria-label="可新增的书籍" sx={{ mt: `${tokens.spacing[4]}px`, maxHeight: 360, overflowY: "auto", border: 1, borderColor: "divider", borderRadius: `${tokens.radius.lg}px`, p: 0 }}>
               {sourceBooks.map((book, index) => (

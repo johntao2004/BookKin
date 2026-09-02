@@ -1,15 +1,21 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import { resolve } from "node:path";
 
 const apiPort = process.env.BOOKKIN_API_PORT ?? "8080";
 const apiProxyTarget = process.env.BOOKKIN_API_PROXY_TARGET ?? `http://127.0.0.1:${apiPort}`;
 
 export default defineConfig({
+  resolve: {
+    alias: {
+      "@": resolve(import.meta.dirname, "src"),
+    },
+  },
   build: {
     outDir: "dist/client",
   },
   optimizeDeps: {
-    include: ["react", "react-dom/client", "@tanstack/react-query"],
+    include: ["react", "react-dom/client", "@tanstack/react-query", "antd", "@ant-design/icons"],
   },
   server: {
     host: "0.0.0.0",

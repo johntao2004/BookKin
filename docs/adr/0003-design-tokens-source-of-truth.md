@@ -5,7 +5,7 @@
 
 ## 决策
 
-颜色、间距、圆角、排版尺寸、阴影和布局常量只在 `design/tokens.json` 定义。生成器产出 MUI/CSS 绑定；Figma 变量使用相同名称和 Web code syntax。
+颜色、间距、圆角、排版尺寸、阴影和布局常量只在 `design/tokens.json` 定义。生成器产出 Ant Design/BookKin UI/CSS 绑定；Figma 变量使用相同名称和 Web code syntax。
 
 ## 后果
 

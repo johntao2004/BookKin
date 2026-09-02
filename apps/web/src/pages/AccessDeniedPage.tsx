@@ -1,7 +1,7 @@
-import LockOutlined from "@mui/icons-material/LockOutlined";
-import Button from "@mui/material/Button";
-import Stack from "@mui/material/Stack";
-import Typography from "@mui/material/Typography";
+import { LockOutlined } from "@/ui/icons";
+import { Button } from "@/ui";
+import { Stack } from "@/ui";
+import { Typography } from "@/ui";
 import { Link } from "react-router-dom";
 import { tokens } from "../theme/generated-tokens";
 

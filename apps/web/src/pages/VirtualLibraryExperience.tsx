@@ -1,10 +1,10 @@
-import ArrowBackRounded from "@mui/icons-material/ArrowBackRounded";
-import KeyboardReturnRounded from "@mui/icons-material/KeyboardReturnRounded";
-import LockRounded from "@mui/icons-material/LockRounded";
-import MeetingRoomRounded from "@mui/icons-material/MeetingRoomRounded";
-import RefreshRounded from "@mui/icons-material/RefreshRounded";
-import Button from "@mui/material/Button";
-import CircularProgress from "@mui/material/CircularProgress";
+import { ArrowBackRounded } from "@/ui/icons";
+import { KeyboardReturnRounded } from "@/ui/icons";
+import { LockRounded } from "@/ui/icons";
+import { MeetingRoomRounded } from "@/ui/icons";
+import { RefreshRounded } from "@/ui/icons";
+import { Button } from "@/ui";
+import { CircularProgress } from "@/ui";
 import { useQuery } from "@tanstack/react-query";
 import * as THREE from "three";
 import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";

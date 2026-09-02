@@ -1,20 +1,20 @@
-import CheckCircleOutlined from "@mui/icons-material/CheckCircleOutlined";
-import DriveFileRenameOutlineRounded from "@mui/icons-material/DriveFileRenameOutlineRounded";
-import GppGoodOutlined from "@mui/icons-material/GppGoodOutlined";
-import Alert from "@mui/material/Alert";
-import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
-import Checkbox from "@mui/material/Checkbox";
-import CircularProgress from "@mui/material/CircularProgress";
-import Dialog from "@mui/material/Dialog";
-import DialogActions from "@mui/material/DialogActions";
-import DialogContent from "@mui/material/DialogContent";
-import DialogTitle from "@mui/material/DialogTitle";
-import Divider from "@mui/material/Divider";
-import FormControlLabel from "@mui/material/FormControlLabel";
-import Stack from "@mui/material/Stack";
-import TextField from "@mui/material/TextField";
-import Typography from "@mui/material/Typography";
+import { CheckCircleOutlined } from "@/ui/icons";
+import { DriveFileRenameOutlineRounded } from "@/ui/icons";
+import { GppGoodOutlined } from "@/ui/icons";
+import { Alert } from "@/ui";
+import { Box } from "@/ui";
+import { Button } from "@/ui";
+import { Checkbox } from "@/ui";
+import { CircularProgress } from "@/ui";
+import { Dialog } from "@/ui";
+import { DialogActions } from "@/ui";
+import { DialogContent } from "@/ui";
+import { DialogTitle } from "@/ui";
+import { Divider } from "@/ui";
+import { FormControlLabel } from "@/ui";
+import { Stack } from "@/ui";
+import { TextField } from "@/ui";
+import { Typography } from "@/ui";
 import { useEffect, useMemo, useState } from "react";
 import { api } from "../api/client";
 import type { Book, FileOperationPreview } from "../domain/types";
@@ -90,8 +90,8 @@ export function BatchRenameDialog({ open, books, onClose, onCompleted }: {
       <DialogTitle><Typography variant="h4" component="span">批量重命名</Typography><Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>只处理你明确勾选的书。先生成完整变更清单，再逐项提交幂等任务。</Typography></DialogTitle>
       <DialogContent>
         {plans.length === 0 ? <Stack spacing={2.5} sx={{ pt: 1 }}>
-          <TextField label="命名模板" value={template} onChange={(event) => setTemplate(event.target.value)} helperText="可用变量：{author}、{series}、{title}、{ext}。缺少系列时使用“未分类”。" />
-          <Stack direction={{ xs: "column", sm: "row" }} sx={{ justifyContent: "space-between", alignItems: { sm: "center" }, gap: 1 }}><Typography sx={{ fontWeight: 700 }}>选择当前已加载的藏书（最多 50 本）</Typography><FormControlLabel control={<Checkbox checked={selectedBooks.length > 0 && selectedBooks.length === Math.min(books.length, 50)} onChange={(event) => setSelectedIds(event.target.checked ? books.slice(0, 50).map((book) => book.id) : [])} />} label="全选当前页" /></Stack>
+          <TextField label="命名模板" value={template} onChange={(event: any) => setTemplate(event.target.value)} helperText="可用变量：{author}、{series}、{title}、{ext}。缺少系列时使用“未分类”。" />
+          <Stack direction={{ xs: "column", sm: "row" }} sx={{ justifyContent: "space-between", alignItems: { sm: "center" }, gap: 1 }}><Typography sx={{ fontWeight: 700 }}>选择当前已加载的藏书（最多 50 本）</Typography><FormControlLabel control={<Checkbox checked={selectedBooks.length > 0 && selectedBooks.length === Math.min(books.length, 50)} onChange={(event: any) => setSelectedIds(event.target.checked ? books.slice(0, 50).map((book) => book.id) : [])} />} label="全选当前页" /></Stack>
           <Stack divider={<Divider flexItem />} sx={{ border: 1, borderColor: "divider", borderRadius: 2, maxHeight: 380, overflow: "auto" }}>
             {books.map((book) => <Stack key={book.id} direction="row" spacing={1.5} sx={{ alignItems: "center", px: 2, py: 1.25 }}><Checkbox checked={selectedIds.includes(book.id)} onChange={() => toggle(book.id)} slotProps={{ input: { "aria-label": `选择${book.title}` } }} /><Box component="img" src={book.coverUrl} alt="" sx={{ width: 34, aspectRatio: "2/3", objectFit: "cover", borderRadius: 0.5 }} /><Box sx={{ minWidth: 0 }}><Typography noWrap sx={{ fontWeight: 700 }}>{book.title}</Typography><Typography variant="body2" color="text.secondary" noWrap>{book.author} · {book.relativePath}</Typography></Box></Stack>)}
           </Stack>

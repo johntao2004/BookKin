@@ -14,7 +14,7 @@
 - `design/tokens.json` 是颜色、间距、圆角、字号和阴影数值的唯一来源。
 - 不得在 React 组件或 CSS 中新增未命名的十六进制颜色、间距、圆角或阴影。
 - 修改 Token 后必须运行 `pnpm generate:tokens`，并同步检查 Figma 变量。
-- MUI 组件应通过 `apps/web/src/theme/theme.ts` 统一定制；业务页面不得局部重写品牌基础样式。
+- Ant Design 组件应通过 `apps/web/src/theme/theme.ts` 与 `apps/web/src/ui/` 统一定制；业务页面不得局部重写品牌基础样式。
 - 界面使用暖色编辑出版风格、克制珊瑚强调色、稀少阴影和真实封面素材。
 
 ## Java 模块边界

@@ -73,9 +73,9 @@ describe("LibraryPage", () => {
     const progressTitle = within(currentReading).getByRole("heading", { name: "请开始阅读" });
     const recentDescription = await within(recentAnnotations).findByText("去书中划下第一句话，它会出现在这里。");
     const progressDescription = within(currentReading).getByText("打开任意一本书后，阅读进度会显示在这里。");
-    expect(recentTitle).toHaveClass("MuiTypography-h4");
-    expect(progressTitle).toHaveClass("MuiTypography-h4");
-    expect(recentDescription).toHaveClass("MuiTypography-body2");
-    expect(progressDescription).toHaveClass("MuiTypography-body2");
+    expect(recentTitle).toHaveClass("bk-typography-h4");
+    expect(progressTitle).toHaveClass("bk-typography-h4");
+    expect(recentDescription).toHaveClass("bk-typography-body2");
+    expect(progressDescription).toHaveClass("bk-typography-body2");
   });
 });

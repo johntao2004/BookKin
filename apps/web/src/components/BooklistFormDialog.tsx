@@ -1,17 +1,17 @@
-import DeleteOutlineRounded from "@mui/icons-material/DeleteOutlineRounded";
-import Alert from "@mui/material/Alert";
-import Button from "@mui/material/Button";
-import Dialog from "@mui/material/Dialog";
-import DialogActions from "@mui/material/DialogActions";
-import DialogContent from "@mui/material/DialogContent";
-import DialogTitle from "@mui/material/DialogTitle";
-import FormControl from "@mui/material/FormControl";
-import InputLabel from "@mui/material/InputLabel";
-import MenuItem from "@mui/material/MenuItem";
-import Select from "@mui/material/Select";
-import Stack from "@mui/material/Stack";
-import TextField from "@mui/material/TextField";
-import Typography from "@mui/material/Typography";
+import { DeleteOutlineRounded } from "@/ui/icons";
+import { Alert } from "@/ui";
+import { Button } from "@/ui";
+import { Dialog } from "@/ui";
+import { DialogActions } from "@/ui";
+import { DialogContent } from "@/ui";
+import { DialogTitle } from "@/ui";
+import { FormControl } from "@/ui";
+import { InputLabel } from "@/ui";
+import { MenuItem } from "@/ui";
+import { Select } from "@/ui";
+import { Stack } from "@/ui";
+import { TextField } from "@/ui";
+import { Typography } from "@/ui";
 import { useEffect, useState } from "react";
 import { api } from "../api/client";
 import type { BooklistDetail, BooklistKind, BooklistVisibility } from "../domain/types";
@@ -81,12 +81,12 @@ export function BooklistFormDialog({ open, initial, canCreateOfficial, onClose, 
         <DialogContent>
           <Stack sx={{ gap: `${tokens.spacing[5]}px`, pt: `${tokens.spacing[2]}px` }}>
             {error ? <Alert severity="error">{error}</Alert> : null}
-            <TextField autoFocus label="书单名称" value={title} onChange={(event) => setTitle(event.target.value)} slotProps={{ htmlInput: { maxLength: 240 } }} />
-            <TextField label="书单说明" value={description} onChange={(event) => setDescription(event.target.value)} multiline minRows={4} slotProps={{ htmlInput: { maxLength: 4000 } }} />
+            <TextField autoFocus label="书单名称" value={title} onChange={(event: any) => setTitle(event.target.value)} slotProps={{ htmlInput: { maxLength: 240 } }} />
+            <TextField label="书单说明" value={description} onChange={(event: any) => setDescription(event.target.value)} multiline minRows={4} slotProps={{ htmlInput: { maxLength: 4000 } }} />
             {!initial && canCreateOfficial ? (
               <FormControl>
                 <InputLabel id="booklist-kind-label">书单类型</InputLabel>
-                <Select labelId="booklist-kind-label" label="书单类型" value={kind} onChange={(event) => setKind(event.target.value as BooklistKind)}>
+                <Select labelId="booklist-kind-label" label="书单类型" value={kind} onChange={(event: any) => setKind(event.target.value as BooklistKind)}>
                   <MenuItem value="PERSONAL">个人书单</MenuItem>
                   <MenuItem value="OFFICIAL">官方书单</MenuItem>
                 </Select>
@@ -94,7 +94,7 @@ export function BooklistFormDialog({ open, initial, canCreateOfficial, onClose, 
             ) : null}
             <FormControl>
               <InputLabel id="booklist-visibility-label">谁可以看</InputLabel>
-              <Select labelId="booklist-visibility-label" label="谁可以看" value={visibility} onChange={(event) => setVisibility(event.target.value as BooklistVisibility)}>
+              <Select labelId="booklist-visibility-label" label="谁可以看" value={visibility} onChange={(event: any) => setVisibility(event.target.value as BooklistVisibility)}>
                 <MenuItem value="PRIVATE">仅自己</MenuItem>
                 <MenuItem value="MEMBERS">家庭成员</MenuItem>
                 <MenuItem value="PUBLIC">任何访客</MenuItem>

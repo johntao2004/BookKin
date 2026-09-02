@@ -1,21 +1,21 @@
-import CloudUploadOutlined from "@mui/icons-material/CloudUploadOutlined";
-import Alert from "@mui/material/Alert";
-import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
-import Card from "@mui/material/Card";
-import CardContent from "@mui/material/CardContent";
-import Chip from "@mui/material/Chip";
-import CircularProgress from "@mui/material/CircularProgress";
-import Divider from "@mui/material/Divider";
-import FormControl from "@mui/material/FormControl";
-import InputLabel from "@mui/material/InputLabel";
-import MenuItem from "@mui/material/MenuItem";
-import Select from "@mui/material/Select";
-import Snackbar from "@mui/material/Snackbar";
-import Stack from "@mui/material/Stack";
-import Switch from "@mui/material/Switch";
-import TextField from "@mui/material/TextField";
-import Typography from "@mui/material/Typography";
+import { CloudUploadOutlined } from "@/ui/icons";
+import { Alert } from "@/ui";
+import { Box } from "@/ui";
+import { Button } from "@/ui";
+import { Card } from "@/ui";
+import { CardContent } from "@/ui";
+import { Chip } from "@/ui";
+import { CircularProgress } from "@/ui";
+import { Divider } from "@/ui";
+import { FormControl } from "@/ui";
+import { InputLabel } from "@/ui";
+import { MenuItem } from "@/ui";
+import { Select } from "@/ui";
+import { Snackbar } from "@/ui";
+import { Stack } from "@/ui";
+import { Switch } from "@/ui";
+import { TextField } from "@/ui";
+import { Typography } from "@/ui";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
 import { api } from "../api/client";
@@ -93,19 +93,19 @@ export function ReaderFontsPage() {
               <Typography variant="h5">上传自定义字体</Typography>
               <Typography variant="body2" color="text.secondary">上传前请确认字体许可允许在家庭成员之间使用；系统会校验扩展名、文件签名、大小和 SHA-256。</Typography>
               <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-                <TextField label="展示名称（可选）" value={displayName} onChange={(event) => setDisplayName(event.target.value)} fullWidth />
+                <TextField label="展示名称（可选）" value={displayName} onChange={(event: any) => setDisplayName(event.target.value)} fullWidth />
                 <FormControl sx={{ minWidth: { sm: 170 } }}>
                   <InputLabel id="reader-font-kind-label">字体类型</InputLabel>
-                  <Select labelId="reader-font-kind-label" label="字体类型" value={kind} onChange={(event) => setKind(event.target.value as ReaderFont["kind"])}>
+                  <Select labelId="reader-font-kind-label" label="字体类型" value={kind} onChange={(event: any) => setKind(event.target.value as ReaderFont["kind"])}>
                     <MenuItem value="SERIF">衬线字体</MenuItem>
                     <MenuItem value="SANS">无衬线字体</MenuItem>
                   </Select>
                 </FormControl>
               </Stack>
-              <TextField label="来源 / 许可说明（可选）" value={licenseNote} onChange={(event) => setLicenseNote(event.target.value)} fullWidth />
+              <TextField label="来源 / 许可说明（可选）" value={licenseNote} onChange={(event: any) => setLicenseNote(event.target.value)} fullWidth />
             </Stack>
             <Stack spacing={1} sx={{ width: { xs: "100%", md: 220 } }}>
-              <input ref={inputRef} hidden type="file" accept=".woff2,.woff,.ttf,.otf" onChange={(event) => { const file = event.target.files?.[0]; if (file) void upload(file); }} />
+              <input ref={inputRef} hidden type="file" accept=".woff2,.woff,.ttf,.otf" onChange={(event: any) => { const file = event.target.files?.[0]; if (file) void upload(file); }} />
               <Button variant="contained" size="large" startIcon={busy ? <CircularProgress size={18} color="inherit" /> : <CloudUploadOutlined />} disabled={busy} onClick={() => inputRef.current?.click()}>{busy ? `上传中 ${uploadProgress}%` : "选择字体文件"}</Button>
               <Typography variant="caption" color="text.secondary" sx={{ textAlign: "center" }}>WOFF2 / WOFF / TTF / OTF · ≤ 25 MB</Typography>
             </Stack>

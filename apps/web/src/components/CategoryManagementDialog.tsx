@@ -1,24 +1,24 @@
-import AddRounded from "@mui/icons-material/AddRounded";
-import ArrowDownwardRounded from "@mui/icons-material/ArrowDownwardRounded";
-import ArrowUpwardRounded from "@mui/icons-material/ArrowUpwardRounded";
-import DeleteOutlineRounded from "@mui/icons-material/DeleteOutlineRounded";
-import EditOutlined from "@mui/icons-material/EditOutlined";
-import Alert from "@mui/material/Alert";
-import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
-import Dialog from "@mui/material/Dialog";
-import DialogActions from "@mui/material/DialogActions";
-import DialogContent from "@mui/material/DialogContent";
-import DialogTitle from "@mui/material/DialogTitle";
-import IconButton from "@mui/material/IconButton";
-import List from "@mui/material/List";
-import ListItem from "@mui/material/ListItem";
-import ListItemText from "@mui/material/ListItemText";
-import Snackbar from "@mui/material/Snackbar";
-import Stack from "@mui/material/Stack";
-import TextField from "@mui/material/TextField";
-import Tooltip from "@mui/material/Tooltip";
-import Typography from "@mui/material/Typography";
+import { AddRounded } from "@/ui/icons";
+import { ArrowDownwardRounded } from "@/ui/icons";
+import { ArrowUpwardRounded } from "@/ui/icons";
+import { DeleteOutlineRounded } from "@/ui/icons";
+import { EditOutlined } from "@/ui/icons";
+import { Alert } from "@/ui";
+import { Box } from "@/ui";
+import { Button } from "@/ui";
+import { Dialog } from "@/ui";
+import { DialogActions } from "@/ui";
+import { DialogContent } from "@/ui";
+import { DialogTitle } from "@/ui";
+import { IconButton } from "@/ui";
+import { List } from "@/ui";
+import { ListItem } from "@/ui";
+import { ListItemText } from "@/ui";
+import { Snackbar } from "@/ui";
+import { Stack } from "@/ui";
+import { TextField } from "@/ui";
+import { Tooltip } from "@/ui";
+import { Typography } from "@/ui";
 import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { api } from "../api/client";
@@ -133,8 +133,8 @@ export function CategoryManagementDialog({ open, categories, onClose }: {
             </Box>
             <Stack sx={{ gap: `${tokens.spacing[4]}px` }}>
               <Typography variant="h5">{editingId ? "编辑分类" : "新建分类"}</Typography>
-              <TextField autoFocus label="分类名称" value={name} onChange={(event) => setName(event.target.value)} slotProps={{ htmlInput: { maxLength: 160 } }} />
-              <TextField label="简介" value={description} onChange={(event) => setDescription(event.target.value)} multiline minRows={4} slotProps={{ htmlInput: { maxLength: 2000 } }} />
+              <TextField autoFocus label="分类名称" value={name} onChange={(event: any) => setName(event.target.value)} slotProps={{ htmlInput: { maxLength: 160 } }} />
+              <TextField label="简介" value={description} onChange={(event: any) => setDescription(event.target.value)} multiline minRows={4} slotProps={{ htmlInput: { maxLength: 2000 } }} />
               <Button variant="contained" startIcon={editingId ? <EditOutlined /> : <AddRounded />} disabled={!name.trim() || busy} onClick={() => void save()}>{editingId ? "保存修改" : "创建分类"}</Button>
               {editingId ? <Button onClick={resetForm}>取消编辑</Button> : null}
             </Stack>

@@ -16,7 +16,7 @@ BookKin 的视觉语言是“安静的私人藏书室”：暖色纸张、深墨
 
 `design/tokens.json` 是所有数值的唯一真源。脚本生成：
 
-- `apps/web/src/theme/generated-tokens.ts`：MUI Theme 输入；
+- `apps/web/src/theme/generated-tokens.ts`：Ant Design 主题与 BookKin UI 适配层输入；
 - `apps/web/src/theme/generated-tokens.css`：浏览器 CSS Variables；
 - Figma 变量命名和代码语法映射。
 
@@ -51,16 +51,18 @@ BookKin 的视觉语言是“安静的私人藏书室”：暖色纸张、深墨
 
 ## 5. 核心组件映射
 
-| BookKin 组件 | MUI 基础 | 关键约束 |
+| BookKin 组件 | Ant Design 基础 | 关键约束 |
 |---|---|---|
-| `BookKinButton` | `Button` | 高度至少 44px；主按钮珊瑚色 |
-| `BookKinField` | `TextField` | 标签常驻；错误信息不改变表单宽度 |
-| `BookCard` | `CardActionArea` | 封面比例 2:3；标题最多两行 |
-| `StatusChip` | `Chip` | 文字与颜色双编码状态 |
-| `OperationPreviewDialog` | `Dialog` | 先摘要后完整变更清单；危险项不可折叠隐藏 |
-| `DataTable` | `Table` | 游标分页；批量选择跨页不默认保留 |
-| `SideNavigation` | `Drawer` | 管理区与阅读区分组 |
-| `ReaderToolbar` | `AppBar` | 深色、可自动隐藏、键盘可达 |
+| `BookKinButton` | Ant `Button` | 高度至少 44px；主按钮珊瑚色 |
+| `BookKinField` | Ant `Input` | 标签常驻；错误信息不改变表单宽度 |
+| `BookCard` | Ant `Card` | 封面比例 2:3；标题最多两行 |
+| `StatusChip` | Ant `Tag` | 文字与颜色双编码状态 |
+| `OperationPreviewDialog` | Ant `Modal` | 先摘要后完整变更清单；危险项不可折叠隐藏 |
+| `DataTable` | HTML table / Ant table contract | 游标分页；批量选择跨页不默认保留 |
+| `SideNavigation` | Ant `Drawer` | 管理区与阅读区分组 |
+| `ReaderToolbar` | BookKin shell + Ant controls | 深色、可自动隐藏、键盘可达 |
+
+AntV 图表通过 `apps/web/src/charts/antv.ts` 统一创建，后续统计功能应复用该入口并继续使用本文件中的语义 Token。
 
 ## 6. 文件管理交互
 

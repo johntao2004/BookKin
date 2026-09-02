@@ -1,33 +1,33 @@
-import AutoAwesomeOutlined from "@mui/icons-material/AutoAwesomeOutlined";
-import CheckCircleOutlineRounded from "@mui/icons-material/CheckCircleOutlineRounded";
-import CloudUploadOutlined from "@mui/icons-material/CloudUploadOutlined";
-import DeleteOutlineRounded from "@mui/icons-material/DeleteOutlineRounded";
-import EditNoteRounded from "@mui/icons-material/EditNoteRounded";
-import ErrorOutlineRounded from "@mui/icons-material/ErrorOutlineRounded";
-import ImageOutlined from "@mui/icons-material/ImageOutlined";
-import InsertDriveFileOutlined from "@mui/icons-material/InsertDriveFileOutlined";
-import WarningAmberRounded from "@mui/icons-material/WarningAmberRounded";
-import Alert from "@mui/material/Alert";
-import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
-import Chip from "@mui/material/Chip";
-import CircularProgress from "@mui/material/CircularProgress";
-import Dialog from "@mui/material/Dialog";
-import DialogActions from "@mui/material/DialogActions";
-import DialogContent from "@mui/material/DialogContent";
-import DialogTitle from "@mui/material/DialogTitle";
-import Divider from "@mui/material/Divider";
-import FormControl from "@mui/material/FormControl";
-import IconButton from "@mui/material/IconButton";
-import InputLabel from "@mui/material/InputLabel";
-import LinearProgress from "@mui/material/LinearProgress";
-import MenuItem from "@mui/material/MenuItem";
-import Select from "@mui/material/Select";
-import Stack from "@mui/material/Stack";
-import TextField from "@mui/material/TextField";
-import Typography from "@mui/material/Typography";
-import useMediaQuery from "@mui/material/useMediaQuery";
-import { useTheme } from "@mui/material/styles";
+import { AutoAwesomeOutlined } from "@/ui/icons";
+import { CheckCircleOutlineRounded } from "@/ui/icons";
+import { CloudUploadOutlined } from "@/ui/icons";
+import { DeleteOutlineRounded } from "@/ui/icons";
+import { EditNoteRounded } from "@/ui/icons";
+import { ErrorOutlineRounded } from "@/ui/icons";
+import { ImageOutlined } from "@/ui/icons";
+import { InsertDriveFileOutlined } from "@/ui/icons";
+import { WarningAmberRounded } from "@/ui/icons";
+import { Alert } from "@/ui";
+import { Box } from "@/ui";
+import { Button } from "@/ui";
+import { Chip } from "@/ui";
+import { CircularProgress } from "@/ui";
+import { Dialog } from "@/ui";
+import { DialogActions } from "@/ui";
+import { DialogContent } from "@/ui";
+import { DialogTitle } from "@/ui";
+import { Divider } from "@/ui";
+import { FormControl } from "@/ui";
+import { IconButton } from "@/ui";
+import { InputLabel } from "@/ui";
+import { LinearProgress } from "@/ui";
+import { MenuItem } from "@/ui";
+import { Select } from "@/ui";
+import { Stack } from "@/ui";
+import { TextField } from "@/ui";
+import { Typography } from "@/ui";
+import { useMediaQuery } from "@/ui";
+import { useTheme } from "@/ui";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState, type DragEvent } from "react";
 import { api } from "../api/client";
@@ -176,24 +176,24 @@ export function BookUploadDialog({ open, initialRootId, publishToDisplay = false
           <Stack spacing={3}>
             <FormControl fullWidth>
               <InputLabel id="upload-root-label">目标书库</InputLabel>
-              <Select labelId="upload-root-label" label="目标书库" value={rootId} onChange={(event) => setRootId(event.target.value)}>
+              <Select labelId="upload-root-label" label="目标书库" value={rootId} onChange={(event: any) => setRootId(event.target.value)}>
                 {writableRoots.map((root) => <MenuItem key={root.id} value={root.id}>{root.name} · 可用 {formatBytes(root.freeBytes)}</MenuItem>)}
               </Select>
             </FormControl>
             {writableRoots.length === 0 && <Alert severity="warning">没有在线且具备写入、暂存能力的书库根目录。</Alert>}
             <Box
-              onDragOver={(event) => event.preventDefault()}
+              onDragOver={(event: any) => event.preventDefault()}
               onDrop={drop}
               onClick={() => fileInput.current?.click()}
               role="button"
               tabIndex={0}
-              onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") fileInput.current?.click(); }}
+              onKeyDown={(event: any) => { if (event.key === "Enter" || event.key === " ") fileInput.current?.click(); }}
               sx={{ border: 1, borderStyle: "dashed", borderColor: "divider", borderRadius: 3, bgcolor: "background.default", px: 3, py: 5, textAlign: "center", cursor: "pointer", "&:focus-visible": { outline: 2, outlineColor: "primary.main", outlineOffset: 2 } }}
             >
               <CloudUploadOutlined color="primary" sx={{ fontSize: 42 }} />
               <Typography variant="h5" sx={{ mt: 1 }}>拖入 EPUB 或 PDF</Typography>
               <Typography color="text.secondary" sx={{ mt: 0.5 }}>也可以点击选择，单次最多20本，不接受ZIP等压缩包</Typography>
-              <input ref={fileInput} hidden multiple type="file" accept=".epub,.pdf,application/epub+zip,application/pdf" onChange={(event) => { if (event.target.files) addFiles(event.target.files); event.target.value = ""; }} />
+              <input ref={fileInput} hidden multiple type="file" accept=".epub,.pdf,application/epub+zip,application/pdf" onChange={(event: any) => { if (event.target.files) addFiles(event.target.files); event.target.value = ""; }} />
             </Box>
             {local.length > 0 && <LocalQueue items={local} onRemove={(id) => setLocal((current) => current.filter((item) => item.id !== id))} />}
             <PersistentQueue uploads={uploads} onReview={setReviewId} onCancel={cancel} />
@@ -274,7 +274,7 @@ function UploadReview({ upload, publishToDisplay, onChanged, onCommitted }: { up
       <Stack spacing={1.5} sx={{ alignItems: "stretch" }}>
         <Box component="img" src={upload.coverUrl} alt={`${draft.title}封面`} sx={{ width: "100%", maxWidth: 240, aspectRatio: "2 / 3", objectFit: "cover", bgcolor: "background.default", borderRadius: 2, boxShadow: tokens.shadow.cover }} />
         <Button startIcon={<ImageOutlined />} variant="outlined" onClick={() => coverInput.current?.click()}>更换封面</Button>
-        <input ref={coverInput} hidden type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => { const file = event.target.files?.[0]; if (file) void coverChanged(file); event.target.value = ""; }} />
+        <input ref={coverInput} hidden type="file" accept="image/jpeg,image/png,image/webp" onChange={(event: any) => { const file = event.target.files?.[0]; if (file) void coverChanged(file); event.target.value = ""; }} />
         <Typography variant="caption" color="text.secondary">JPG、PNG或WebP会居中裁切为2:3，并以安全JPEG保存。</Typography>
       </Stack>
       <Stack spacing={2.25}>
@@ -308,7 +308,7 @@ function UploadReview({ upload, publishToDisplay, onChanged, onCommitted }: { up
 }
 
 function SourcedField({ label, value, source, onChange, required, helperText, placeholder, multiline, minRows }: { label: string; value: string; source?: MetadataSource; onChange: (value: string) => void; required?: boolean; helperText?: string; placeholder?: string; multiline?: boolean; minRows?: number }) {
-  return <TextField label={label} value={value} required={required} placeholder={placeholder} multiline={multiline} minRows={minRows} onChange={(event) => onChange(event.target.value)} helperText={<Stack component="span" direction="row" spacing={0.75} sx={{ alignItems: "center" }}>{source && <Chip component="span" label={sourceText[source]} size="small" variant="outlined" />}{helperText && <Box component="span">{helperText}</Box>}</Stack>} />;
+  return <TextField label={label} value={value} required={required} placeholder={placeholder} multiline={multiline} minRows={minRows} onChange={(event: any) => onChange(event.target.value)} helperText={<Stack component="span" direction="row" spacing={0.75} sx={{ alignItems: "center" }}>{source && <Chip component="span" label={sourceText[source]} size="small" variant="outlined" />}{helperText && <Box component="span">{helperText}</Box>}</Stack>} />;
 }
 
 function CandidateCard({ candidate, onUse, onCover }: { candidate: MetadataCandidate; onUse: () => void; onCover?: () => void }) {

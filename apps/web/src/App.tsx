@@ -1,5 +1,5 @@
-import CircularProgress from "@mui/material/CircularProgress";
-import Stack from "@mui/material/Stack";
+import { CircularProgress } from "@/ui";
+import { Stack } from "@/ui";
 import { lazy, Suspense } from "react";
 import { Navigate, Outlet, Route, Routes } from "react-router-dom";
 import { RequireAuth } from "./auth/AuthContext";

@@ -1,9 +1,9 @@
-import AccessTimeRounded from "@mui/icons-material/AccessTimeRounded";
-import Alert from "@mui/material/Alert";
-import Box from "@mui/material/Box";
-import CircularProgress from "@mui/material/CircularProgress";
-import Stack from "@mui/material/Stack";
-import Typography from "@mui/material/Typography";
+import { AccessTimeRounded } from "@/ui/icons";
+import { Alert } from "@/ui";
+import { Box } from "@/ui";
+import { CircularProgress } from "@/ui";
+import { Stack } from "@/ui";
+import { Typography } from "@/ui";
 import type { WeeklyReadingStats } from "../domain/types";
 import { tokens } from "../theme/generated-tokens";
 import { OverviewCardHeader } from "./OverviewCardHeader";

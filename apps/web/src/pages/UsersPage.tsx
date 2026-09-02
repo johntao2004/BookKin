@@ -1,33 +1,33 @@
-import AddRounded from "@mui/icons-material/AddRounded";
-import ContentCopyRounded from "@mui/icons-material/ContentCopyRounded";
-import LockResetRounded from "@mui/icons-material/LockResetRounded";
-import LogoutRounded from "@mui/icons-material/LogoutRounded";
-import Alert from "@mui/material/Alert";
-import Avatar from "@mui/material/Avatar";
-import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
-import Chip from "@mui/material/Chip";
-import CircularProgress from "@mui/material/CircularProgress";
-import Dialog from "@mui/material/Dialog";
-import DialogActions from "@mui/material/DialogActions";
-import DialogContent from "@mui/material/DialogContent";
-import DialogTitle from "@mui/material/DialogTitle";
-import Divider from "@mui/material/Divider";
-import FormControl from "@mui/material/FormControl";
-import InputLabel from "@mui/material/InputLabel";
-import MenuItem from "@mui/material/MenuItem";
-import Select from "@mui/material/Select";
-import Snackbar from "@mui/material/Snackbar";
-import Stack from "@mui/material/Stack";
-import Switch from "@mui/material/Switch";
-import Table from "@mui/material/Table";
-import TableBody from "@mui/material/TableBody";
-import TableCell from "@mui/material/TableCell";
-import TableContainer from "@mui/material/TableContainer";
-import TableHead from "@mui/material/TableHead";
-import TableRow from "@mui/material/TableRow";
-import TextField from "@mui/material/TextField";
-import Typography from "@mui/material/Typography";
+import { AddRounded } from "@/ui/icons";
+import { ContentCopyRounded } from "@/ui/icons";
+import { LockResetRounded } from "@/ui/icons";
+import { LogoutRounded } from "@/ui/icons";
+import { Alert } from "@/ui";
+import { Avatar } from "@/ui";
+import { Box } from "@/ui";
+import { Button } from "@/ui";
+import { Chip } from "@/ui";
+import { CircularProgress } from "@/ui";
+import { Dialog } from "@/ui";
+import { DialogActions } from "@/ui";
+import { DialogContent } from "@/ui";
+import { DialogTitle } from "@/ui";
+import { Divider } from "@/ui";
+import { FormControl } from "@/ui";
+import { InputLabel } from "@/ui";
+import { MenuItem } from "@/ui";
+import { Select } from "@/ui";
+import { Snackbar } from "@/ui";
+import { Stack } from "@/ui";
+import { Switch } from "@/ui";
+import { Table } from "@/ui";
+import { TableBody } from "@/ui";
+import { TableCell } from "@/ui";
+import { TableContainer } from "@/ui";
+import { TableHead } from "@/ui";
+import { TableRow } from "@/ui";
+import { TextField } from "@/ui";
+import { Typography } from "@/ui";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, type FormEvent } from "react";
 import { api } from "../api/client";
@@ -228,9 +228,9 @@ function CreateUserDialog({ open, allowAdmin, onClose, onCreated }: {
       <Stack component="form" onSubmit={submit}>
         <DialogTitle><Typography variant="h4" component="span">创建家庭账户</Typography></DialogTitle>
         <DialogContent><Stack spacing={2.5} sx={{ pt: 1 }}>
-          <TextField label="显示名称" value={form.displayName} onChange={(event) => setForm({ ...form, displayName: event.target.value })} required autoFocus />
-          <TextField label="用户名" value={form.username} onChange={(event) => setForm({ ...form, username: event.target.value.toLowerCase().replace(/[^a-z0-9._-]/g, "") })} helperText="仅使用小写字母、数字、点、下划线或短横线。" required />
-          <FormControl><InputLabel id="new-user-role">角色</InputLabel><Select labelId="new-user-role" label="角色" value={form.role} onChange={(event) => setForm({ ...form, role: event.target.value as "ADMIN" | "MEMBER" })}><MenuItem value="MEMBER">成员 · 只读藏书</MenuItem>{allowAdmin && <MenuItem value="ADMIN">管理员 · 可管理书库</MenuItem>}</Select></FormControl>
+          <TextField label="显示名称" value={form.displayName} onChange={(event: any) => setForm({ ...form, displayName: event.target.value })} required autoFocus />
+          <TextField label="用户名" value={form.username} onChange={(event: any) => setForm({ ...form, username: event.target.value.toLowerCase().replace(/[^a-z0-9._-]/g, "") })} helperText="仅使用小写字母、数字、点、下划线或短横线。" required />
+          <FormControl><InputLabel id="new-user-role">角色</InputLabel><Select labelId="new-user-role" label="角色" value={form.role} onChange={(event: any) => setForm({ ...form, role: event.target.value as "ADMIN" | "MEMBER" })}><MenuItem value="MEMBER">成员 · 只读藏书</MenuItem>{allowAdmin && <MenuItem value="ADMIN">管理员 · 可管理书库</MenuItem>}</Select></FormControl>
           {error && <Alert severity="error">{error}</Alert>}
         </Stack></DialogContent>
         <DialogActions sx={{ p: 3 }}><Button onClick={onClose} color="inherit">取消</Button><Button type="submit" variant="contained" disabled={loading}>{loading ? "正在创建…" : "创建并生成临时密码"}</Button></DialogActions>

@@ -1,12 +1,12 @@
-import VisibilityOffOutlined from "@mui/icons-material/VisibilityOffOutlined";
-import VisibilityOutlined from "@mui/icons-material/VisibilityOutlined";
-import Alert from "@mui/material/Alert";
-import Button from "@mui/material/Button";
-import IconButton from "@mui/material/IconButton";
-import InputAdornment from "@mui/material/InputAdornment";
-import Stack from "@mui/material/Stack";
-import TextField from "@mui/material/TextField";
-import Typography from "@mui/material/Typography";
+import { VisibilityOffOutlined } from "@/ui/icons";
+import { VisibilityOutlined } from "@/ui/icons";
+import { Alert } from "@/ui";
+import { Button } from "@/ui";
+import { IconButton } from "@/ui";
+import { InputAdornment } from "@/ui";
+import { Stack } from "@/ui";
+import { TextField } from "@/ui";
+import { Typography } from "@/ui";
 import { useQuery } from "@tanstack/react-query";
 import { useState, type FormEvent } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -52,13 +52,13 @@ export function LoginPage() {
   return (
     <AuthFrame title="回到你的书房" greeting={getLoginGreeting(new Date().getHours())}>
       <Stack component="form" spacing={2.5} onSubmit={submit}>
-        <TextField label="用户名" autoComplete="username" value={username} onChange={(event) => setUsername(event.target.value)} required autoFocus />
+        <TextField label="用户名" autoComplete="username" value={username} onChange={(event: any) => setUsername(event.target.value)} required autoFocus />
         <TextField
           label="密码"
           type={showPassword ? "text" : "password"}
           autoComplete="current-password"
           value={password}
-          onChange={(event) => setPassword(event.target.value)}
+          onChange={(event: any) => setPassword(event.target.value)}
           required
           slotProps={{
             input: {

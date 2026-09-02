@@ -1,5 +1,5 @@
-import CircularProgress from "@mui/material/CircularProgress";
-import Stack from "@mui/material/Stack";
+import { CircularProgress } from "@/ui";
+import { Stack } from "@/ui";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type PropsWithChildren } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { api } from "../api/client";

@@ -1,39 +1,39 @@
-import AdminPanelSettingsOutlined from "@mui/icons-material/AdminPanelSettingsOutlined";
-import AutoStoriesOutlined from "@mui/icons-material/AutoStoriesOutlined";
-import CategoryOutlined from "@mui/icons-material/CategoryOutlined";
-import CheckRounded from "@mui/icons-material/CheckRounded";
-import CollectionsBookmarkOutlined from "@mui/icons-material/CollectionsBookmarkOutlined";
-import FontDownloadOutlined from "@mui/icons-material/FontDownloadOutlined";
-import HomeOutlined from "@mui/icons-material/HomeOutlined";
-import LibraryBooksOutlined from "@mui/icons-material/LibraryBooksOutlined";
-import LogoutOutlined from "@mui/icons-material/LogoutOutlined";
-import MenuRounded from "@mui/icons-material/MenuRounded";
-import NotesOutlined from "@mui/icons-material/NotesOutlined";
-import PaletteOutlined from "@mui/icons-material/PaletteOutlined";
-import SearchRounded from "@mui/icons-material/SearchRounded";
-import SettingsOutlined from "@mui/icons-material/SettingsOutlined";
-import StorageRounded from "@mui/icons-material/StorageRounded";
-import ThreeDRotationOutlined from "@mui/icons-material/ThreeDRotationOutlined";
-import AppBar from "@mui/material/AppBar";
-import Avatar from "@mui/material/Avatar";
-import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
-import Divider from "@mui/material/Divider";
-import Drawer from "@mui/material/Drawer";
-import IconButton from "@mui/material/IconButton";
-import InputAdornment from "@mui/material/InputAdornment";
-import List from "@mui/material/List";
-import ListItemButton from "@mui/material/ListItemButton";
-import ListItemIcon from "@mui/material/ListItemIcon";
-import ListItemText from "@mui/material/ListItemText";
-import Menu from "@mui/material/Menu";
-import MenuItem from "@mui/material/MenuItem";
-import Stack from "@mui/material/Stack";
-import TextField from "@mui/material/TextField";
-import Toolbar from "@mui/material/Toolbar";
-import Tooltip from "@mui/material/Tooltip";
-import Typography from "@mui/material/Typography";
-import { alpha } from "@mui/material/styles";
+import { AdminPanelSettingsOutlined } from "@/ui/icons";
+import { AutoStoriesOutlined } from "@/ui/icons";
+import { CategoryOutlined } from "@/ui/icons";
+import { CheckRounded } from "@/ui/icons";
+import { CollectionsBookmarkOutlined } from "@/ui/icons";
+import { FontDownloadOutlined } from "@/ui/icons";
+import { HomeOutlined } from "@/ui/icons";
+import { LibraryBooksOutlined } from "@/ui/icons";
+import { LogoutOutlined } from "@/ui/icons";
+import { MenuRounded } from "@/ui/icons";
+import { NotesOutlined } from "@/ui/icons";
+import { PaletteOutlined } from "@/ui/icons";
+import { SearchRounded } from "@/ui/icons";
+import { SettingsOutlined } from "@/ui/icons";
+import { StorageRounded } from "@/ui/icons";
+import { ThreeDRotationOutlined } from "@/ui/icons";
+import { AppBar } from "@/ui";
+import { Avatar } from "@/ui";
+import { Box } from "@/ui";
+import { Button } from "@/ui";
+import { Divider } from "@/ui";
+import { Drawer } from "@/ui";
+import { IconButton } from "@/ui";
+import { InputAdornment } from "@/ui";
+import { List } from "@/ui";
+import { ListItemButton } from "@/ui";
+import { ListItemIcon } from "@/ui";
+import { ListItemText } from "@/ui";
+import { Menu } from "@/ui";
+import { MenuItem } from "@/ui";
+import { Stack } from "@/ui";
+import { TextField } from "@/ui";
+import { Toolbar } from "@/ui";
+import { Tooltip } from "@/ui";
+import { Typography } from "@/ui";
+import { alpha } from "@/ui";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useState, type PropsWithChildren } from "react";
 import { NavLink, useLocation, useNavigate, useSearchParams } from "react-router-dom";
@@ -155,7 +155,7 @@ export function AppShell({ children }: PropsWithChildren) {
           position="sticky"
           elevation={0}
           color="transparent"
-          sx={(theme) => ({
+          sx={(theme: any) => ({
             bgcolor: alpha(theme.palette.background.default, 0.94),
             color: "text.primary",
             backdropFilter: "blur(16px)",
@@ -198,10 +198,10 @@ export function AppShell({ children }: PropsWithChildren) {
               <TextField
                 size="small"
                 value={query}
-                onChange={(event) => updateQuery(event.target.value)}
+                onChange={(event: any) => updateQuery(event.target.value)}
                 placeholder={location.pathname === "/recycle-bin" ? "搜索回收站" : location.pathname === "/library" ? "搜索展示书目" : "搜索整座书库"}
                 aria-label={location.pathname === "/recycle-bin" ? "搜索回收站" : location.pathname === "/library" ? "搜索展示书目" : "搜索整座书库"}
-                sx={(theme) => ({
+                sx={(theme: any) => ({
                   flexGrow: { xs: searchExpanded ? 1 : 0, md: 0 },
                   flexShrink: 1,
                   flexBasis: `${tokens.layout.touchTarget}px`,
@@ -217,7 +217,7 @@ export function AppShell({ children }: PropsWithChildren) {
                     flexGrow: { xs: 1, md: 0 },
                     width: { xs: `${tokens.layout.touchTarget}px`, md: "100%" },
                   },
-                  "& .MuiOutlinedInput-root": {
+                  "& .bk-field-control": {
                     height: `${tokens.layout.touchTarget}px`,
                     bgcolor: searchExpanded ? "background.paper" : "transparent",
                     borderRadius: `${tokens.radius.lg}px`,
@@ -225,36 +225,34 @@ export function AppShell({ children }: PropsWithChildren) {
                     transition: theme.transitions.create("background-color", {
                       duration: theme.transitions.duration.standard,
                     }),
-                    "& .MuiOutlinedInput-notchedOutline": {
+                    "& .ant-input-affix-wrapper": {
                       borderColor: searchExpanded ? "divider" : "transparent",
                       transition: theme.transitions.create("border-color", {
                         duration: theme.transitions.duration.standard,
                       }),
                     },
                   },
-                  "&:hover .MuiOutlinedInput-root, &:focus-within .MuiOutlinedInput-root": {
+                  "&:hover .bk-field-control, &:focus-within .bk-field-control": {
                     bgcolor: "background.paper",
-                  },
-                  "&:hover .MuiOutlinedInput-notchedOutline, &:focus-within .MuiOutlinedInput-notchedOutline": {
                     borderColor: "divider",
                   },
-                  "& .MuiInputBase-input": {
+                  "& .bk-field-control input, & .bk-field-control textarea": {
                     minWidth: 0,
                     opacity: searchExpanded ? 1 : 0,
                     transition: theme.transitions.create("opacity", {
                       duration: theme.transitions.duration.shorter,
                     }),
                   },
-                  "&:hover .MuiInputBase-input, &:focus-within .MuiInputBase-input": {
+                  "&:hover .bk-field-control input, &:focus-within .bk-field-control input, &:hover .bk-field-control textarea, &:focus-within .bk-field-control textarea": {
                     opacity: 1,
                   },
-                  "& .MuiInputAdornment-root": {
+                  "& .bk-input-adornment, & .ant-input-prefix": {
                     mr: searchExpanded ? `${tokens.spacing[2]}px` : 0,
                     transition: theme.transitions.create("margin-right", {
                       duration: theme.transitions.duration.shorter,
                     }),
                   },
-                  "&:hover .MuiInputAdornment-root, &:focus-within .MuiInputAdornment-root": {
+                  "&:hover .bk-input-adornment, &:focus-within .bk-input-adornment, &:hover .ant-input-prefix, &:focus-within .ant-input-prefix": {
                     mr: `${tokens.spacing[2]}px`,
                   },
                 })}
@@ -265,11 +263,11 @@ export function AppShell({ children }: PropsWithChildren) {
                 }}
               />
               <Tooltip title={`全站主题：${bookKinThemeOptions[bookKinTheme].label}`}>
-                <IconButton color="inherit" onClick={(event) => setThemeAnchor(event.currentTarget)} aria-label="切换全站主题">
+                <IconButton color="inherit" onClick={(event: any) => setThemeAnchor(event.currentTarget)} aria-label="切换全站主题">
                   <PaletteOutlined />
                 </IconButton>
               </Tooltip>
-              {user ? <IconButton onClick={(event) => setMenuAnchor(event.currentTarget)} aria-label="账户菜单">
+              {user ? <IconButton onClick={(event: any) => setMenuAnchor(event.currentTarget)} aria-label="账户菜单">
                 <Avatar sx={{ width: 38, height: 38, bgcolor: "secondary.main", color: "common.white", fontFamily: tokens.typography.fontFamily.display }}>
                   {user.displayName.slice(0, 1)}
                 </Avatar>

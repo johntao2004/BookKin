@@ -1,38 +1,38 @@
-import AutoStoriesRounded from "@mui/icons-material/AutoStoriesRounded";
-import CheckRounded from "@mui/icons-material/CheckRounded";
-import FontDownloadRounded from "@mui/icons-material/FontDownloadRounded";
-import FormatBoldRounded from "@mui/icons-material/FormatBoldRounded";
-import FormatSizeRounded from "@mui/icons-material/FormatSizeRounded";
-import FormatUnderlinedRounded from "@mui/icons-material/FormatUnderlinedRounded";
-import MenuBookOutlined from "@mui/icons-material/MenuBookOutlined";
-import NavigateBeforeRounded from "@mui/icons-material/NavigateBeforeRounded";
-import NavigateNextRounded from "@mui/icons-material/NavigateNextRounded";
-import NoteAddOutlined from "@mui/icons-material/NoteAddOutlined";
-import Alert from "@mui/material/Alert";
-import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
-import ButtonBase from "@mui/material/ButtonBase";
-import Chip from "@mui/material/Chip";
-import CircularProgress from "@mui/material/CircularProgress";
-import Dialog from "@mui/material/Dialog";
-import DialogActions from "@mui/material/DialogActions";
-import DialogContent from "@mui/material/DialogContent";
-import DialogTitle from "@mui/material/DialogTitle";
-import Divider from "@mui/material/Divider";
-import Drawer from "@mui/material/Drawer";
-import List from "@mui/material/List";
-import ListItemButton from "@mui/material/ListItemButton";
-import ListItemText from "@mui/material/ListItemText";
-import Menu from "@mui/material/Menu";
-import MenuItem from "@mui/material/MenuItem";
-import Popover from "@mui/material/Popover";
-import Slider from "@mui/material/Slider";
-import Snackbar from "@mui/material/Snackbar";
-import Stack from "@mui/material/Stack";
-import Switch from "@mui/material/Switch";
-import TextField from "@mui/material/TextField";
-import Tooltip from "@mui/material/Tooltip";
-import Typography from "@mui/material/Typography";
+import { AutoStoriesRounded } from "@/ui/icons";
+import { CheckRounded } from "@/ui/icons";
+import { FontDownloadRounded } from "@/ui/icons";
+import { FormatBoldRounded } from "@/ui/icons";
+import { FormatSizeRounded } from "@/ui/icons";
+import { FormatUnderlinedRounded } from "@/ui/icons";
+import { MenuBookOutlined } from "@/ui/icons";
+import { NavigateBeforeRounded } from "@/ui/icons";
+import { NavigateNextRounded } from "@/ui/icons";
+import { NoteAddOutlined } from "@/ui/icons";
+import { Alert } from "@/ui";
+import { Box } from "@/ui";
+import { Button } from "@/ui";
+import { ButtonBase } from "@/ui";
+import { Chip } from "@/ui";
+import { CircularProgress } from "@/ui";
+import { Dialog } from "@/ui";
+import { DialogActions } from "@/ui";
+import { DialogContent } from "@/ui";
+import { DialogTitle } from "@/ui";
+import { Divider } from "@/ui";
+import { Drawer } from "@/ui";
+import { List } from "@/ui";
+import { ListItemButton } from "@/ui";
+import { ListItemText } from "@/ui";
+import { Menu } from "@/ui";
+import { MenuItem } from "@/ui";
+import { Popover } from "@/ui";
+import { Slider } from "@/ui";
+import { Snackbar } from "@/ui";
+import { Stack } from "@/ui";
+import { Switch } from "@/ui";
+import { TextField } from "@/ui";
+import { Tooltip } from "@/ui";
+import { Typography } from "@/ui";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
@@ -236,7 +236,7 @@ export function ReaderPage() {
         backLabel={user ? "返回全部书籍" : "返回书库"}
         onOpenTableOfContents={() => setTocOpen(true)}
         onToggleBookmark={() => void toggleBookmark()}
-        onOpenSettings={(event) => setSettingsAnchor(event.currentTarget)}
+        onOpenSettings={(event: any) => setSettingsAnchor(event.currentTarget)}
         onOpenNotes={() => setNotesOpen(true)}
       />
 
@@ -288,7 +288,7 @@ export function ReaderPage() {
           <Typography component="div" variant="body2" sx={{ mb: 2, color: currentTheme.foreground, fontFamily: tokens.typography.fontFamily.display, maxHeight: 86, overflow: "auto" }}><Box component="span" sx={{ bgcolor: annotationColorBackground(highlightColor), borderRadius: "2px", boxDecorationBreak: "clone" }}>“{selection?.quote}”</Box></Typography>
           <Typography variant="caption" color="text.secondary">高亮颜色</Typography>
           <AnnotationColorSwatches value={highlightColor} onChange={setHighlightColor} disabled={annotationBusy} compact />
-          <TextField label="写下这段文字带来的想法" multiline minRows={3} fullWidth value={note} onChange={(event) => setNote(event.target.value)} autoFocus />
+          <TextField label="写下这段文字带来的想法" multiline minRows={3} fullWidth value={note} onChange={(event: any) => setNote(event.target.value)} autoFocus />
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2.5, justifyContent: "space-between" }}><Button color="inherit" disabled={annotationBusy} onClick={() => { setNoteComposerOpen(false); setNote(""); }}>返回</Button><Button variant="contained" disabled={!note.trim() || annotationBusy} startIcon={<CheckRounded />} onClick={() => void saveAnnotation("HIGHLIGHT", true)}>保存笔记</Button></DialogActions>
       </Dialog>
@@ -304,7 +304,7 @@ export function ReaderPage() {
             </MenuItem>)}
           </Stack>
           <Stack direction="row" spacing={1} sx={{ alignItems: "center", mt: 1.5, mb: 1 }}><FormatSizeRounded /><Typography sx={{ fontWeight: 700 }}>字号</Typography><Typography variant="body2" color="text.secondary" sx={{ ml: "auto" }}>{fontSize}px</Typography></Stack>
-          <Slider min={16} max={28} step={1} value={fontSize} onChange={(_, value) => setReaderSettings((current) => ({ ...current, fontSize: value as number }))} valueLabelDisplay="auto" />
+          <Slider min={16} max={28} step={1} value={fontSize} onChange={(_: any, value: any) => setReaderSettings((current) => ({ ...current, fontSize: value as number }))} valueLabelDisplay="auto" />
           <Stack direction="row" sx={{ alignItems: "center", gap: 1.25, mt: 1.5 }}>
             <AutoStoriesRounded />
             <Box sx={{ minWidth: 0 }}>
@@ -315,7 +315,7 @@ export function ReaderPage() {
             </Box>
             <Switch
               checked={readerSettings.pageTurnEnabled}
-              onChange={(event) => setReaderSettings((current) => ({ ...current, pageTurnEnabled: event.target.checked }))}
+              onChange={(event: any) => setReaderSettings((current) => ({ ...current, pageTurnEnabled: event.target.checked }))}
               slotProps={{ input: { "aria-label": "启用翻页效果" } }}
               sx={{ ml: "auto" }}
             />
