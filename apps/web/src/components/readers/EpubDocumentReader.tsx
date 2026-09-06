@@ -93,6 +93,7 @@ export default function EpubDocumentReader({ bookId, annotations, theme, fontSiz
       '@import url("/fonts/noto-fonts.css");',
       '@font-face { font-family: "Source Han Serif SC"; src: url("/fonts/source-han-serif-sc-regular.woff2") format("woff2"); font-display: swap; }',
       '@font-face { font-family: "Source Han Sans SC"; src: url("/fonts/source-han-sans-sc-regular.woff2") format("woff2"); font-display: swap; }',
+      '@font-face { font-family: "Alibaba PuHuiTi"; src: url("/fonts/alibaba-puhuiti-regular.woff2") format("woff2"); font-display: swap; }',
       fontSourceUrl ? `@font-face { font-family: "${familyName}"; src: url("${fontSourceUrl}"); font-display: swap; }` : "",
     ].join("\n");
     document.head.append(style);

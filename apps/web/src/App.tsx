@@ -1,5 +1,5 @@
-import { CircularProgress } from "@/ui";
-import { Stack } from "@/ui";
+import { Skeleton } from "@/ui";
+import { PageContainer } from "./components/PageHeader";
 import { lazy, Suspense } from "react";
 import { Navigate, Outlet, Route, Routes } from "react-router-dom";
 import { RequireAuth } from "./auth/AuthContext";
@@ -35,7 +35,7 @@ function PublicShell() {
 
 export default function App() {
   return (
-    <Suspense fallback={<Stack sx={{ minHeight: "100vh", alignItems: "center", justifyContent: "center" }}><CircularProgress /></Stack>}>
+    <Suspense fallback={<PageContainer><div role="status" aria-label="正在加载页面"><Skeleton active paragraph={{ rows: 8 }} /></div></PageContainer>}>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/setup" element={<SetupPage />} />

@@ -1,3 +1,4 @@
+import { Skeleton } from "@/ui";
 import { AutoAwesomeOutlined } from "@/ui/icons";
 import { BookmarkAddOutlined } from "@/ui/icons";
 import { EditNoteRounded } from "@/ui/icons";
@@ -11,14 +12,12 @@ import { Alert } from "@/ui";
 import { Box } from "@/ui";
 import { Button } from "@/ui";
 import { Chip } from "@/ui";
-import { CircularProgress } from "@/ui";
 import { Dialog } from "@/ui";
 import { DialogActions } from "@/ui";
 import { DialogContent } from "@/ui";
 import { Divider } from "@/ui";
 import { Fab } from "@/ui";
 import { FormControl } from "@/ui";
-import { InputLabel } from "@/ui";
 import { MenuItem } from "@/ui";
 import { Select } from "@/ui";
 import { Snackbar } from "@/ui";
@@ -132,12 +131,17 @@ export function LibraryPage() {
             // fixed token-derived track prevents the compact empty states
             // from collapsing while the featured cover and weekly chart set
             // the height of the upper row.
-            gridTemplateRows: { sm: `repeat(2, ${tokens.spacing[24] * 5}px)` },
+            gridAutoRows: `${tokens.spacing[24] * 3.5}px`,
             gap: { xs: `${tokens.spacing[4]}px`, sm: `${tokens.spacing[6]}px` },
             mb: { xs: `${tokens.spacing[6]}px`, md: `${tokens.spacing[8]}px` },
             alignItems: "stretch",
           }}
         >
+          {booksQuery.isPending ? Array.from({ length: 4 }, (_, index) => (
+            <Box key={index} role="status" aria-label="正在加载书库概览" sx={{ p: 3, border: 1, borderColor: "divider", borderRadius: `${tokens.radius.xl}px`, bgcolor: "background.paper" }}>
+              <Skeleton active paragraph={{ rows: 4 }} />
+            </Box>
+          )) : <>
           {featured && (
             <>
               <Box
@@ -168,7 +172,9 @@ export function LibraryPage() {
                     mt: `${tokens.spacing[4]}px`,
                   }}
                 >
-                  <Box component="img" src={featured.coverUrl} alt={`${featured.title}封面`} loading="eager" decoding="async" fetchPriority="high" sx={{ width: "100%", height: "100%", minHeight: 0, borderRadius: `${tokens.radius.lg}px`, objectFit: "cover" }} />
+                  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", minWidth: 0, minHeight: 0 }}>
+                    <Box component="img" src={featured.coverUrl} alt={`${featured.title}封面`} loading="eager" decoding="async" fetchPriority="high" sx={{ display: "block", width: "auto", height: "auto", maxWidth: "100%", maxHeight: "100%", borderRadius: `${tokens.radius.lg}px` }} />
+                  </Box>
                   <Stack sx={{ minWidth: 0, justifyContent: "center", alignItems: "flex-start" }}>
                     <Typography id="featured-book-title" variant="h4" component="h3">{featured.title}</Typography>
                     <Typography color="text.secondary" sx={{ mt: `${tokens.spacing[2]}px` }}>{featured.author}</Typography>
@@ -236,6 +242,7 @@ export function LibraryPage() {
               )}
             </Stack>
           </>
+          </>}
         </Box>
 
         <Stack direction={{ xs: "column", md: "row" }} sx={{ justifyContent: "space-between", alignItems: { xs: "stretch", md: "flex-end" }, gap: 2, mb: 3 }}>
@@ -255,16 +262,14 @@ export function LibraryPage() {
             {canManage && <Button variant="contained" startIcon={<CloudUploadOutlined />} onClick={() => setUploadOpen(true)} sx={{ whiteSpace: "nowrap" }}>上传书籍</Button>}
             {canManage && <Button variant="outlined" startIcon={<DriveFileRenameOutlineRounded />} onClick={() => setBatchRenameOpen(true)} sx={{ whiteSpace: "nowrap" }}>批量重命名</Button>}
             <FormControl size="small" sx={{ minWidth: 118 }}>
-              <InputLabel id="format-label">格式</InputLabel>
-              <Select labelId="format-label" label="格式" value={format} onChange={(event: any) => updateParam("format", event.target.value, "ALL")} startAdornment={<FilterListRounded sx={{ mr: 1, color: "text.secondary" }} />}>
+              <Select label="格式" value={format} onChange={(event: any) => updateParam("format", event.target.value, "ALL")} startAdornment={<FilterListRounded sx={{ mr: 1, color: "text.secondary" }} />}>
                 <MenuItem value="ALL">全部格式</MenuItem>
                 <MenuItem value="EPUB">EPUB</MenuItem>
                 <MenuItem value="PDF">PDF</MenuItem>
               </Select>
             </FormControl>
             <FormControl size="small" sx={{ minWidth: 126 }}>
-              <InputLabel id="sort-label">排序</InputLabel>
-              <Select labelId="sort-label" label="排序" value={sort} onChange={(event: any) => updateParam("sort", event.target.value, "recent")}>
+              <Select label="排序" value={sort} onChange={(event: any) => updateParam("sort", event.target.value, "recent")}>
                 <MenuItem value="recent">最近入库</MenuItem>
                 <MenuItem value="title">按书名</MenuItem>
                 <MenuItem value="author">按作者</MenuItem>
@@ -274,7 +279,9 @@ export function LibraryPage() {
         </Stack>
 
         {booksQuery.isPending ? (
-          <Stack spacing={2} sx={{ alignItems: "center", py: 12 }}><CircularProgress /><Typography color="text.secondary">正在打开书库…</Typography></Stack>
+          <Box role="status" aria-label="正在加载藏书" sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2, minmax(0, 1fr))", md: "repeat(4, minmax(0, 1fr))" }, gap: 3 }}>
+            {Array.from({ length: 4 }, (_, index) => <Box key={index}><Box sx={{ aspectRatio: "2 / 3", bgcolor: "action.hover", borderRadius: `${tokens.radius.lg}px`, mb: 2 }} /><Skeleton active title={false} paragraph={{ rows: 2 }} /></Box>)}
+          </Box>
         ) : booksQuery.isError && !booksQuery.data ? (
           <Alert severity="error">书库暂时无法读取，请检查 API 与 NAS 状态。</Alert>
         ) : books.length === 0 ? (
@@ -304,7 +311,7 @@ export function LibraryPage() {
           <Stack ref={triggerRef} role="status" aria-live="polite" sx={{ minHeight: 96, alignItems: "center", justifyContent: "center", mt: 3 }}>
             {booksQuery.isFetchingNextPage ? (
               <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", color: "text.secondary" }}>
-                <CircularProgress size={22} />
+                <Skeleton active title={false} paragraph={{ rows: 2 }} />
                 <Typography variant="body2">正在展开更多藏书…</Typography>
               </Stack>
             ) : automaticLoadingSupported ? (

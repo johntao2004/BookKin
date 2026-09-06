@@ -21,9 +21,9 @@ describe("LoginPage", () => {
 
   it("never invents a database password outside demo mode", () => {
     expect(getLoginDefaults(false)).toEqual({
-      username: "owner",
+      username: "",
       password: "",
-      hint: "使用初始化时创建的账户登录",
+      hint: "",
     });
     expect(getLoginDefaults(true).password).toBe("bookkin-demo");
   });

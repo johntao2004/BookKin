@@ -42,9 +42,10 @@ import {
   type LibraryRoomId,
 } from "./virtual-library-rooms";
 import "./virtual-library.css";
+import { VirtualLibrarySearch } from "./VirtualLibrarySearch";
 
 type ViewPreset = "front" | "free";
-type PointerMode = "inspect" | "orbit" | "portal" | "select" | "shelf" | null;
+type PointerMode = "inspect" | "orbit" | "portal" | "select" | "shelf" | "terminal" | null;
 
 const MIN_SCENE_ZOOM = 0.72;
 const MAX_SCENE_ZOOM = 1.55;
@@ -99,6 +100,9 @@ export function VirtualLibraryExperience() {
   const [selectedShelfInfo, setSelectedShelfInfo] = useState<ShelfCategoryInfo | null>(null);
   const [activeRoom, setActiveRoom] = useState<LibraryRoomId>("hall");
   const [viewPreset, setViewPreset] = useState<ViewPreset>("front");
+  const [searchOpen, setSearchOpen] = useState(false);
+  const searchOpenRef = useRef(false);
+  searchOpenRef.current = searchOpen;
   const [sceneError, setSceneError] = useState(false);
   const booksQuery = useQuery({
     queryKey: VIRTUAL_LIBRARY_BOOKS_QUERY_KEY,
@@ -331,21 +335,29 @@ export function VirtualLibraryExperience() {
         updatePointer(event);
         raycaster.setFromCamera(pointer, camera);
         if (activeRoomRef.current !== "hall") {
-          return { book: null, shelfSectionId: null, portalRoom: null };
+          return { book: null, shelfSectionId: null, portalRoom: null, terminal: false };
+        }
+        const terminalHit = raycaster.intersectObject(world.catalogTerminal, true)[0];
+        if (terminalHit && world.catalogTerminal.parent) {
+          const surface = raycaster.intersectObject(world.catalogTerminal.parent, true)[0];
+          if (!surface || surface.distance >= terminalHit.distance - 0.001) {
+            return { book: null, shelfSectionId: null, portalRoom: null, terminal: true };
+          }
         }
         const bookHit = raycaster.intersectObjects(world.interactiveMeshes, false)[0];
         const book = bookHit ? findSceneBook(bookHit.object) : null;
         if (book) {
           if (world.getExpandedShelfSectionId() === book.shelfSectionId) {
-            return { book, shelfSectionId: null, portalRoom: null };
+            return { book, shelfSectionId: null, portalRoom: null, terminal: false };
           }
-          return { book: null, shelfSectionId: book.shelfSectionId, portalRoom: null };
+          return { book: null, shelfSectionId: book.shelfSectionId, portalRoom: null, terminal: false };
         }
         const portalHit = raycaster.intersectObjects(world.portalHitMeshes, false)[0];
         const portalRoom = portalHit ? findPortalRoom(portalHit.object) : null;
-        if (portalRoom) return { book: null, shelfSectionId: null, portalRoom };
+        if (portalRoom) return { book: null, shelfSectionId: null, portalRoom, terminal: false };
         const shelfHit = raycaster.intersectObjects(world.shelfHitMeshes, false)[0];
         return {
+          terminal: false,
           book: null,
           shelfSectionId: shelfHit ? findShelfSectionId(shelfHit.object) : null,
           portalRoom: null,
@@ -471,7 +483,7 @@ export function VirtualLibraryExperience() {
         pointerState.book = sceneBook;
         pointerState.shelfSectionId = target.shelfSectionId;
         pointerState.portalRoom = target.portalRoom;
-        pointerState.mode = sceneBook
+        pointerState.mode = target.terminal ? "terminal" : sceneBook
           ? selectedBookIdRef.current === sceneBook.book.id
             ? "inspect"
             : "select"
@@ -524,7 +536,7 @@ export function VirtualLibraryExperience() {
         else delete canvas.dataset.hoveredShelfSection;
         if (target.book) canvas.dataset.hoveredBookId = target.book.book.id;
         else delete canvas.dataset.hoveredBookId;
-        canvas.style.cursor = target.book || target.portalRoom || target.shelfSectionId !== null ? "pointer" : "grab";
+        canvas.style.cursor = target.terminal || target.book || target.portalRoom || target.shelfSectionId !== null ? "pointer" : "grab";
       };
       const endPointer = (event: PointerEvent) => {
         if (pointerState.pointerId !== event.pointerId) return;
@@ -540,6 +552,7 @@ export function VirtualLibraryExperience() {
         })
           ? pointerState.book?.book.id ?? null
           : null;
+        if (pointerState.mode === "terminal" && moved < 8 && hitTestTargets(event).terminal) setSearchOpen(true);
         if (pointerState.mode === "select" && pointerState.book && moved < 8) selectBook(pointerState.book);
         if (pointerState.mode === "portal" && pointerState.portalRoom && moved < 8) {
           navigateRoom(pointerState.portalRoom);
@@ -575,7 +588,7 @@ export function VirtualLibraryExperience() {
         if (pointerState.mode === null) canvas.style.cursor = "grab";
       };
       const onKeyDown = (event: KeyboardEvent) => {
-        if (event.key !== "Escape") return;
+        if (searchOpenRef.current || event.key !== "Escape") return;
         if (activeRoomRef.current !== "hall") {
           navigateRoom("hall");
           return;
@@ -811,7 +824,9 @@ export function VirtualLibraryExperience() {
           data-book-presentation={selectedBook ? "inspection" : "shelved"}
         />
       </div>
+      <VirtualLibrarySearch open={searchOpen} books={books} onClose={() => setSearchOpen(false)} />
       <div className="virtual-library-overlay">
+        {activeRoom === "hall" && <Button className="virtual-library-terminal-access" onClick={() => setSearchOpen(true)} aria-label="使用星仪水晶球搜索藏书">搜索藏书</Button>}
         {activeRoom === "hall" ? (
           <Button component={Link} to="/library" startIcon={<ArrowBackRounded />} className="virtual-library-back" aria-label="返回书库">
             返回书库

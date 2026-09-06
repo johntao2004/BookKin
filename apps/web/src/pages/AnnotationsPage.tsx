@@ -58,7 +58,7 @@ function AnnotationBooks({ onOpen }: { onOpen: (bookId: string) => void }) {
 
   return (
     <PageContainer>
-      <PageHeader eyebrow="阅读笔记" title="阅读笔记" description="按书籍整理高亮、下划线、加粗与阅读笔记；所有内容仅当前账户可见。" />
+      <PageHeader eyebrow="READING NOTES" title="阅读笔记" description="按书籍整理高亮、下划线、加粗与阅读笔记；所有内容仅当前账户可见。" />
       <TextField
         value={search}
         onChange={(event: any) => setSearch(event.target.value)}

@@ -5,7 +5,6 @@ import { Box } from "@/ui";
 import { Button } from "@/ui";
 import { Card } from "@/ui";
 import { CardActionArea } from "@/ui";
-import { Chip } from "@/ui";
 import { CircularProgress } from "@/ui";
 import { Stack } from "@/ui";
 import { Typography } from "@/ui";
@@ -42,11 +41,10 @@ export function PublicLibraryPage() {
   const revision = displayQuery.data?.pages.at(-1)?.revision ?? 0;
 
   return (
-    <PageContainer sx={{ pt: { xs: 3, md: 5 } }}>
+    <PageContainer>
       <PageHeader
         eyebrow="HOME"
         title="首页"
-        action={<Chip icon={<AutoStoriesOutlined />} label={`${books.length}${displayQuery.hasNextPage ? "+" : ""} 本展示书目`} variant="outlined" />}
       />
       {displayQuery.isPending ? (
         <Stack spacing={2} sx={{ alignItems: "center", py: 12 }}><CircularProgress /><Typography color="text.secondary">正在打开首页…</Typography></Stack>
@@ -81,7 +79,7 @@ export function PublicLibraryPage() {
 
 function PublicBookCard({ book }: { book: DisplayBook }) {
   return (
-    <Card sx={{ bgcolor: "transparent", overflow: "visible", contentVisibility: "auto", containIntrinsicSize: "420px" }}>
+    <Card variant="borderless" sx={{ "&.ant-card": { boxShadow: "none" }, bgcolor: "transparent", overflow: "visible", contentVisibility: "auto", containIntrinsicSize: "420px" }}>
       <CardActionArea component={Link} to={`/reader/${book.id}`} sx={{ borderRadius: `${tokens.radius.lg}px`, overflow: "hidden" }}>
         <Box component="img" src={book.coverUrl} alt={`${book.title}封面`} loading="lazy" decoding="async" sx={{ width: "100%", aspectRatio: "2 / 3", display: "block", objectFit: "cover", bgcolor: "background.paper", boxShadow: tokens.shadow.cover }} />
       </CardActionArea>

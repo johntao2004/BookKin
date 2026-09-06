@@ -23,6 +23,7 @@ BookKin turns a NAS folder into a private digital bookshelf for a household. It 
 | Area | Capabilities |
 | --- | --- |
 | Library | EPUB/PDF catalog, metadata and cover management, categories, booklists, search, cursor pagination, large-catalog tooling |
+| Virtual library | Original Gothic rotunda, real catalog books, shelf inspection, celestial catalog search and separate archive/office rooms |
 | Reading | EPUB.js and PDF.js readers, reading positions, bookmarks, highlights, underlines, bold marks, notes, custom fonts and whole-site themes |
 | Family accounts | Owner, administrator and member roles; private per-user progress and annotations; controlled public discovery |
 | NAS safety | Incremental scans, path validation, fingerprints, previews, idempotency keys, file leases, recycle bin and audited recovery paths |
@@ -105,14 +106,17 @@ For production, expose BookKin only through a trusted LAN or VPN and mount the i
 ## Repository map
 
 ```text
-apps/web/       React, TypeScript, Vite and Material UI
-apps/server/    Java 21, Spring Boot, Flyway and jOOQ
-design/         Design tokens and Figma scope
+apps/web/       前端：React、TypeScript、Vite、Ant Design
+apps/server/    后端：Java 21、Spring Boot、Flyway、jOOQ
+design/         Design tokens, Figma scope and dated visual QA
 docs/           Architecture, operations, ADRs and OpenAPI
 docker/         Production image and multi-root example
 ops/            Backup and restore utilities
-scripts/        Local runtime, demo data and token generation
+scripts/        开发脚本：本地启动、演示数据、Token 生成
+scripts/benchmark/  性能测试脚本与专用 SQL
 ```
+
+完整代码位置及文件存放规则见 [目录导航](docs/repository-layout.md)。
 
 ## Quality gates
 
@@ -130,6 +134,9 @@ The design-token source of truth is [`design/tokens.json`](design/tokens.json). 
 
 ## Documentation
 
+- [Repository layout](docs/repository-layout.md)
+- [Virtual library](docs/virtual-library.md)
+- [Documentation audit](docs/documentation-audit.md)
 - [Technical architecture](docs/technical-architecture.md)
 - [Design system](docs/design-system.md)
 - [Implementation status](docs/implementation-status.md)
@@ -140,4 +147,4 @@ The design-token source of truth is [`design/tokens.json`](design/tokens.json). 
 
 ## License
 
-BookKin is available under the [MIT License](LICENSE).
+BookKin source code is available under the [MIT License](LICENSE). Bundled fonts, artwork and models retain their own licenses and source notices in `apps/web/public/`; see [font sources](apps/web/public/fonts/FONT_SOURCES.md) and [virtual-library assets](docs/virtual-library.md#资源与许可).

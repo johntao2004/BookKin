@@ -1,7 +1,7 @@
 import { FormatQuoteRounded } from "@/ui/icons";
 import { NotesOutlined } from "@/ui/icons";
 import { Box } from "@/ui";
-import { CircularProgress } from "@/ui";
+import { Skeleton } from "@/ui";
 import { Stack } from "@/ui";
 import { Typography } from "@/ui";
 import { useQuery } from "@tanstack/react-query";
@@ -60,10 +60,7 @@ export function RecentAnnotationsPanel({ embedded = false }: { embedded?: boolea
       </Box>
 
       {annotationsQuery.isPending ? (
-        <Stack role="status" direction="row" sx={{ minHeight: `${tokens.spacing[20]}px`, alignItems: "center", justifyContent: "center", gap: `${tokens.spacing[3]}px`, color: "text.secondary", mt: `${tokens.spacing[4]}px` }}>
-          <CircularProgress size={20} />
-          <Typography variant="body2">正在整理最近批注…</Typography>
-        </Stack>
+        <Box role="status" aria-label="正在整理最近批注" sx={{ mt: 2 }}><Skeleton active paragraph={{ rows: 2 }} /></Box>
       ) : annotationsQuery.isError ? (
         <Stack sx={{ minHeight: `${tokens.spacing[20]}px`, alignItems: "flex-start", justifyContent: "center", mt: `${tokens.spacing[4]}px` }}>
           <Typography color="text.secondary">暂时无法读取批注，不影响继续阅读。</Typography>

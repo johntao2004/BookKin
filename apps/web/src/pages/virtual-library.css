@@ -346,3 +346,33 @@
     text-align: center;
   }
 }
+
+.virtual-library-search-results {
+  max-height: 50svh;
+  overflow-y: auto;
+  display: grid;
+  gap: var(--spacing-3);
+}
+.virtual-library-search-result {
+  display: grid;
+  gap: var(--spacing-1);
+  padding: var(--spacing-3);
+  color: var(--color-text-primary);
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+}
+.virtual-library-search-result span { color: var(--color-text-secondary); }
+.virtual-library-terminal-access:not(:focus-visible) {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+.virtual-library-terminal-access:focus-visible {
+  position: absolute;
+  bottom: var(--spacing-6);
+  left: 50%;
+  transform: translateX(-50%);
+  pointer-events: auto;
+}

@@ -39,26 +39,27 @@ BookKin 的视觉语言是“安静的私人藏书室”：暖色纸张、深墨
 - UI/正文字体：`Inter` + `Noto Sans SC`/苹方；用于导航、表单、表格、说明。
 - 等宽字体：`JetBrains Mono`；只用于路径、指纹、任务编号和日志。
 - 大标题用常规字重，不用粗黑；正文 16px、行高 1.65；管理表格最小 14px。
-- 长路径采用中间省略，悬停/聚焦显示完整值，并提供复制按钮。
+- 长路径应保持可读；NAS 根目录卡片允许路径换行，避免挤压状态信息。
 
 ## 4. 布局与响应式
 
-- 1440px：最大内容宽 1360px；画廊 6–8 列；详情以侧栏或双栏出现。
-- 1024px：画廊 4–5 列；管理表格保留关键列，其余进入详情抽屉。
-- 390px：单列主任务；画廊 2 列；筛选使用底部抽屉；危险操作使用全屏对话框。
-- 顶栏桌面高 72px；内容区水平边距为 24–48px，手机为 16px。
+- 页面与导航共用 `PageContainer` / `pageWidthSx`，最大宽度 1360px；手机水平内边距 16px，中间断点 24px，大屏通过最大宽度居中。
+- 标准标题共用 `PageHeader`，统一眉题、标题、说明与操作区。
+- 藏书概览桌面为两列两行，四张卡片等高 336px；手机堆叠。画廊列数随页面和视口变化，不固定承诺列数。
+- 用户管理桌面使用 Ant Design 数据表，手机使用卡片；按钮和筛选在手机纵向全宽排列。
+- 顶栏高度使用 72px Token。
 - 间距只使用 4px 基准 Token；卡片默认 12px 圆角，输入和按钮为 8px。
 
 ## 5. 核心组件映射
 
 | BookKin 组件 | Ant Design 基础 | 关键约束 |
 |---|---|---|
-| `BookKinButton` | Ant `Button` | 高度至少 44px；主按钮珊瑚色 |
-| `BookKinField` | Ant `Input` | 标签常驻；错误信息不改变表单宽度 |
+| `Button` | Ant `Button` | 高度至少 44px；主按钮珊瑚色 |
+| `TextField` | Ant `Input` | 标签常驻；错误信息不改变表单宽度 |
 | `BookCard` | Ant `Card` | 封面比例 2:3；标题最多两行 |
-| `StatusChip` | Ant `Tag` | 文字与颜色双编码状态 |
+| `Chip` | Ant `Tag` | 文字与颜色双编码状态 |
 | `OperationPreviewDialog` | Ant `Modal` | 先摘要后完整变更清单；危险项不可折叠隐藏 |
-| `DataTable` | HTML table / Ant table contract | 游标分页；批量选择跨页不默认保留 |
+| `DataTable` | Ant `Table`（兼容旧 HTML table 适配） | 游标分页；批量选择跨页不默认保留 |
 | `SideNavigation` | Ant `Drawer` | 管理区与阅读区分组 |
 | `ReaderToolbar` | BookKin shell + Ant controls | 深色、可自动隐藏、键盘可达 |
 
@@ -97,3 +98,15 @@ AntV 图表通过 `apps/web/src/charts/antv.ts` 统一创建，后续统计功�
 ## 9. Figma 页面结构
 
 `BookKin · 电子图书馆 V1`：Cover、Getting Started、Foundations、Components、Auth、Library、Reader、File Management、Responsive、Utilities。变量名使用斜杠层级，并设置 Web code syntax 指向生成的 CSS Variable。
+
+## 10. 当前页面与组件约定
+
+- 纸色、亮色、夜间是全站持久主题，顶栏和阅读器共用选择；深色不能只覆盖阅读正文。
+- 图标按钮使用独立图标槽，图标与文字居中对齐；中文双字标签不自动插入空格。路由按钮保留同样结构和键盘焦点。
+- 顶栏搜索支持悬停、触摸点击和自动聚焦；离开、失焦或 Escape 收起。主题为紧凑下拉菜单。导航抽屉与正文共享宽度和边缘对齐规则。
+- 藏书概览加载时显示骨架；真实请求结束后才展示空状态。封面按自然比例适配并裁切四角；卡片无悬停放大或抬升。
+- NAS 根目录卡片使用紧凑上下内边距，分割线不额外占据外边距；路径、权限、空间和扫描时间均保留。
+- 字体管理卡片直接显示名称、元信息和状态开关；无前置图标、尾部分割线或停用说明。上传名称和字体类型的标签间距一致，许可输入框与上传按钮齐平，格式提示位于按钮下方。
+- 预设字体状态固定启用，只有自定义字体可停用。内置阅读字体包括 Noto Serif SC、Noto Sans SC、Source Han Serif SC、思源黑体和阿里巴巴普惠体；来源见字体目录说明。
+- PDF 重排页在内层裁切，窄屏单页、平板以上双页；页码导航位于正文下方，不重复生成源文档页脚。翻页效果默认开启且可持久关闭。
+- 虚拟书库的建筑、目录交互及资源说明见 [虚拟书库](virtual-library.md)。

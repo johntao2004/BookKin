@@ -19,6 +19,6 @@
     "demo:seed": "bash scripts/seed-native-demo.sh",
     "start:local": "bash scripts/start-local.sh",
     "stop:local": "bash scripts/stop-local.sh",
-    "benchmark:catalog": "node tools/benchmark-catalog.mjs"
+    "benchmark:catalog": "node scripts/benchmark/benchmark-catalog.mjs"
   }
 }

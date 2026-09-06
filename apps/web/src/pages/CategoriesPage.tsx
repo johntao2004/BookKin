@@ -25,7 +25,7 @@ import { api } from "../api/client";
 import { useAuth } from "../auth/AuthContext";
 import { BrowseBookCard } from "../components/CatalogDiscoveryCards";
 import { CategoryManagementDialog } from "../components/CategoryManagementDialog";
-import { PageContainer } from "../components/PageHeader";
+import { PageContainer, PageHeader } from "../components/PageHeader";
 import { useInfiniteScrollTrigger } from "../hooks/useInfiniteScrollTrigger";
 import { tokens } from "../theme/generated-tokens";
 
@@ -117,17 +117,11 @@ export function CategoriesPage() {
   ) : undefined;
 
   return (
-    <PageContainer sx={{ py: { xs: `${tokens.spacing[4]}px`, md: `${tokens.spacing[8]}px` } }}>
-      <Stack direction={{ xs: "column", sm: "row" }} sx={{ justifyContent: "space-between", alignItems: { xs: "flex-start", sm: "flex-end" }, gap: `${tokens.spacing[4]}px`, mb: `${tokens.spacing[6]}px` }}>
-        <Box sx={{ maxWidth: tokens.layout.readingMax }}>
-          <Typography variant="overline" color="primary.main" sx={{ fontWeight: 700, letterSpacing: "0.12em" }}>CATEGORIES</Typography>
-          <Typography variant="h3" component="h1">分类</Typography>
-          <Typography color="text.secondary" sx={{ mt: `${tokens.spacing[1]}px` }}>
-            {user ? "从主题进入藏书，再用格式、书名或作者缩小范围。" : "从公开书目中，按主题找到下一本想读的书。"}
-          </Typography>
-        </Box>
-        {headerAction}
-      </Stack>
+    <PageContainer>
+      <PageHeader eyebrow="CATEGORIES" title="分类"
+        description={user ? "从主题进入藏书，再用格式、书名或作者缩小范围。" : "从公开书目中，按主题找到下一本想读的书。"}
+        action={headerAction}
+      />
 
       {categoriesQuery.isPending ? (
         <Stack sx={{ alignItems: "center", py: `${tokens.spacing[20]}px` }}><CircularProgress /><Typography color="text.secondary" sx={{ mt: `${tokens.spacing[2]}px` }}>正在整理分类目录…</Typography></Stack>

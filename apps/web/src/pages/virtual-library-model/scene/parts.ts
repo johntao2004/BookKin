@@ -391,7 +391,7 @@ export function createRestrictedLectern(materials: LibraryMaterials) {
   return group;
 }
 
-export function createChandelier(materials: LibraryMaterials, lightEnabled: boolean) {
+export function createChandelier(materials: LibraryMaterials, lightEnabled: boolean, mountHeight = 2.45) {
   const group = new THREE.Group();
   group.name = 'Candle chandelier';
   const mainRadius = 0.88;
@@ -483,12 +483,15 @@ export function createChandelier(materials: LibraryMaterials, lightEnabled: bool
     );
   }
 
-  for (let linkIndex = 0; linkIndex < 18; linkIndex += 1) {
+  const chainStart = 0.78;
+  const chainEnd = mountHeight - 0.14;
+  const linkCount = Math.max(2, Math.ceil((chainEnd - chainStart) / 0.09) + 1);
+  for (let linkIndex = 0; linkIndex < linkCount; linkIndex += 1) {
     const link = new THREE.Mesh(
       new THREE.TorusGeometry(0.047, 0.011, 6, 14),
       materials.iron,
     );
-    link.position.y = 0.78 + linkIndex * 0.09;
+    link.position.y = THREE.MathUtils.lerp(chainStart, chainEnd, linkIndex / (linkCount - 1));
     if (linkIndex % 2 === 1) link.rotation.y = Math.PI / 2;
     link.castShadow = true;
     link.name = `Chandelier chain link ${linkIndex + 1}`;
@@ -498,10 +501,14 @@ export function createChandelier(materials: LibraryMaterials, lightEnabled: bool
     new THREE.CylinderGeometry(0.07, 0.095, 0.12, 10),
     materials.brass,
   );
-  ceilingShackle.position.y = 2.39;
+  ceilingShackle.position.y = mountHeight - 0.06;
   ceilingShackle.castShadow = true;
   ceilingShackle.name = 'Chandelier ceiling shackle';
   group.add(ceilingShackle);
+  const mountingPlate = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.17, 0.06, 32), materials.iron);
+  mountingPlate.position.y = mountHeight - 0.03;
+  mountingPlate.name = 'Chandelier ceiling mounting plate';
+  group.add(mountingPlate);
 
   for (let candleIndex = 0; candleIndex < candleCount; candleIndex += 1) {
     const angle = (candleIndex / candleCount) * Math.PI * 2;

@@ -107,12 +107,23 @@ select {
 .bk-button-icon {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  line-height: 1;
+  font-size: var(--typography-font-size-body);
 }
 
 .bk-icon-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+}
+
+.bk-icon-button > span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
 }
 
 .bk-card,
@@ -147,6 +158,14 @@ select {
   width: 100%;
 }
 
+.bk-input-adornment {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
 .bk-field-label,
 .bk-input-label {
   color: var(--color-text-secondary);
@@ -154,7 +173,7 @@ select {
   line-height: var(--typography-line-height-ui);
 }
 
-.bk-field .ant-input,
+.bk-field > .ant-input,
 .bk-field .ant-input-affix-wrapper,
 .bk-field .ant-input-textarea {
   min-height: var(--layout-touch-target);
@@ -167,6 +186,12 @@ select {
 .bk-field .ant-input::placeholder,
 .bk-field .ant-input-textarea::placeholder {
   color: var(--color-text-muted);
+}
+
+/* Adornment actions already provide a full touch target; do not add the
+   input wrapper's vertical padding to their height. */
+.bk-field .ant-input-affix-wrapper .bk-icon-button {
+  margin-block: calc(-1 * var(--spacing-1));
 }
 
 .bk-select {
@@ -387,6 +412,9 @@ select {
 }
 
 .bk-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1);
   margin-inline-end: 0;
   border-radius: var(--radius-sm);
   font-weight: var(--typography-font-weight-medium);
@@ -471,4 +499,12 @@ select {
     left: var(--spacing-3);
     max-width: none;
   }
+}
+
+@font-face {
+  font-family: "Alibaba PuHuiTi";
+  src: url("/fonts/alibaba-puhuiti-regular.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
 }

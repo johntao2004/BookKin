@@ -10,11 +10,27 @@ Build app UI in `src/`. Keep `.openai/hosting.json`, `worker/index.js`, `scripts
 
 The library book grid is intentionally static: do not add hover zoom, lift, transform, or stronger-shadow effects to book cards or covers. Preserve visible keyboard focus and working card actions.
 
+The public homepage header must not show a display-book count badge.
+
+Use PageContainer and PageHeader for standard page introductions. Keep the eyebrow, heading, description, and top spacing consistent; do not recreate their typography or override page-top padding on individual listing or management pages.
+
+Keep the navigation drawer and its content at one shared width. Put BookKin in the drawer header beside the close control, and inset navigation items evenly instead of adding a second brand section inside the body.
+
+Use a compact Ant Design dropdown for the global theme selector, aligned to the trigger's right edge; close it automatically when the pointer leaves the trigger and menu region.
+
+Keep the global navigation and page content on the shared page-width rule, with identical maximum width and responsive horizontal gutters. Align the outer navigation controls with the content edges.
+
+The header search must expand on mouse enter and also support clicking on touch devices, focus its input, and collapse on mouse leave, blur or Escape while preserving the query. Keep its expanded field within the viewport on phones. The theme dropdown must also open on mouse enter.
+
 The library book-action menu uses one `编辑元信息` entry for cover, title, and other bibliographic fields; do not split `更换封面` or title editing back into separate menu items. Keep NAS location changes such as `移动` as independent file operations so they continue through fingerprint validation and the safety-preview flow.
 
 The library homepage includes a compact recent-annotations module beneath the latest-book card, in the same content flow rather than as a separate column. Show only the signed-in user's newest private annotation, link back to the exact EPUB CFI or PDF page when available, and keep a clear empty state without adding goals or streaks.
 
 The library homepage overview uses a two-by-two desktop composition: all four overview cards share the same height, the two cards in the left column share one width, and the two cards in the right column share another width. On narrow screens, keep the cards stacked in one column.
+
+Keep overview cards compact at the token-derived 336px height rather than 480px. Use skeleton placeholders for library overview, statistics, annotations, and catalog loading; do not flash zero-data empty states before requests finish.
+
+The featured-book cover in the overview must visibly clip all four image corners using the shared radius token. Keep the image box fitted to its natural aspect ratio within the cover slot; do not apply rounding to a larger letterboxed image box whose corners never touch the visible cover.
 
 The four library-homepage overview cards share one visual hierarchy. Keep every section label at the same top-left inset with the same display font, weight, line height, and same-size leading icon; use contrast-aware color only where a dark card requires it. Treat the featured book title, weekly duration, newest annotation content or empty state, and current-reading title or empty state as one secondary tier with matching typography and vertical rhythm. Do not enlarge or detach one card's section icon, vertically center a section label, or omit the featured-card icon.
 
@@ -23,6 +39,10 @@ Keep overview-card actions sparse: the featured card has only `开始阅读`, th
 At tablet widths, the library action and filter controls may share horizontal rows with wrapping; on phone widths, keep them stacked and full width.
 
 On the reader-font management page, start each font card directly with the font name and metadata; do not add a leading font-icon tile. Show only the status switch at the right edge, without visible `启用` or `已停用` copy beside it, and preserve an action-specific accessible name on the switch itself.
+
+End the reader-font management page at the font list. Do not add a trailing divider or explanatory paragraph about disabling fonts and fallback behavior.
+
+In the font-upload form, align the name input and font-kind select using equal label gaps. On desktop, align the file-selection button with the license input; place file-format guidance below the control row so it cannot lift the button out of alignment.
 
 On desktop authentication screens, the default `mountains-autumn.jpg` artwork fills the entire left panel with the library introduction centered over the image in the same middle visual band as the form, while the authentication form occupies the right panel. Place the `BookKin` brand independently at the image panel's true upper-left safe edge; do not inherit the centered introduction's much deeper horizontal inset. Keep a mobile-only brand above the form when the artwork is hidden. The login title has one concise, playful greeting selected from morning, midday, and evening according to the visitor's local time. Show the owner-initialization link only when the public setup-status check explicitly reports an uninitialized library; hide it while unknown, on failure, and after initialization, and redirect direct `/setup` visits once initialization is complete. Do not pin the introduction to the image bottom or restore the teal field with a floating cover card; small screens may hide the artwork and prioritize the form.
 
@@ -93,3 +113,17 @@ Keep `书库状态`, `用户管理`, `文件任务`, `阅读字体`, and `展示
 Use a distinct semantic icon for every reader-facing navigation item. In particular, `首页` uses the home icon while `藏书库` retains the library-books icon; do not reuse the same glyph for both destinations.
 
 Use Ant Design 6 as the only UI component library for new and migrated screens; keep shared adaptations in `src/ui/` and do not add a second component-library dependency. Use `src/charts/antv.ts` as the AntV G2 entry point for chart features, and feed charts from the same generated design tokens as the rest of the interface.
+
+Use the native Ant Design DataTable for management tables. Keep column headings aligned with cell content, put account enable switches in their own column, and use compact text-link actions with consistent spacing.
+
+Keep NAS root status cards compact: use modest vertical padding around the name/path and the capacity/scan row, and no extra vertical margin around the separating divider. Let content determine height so narrow-screen wrapping and degraded status remain readable.
+
+The virtual library now targets a Hogwarts-inspired collegiate Gothic reading library: modeled moulded vault ribs, carved timber trusses, paired long reading tables, turned chairs, parchment stationery, and warm localized lamps against cool window light. This supersedes the earlier painted conical-roof visual target. Preserve original BookKin identity, real-catalog book correspondence, shelf inspection, room portals, lazy room creation, and model-anchored camera collisions.
+
+Keep the virtual-library central floor clear: no added reading tables or chairs. Place one original celestial catalog orb on the existing central reception countertop; clicking it opens private-catalog search. Do not restore the computer, monitor or keyboard. Open a single search field at the center of the viewport, focus it automatically, and show results only after typing. Ceiling ribs must remain above the bookcase crowns; never run low transverse trusses or brackets into shelving. This supersedes the earlier paired-table and hammerbeam additions.
+
+Every chandelier must have a continuous interlocking chain and ceiling mounting plate reaching the actual modeled ceiling, calculated from its room ceiling height and the fixture scale. Never leave a fixed-length suspension ending in mid-air after changing roof geometry.
+
+Use separate icon and label slots in every shared button, including leading/trailing icons and router links. Never wrap the entire icon-plus-label composition in a Fragment passed to Ant Button, which flattens it into one text span and loses the gap. Keep a consistent token-based icon size and preserve keyboard and disabled behavior.
+
+The fireplace fire must occupy the actual hearth volume behind the grate, with a grounded coal bed and upward turbulent motion. Do not use overlapping camera-facing flame sprites or a floating circular glow plate; orbiting must preserve the fire depth and its occlusion by the grate and masonry.

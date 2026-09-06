@@ -28,7 +28,7 @@ interface BookCardProps {
 export function BookCard({ book, onOpen, onRead, onEditMetadata, onFileOperation, onAddToBooklist }: BookCardProps) {
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
   return (
-    <Card sx={{ bgcolor: "transparent", overflow: "visible", contentVisibility: "auto", containIntrinsicSize: "420px" }}>
+    <Card variant="borderless" sx={{ "&.ant-card": { boxShadow: "none" }, bgcolor: "transparent", overflow: "visible", contentVisibility: "auto", containIntrinsicSize: "420px" }}>
       <CardActionArea
         onClick={() => onOpen(book)}
         sx={{

@@ -19,7 +19,7 @@ import { getLoginGreeting } from "./login-greeting";
 export function getLoginDefaults(isDemo: boolean) {
   return isDemo
     ? { username: "owner", password: "bookkin-demo", hint: "内存演示模式：owner / bookkin-demo" }
-    : { username: "owner", password: "", hint: "使用初始化时创建的账户登录" };
+    : { username: "", password: "", hint: "" };
 }
 
 export function LoginPage() {
@@ -80,9 +80,9 @@ export function LoginPage() {
           首次运行？<Link to="/setup">初始化主人账户</Link>
         </Typography>
       )}
-      <Typography variant="caption" color="text.disabled" sx={{ display: "block", mt: 2 }}>
+      {defaults.hint && <Typography variant="caption" color="text.disabled" sx={{ display: "block", mt: 2 }}>
         {defaults.hint}
-      </Typography>
+      </Typography>}
     </AuthFrame>
   );
 }

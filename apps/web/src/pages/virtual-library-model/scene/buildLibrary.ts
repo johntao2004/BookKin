@@ -25,10 +25,13 @@ import {
   createRestrictedPortalGate,
   makeBox,
 } from './parts';
+import { createCatalogTerminal } from './catalogTerminal';
+import { createScholasticVault, SCHOLASTIC_LAYOUT } from './scholasticArchitecture';
 import { VIRTUAL_LIBRARY_LAYOUT } from '../../virtual-library-layout';
 
 export interface BuiltLibrary {
   root: THREE.Group;
+  catalogTerminal: THREE.Group;
   materials: LibraryMaterials;
   bookSlots: BookShelfSlot[];
   shelfSections: ExpandableShelfSection[];
@@ -356,11 +359,13 @@ function addFloorAndShell(root: THREE.Group, materials: LibraryMaterials) {
       },
     },
   ]);
-  const floorMaterial = new THREE.MeshStandardMaterial({
-    color: 0x221f1b,
-    roughness: 0.94,
-    metalness: 0.01,
-  });
+  const floorMaterial = materials.stone.clone();
+  floorMaterial.color.setHex(PALETTE.stone);
+  floorMaterial.roughness = 0.88;
+  floorMaterial.map = materials.stone.map!.clone();
+  floorMaterial.map.repeat.set(9, 9);
+  floorMaterial.bumpMap = floorMaterial.map;
+  floorMaterial.bumpScale = 0.035;
   const floor = new THREE.Mesh(new THREE.CircleGeometry(innerRadius - 0.22, 112), floorMaterial);
   floor.rotation.x = -Math.PI / 2;
   floor.position.y = 0.02;
@@ -511,6 +516,24 @@ function addTangentialBookcase(
     group.add(makeBox(width, height - 0.32, 0.11, materials.woodDark, 0, baseY + height / 2, backZ));
     const insetZ = backZ + faces[0] * 0.066;
     const insetWidth = width - 0.18;
+    // Recessed joinery reads at shelf-inspection distance without occupying book slots.
+    for (const panelX of [-width / 3, 0, width / 3]) {
+      const panelWidth = width / 3 - 0.12;
+      const panelDepth = insetZ + faces[0] * 0.035;
+      for (const edge of [-1, 1]) {
+        const stile = makeBox(0.028, height - 0.86, 0.025, materials.woodWarm,
+          panelX + edge * panelWidth / 2, baseY + height / 2, panelDepth, false);
+        stile.name = 'Bookcase recessed panel stile';
+        group.add(stile);
+      }
+      for (const panelY of [baseY + 0.43, baseY + height - 0.43]) {
+        const molding = makeBox(panelWidth, 0.028, 0.025, materials.woodWarm,
+          panelX, panelY, panelDepth, false);
+        molding.name = 'Bookcase recessed panel molding';
+        group.add(molding);
+      }
+    }
+
     group.add(
       makeBox(
         insetWidth,
@@ -861,12 +884,25 @@ function addOuterBookWalls(
   for (const boundary of getHallColumnSectionIndices(segmentCount)) {
     const angle = entranceAngle + (boundary + 0.5) * step;
     const shaft = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.28, 0.38, mainHeight - 0.45, 10),
+      new THREE.CylinderGeometry(0.28, 0.38, mainHeight - 0.45, 32),
       materials.stoneDark,
     );
     shaft.position.copy(positionFromPolar(innerRadius - 0.5, angle, mainHeight / 2));
     shaft.castShadow = true;
     root.add(shaft);
+    for (let flute = 0; flute < 12; flute++) {
+      const a = flute * Math.PI / 6;
+      const reed = new THREE.Mesh(new THREE.CylinderGeometry(0.034, 0.042, mainHeight - 1.1, 8), materials.stone);
+      reed.position.copy(shaft.position).add(new THREE.Vector3(Math.cos(a) * 0.285, 0, Math.sin(a) * 0.285));
+      reed.castShadow = true;
+      root.add(reed);
+    }
+    for (const y of [0.24, 0.4, 5.5, 5.72, mainHeight - 0.78]) {
+      const collar = new THREE.Mesh(new THREE.TorusGeometry(0.36, 0.055, 10, 32), materials.stone);
+      collar.rotation.x = Math.PI / 2;
+      collar.position.copy(positionFromPolar(innerRadius - 0.5, angle, y));
+      root.add(collar);
+    }
     for (const y of [5.62, galleryY + 0.14, mainHeight - 0.65]) {
       const capital = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.36, 0.24, 10), materials.stone);
       capital.position.copy(positionFromPolar(innerRadius - 0.5, angle, y));
@@ -1047,6 +1083,14 @@ function addGallery(
       railLayout.balusterCenterY,
     ));
     rail.add(baluster);
+    for (const heightRatio of [-0.4, 0.4]) {
+      const socket = new THREE.Mesh(new THREE.CylinderGeometry(0.061, 0.061, 0.055, 12), materials.brass);
+      socket.name = 'Gallery baluster fitted collar';
+      socket.position.copy(baluster.position);
+      socket.position.y += railLayout.balusterHeight * heightRatio;
+      rail.add(socket);
+    }
+
     const segmentWidth = galleryInner * ((Math.PI * 2) / railSegments) * 0.92;
     if (index % 2 === 0) {
       for (const direction of [-1, 1] as const) {
@@ -1078,7 +1122,7 @@ function addGallery(
     const columnAngle = entranceAngle + (section + 0.5) * step;
     const columnCenter = positionFromPolar(galleryInner - 0.12, columnAngle, 0);
     const column = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.2, 0.28, galleryY - 0.36, 9),
+      new THREE.CylinderGeometry(0.2, 0.28, galleryY - 0.36, 32),
       materials.stoneDark,
     );
     column.position.copy(
@@ -1101,7 +1145,7 @@ function addGallery(
       root.add(rib);
     }
     const base = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.34, 0.4, 0.2, 9),
+      new THREE.CylinderGeometry(0.34, 0.4, 0.2, 32),
       materials.stone,
     );
     base.position.copy(positionFromPolar(galleryInner - 0.12, columnAngle, 0.12));
@@ -1116,7 +1160,7 @@ function addGallery(
       root.add(collar);
     }
     const galleryCapital = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.36, 0.25, 0.24, 9),
+      new THREE.CylinderGeometry(0.36, 0.25, 0.24, 32),
       materials.stone,
     );
     galleryCapital.position.copy(
@@ -1145,7 +1189,8 @@ function addReceptionAndChandelier(root: THREE.Group, materials: LibraryMaterial
     segments: 24,
   });
   root.add(reception);
-  const chandelier = createChandelier(materials, false);
+  const mountY = SCHOLASTIC_LAYOUT.vaultSpring + SCHOLASTIC_LAYOUT.vaultRise + 0.14;
+  const chandelier = createChandelier(materials, false, (mountY - 9.15) / 1.45);
   chandelier.position.set(0, 9.15, 0);
   chandelier.scale.setScalar(1.45);
   markCameraCollider(chandelier, {
@@ -1566,364 +1611,10 @@ function addDirectorOfficeEntrance(
   root.add(officeGlow);
 }
 
-function addRoof(root: THREE.Group, materials: LibraryMaterials) {
-  const { innerRadius, mainHeight, roofHeight, segmentCount, entranceAngle } = LIBRARY.tower;
-  const roofBaseY = mainHeight - 0.02;
-  const roofInteriorRadius = innerRadius + 0.3;
-  const roofExteriorRadius = innerRadius + 1.05;
-
-  const interiorLinerMaterial = new THREE.MeshStandardMaterial({
-    color: 0x292621,
-    roughness: 0.9,
-    metalness: 0.03,
-    side: THREE.BackSide,
-  });
-  const interiorLiner = new THREE.Mesh(
-    new THREE.ConeGeometry(roofInteriorRadius, roofHeight, 96, 6, true),
-    interiorLinerMaterial,
-  );
-  interiorLiner.position.y = roofBaseY + roofHeight / 2;
-  interiorLiner.receiveShadow = true;
-  interiorLiner.name = 'Continuous interior roof liner';
-  root.add(interiorLiner);
-
-  const exteriorRoofMaterial = new THREE.MeshStandardMaterial({
-    color: 0x171d22,
-    emissive: 0x05080a,
-    emissiveIntensity: 0.08,
-    roughness: 0.88,
-    metalness: 0.12,
-    side: THREE.DoubleSide,
-  });
-  const exteriorRoofHeight = roofHeight + 0.48;
-  const exteriorRoofBaseY = roofBaseY - 0.22;
-  const exteriorRoofTopY = exteriorRoofBaseY + exteriorRoofHeight;
-  const exteriorRoofRadiusAt = (heightFraction: number) =>
-    0.18 + (roofExteriorRadius - 0.18) * (1 - heightFraction);
-  const exteriorRoof = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.18, roofExteriorRadius, exteriorRoofHeight, 96, 8, true),
-    exteriorRoofMaterial,
-  );
-  exteriorRoof.position.y = exteriorRoofBaseY + exteriorRoofHeight / 2;
-  exteriorRoof.castShadow = true;
-  exteriorRoof.receiveShadow = true;
-  exteriorRoof.frustumCulled = false;
-  exteriorRoof.name = 'Continuous exterior slate roof';
-  root.add(exteriorRoof);
-
-  const fasciaMaterial = materials.stoneDark.clone();
-  fasciaMaterial.side = THREE.DoubleSide;
-  const eaveFascia = new THREE.Mesh(
-    new THREE.CylinderGeometry(
-      roofExteriorRadius + 0.02,
-      roofExteriorRadius + 0.08,
-      0.42,
-      96,
-      1,
-      true,
-    ),
-    fasciaMaterial,
-  );
-  eaveFascia.position.y = roofBaseY + 0.04;
-  eaveFascia.castShadow = true;
-  eaveFascia.name = 'Closed roof eave fascia';
-  root.add(eaveFascia);
-
-  const soffitMaterial = materials.woodDark.clone();
-  soffitMaterial.side = THREE.DoubleSide;
-  const eaveSoffit = new THREE.Mesh(
-    new THREE.RingGeometry(innerRadius - 0.12, roofExteriorRadius + 0.08, 96),
-    soffitMaterial,
-  );
-  eaveSoffit.rotation.x = -Math.PI / 2;
-  eaveSoffit.position.y = roofBaseY - 0.16;
-  eaveSoffit.receiveShadow = true;
-  eaveSoffit.name = 'Closed roof eave soffit';
-  root.add(eaveSoffit);
-
-  const roofStep = (Math.PI * 2) / segmentCount;
-  const panelHeight = roofHeight - 0.08;
-  const panelRadius = roofInteriorRadius - 0.16;
-  const interiorRoofRadiusAt = (heightFraction: number) =>
-    Math.max(0.08, roofInteriorRadius * (1 - heightFraction) - 0.2);
-  const interiorRoofPath = (angle: number, radialInset = 0) =>
-    new THREE.CatmullRomCurve3(
-      [0.02, 0.34, 0.76, 0.98].map((heightFraction) =>
-        positionFromPolar(
-          Math.max(0.05, interiorRoofRadiusAt(heightFraction) - radialInset),
-          angle,
-          roofBaseY + roofHeight * heightFraction,
-        ),
-      ),
-      false,
-      'centripetal',
-    );
-  for (let panelIndex = 0; panelIndex < segmentCount; panelIndex += 1) {
-    const panel = new THREE.Mesh(
-      new THREE.ConeGeometry(
-        panelRadius,
-        panelHeight,
-        10,
-        4,
-        true,
-        entranceAngle + panelIndex * roofStep - 0.002,
-        roofStep + 0.004,
-      ),
-      materials.ceilingPanels[panelIndex % materials.ceilingPanels.length],
-    );
-    panel.position.y = roofBaseY + panelHeight / 2 + 0.035;
-    panel.receiveShadow = true;
-    panel.name = `Painted ceiling panel ${panelIndex + 1}`;
-    root.add(panel);
-  }
-
-  const roofNodeGeometry = new THREE.SphereGeometry(0.1, 12, 9);
-  const panelBossGeometry = new THREE.SphereGeometry(0.075, 10, 8);
-  for (let ribIndex = 0; ribIndex < segmentCount; ribIndex += 1) {
-    const angle = entranceAngle + (ribIndex / segmentCount) * Math.PI * 2;
-    const rib = new THREE.Mesh(
-      new THREE.TubeGeometry(interiorRoofPath(angle), 48, 0.105, 12, false),
-      materials.woodDark,
-    );
-    rib.castShadow = true;
-    rib.name = `Interior roof rib ${ribIndex + 1}`;
-    root.add(rib);
-
-    for (const trimOffset of [-0.028, 0.028]) {
-      const trim = new THREE.Mesh(
-        new THREE.TubeGeometry(
-          interiorRoofPath(angle + trimOffset, 0.035),
-          42,
-          0.024,
-          8,
-          false,
-        ),
-        materials.brass,
-      );
-      trim.name = `Gilded rib trim ${ribIndex + 1}`;
-      root.add(trim);
-    }
-
-    for (const heightFraction of [0.36, 0.67]) {
-      const node = new THREE.Mesh(roofNodeGeometry, materials.brass);
-      node.position.copy(
-        positionFromPolar(
-          interiorRoofRadiusAt(heightFraction) - 0.04,
-          angle,
-          roofBaseY + roofHeight * heightFraction,
-        ),
-      );
-      node.scale.set(1, 0.78, 1);
-      node.name = `Roof rib intersection boss ${ribIndex + 1}`;
-      root.add(node);
-    }
-
-    const panelAngle = angle + roofStep / 2;
-    const panelBoss = new THREE.Mesh(panelBossGeometry, materials.brass);
-    panelBoss.position.copy(
-      positionFromPolar(
-        interiorRoofRadiusAt(0.52) - 0.035,
-        panelAngle,
-        roofBaseY + roofHeight * 0.52,
-      ),
-    );
-    panelBoss.name = `Painted panel boss ${ribIndex + 1}`;
-    root.add(panelBoss);
-
-    const exteriorPoints = [
-      positionFromPolar(
-        exteriorRoofRadiusAt(0.02) + 0.07,
-        angle,
-        exteriorRoofBaseY + exteriorRoofHeight * 0.02,
-      ),
-      positionFromPolar(
-        exteriorRoofRadiusAt(0.34) + 0.07,
-        angle,
-        exteriorRoofBaseY + exteriorRoofHeight * 0.34,
-      ),
-      positionFromPolar(
-        exteriorRoofRadiusAt(0.76) + 0.07,
-        angle,
-        exteriorRoofBaseY + exteriorRoofHeight * 0.76,
-      ),
-      positionFromPolar(
-        exteriorRoofRadiusAt(0.98) + 0.05,
-        angle,
-        exteriorRoofBaseY + exteriorRoofHeight * 0.98,
-      ),
-    ];
-    const exteriorSeam = new THREE.Mesh(
-      new THREE.TubeGeometry(
-        new THREE.CatmullRomCurve3(exteriorPoints, false, 'centripetal'),
-        34,
-        0.055,
-        8,
-        false,
-      ),
-      materials.iron,
-    );
-    exteriorSeam.castShadow = true;
-    exteriorSeam.name = `Exterior standing seam ${ribIndex + 1}`;
-    root.add(exteriorSeam);
-  }
-
-  const dentilGeometry = new THREE.BoxGeometry(0.25, 0.17, 0.28);
-  for (let dentilIndex = 0; dentilIndex < segmentCount * 4; dentilIndex += 1) {
-    const angle = entranceAngle + (dentilIndex / (segmentCount * 4)) * Math.PI * 2;
-    const dentil = new THREE.Mesh(dentilGeometry, materials.woodWarm);
-    placePolar(dentil, innerRadius - 0.24, angle, roofBaseY - 0.17);
-    dentil.castShadow = true;
-    dentil.name = `Ceiling cornice dentil ${dentilIndex + 1}`;
-    root.add(dentil);
-  }
-
-  for (const heightFraction of [0.25, 0.5, 0.75]) {
-    root.add(
-      makeRing(
-        exteriorRoofRadiusAt(heightFraction) + 0.075,
-        0.038,
-        materials.iron,
-        exteriorRoofBaseY + exteriorRoofHeight * heightFraction,
-      ),
-    );
-  }
-  root.add(makeRing(roofExteriorRadius + 0.09, 0.13, materials.iron, roofBaseY - 0.06));
-  root.add(makeRing(roofExteriorRadius + 0.07, 0.055, materials.brass, roofBaseY + 0.16));
-  root.add(makeRing(innerRadius - 0.12, 0.18, materials.woodDark, mainHeight + 0.06));
-  root.add(makeRing(innerRadius - 0.42, 0.085, materials.brass, roofBaseY - 0.11));
-  root.add(
-    makeRing(
-      interiorRoofRadiusAt(0.12),
-      0.065,
-      materials.woodWarm,
-      roofBaseY + roofHeight * 0.12,
-    ),
-  );
-  root.add(
-    makeRing(
-      interiorRoofRadiusAt(0.36),
-      0.11,
-      materials.brass,
-      roofBaseY + roofHeight * 0.36,
-    ),
-  );
-  root.add(
-    makeRing(
-      interiorRoofRadiusAt(0.67),
-      0.09,
-      materials.woodWarm,
-      roofBaseY + roofHeight * 0.67,
-    ),
-  );
-  root.add(
-    makeRing(
-      interiorRoofRadiusAt(0.7),
-      0.035,
-      materials.brass,
-      roofBaseY + roofHeight * 0.7,
-    ),
-  );
-  root.add(
-    makeRing(
-      interiorRoofRadiusAt(0.86),
-      0.055,
-      materials.brass,
-      roofBaseY + roofHeight * 0.86,
-    ),
-  );
-  root.add(
-    makeRing(
-      interiorRoofRadiusAt(0.92),
-      0.045,
-      materials.woodDark,
-      roofBaseY + roofHeight * 0.92,
-    ),
-  );
-  const canopyY = roofBaseY + roofHeight - 0.36;
-  const centralCanopy = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.72, 0.96, 0.2, 16, 2),
-    materials.woodDark,
-  );
-  centralCanopy.position.y = canopyY;
-  centralCanopy.castShadow = true;
-  centralCanopy.name = 'Layered ceiling crown';
-  root.add(centralCanopy);
-  const canopyInset = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.5, 0.67, 0.1, 16, 1),
-    materials.woodWarm,
-  );
-  canopyInset.position.y = canopyY - 0.13;
-  canopyInset.name = 'Ceiling crown inset';
-  root.add(canopyInset);
-  root.add(makeRing(0.82, 0.075, materials.brass, canopyY - 0.12));
-  root.add(makeRing(0.58, 0.045, materials.brass, canopyY - 0.2));
-  const crownPetalGeometry = new THREE.SphereGeometry(0.105, 10, 8);
-  for (let petalIndex = 0; petalIndex < 8; petalIndex += 1) {
-    const angle = (petalIndex / 8) * Math.PI * 2;
-    const petal = new THREE.Mesh(crownPetalGeometry, materials.brass);
-    petal.position.set(Math.cos(angle) * 0.45, canopyY - 0.19, Math.sin(angle) * 0.45);
-    petal.scale.set(1.25, 0.5, 0.85);
-    petal.rotation.y = -angle;
-    petal.name = `Ceiling crown petal ${petalIndex + 1}`;
-    root.add(petal);
-  }
-  const pendantChain = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.035, 0.035, 1.35, 8),
-    materials.iron,
-  );
-  pendantChain.position.y = mainHeight + roofHeight - 1.0;
-  root.add(pendantChain);
-  const pendantCrown = new THREE.Mesh(
-    new THREE.ConeGeometry(0.38, 0.62, 10, 1, true),
-    materials.brass,
-  );
-  pendantCrown.position.y = mainHeight + roofHeight - 1.72;
-  pendantCrown.rotation.x = Math.PI;
-  root.add(pendantCrown);
-  const boss = new THREE.Mesh(new THREE.SphereGeometry(0.3, 16, 12), materials.brass);
-  boss.position.y = canopyY - 0.26;
-  boss.userData.view = 'gallery';
-  root.add(boss);
-
-  const exteriorFinialBase = new THREE.Mesh(
-    new THREE.SphereGeometry(0.24, 16, 12),
-    materials.iron,
-  );
-  exteriorFinialBase.position.y = exteriorRoofTopY + 0.06;
-  root.add(exteriorFinialBase);
-  const exteriorFinial = new THREE.Mesh(
-    new THREE.ConeGeometry(0.16, 0.72, 12),
-    materials.brass,
-  );
-  exteriorFinial.position.y = exteriorRoofTopY + 0.48;
-  exteriorFinial.castShadow = true;
-  root.add(exteriorFinial);
-  const finialCollar = new THREE.Mesh(
-    new THREE.TorusGeometry(0.13, 0.035, 10, 24),
-    materials.brass,
-  );
-  finialCollar.rotation.x = Math.PI / 2;
-  finialCollar.position.y = exteriorRoofTopY + 0.82;
-  root.add(finialCollar);
-  const finialPearl = new THREE.Mesh(
-    new THREE.SphereGeometry(0.105, 14, 10),
-    materials.brass,
-  );
-  finialPearl.position.y = exteriorRoofTopY + 0.9;
-  root.add(finialPearl);
-  const finialNeedle = new THREE.Mesh(
-    new THREE.ConeGeometry(0.055, 0.42, 10),
-    materials.iron,
-  );
-  finialNeedle.position.y = exteriorRoofTopY + 1.14;
-  finialNeedle.castShadow = true;
-  root.add(finialNeedle);
-}
-
 function addLighting(root: THREE.Group): LightingRig {
-  const ambient = new THREE.HemisphereLight(0x8999aa, 0x24150e, 0.84);
+  const ambient = new THREE.HemisphereLight(0x8999aa, 0x24150e, 1.25);
   root.add(ambient);
-  root.add(new THREE.AmbientLight(0x8b725d, 0.4));
+  root.add(new THREE.AmbientLight(0x8b725d, 0.68));
 
   const moon = new THREE.DirectionalLight(0xb8cee0, 1.55);
   moon.position.set(-8, 16, -10);
@@ -1963,11 +1654,18 @@ function addLighting(root: THREE.Group): LightingRig {
 
   for (let index = 0; index < 8; index += 1) {
     const angle = LIBRARY.tower.entranceAngle + (index / 8) * Math.PI * 2;
-    const shelfWash = new THREE.SpotLight(0xffb277, 42, 10, Math.PI / 4.8, 0.82, 1.7);
+    const shelfWash = new THREE.SpotLight(0xffb277, 75, 10, Math.PI / 4.8, 0.82, 1.7);
     shelfWash.name = `Shelf wash light ${index + 1}`;
     shelfWash.position.copy(positionFromPolar(8.1, angle, 6.4));
     shelfWash.target.position.copy(positionFromPolar(13.25, angle, 4.9));
     root.add(shelfWash, shelfWash.target);
+  }
+  for (const x of [-7, 7]) {
+    const vaultLight = new THREE.SpotLight(PALETTE.parchment, 240, 25, Math.PI / 2.8, 0.9, 1.3);
+    vaultLight.position.set(x, 8.5, 2);
+    vaultLight.target.position.set(0, 17.5, -2);
+    vaultLight.name = 'Indirect warm vault bounce';
+    root.add(vaultLight, vaultLight.target);
   }
   return { moon, windowLight };
 }
@@ -1988,12 +1686,13 @@ function addWindowLightShafts(root: THREE.Group) {
     placePolar(shaft, 8.4, angle, 6.2);
     shaft.rotation.x = -0.32;
     root.add(shaft);
+
   }
 }
 
 export function buildLibraryScene(): BuiltLibrary {
   const root = new THREE.Group();
-  root.name = "BookKin circular tower library";
+  root.name = "BookKin collegiate Gothic library";
   const interactiveObjects: THREE.Object3D[] = [];
   const shelfSections: ExpandableShelfSection[] = [];
   const materials = createLibraryMaterials();
@@ -2018,11 +1717,15 @@ export function buildLibraryScene(): BuiltLibrary {
   });
   addGallery(root, materials, interactiveObjects);
   addReceptionAndChandelier(root, materials);
+  const catalogTerminal = createCatalogTerminal(materials);
+  root.add(catalogTerminal);
+  interactiveObjects.push(catalogTerminal);
   const fireplace = addOppositeFireplace(root, materials);
   addSpiralStair(root, materials, interactiveObjects);
   const restrictedGlow = addRestrictedEntrance(root, materials, books, interactiveObjects);
   addDirectorOfficeEntrance(root, materials, books, interactiveObjects);
-  addRoof(root, materials);
+  root.add(createScholasticVault(materials));
+
   const lighting = addLighting(root);
   addWindowLightShafts(root);
 
@@ -2049,6 +1752,7 @@ export function buildLibraryScene(): BuiltLibrary {
 
   return {
     root,
+    catalogTerminal,
     materials,
     bookSlots: books.getSlots(),
     shelfSections,

@@ -1,7 +1,7 @@
 import { AccessTimeRounded } from "@/ui/icons";
 import { Alert } from "@/ui";
 import { Box } from "@/ui";
-import { CircularProgress } from "@/ui";
+import { Skeleton } from "@/ui";
 import { Stack } from "@/ui";
 import { Typography } from "@/ui";
 import type { WeeklyReadingStats } from "../domain/types";
@@ -13,6 +13,7 @@ export function ReadingStatsPanel({ stats, loading, error }: {
   loading: boolean;
   error: boolean;
 }) {
+  if (loading) return <Box role="status" aria-label="正在加载阅读时长" sx={{ height: "100%", p: 3, border: 1, borderColor: "divider", borderRadius: `${tokens.radius.xl}px`, bgcolor: "background.paper" }}><Skeleton active paragraph={{ rows: 4 }} /></Box>;
   if (error) return <Alert severity="warning">阅读时长暂时无法读取，不影响藏书浏览。</Alert>;
   const days = stats?.days ?? [];
   const maximum = Math.max(1, ...days.map((day) => day.seconds));
@@ -39,14 +40,14 @@ export function ReadingStatsPanel({ stats, loading, error }: {
       </Stack>
 
       <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "flex-end", gap: `${tokens.spacing[4]}px`, mt: `${tokens.spacing[4]}px` }}>
-        {loading ? <CircularProgress size={tokens.spacing[6]} /> : <Typography variant="h4">{formatDuration(stats?.totalSeconds ?? 0)}</Typography>}
+        {loading ? <Skeleton.Input active size="small" /> : <Typography variant="h4">{formatDuration(stats?.totalSeconds ?? 0)}</Typography>}
         <Typography variant="caption" color="text.secondary" sx={{ textAlign: "right" }}>
           {formatWeeklyComparison(stats?.totalSeconds ?? 0, stats?.previousWeekSeconds ?? 0)}
         </Typography>
       </Stack>
 
       <Typography variant="body1" sx={{ fontWeight: tokens.typography.fontWeight.semibold, mt: `${tokens.spacing[5]}px`, mb: `${tokens.spacing[2]}px` }}>近 7 日阅读时长</Typography>
-      <Box sx={{ flex: 1, minHeight: `${tokens.spacing[24]}px`, display: "grid", gridTemplateColumns: "repeat(7, minmax(0, 1fr))", gap: { xs: `${tokens.spacing[1]}px`, sm: `${tokens.spacing[2]}px` }, alignItems: "stretch" }}>
+      <Box sx={{ flex: 1, minHeight: `${tokens.spacing[12]}px`, display: "grid", gridTemplateColumns: "repeat(7, minmax(0, 1fr))", gap: { xs: `${tokens.spacing[1]}px`, sm: `${tokens.spacing[2]}px` }, alignItems: "stretch" }}>
         {days.map((day) => (
           <Stack key={day.date} sx={{ minWidth: 0, minHeight: 0, height: "100%", alignItems: "center", justifyContent: "flex-end" }}>
             <Typography variant="caption" color="text.secondary" noWrap sx={{ flexShrink: 0 }}>{day.seconds ? formatCompactDuration(day.seconds) : "0"}</Typography>

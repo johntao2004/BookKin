@@ -1,3 +1,4 @@
+import { PageContainer, PageHeader } from "../components/PageHeader";
 import { CloudUploadOutlined } from "@/ui/icons";
 import { Alert } from "@/ui";
 import { Box } from "@/ui";
@@ -6,7 +7,6 @@ import { Card } from "@/ui";
 import { CardContent } from "@/ui";
 import { Chip } from "@/ui";
 import { CircularProgress } from "@/ui";
-import { Divider } from "@/ui";
 import { FormControl } from "@/ui";
 import { InputLabel } from "@/ui";
 import { MenuItem } from "@/ui";
@@ -24,6 +24,7 @@ import type { ReaderFont } from "../domain/types";
 import { tokens } from "../theme/generated-tokens";
 
 const allowedExtensions = new Set(["woff2", "woff", "ttf", "otf"]);
+const uploadActionWidth = tokens.layout.touchTarget * 5;
 
 export function ReaderFontsPage() {
   const queryClient = useQueryClient();
@@ -78,13 +79,9 @@ export function ReaderFontsPage() {
   };
 
   return (
-    <Box sx={{ maxWidth: tokens.layout.contentMax, mx: "auto", px: { xs: 2, sm: 4, lg: 0 }, py: { xs: 4, md: 7 } }}>
+    <PageContainer>
       {fonts.filter((font) => font.source === "CUSTOM" && font.contentUrl).map((font) => <style key={font.id}>{`@font-face { font-family: "${font.familyName}"; src: url("${font.contentUrl}") format("${font.format?.toLowerCase() ?? "woff2"}"); font-display: swap; }`}</style>)}
-      <Stack spacing={1.5} sx={{ mb: 5 }}>
-        <Typography variant="overline" sx={{ letterSpacing: ".18em", color: "primary.main" }}>READER TYPOGRAPHY</Typography>
-        <Typography variant="h1">阅读字体</Typography>
-        <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 760 }}>为全家成员提供清晰、稳定的正文排版。预设字体随应用发布；自定义字体独立存储，不写入书籍原目录。</Typography>
-      </Stack>
+      <PageHeader eyebrow="READER TYPOGRAPHY" title="阅读字体" description="为全家成员提供清晰、稳定的正文排版。预设字体随应用发布；自定义字体独立存储，不写入书籍原目录。" />
 
       <Card variant="outlined" sx={{ mb: 4, borderRadius: `${tokens.radius.xl}px`, bgcolor: "background.paper" }}>
         <CardContent sx={{ p: { xs: 2.5, sm: 4 } }}>
@@ -94,7 +91,7 @@ export function ReaderFontsPage() {
               <Typography variant="body2" color="text.secondary">上传前请确认字体许可允许在家庭成员之间使用；系统会校验扩展名、文件签名、大小和 SHA-256。</Typography>
               <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
                 <TextField label="展示名称（可选）" value={displayName} onChange={(event: any) => setDisplayName(event.target.value)} fullWidth />
-                <FormControl sx={{ minWidth: { sm: 170 } }}>
+                <FormControl sx={{ minWidth: { sm: 170 }, gap: `${tokens.spacing[2]}px` }}>
                   <InputLabel id="reader-font-kind-label">字体类型</InputLabel>
                   <Select labelId="reader-font-kind-label" label="字体类型" value={kind} onChange={(event: any) => setKind(event.target.value as ReaderFont["kind"])}>
                     <MenuItem value="SERIF">衬线字体</MenuItem>
@@ -104,12 +101,12 @@ export function ReaderFontsPage() {
               </Stack>
               <TextField label="来源 / 许可说明（可选）" value={licenseNote} onChange={(event: any) => setLicenseNote(event.target.value)} fullWidth />
             </Stack>
-            <Stack spacing={1} sx={{ width: { xs: "100%", md: 220 } }}>
+            <Stack sx={{ width: { xs: "100%", md: uploadActionWidth }, flexShrink: 0 }}>
               <input ref={inputRef} hidden type="file" accept=".woff2,.woff,.ttf,.otf" onChange={(event: any) => { const file = event.target.files?.[0]; if (file) void upload(file); }} />
               <Button variant="contained" size="large" startIcon={busy ? <CircularProgress size={18} color="inherit" /> : <CloudUploadOutlined />} disabled={busy} onClick={() => inputRef.current?.click()}>{busy ? `上传中 ${uploadProgress}%` : "选择字体文件"}</Button>
-              <Typography variant="caption" color="text.secondary" sx={{ textAlign: "center" }}>WOFF2 / WOFF / TTF / OTF · ≤ 25 MB</Typography>
             </Stack>
           </Stack>
+          <Typography component="p" variant="caption" color="text.secondary" sx={{ mt: `${tokens.spacing[2]}px`, ml: "auto", width: { xs: "100%", md: uploadActionWidth }, textAlign: "center" }}>WOFF2 / WOFF / TTF / OTF · ≤ 25 MB</Typography>
         </CardContent>
       </Card>
 
@@ -141,10 +138,8 @@ export function ReaderFontsPage() {
           </Card>
         ))}
       </Stack>
-      <Divider sx={{ my: 4 }} />
-      <Typography variant="body2" color="text.secondary">停用只影响后续选择，不删除字体文件；如果某个用户正在使用已停用字体，阅读器会回退到 Noto Serif SC。</Typography>
       <Snackbar open={Boolean(error)} autoHideDuration={5000} onClose={() => setError("")}><Alert severity="error" onClose={() => setError("")}>{error}</Alert></Snackbar>
       <Snackbar open={Boolean(notice)} autoHideDuration={3500} onClose={() => setNotice("")} message={notice} />
-    </Box>
+    </PageContainer>
   );
 }

@@ -1,3 +1,5 @@
+export { default as Skeleton } from "antd/es/skeleton";
+export { default as Dropdown } from "antd/es/dropdown";
 import AntAlert from "antd/es/alert";
 import AntAvatar from "antd/es/avatar";
 import AntButton from "antd/es/button";
@@ -39,6 +41,7 @@ import {
   useEffect,
   useId,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import { tokens } from "../theme/generated-tokens";
@@ -345,6 +348,7 @@ export function Typography({ variant = "body1", component, color, noWrap, align,
   // example `fontSize: { xs: ..., md: ... }`) from taking effect because an
   // inline style always wins over the media-query rule.
   const typographySx: SxObject = {
+    margin: 0,
     ...typographyStyles[variant],
     ...(colorValue ? { color: colorValue } : {}),
     ...(noWrap ? { whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } : {}),
@@ -381,11 +385,14 @@ export const Button = forwardRef<HTMLElement, ButtonProps>(function Button({ var
   // caller's semantic color (for example the active desktop nav item) can
   // override the default Ant button tone without an inline-style conflict.
   const colorSx = isError && variant !== "contained" ? { color: "var(--color-error)", borderColor: "var(--color-error)" } : undefined;
-  const content = <>{startIcon && <span className="bk-button-icon">{startIcon}</span>}{children}{endIcon && <span className="bk-button-icon">{endIcon}</span>}</>;
+  // Ant wraps a Fragment in one text span, which swallows the flex gap between
+  // its icon and label. Keep icons in their own slots for every button variant.
+  const leadingIcon = startIcon ? <span className="bk-button-icon">{startIcon}</span> : undefined;
+  const trailingIcon = endIcon ? <span className="bk-button-icon" key="end-icon">{endIcon}</span> : undefined;
   const classes = mergeClassNames("bk-button", `bk-button-${variant}`, sxClassName({ ...colorSx, ...flattenSx(sx, theme) }, theme), className);
   const style = { width: fullWidth ? "100%" : undefined };
-  if (Component) return createElement(Component, { ...props, ref, to, href, className: classes, style }, content);
-  return <AntButton ref={ref as ForwardedRef<HTMLButtonElement>} {...props} danger={isError || undefined} type={antdType as "primary" | "default" | "text"} size={size === "medium" ? "middle" : size} block={fullWidth} className={classes} style={style} htmlType={typeof type === "string" ? type as "button" | "submit" | "reset" : undefined}>{content}</AntButton>;
+  if (Component) return createElement(Component, { ...props, ref, to, href, className: classes, style }, leadingIcon, children, trailingIcon);
+  return <AntButton ref={ref as ForwardedRef<HTMLButtonElement>} autoInsertSpace={false} {...props} icon={leadingIcon ?? props.icon} danger={isError || undefined} type={antdType as "primary" | "default" | "text"} size={size === "medium" ? "middle" : size} block={fullWidth} className={classes} style={style} htmlType={typeof type === "string" ? type as "button" | "submit" | "reset" : undefined}>{children}{trailingIcon}</AntButton>;
 });
 
 export const ButtonBase = Button;
@@ -569,11 +576,30 @@ export function ListItemText({ primary, secondary, sx, className, ...props }: { 
 interface OverlayProps extends Record<string, any> { open?: boolean; onClose?: () => void; anchorEl?: HTMLElement | null; anchorPosition?: { top: number; left: number }; children?: ReactNode; sx?: SxProps; role?: string; className?: string }
 function Overlay({ open, onClose, anchorEl, anchorPosition, children, sx, role = "menu", className, anchorReference: _anchorReference, marginThreshold: _marginThreshold, ...props }: OverlayProps) {
   const theme = useTheme();
+  const overlayRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const dismissOutside = (event: PointerEvent) => {
+      if (event.target instanceof Node && !overlayRef.current?.contains(event.target) && !anchorEl?.contains(event.target)) onClose?.();
+    };
+    const dismissEscape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      onClose?.();
+      anchorEl?.focus();
+    };
+    document.addEventListener("pointerdown", dismissOutside, true);
+    document.addEventListener("keydown", dismissEscape);
+    return () => {
+      document.removeEventListener("pointerdown", dismissOutside, true);
+      document.removeEventListener("keydown", dismissEscape);
+    };
+  }, [open, onClose, anchorEl]);
   const position = useMemo(() => ({ top: 80, left: 24 }), []);
   if (!open || typeof document === "undefined") return null;
   const rect = anchorEl?.getBoundingClientRect();
   const style: CSSProperties = { position: "fixed", top: anchorPosition?.top ?? (rect ? rect.bottom + 8 : position.top), left: anchorPosition?.left ?? (rect ? Math.max(8, rect.right - 260) : position.left), zIndex: 1400, minWidth: 220, maxWidth: "min(94vw, 420px)", background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "var(--radius-lg)", boxShadow: "var(--shadow-popover)", padding: 8, ...flattenSx(sx, theme) };
-  return createPortal(<div {...props} role={role} className={mergeClassNames("bk-overlay", className)} style={style} onKeyDown={(event: any) => { if (event.key === "Escape") onClose?.(); }}>{children}</div>, document.body);
+  return createPortal(<div {...props} ref={overlayRef} role={role} className={mergeClassNames("bk-overlay", className)} style={style}>{children}</div>, document.body);
 }
 
 export function Menu({ open, onClose, anchorEl, children, slotProps, ...props }: OverlayProps & { slotProps?: { paper?: { sx?: SxProps } } }) {
@@ -711,3 +737,9 @@ export {
   AntModal as _AntModal,
   AntDrawer as _AntDrawer,
 };
+
+// Native data tables keep column alignment and spacing within Ant Design.
+export { AntTable as DataTable };
+export function TableAction(props: React.ComponentProps<typeof AntButton>) {
+  return <AntButton {...props} type="link" size="small" style={{ padding: 0, height: "auto" }} />;
+}

@@ -35,6 +35,36 @@ function renderShell(initialPath: string) {
 describe("AppShell", () => {
   beforeEach(() => localStorage.clear());
 
+  it("automatically closes the theme dropdown when the pointer leaves", async () => {
+    renderShell("/library");
+    const trigger = screen.getByRole("button", { name: "切换全站主题" });
+    fireEvent.mouseEnter(trigger);
+    await waitFor(() => expect(trigger).toHaveAttribute("aria-expanded", "true"));
+    fireEvent.mouseLeave(trigger);
+    await waitFor(() => expect(trigger).toHaveAttribute("aria-expanded", "false"));
+  });
+
+  it("opens search on hover and preserves the query after Escape or blur", () => {
+    renderShell("/library");
+    const trigger = screen.getByRole("button", { name: "展开搜索" });
+    expect(screen.queryByRole("textbox", { name: "搜索展示书目" })).not.toBeInTheDocument();
+    fireEvent.mouseEnter(trigger);
+    const input = screen.getByRole("textbox", { name: "搜索展示书目" });
+    expect(input).toHaveFocus();
+    fireEvent.change(input, { target: { value: "文学" } });
+    fireEvent.mouseLeave(trigger.parentElement!);
+    expect(trigger).toHaveAttribute("aria-expanded", "false");
+    fireEvent.mouseEnter(trigger);
+    const reopenedInput = screen.getByRole("textbox", { name: "搜索展示书目" });
+    fireEvent.keyDown(reopenedInput, { key: "Escape" });
+    expect(trigger).toHaveFocus();
+    expect(trigger).toHaveAttribute("aria-expanded", "false");
+    fireEvent.click(trigger);
+    expect(screen.getByRole("textbox", { name: "搜索展示书目" })).toHaveValue("文学");
+    fireEvent.blur(screen.getByRole("textbox", { name: "搜索展示书目" }));
+    expect(trigger).toHaveAttribute("aria-expanded", "false");
+  });
+
   it("leaves only the reader navigation on reader routes", () => {
     renderShell("/reader/book-1");
 
@@ -63,7 +93,7 @@ describe("AppShell", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "打开导航" }));
     const drawer = screen.getByRole("navigation");
-    expect(within(drawer).getByText("BookKin").previousElementSibling).toBeNull();
+    expect(within(screen.getByRole("dialog", { name: "BookKin" })).getByRole("heading", { name: "BookKin" })).toBeInTheDocument();
     for (const label of managementLabels) expect(within(drawer).queryByText(label)).not.toBeInTheDocument();
     expect(within(drawer).queryByText("展示书目设置")).not.toBeInTheDocument();
     expect(within(drawer).getAllByRole("button").map((button) => button.textContent)).toEqual([

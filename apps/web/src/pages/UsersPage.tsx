@@ -1,3 +1,4 @@
+import { DataTable, TableAction } from "@/ui";
 import { AddRounded } from "@/ui/icons";
 import { ContentCopyRounded } from "@/ui/icons";
 import { LockResetRounded } from "@/ui/icons";
@@ -20,12 +21,6 @@ import { Select } from "@/ui";
 import { Snackbar } from "@/ui";
 import { Stack } from "@/ui";
 import { Switch } from "@/ui";
-import { Table } from "@/ui";
-import { TableBody } from "@/ui";
-import { TableCell } from "@/ui";
-import { TableContainer } from "@/ui";
-import { TableHead } from "@/ui";
-import { TableRow } from "@/ui";
 import { TextField } from "@/ui";
 import { Typography } from "@/ui";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -82,25 +77,29 @@ export function UsersPage() {
       {usersQuery.isPending ? <Stack sx={{ alignItems: "center", py: 10 }}><CircularProgress /></Stack> : (
         <>
           <Box sx={{ display: { xs: "none", md: "block" } }}>
-            <TableContainer sx={{ bgcolor: "background.paper", borderRadius: 3, border: 1, borderColor: "divider", overflowX: "auto" }}>
-              <Table aria-label="用户列表" sx={{ minWidth: 920 }}>
-                <TableHead><TableRow><TableCell>用户</TableCell><TableCell>角色</TableCell><TableCell>状态</TableCell><TableCell>最后登录</TableCell><TableCell align="right">账户操作</TableCell></TableRow></TableHead>
-                <TableBody>
-                  {(usersQuery.data ?? []).map((user) => (
-                    <TableRow key={user.id} hover>
-                      <TableCell><UserIdentity user={user} sessionUser={sessionUser} /></TableCell>
-                      <TableCell><UserRoleChip user={user} /></TableCell>
-                      <TableCell><UserStatus user={user} /></TableCell>
-                      <TableCell><Typography variant="body2" color="text.secondary">{formatLastLogin(user.lastLoginAt)}</Typography></TableCell>
-                      <TableCell align="right"><Stack direction="row" spacing={0.5} sx={{ justifyContent: "flex-end", alignItems: "center", minWidth: 260 }}>
-                        {canManageAccountActions(user, sessionUser) && <><Button size="small" startIcon={<LockResetRounded />} onClick={() => void resetPassword(user)}>临时密码</Button><Button size="small" startIcon={<LogoutRounded />} onClick={() => void revokeSessions(user)}>退出设备</Button></>}
-                        <Switch checked={user.status === "ACTIVE"} disabled={!canToggleAccount(user, sessionUser)} onChange={() => void toggle(user)} slotProps={{ input: { "aria-label": `${user.status === "ACTIVE" ? "停用" : "启用"}${user.displayName}` } }} />
-                      </Stack></TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
+            <DataTable<ManagedUser>
+              aria-label="用户列表"
+              rowKey="id"
+              size="middle"
+              pagination={false}
+              dataSource={usersQuery.data ?? []}
+              scroll={{ x: tokens.spacing[24] * 10 }}
+              columns={[
+                { title: "用户", key: "identity", render: (_, user) => <UserIdentity user={user} sessionUser={sessionUser} /> },
+                { title: "角色", key: "role", width: tokens.spacing[24] * 1.25, render: (_, user) => <UserRoleChip user={user} /> },
+                { title: "状态", key: "status", width: tokens.spacing[24] * 1.5, render: (_, user) => <UserStatus user={user} /> },
+                { title: "最后登录", dataIndex: "lastLoginAt", width: tokens.spacing[24] * 2.5, render: (value) => formatLastLogin(value) },
+                { title: "启用", key: "enabled", width: tokens.spacing[24], render: (_, user) => (
+                  <Switch checked={user.status === "ACTIVE"} disabled={!canToggleAccount(user, sessionUser)} onChange={() => void toggle(user)} slotProps={{ input: { "aria-label": `${user.status === "ACTIVE" ? "停用" : "启用"}${user.displayName}` } }} />
+                ) },
+                { title: "账户操作", key: "actions", width: tokens.spacing[24] * 2, render: (_, user) => canManageAccountActions(user, sessionUser) ? (
+                  <Stack direction="row" spacing={2}>
+                    <TableAction onClick={() => void resetPassword(user)}>临时密码</TableAction>
+                    <TableAction onClick={() => void revokeSessions(user)}>退出设备</TableAction>
+                  </Stack>
+                ) : "—" },
+              ]}
+            />
           </Box>
           <Stack component="section" aria-label="移动端用户列表" spacing={2} sx={{ display: { xs: "flex", md: "none" } }}>
             {(usersQuery.data ?? []).map((user) => (

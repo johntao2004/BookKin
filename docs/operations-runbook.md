@@ -46,13 +46,21 @@ BOOKKIN_BACKUP_DIR=/volume/backups ./ops/backup.sh
 
 ## 十万册性能验收
 
-只在独立测试数据库运行 `tools/seed-large-catalog.sql`；它会写入 10 万本逻辑书和 15 万个文件记录，但不会在磁盘生成书籍。随后使用一个专用测试账户运行：
+只在独立测试数据库运行 `scripts/benchmark/seed-large-catalog.sql`；它会写入 10 万本逻辑书和 15 万个文件记录，但不会在磁盘生成书籍。随后使用一个专用测试账户运行：
 
 ```bash
-docker compose exec -T postgres psql -U "${POSTGRES_USER:-bookkin}" -d "${POSTGRES_DB:-bookkin}" < tools/seed-large-catalog.sql
+docker compose exec -T postgres psql -U "${POSTGRES_USER:-bookkin}" -d "${POSTGRES_DB:-bookkin}" < scripts/benchmark/seed-large-catalog.sql
 BOOKKIN_BENCHMARK_USERNAME=benchmark \
 BOOKKIN_BENCHMARK_PASSWORD='从环境注入，不写入仓库' \
 pnpm benchmark:catalog
 ```
 
 脚本预热后分别采样列表与模糊搜索，列表 p95 超过 250ms 或搜索 p95 超过 500ms 时返回非零状态。
+
+## 本地运行与发布验证
+
+本机开发通过 `pnpm start:local` 启动 API/Worker，再运行 `pnpm dev`（4173）。启动脚本将 JAR 复制至 `.local/run/`，禁止直接启动会被构建覆盖的 `target/bookkin-*.jar`。停止 API/Worker 使用 `pnpm stop:local`。端口已占用时先检查健康服务，避免重复启动。
+
+自定义字体目录由 `BOOKKIN_FONT_STORAGE_PATH` 配置；备份脚本只覆盖数据库和回收站，不包含字体、封面资产或全部原书。部署备份策略须另外覆盖字体目录与各根目录的 `.bookkin-assets`，并与数据库恢复点配套。
+
+提交前运行 README 中的前后端质量门禁，并检查 `pnpm check:tokens`、Sites 路由测试和实际浏览器关键流程。GitHub 的 Docker 工作流在 main 推送、PR、版本标签或手动触发时构建双架构镜像；只有 `v*` 标签发布 GHCR 镜像。推送功能分支不代表已部署或已通过远端 CI。

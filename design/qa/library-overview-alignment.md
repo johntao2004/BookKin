@@ -1,5 +1,7 @@
 # BookKin 书库概览零数据对齐 QA
 
+> 本文保留零数据排版调整时的历史测量。2026-09-06 后续已将概览卡片统一为 336px 高度并修正真实封面圆角；以下像素值不代表所有最新页面尺寸。
+
 - Source visual truth: `design/qa/library-overview-alignment-reference.png`
 - Implementation screenshot: `design/qa/library-overview-alignment-implementation.png`
 - Combined comparison: `design/qa/library-overview-alignment-comparison.png`

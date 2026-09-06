@@ -41,7 +41,7 @@ NAS roots <──safe file transaction── worker ┘
 - `pg_trgm` GIN 索引覆盖标题、主作者、作者、系列和标签；游标键、关系键与指纹使用 B-tree。
 - 当前扫描按书库根目录顺序遍历；快速指纹未变化时只更新本次扫描标记，变化时才计算 SHA-256、解析元数据和封面。`batch-size` 用于进度日志，不冒充可恢复的文件级 checkpoint。
 - `book_files` 的 `(library_root_id, normalized_path)` 唯一；扫描通过稳定路径与指纹合并，不直接删除缺失记录。中断后可安全重跑整次扫描。
-- 10 万册/15 万文件基准数据由 `tools/seed-large-catalog.sql` 生成。
+- 10 万册/15 万文件基准数据由 `scripts/benchmark/seed-large-catalog.sql` 生成。
 
 ### 3.1 上传、识别与来源保护
 
@@ -127,3 +127,11 @@ Compose 只包含 `app`、`worker`、`postgres`。`app` 与 `worker` 使用同�
 - 日志带 `traceId`，文件任务日志带 operation id；禁止记录密码、Session、笔记正文或完整文件内容。生产环境可在容器日志采集层转换为结构化 JSON。
 - Actuator/Prometheus 暴露 HTTP、JVM、连接池等标准 Micrometer 指标；扫描速率、队列深度、租约等待和根目录空间等业务指标列为生产加固项。
 - 超过 1 秒的 SQL 在开发/压测记录执行计划；生产日志不打印参数中的私人数据。
+
+## 11. 浏览器与虚拟书库
+
+React 路由按页面懒加载。公开发现入口与受保护的私人书库、管理页分别由 `PublicShell` / `ProtectedShell` 组织；匿名访问受保护内容显示 401，角色不符显示 403。公开阅读仍须经过书籍可见性判断。
+
+`apps/web/src/ui/` 统一适配 Ant Design；共享按钮独立处理图标槽、标签和链接。`VirtualLibraryExperience.tsx` 组合 Three.js 场景、真实目录及 `VirtualLibrarySearch.tsx`；搜索在已授权且加载的目录中匹配标题、作者、系列、格式和标签，不新增后端搜索协议。场景几何批处理与房间懒创建、火焰更新及碰撞规则见 [虚拟书库](virtual-library.md)。
+
+阅读字体由前端预设资源与服务端自定义字体记录合并。自定义字体二进制存放在 `BOOKKIN_FONT_STORAGE_PATH`，不进入 NAS 书籍原目录或数据库；状态与授权由字体 API 控制。

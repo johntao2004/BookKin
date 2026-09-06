@@ -66,7 +66,7 @@ function RootCard({ root }: { root: LibraryRoot }) {
   const statusLabel = unavailable ? (root.status === "OFFLINE" ? "离线" : "不可读") : writable ? "可读可写" : "只读";
   return (
     <Stack sx={{ bgcolor: "background.paper", border: 1, borderColor: "divider", borderRadius: 3, overflow: "hidden" }}>
-      <Stack direction="row" sx={{ p: 3, alignItems: "flex-start", gap: 2 }}>
+      <Stack direction="row" sx={{ px: `${tokens.spacing[6]}px`, py: `${tokens.spacing[4]}px`, alignItems: "flex-start", gap: 2 }}>
         <Box sx={{ width: 48, height: 48, borderRadius: 2, bgcolor: "background.default", display: "grid", placeItems: "center", color: "primary.main", flexShrink: 0 }}><StorageRounded /></Box>
         <Box sx={{ flex: 1, minWidth: 0 }}>
           <Stack direction={{ xs: "column", sm: "row" }} sx={{ alignItems: { sm: "center" }, justifyContent: "space-between", gap: 1 }}>
@@ -86,8 +86,8 @@ function RootCard({ root }: { root: LibraryRoot }) {
           </Stack>
         </Box>
       </Stack>
-      <Divider />
-      <Stack direction={{ xs: "column", sm: "row" }} sx={{ p: 3, justifyContent: "space-between", gap: 1.5, color: "text.secondary" }}>
+      <Divider sx={{ m: 0 }} />
+      <Stack direction={{ xs: "column", sm: "row" }} sx={{ px: `${tokens.spacing[6]}px`, py: `${tokens.spacing[3]}px`, justifyContent: "space-between", gap: 1.5, color: "text.secondary" }}>
         <Typography variant="body2">可用空间 <Box component="span" sx={{ color: "text.primary", fontWeight: 700 }}>{formatBytes(root.freeBytes)}</Box></Typography>
         <Stack direction="row" spacing={0.75} sx={{ alignItems: "center" }}><SyncRounded fontSize="small" /><Typography variant="body2">上次扫描 {formatDate(root.lastScanAt)}</Typography></Stack>
       </Stack>

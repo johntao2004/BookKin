@@ -5,14 +5,18 @@ import type { SxProps, Theme } from "@/ui";
 import type { ReactNode } from "react";
 import { tokens } from "../theme/generated-tokens";
 
+export const pageWidthSx = {
+  width: "100%",
+  maxWidth: tokens.layout.contentMax,
+  mx: "auto",
+  px: { xs: 2, sm: 3, lg: 0 },
+};
+
 export function PageContainer({ children, sx }: { children: ReactNode; sx?: SxProps<Theme> }) {
   return (
     <Box
       sx={{
-        width: "100%",
-        maxWidth: tokens.layout.contentMax,
-        mx: "auto",
-        px: { xs: 2, sm: 3, lg: 0 },
+        ...pageWidthSx,
         py: { xs: 4, md: 6 },
         ...sx,
       }}

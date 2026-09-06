@@ -36,11 +36,11 @@ function createWoodTexture(base = '#3d2114', highlight = '#7a482a') {
   const { canvas, context } = textureCanvas(1024);
   const random = seededRandom(1487);
   const gradient = context.createLinearGradient(0, 0, 1024, 0);
-  gradient.addColorStop(0, '#1b0d08');
+  gradient.addColorStop(0, base);
   gradient.addColorStop(0.12, base);
   gradient.addColorStop(0.5, highlight);
   gradient.addColorStop(0.86, base);
-  gradient.addColorStop(1, '#160a06');
+  gradient.addColorStop(1, base);
   context.fillStyle = gradient;
   context.fillRect(0, 0, 1024, 1024);
 
@@ -175,52 +175,6 @@ function createRugTexture() {
   return textureFromCanvas(canvas);
 }
 
-export function createPaintedPanelTexture(index: number) {
-  const { canvas, context } = textureCanvas(512);
-  const variants = [
-    ['#17302c', '#8f6e31', '#791d22'],
-    ['#24314a', '#b08b45', '#5a1e20'],
-    ['#4a1f24', '#ac8a46', '#1f3730'],
-    ['#332349', '#9b7a3a', '#173636'],
-  ];
-  const [base, gold, accent] = variants[index % variants.length];
-  context.fillStyle = base;
-  context.fillRect(0, 0, 512, 512);
-  const radial = context.createRadialGradient(256, 256, 40, 256, 256, 300);
-  radial.addColorStop(0, 'rgba(255, 225, 156, .18)');
-  radial.addColorStop(1, 'rgba(0, 0, 0, .42)');
-  context.fillStyle = radial;
-  context.fillRect(0, 0, 512, 512);
-
-  context.translate(256, 256);
-  context.strokeStyle = gold;
-  context.lineWidth = 14;
-  context.strokeRect(-210, -210, 420, 420);
-  context.lineWidth = 4;
-  context.strokeRect(-184, -184, 368, 368);
-  for (let turn = 0; turn < 4; turn += 1) {
-    context.rotate(Math.PI / 2);
-    context.beginPath();
-    context.moveTo(0, -160);
-    context.bezierCurveTo(88, -140, 116, -62, 0, -24);
-    context.bezierCurveTo(-116, -62, -88, -140, 0, -160);
-    context.fillStyle = accent;
-    context.fill();
-    context.strokeStyle = gold;
-    context.lineWidth = 5;
-    context.stroke();
-  }
-  context.beginPath();
-  context.arc(0, 0, 50, 0, Math.PI * 2);
-  context.fillStyle = gold;
-  context.fill();
-  context.beginPath();
-  context.arc(0, 0, 32, 0, Math.PI * 2);
-  context.fillStyle = base;
-  context.fill();
-  return textureFromCanvas(canvas);
-}
-
 export interface LibraryMaterials {
   stone: THREE.MeshStandardMaterial;
   stoneDark: THREE.MeshStandardMaterial;
@@ -235,7 +189,6 @@ export interface LibraryMaterials {
   parchment: THREE.MeshStandardMaterial;
   glass: THREE.MeshStandardMaterial;
   lampGlass: THREE.MeshStandardMaterial;
-  ceilingPanels: THREE.MeshStandardMaterial[];
 }
 
 export function createLibraryMaterials(): LibraryMaterials {
@@ -265,18 +218,24 @@ export function createLibraryMaterials(): LibraryMaterials {
       roughness: 0.98,
     }),
     wood: new THREE.MeshStandardMaterial({
-      color: 0x6a3a21,
+      color: PALETTE.parchment,
       map: woodMap,
+      bumpMap: woodMap,
+      bumpScale: 0.025,
       roughness: 0.72,
     }),
     woodDark: new THREE.MeshStandardMaterial({
-      color: 0x4b2616,
+      color: PALETTE.parchment,
       map: darkWoodMap,
+      bumpMap: darkWoodMap,
+      bumpScale: 0.018,
       roughness: 0.78,
     }),
     woodWarm: new THREE.MeshStandardMaterial({
-      color: 0x81502e,
+      color: PALETTE.parchment,
       map: warmWoodMap,
+      bumpMap: warmWoodMap,
+      bumpScale: 0.022,
       roughness: 0.68,
     }),
     floor: new THREE.MeshStandardMaterial({
@@ -312,17 +271,8 @@ export function createLibraryMaterials(): LibraryMaterials {
     lampGlass: new THREE.MeshStandardMaterial({
       color: 0xf0a95a,
       emissive: 0xff7d25,
-      emissiveIntensity: 3.15,
+      emissiveIntensity: 1.35,
       roughness: 0.3,
     }),
-    ceilingPanels: [0, 1, 2, 3].map(
-      (index) =>
-        new THREE.MeshStandardMaterial({
-          map: createPaintedPanelTexture(index),
-          color: 0xffffff,
-          roughness: 0.83,
-          side: THREE.BackSide,
-        }),
-    ),
   };
 }

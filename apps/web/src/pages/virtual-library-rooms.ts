@@ -1,5 +1,7 @@
 import * as THREE from "three";
+import { addScholasticRoomCeiling } from "./virtual-library-model/scene/scholasticArchitecture";
 import { tokens } from "../theme/generated-tokens";
+import { PALETTE } from "./virtual-library-model/config";
 import {
   markCameraCollider,
   type LocalCameraColliderDescriptor,
@@ -341,7 +343,9 @@ function createRoomShell(
   }
   if (options.showPlaque !== false) group.add(createRoomPlaque(title, subtitle));
 
-  const chandelier = createChandelier(materials, true);
+  const ceilingBottom = LIBRARY_ROOM_SHELL_LAYOUT.ceilingCenterY - LIBRARY_ROOM_SHELL_LAYOUT.ceilingHeight / 2;
+  const chandelier = createChandelier(materials, true,
+    (ceilingBottom - (options.chandelierY ?? 4.2)) / (options.chandelierScale ?? 0.78));
   chandelier.position.set(0, options.chandelierY ?? 4.2, options.chandelierZ ?? -0.7);
   chandelier.scale.setScalar(options.chandelierScale ?? 0.78);
   markCameraCollider(chandelier, {
@@ -942,7 +946,7 @@ function createDirectorOfficeBackgroundBooks(
     materials.leather,
     materials.woodWarm,
     materials.woodDark,
-    materials.parchment,
+    new THREE.MeshStandardMaterial({ color: PALETTE.green, roughness: 0.82 }),
   ] as const;
   const geometry = new THREE.BoxGeometry(1, 1, 1);
   const transform = new THREE.Object3D();
@@ -1223,6 +1227,7 @@ export function createVirtualLibraryRooms(
     showPlaque: RESTRICTED_ARCHIVE_ROOM_LAYOUT.showPlaque,
   });
   addRestrictedRoomDetails(restricted, materials);
+  addScholasticRoomCeiling(restricted, materials);
   scene.add(restricted);
 
   const director = new THREE.Group();
@@ -1236,6 +1241,7 @@ export function createVirtualLibraryRooms(
     chandelierScale: 0.68,
   });
   addDirectorRoomDetails(director, materials, loader);
+  addScholasticRoomCeiling(director, materials);
   scene.add(director);
 
   return {

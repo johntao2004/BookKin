@@ -1,7 +1,7 @@
+import { pageWidthSx } from "./PageHeader";
 import { AdminPanelSettingsOutlined } from "@/ui/icons";
 import { AutoStoriesOutlined } from "@/ui/icons";
 import { CategoryOutlined } from "@/ui/icons";
-import { CheckRounded } from "@/ui/icons";
 import { CollectionsBookmarkOutlined } from "@/ui/icons";
 import { FontDownloadOutlined } from "@/ui/icons";
 import { HomeOutlined } from "@/ui/icons";
@@ -18,7 +18,7 @@ import { AppBar } from "@/ui";
 import { Avatar } from "@/ui";
 import { Box } from "@/ui";
 import { Button } from "@/ui";
-import { Divider } from "@/ui";
+import { Dropdown } from "@/ui";
 import { Drawer } from "@/ui";
 import { IconButton } from "@/ui";
 import { InputAdornment } from "@/ui";
@@ -26,16 +26,13 @@ import { List } from "@/ui";
 import { ListItemButton } from "@/ui";
 import { ListItemIcon } from "@/ui";
 import { ListItemText } from "@/ui";
-import { Menu } from "@/ui";
-import { MenuItem } from "@/ui";
 import { Stack } from "@/ui";
 import { TextField } from "@/ui";
 import { Toolbar } from "@/ui";
-import { Tooltip } from "@/ui";
 import { Typography } from "@/ui";
 import { alpha } from "@/ui";
 import { useQueryClient } from "@tanstack/react-query";
-import { useCallback, useEffect, useState, type PropsWithChildren } from "react";
+import { useCallback, useEffect, useRef, useState, type PropsWithChildren } from "react";
 import { NavLink, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import {
@@ -74,8 +71,8 @@ export function AppShell({ children }: PropsWithChildren) {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
-  const [themeAnchor, setThemeAnchor] = useState<HTMLElement | null>(null);
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+  const [themeMenuOpen, setThemeMenuOpen] = useState(false);
   const canManage = user?.role === "OWNER" || user?.role === "ADMIN";
   const libraryNavigation = user
     ? navigation
@@ -83,7 +80,8 @@ export function AppShell({ children }: PropsWithChildren) {
   const searchableLibrary = ["/library", "/library/all", "/recycle-bin"].includes(location.pathname);
   const readerRoute = location.pathname.startsWith("/reader/");
   const query = searchableLibrary ? searchParams.get("q") ?? "" : "";
-  const searchExpanded = Boolean(query);
+  const [searchExpanded, setSearchExpanded] = useState(Boolean(query));
+  const searchTriggerRef = useRef<HTMLElement>(null);
   const isActivePath = (path: string) => path === "/categories" || path === "/booklists"
     ? location.pathname === path || location.pathname.startsWith(`${path}/`)
     : location.pathname === path;
@@ -166,14 +164,11 @@ export function AppShell({ children }: PropsWithChildren) {
           <Toolbar
             sx={{
               minHeight: `${tokens.layout.navHeight}px !important`,
-              maxWidth: tokens.layout.contentMax,
-              width: "100%",
-              mx: "auto",
+              ...pageWidthSx,
               display: { xs: "flex", lg: "grid" },
               gridTemplateColumns: { lg: "max-content max-content" },
               justifyContent: { lg: "space-between" },
-              gap: { xs: 1, md: 4, lg: 6 },
-              px: { xs: 2, sm: 3, lg: 0 },
+              gap: { xs: 0.5, sm: 1, md: 4, lg: 6 },
             }}
           >
             <IconButton onClick={() => setDrawerOpen(true)} sx={{ display: { lg: "none" } }} aria-label="打开导航">
@@ -195,127 +190,83 @@ export function AppShell({ children }: PropsWithChildren) {
             </Stack>
 
             <Stack direction="row" sx={{ alignItems: "center", gap: { xs: 0.5, sm: 2 }, flexShrink: 0, ml: { xs: "auto", lg: 0 }, justifySelf: { lg: "end" } }}>
-              <TextField
-                size="small"
-                value={query}
-                onChange={(event: any) => updateQuery(event.target.value)}
-                placeholder={location.pathname === "/recycle-bin" ? "搜索回收站" : location.pathname === "/library" ? "搜索展示书目" : "搜索整座书库"}
-                aria-label={location.pathname === "/recycle-bin" ? "搜索回收站" : location.pathname === "/library" ? "搜索展示书目" : "搜索整座书库"}
-                sx={(theme: any) => ({
-                  flexGrow: { xs: searchExpanded ? 1 : 0, md: 0 },
-                  flexShrink: 1,
-                  flexBasis: `${tokens.layout.touchTarget}px`,
-                  width: { xs: `${tokens.layout.touchTarget}px`, md: searchExpanded ? "100%" : `${tokens.layout.touchTarget}px` },
-                  minWidth: `${tokens.layout.touchTarget}px`,
-                  maxWidth: "100%",
-                  overflow: "hidden",
-                  transition: theme.transitions.create(["width", "flex-grow"], {
-                    duration: theme.transitions.duration.standard,
-                    easing: theme.transitions.easing.easeInOut,
-                  }),
-                  "&:hover, &:focus-within": {
-                    flexGrow: { xs: 1, md: 0 },
-                    width: { xs: `${tokens.layout.touchTarget}px`, md: "100%" },
-                  },
-                  "& .bk-field-control": {
-                    height: `${tokens.layout.touchTarget}px`,
-                    bgcolor: searchExpanded ? "background.paper" : "transparent",
-                    borderRadius: `${tokens.radius.lg}px`,
-                    overflow: "hidden",
-                    transition: theme.transitions.create("background-color", {
-                      duration: theme.transitions.duration.standard,
-                    }),
-                    "& .ant-input-affix-wrapper": {
-                      borderColor: searchExpanded ? "divider" : "transparent",
-                      transition: theme.transitions.create("border-color", {
-                        duration: theme.transitions.duration.standard,
-                      }),
-                    },
-                  },
-                  "&:hover .bk-field-control, &:focus-within .bk-field-control": {
-                    bgcolor: "background.paper",
-                    borderColor: "divider",
-                  },
-                  "& .bk-field-control input, & .bk-field-control textarea": {
-                    minWidth: 0,
-                    opacity: searchExpanded ? 1 : 0,
-                    transition: theme.transitions.create("opacity", {
-                      duration: theme.transitions.duration.shorter,
-                    }),
-                  },
-                  "&:hover .bk-field-control input, &:focus-within .bk-field-control input, &:hover .bk-field-control textarea, &:focus-within .bk-field-control textarea": {
-                    opacity: 1,
-                  },
-                  "& .bk-input-adornment, & .ant-input-prefix": {
-                    mr: searchExpanded ? `${tokens.spacing[2]}px` : 0,
-                    transition: theme.transitions.create("margin-right", {
-                      duration: theme.transitions.duration.shorter,
-                    }),
-                  },
-                  "&:hover .bk-input-adornment, &:focus-within .bk-input-adornment, &:hover .ant-input-prefix, &:focus-within .ant-input-prefix": {
-                    mr: `${tokens.spacing[2]}px`,
-                  },
-                })}
-                slotProps={{
-                  input: {
-                    startAdornment: <InputAdornment position="start"><SearchRounded fontSize="small" /></InputAdornment>,
-                  },
+              <Box onMouseEnter={() => setSearchExpanded(true)} onMouseLeave={() => setSearchExpanded(false)} sx={{ position: "relative", width: tokens.layout.touchTarget, height: tokens.layout.touchTarget, flexShrink: 0 }}>
+                <IconButton ref={searchTriggerRef} aria-label="展开搜索" aria-expanded={searchExpanded} onClick={() => setSearchExpanded(true)}>
+                  <SearchRounded fontSize="small" />
+                </IconButton>
+                <Box sx={(theme: any) => ({
+                  position: "absolute", right: 0, top: 0,
+                  width: searchExpanded ? `min(${tokens.layout.touchTarget * 7}px, calc(100vw - ${tokens.spacing[20] * 2}px))` : `${tokens.layout.touchTarget}px`,
+                  visibility: searchExpanded ? "visible" : "hidden",
+                  transition: theme.transitions.create("width"),
+                  "@media (prefers-reduced-motion: reduce)": { transition: "none" },
+                })}>
+                  {searchExpanded && <TextField
+                    autoFocus
+                    size="small"
+                    value={query}
+                    onChange={(event: any) => updateQuery(event.target.value)}
+                    onBlur={() => setSearchExpanded(false)}
+                    onKeyDown={(event: any) => {
+                      if (event.key === "Escape") {
+                        setSearchExpanded(false);
+                        searchTriggerRef.current?.focus();
+                      }
+                    }}
+                    placeholder={location.pathname === "/recycle-bin" ? "搜索回收站" : location.pathname === "/library" ? "搜索展示书目" : "搜索整座书库"}
+                    aria-label={location.pathname === "/recycle-bin" ? "搜索回收站" : location.pathname === "/library" ? "搜索展示书目" : "搜索整座书库"}
+                    sx={{ width: "100%", "& .bk-field-control": { height: tokens.layout.touchTarget, bgcolor: "background.paper" } }}
+                    slotProps={{ input: { startAdornment: <InputAdornment position="start"><SearchRounded fontSize="small" /></InputAdornment> } }}
+                  />}
+                </Box>
+              </Box>
+              <Dropdown
+                open={themeMenuOpen}
+                onOpenChange={setThemeMenuOpen}
+                trigger={["hover", "click"]}
+                placement="bottomRight"
+                menu={{
+                  selectable: true,
+                  selectedKeys: [bookKinTheme],
+                  items: (Object.keys(bookKinThemeOptions) as ReaderTheme[]).map((mode) => ({
+                    key: mode,
+                    label: bookKinThemeOptions[mode].label,
+                    icon: <Box sx={{ width: tokens.spacing[5], height: tokens.spacing[5], borderRadius: `${tokens.radius.pill}px`, bgcolor: bookKinThemeOptions[mode].reader.background, border: 1, borderColor: "divider" }} />,
+                  })),
+                  onClick: ({ key }) => { setBookKinTheme(key as ReaderTheme); setThemeMenuOpen(false); },
                 }}
-              />
-              <Tooltip title={`全站主题：${bookKinThemeOptions[bookKinTheme].label}`}>
-                <IconButton color="inherit" onClick={(event: any) => setThemeAnchor(event.currentTarget)} aria-label="切换全站主题">
+              >
+                <IconButton color="inherit" aria-label="切换全站主题" aria-haspopup="menu" aria-expanded={themeMenuOpen}>
                   <PaletteOutlined />
                 </IconButton>
-              </Tooltip>
-              {user ? <IconButton onClick={(event: any) => setMenuAnchor(event.currentTarget)} aria-label="账户菜单">
+              </Dropdown>
+              {user ? <Dropdown open={accountMenuOpen} onOpenChange={setAccountMenuOpen} trigger={["click"]} placement="bottomRight"
+                menu={{
+                  items: [
+                    { key: "account", label: user.displayName, disabled: true },
+                    { type: "divider" },
+                    ...(canManage ? management.map((item) => ({ key: item.path, label: item.label, icon: item.icon })) : []),
+                    { key: displaySettings.path, label: displaySettings.label, icon: displaySettings.icon },
+                    { type: "divider" },
+                    { key: "logout", label: "退出登录", icon: <LogoutOutlined /> },
+                  ],
+                  onClick: async ({ key }) => {
+                    setAccountMenuOpen(false);
+                    if (key === "logout") { await logout(); navigate("/login"); }
+                    else navigate(key);
+                  },
+                }}
+              ><IconButton aria-label="账户菜单" aria-haspopup="menu" aria-expanded={accountMenuOpen}>
                 <Avatar sx={{ width: 38, height: 38, bgcolor: "secondary.main", color: "common.white", fontFamily: tokens.typography.fontFamily.display }}>
                   {user.displayName.slice(0, 1)}
                 </Avatar>
-              </IconButton> : <Button color="inherit" onClick={() => navigate("/login")} sx={{ whiteSpace: "nowrap" }}>登录</Button>}
+              </IconButton></Dropdown> : <Button color="inherit" onClick={() => navigate("/login")} sx={{ whiteSpace: "nowrap", px: 1, minWidth: tokens.layout.touchTarget, flexShrink: 0 }}>登录</Button>}
             </Stack>
           </Toolbar>
         </AppBar>
 
-        <Menu anchorEl={themeAnchor} open={Boolean(themeAnchor)} onClose={() => setThemeAnchor(null)}>
-          <Box sx={{ px: 2, py: 1 }}>
-            <Typography variant="body2" sx={{ fontWeight: tokens.typography.fontWeight.semibold }}>全站主题</Typography>
-            <Typography variant="caption" color="text.secondary">与阅读界面保持一致</Typography>
-          </Box>
-          <Divider />
-          {(Object.keys(bookKinThemeOptions) as ReaderTheme[]).map((mode) => (
-            <MenuItem key={mode} selected={bookKinTheme === mode} onClick={() => { setBookKinTheme(mode); setThemeAnchor(null); }}>
-              <ListItemIcon>
-                <Box sx={{ width: `${tokens.spacing[5]}px`, height: `${tokens.spacing[5]}px`, borderRadius: `${tokens.radius.pill}px`, bgcolor: bookKinThemeOptions[mode].reader.background, border: 1, borderColor: "divider" }} />
-              </ListItemIcon>
-              <ListItemText primary={bookKinThemeOptions[mode].label} />
-              {bookKinTheme === mode && <CheckRounded fontSize="small" />}
-            </MenuItem>
-          ))}
-        </Menu>
-
-        <Menu anchorEl={menuAnchor} open={Boolean(menuAnchor) && Boolean(user)} onClose={() => setMenuAnchor(null)}>
-          <Box sx={{ px: 2, py: 1, minWidth: 190 }}>
-            <Typography variant="body2" sx={{ fontWeight: 600 }}>{user?.displayName}</Typography>
-            <Typography variant="caption" color="text.secondary">{user?.role}</Typography>
-          </Box>
-          <Divider />
-          {canManage && management.map((item) => (
-            <MenuItem key={item.path} onClick={() => { setMenuAnchor(null); navigate(item.path); }}>
-              <ListItemIcon>{item.icon}</ListItemIcon>{item.label}
-            </MenuItem>
-          ))}
-          {user && <MenuItem onClick={() => { setMenuAnchor(null); navigate(displaySettings.path); }}>
-            <ListItemIcon>{displaySettings.icon}</ListItemIcon>{displaySettings.label}
-          </MenuItem>}
-          <MenuItem onClick={async () => { setMenuAnchor(null); await logout(); navigate("/login"); }}>
-            <ListItemIcon><LogoutOutlined /></ListItemIcon>退出登录
-          </MenuItem>
-        </Menu>
-
-        <Drawer open={drawerOpen} onClose={() => setDrawerOpen(false)}>
-          <Box role="navigation" sx={{ width: 288, py: 2 }}>
-            <Typography variant="h5" sx={{ px: 2, pb: 2 }}>BookKin</Typography>
-            <Divider />
+        <Drawer open={drawerOpen} onClose={() => setDrawerOpen(false)} width={tokens.spacing[24] * 3} title={<Typography variant="h5">BookKin</Typography>}>
+          <Box role="navigation" sx={{ width: "100%", p: 2 }}>
             <List>
               {libraryNavigation.map((item) => (
                 <ListItemButton

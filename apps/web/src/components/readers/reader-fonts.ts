@@ -53,7 +53,7 @@ export const PRESET_READER_FONTS: ReaderFont[] = [
   },
   {
     id: "source-han-sans-sc",
-    displayName: "Source Han Sans SC",
+    displayName: "思源黑体",
     familyName: "Source Han Sans SC",
     kind: "SANS",
     source: "PRESET",
@@ -61,6 +61,17 @@ export const PRESET_READER_FONTS: ReaderFont[] = [
     format: "WOFF2",
     contentUrl: "/fonts/source-han-sans-sc-regular.woff2",
     licenseNote: "SIL Open Font License 1.1 · Adobe Source Han Sans",
+  },
+  {
+    id: "alibaba-puhuiti",
+    displayName: "阿里巴巴普惠体",
+    familyName: "Alibaba PuHuiTi",
+    kind: "SANS",
+    source: "PRESET",
+    status: "ENABLED",
+    format: "WOFF2",
+    contentUrl: "/fonts/alibaba-puhuiti-regular.woff2",
+    licenseNote: "阿里巴巴普惠体 3.0 · 阿里巴巴字体使用许可",
   },
 ];
 

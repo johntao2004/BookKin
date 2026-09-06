@@ -29,7 +29,7 @@ import {
 
 export const ROTUNDA_CENTER = new THREE.Vector3(0, 5.4, 0);
 export const ROTUNDA_CAMERA_RADIUS = 11.7;
-export const VIRTUAL_LIBRARY_SCENE_MODEL_VERSION = "gothic-gate-stained-glass-office-reader-entry-2026-08-27";
+export const VIRTUAL_LIBRARY_SCENE_MODEL_VERSION = "collegiate-gothic-vault-reading-hall-2026-09-06";
 
 export const SHELF_PLAQUE_MOUNT = {
   gap: 0.012,
@@ -160,6 +160,7 @@ export interface ShelfCategoryInfo {
 }
 
 export interface LibraryWorld {
+  catalogTerminal: THREE.Group;
   sceneBooks: SceneBook[];
   interactiveMeshes: THREE.Object3D[];
   shelfHitMeshes: THREE.Object3D[];
@@ -973,6 +974,7 @@ export function createVirtualLibraryWorld(
   return {
     sceneBooks,
     interactiveMeshes,
+    catalogTerminal: built.catalogTerminal,
     shelfHitMeshes: shelfControllers.map(({ hitArea }) => hitArea),
     portalHitMeshes,
     toggleShelfSection: (sectionId) => {

@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { tokens } from '../../../theme/generated-tokens';
+import { createFireplaceFire } from './fireplaceFire';
 import { VIRTUAL_LIBRARY_LAYOUT } from '../../virtual-library-layout';
 import { PALETTE } from '../config';
 import type { LibraryMaterials } from './materials';
@@ -299,6 +299,25 @@ export function createHorseshoeReception(materials: LibraryMaterials) {
   group.add(receptionArc(radius + 0.145, 0.35, 0.026, materials.brass));
   group.add(receptionArc(radius + 0.145, 0.88, 0.026, materials.brass));
   group.add(receptionArc(radius + 0.03, 1.24, 0.035, materials.brass));
+
+
+  // Raised walnut panels follow the curved apron, inside the existing counter overhang.
+  const panelCount = 11;
+  const panelRadius = radius + 0.175;
+  for (let panel = 0; panel < panelCount; panel += 1) {
+    const angle = (panel + 0.5) * Math.PI / panelCount;
+    const panelGroup = new THREE.Group();
+    panelGroup.name = `Reception raised walnut panel ${panel + 1}`;
+    panelGroup.position.set(Math.cos(angle) * panelRadius, 0.62, Math.sin(angle) * panelRadius);
+    panelGroup.rotation.y = Math.PI / 2 - angle;
+    const width = panelRadius * Math.PI / panelCount * 0.78;
+    panelGroup.add(makeBox(width, 0.38, 0.025, materials.woodDark));
+    for (const side of [-1, 1]) {
+      panelGroup.add(makeBox(0.024, 0.42, 0.035, materials.wood, side * width / 2, 0, 0.025));
+      panelGroup.add(makeBox(width, 0.024, 0.035, materials.wood, 0, side * 0.21, 0.025));
+    }
+    group.add(panelGroup);
+  }
 
   const deskBell = createDeskBell(materials);
   deskBell.position.set(0.82, 1.22, radius - 0.16);
@@ -691,11 +710,11 @@ export function createFireplaceFeature(materials: LibraryMaterials): FireplaceFe
   group.add(makeBox(4.2, 0.22, 0.9, materials.woodDark, 0, 2.47, -0.35));
   group.add(makeBox(3.3, 0.2, 1.0, materials.stone, 0, 0.12, -0.5));
 
-  for (const x of [-0.62, 0, 0.62]) {
+  for (const [index, x] of [-0.62, 0, 0.62].entries()) {
     const log = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.16, 1.15, 12), materials.woodDark);
     log.rotation.z = Math.PI / 2;
-    log.rotation.y = x * 0.2;
-    log.position.set(x * 0.28, 0.48, -0.63);
+    log.rotation.y = x * 0.45;
+    log.position.set(x * 0.28, index === 1 ? 0.48 : 0.36, -0.54 - index * 0.085);
     group.add(log);
   }
   for (const x of [-0.72, -0.36, 0, 0.36, 0.72]) {
@@ -714,55 +733,8 @@ export function createFireplaceFeature(materials: LibraryMaterials): FireplaceFe
     group.add(andiron);
   }
 
-  const flameTexture = new THREE.TextureLoader().load(
-    '/assets/virtual-library/fireplace-flame-v1-512.png',
-  );
-  flameTexture.colorSpace = THREE.SRGBColorSpace;
-  flameTexture.anisotropy = 8;
-  const flameSettings = [
-    { x: -0.32, y: 0.45, width: 1.2, height: 1.22, opacity: 0.5, phase: 0.4 },
-    { x: 0.28, y: 0.43, width: 1.14, height: 1.12, opacity: 0.46, phase: 2.1 },
-    { x: 0, y: 0.46, width: 1.48, height: 1.42, opacity: 0.7, phase: 3.7 },
-  ];
-  const flames = flameSettings.map((settings, index) => {
-    const flameMaterial = new THREE.SpriteMaterial({
-      map: flameTexture,
-      color: tokens.color.primitive.cream100,
-      transparent: true,
-      opacity: settings.opacity,
-      depthWrite: false,
-      blending: THREE.AdditiveBlending,
-      toneMapped: false,
-    });
-    const flame = new THREE.Sprite(flameMaterial);
-    flame.name = `Layered fireplace flame ${index + 1}`;
-    flame.center.set(0.5, 0.08);
-    flame.position.set(settings.x, settings.y, -0.76 + index * 0.012);
-    flame.scale.set(settings.width, settings.height, 1);
-    flame.userData.baseX = settings.x;
-    flame.userData.baseY = settings.y;
-    flame.userData.baseWidth = settings.width;
-    flame.userData.baseHeight = settings.height;
-    flame.userData.baseOpacity = settings.opacity;
-    flame.userData.phase = settings.phase;
-    group.add(flame);
-    return flame;
-  });
-
-  const emberMaterial = new THREE.MeshBasicMaterial({
-    color: PALETTE.gold,
-    transparent: true,
-    opacity: 0.34,
-    depthWrite: false,
-    side: THREE.DoubleSide,
-    blending: THREE.AdditiveBlending,
-    toneMapped: false,
-  });
-  const embers = new THREE.Mesh(new THREE.CircleGeometry(0.78, 32), emberMaterial);
-  embers.name = 'Fireplace ember glow';
-  embers.scale.set(1.35, 0.33, 1);
-  embers.position.set(0, 0.5, -0.79);
-  group.add(embers);
+  const fire = createFireplaceFire();
+  group.add(fire.group);
 
   const fireLight = new THREE.PointLight(PALETTE.gold, 25, 6.8, 2.2);
   fireLight.name = 'Fireplace warm light';
@@ -825,17 +797,7 @@ export function createFireplaceFeature(materials: LibraryMaterials): FireplaceFe
   return {
     group,
     animate(elapsed) {
-      flames.forEach((flame) => {
-        const phase = Number(flame.userData.phase);
-        const slowPulse = Math.sin(elapsed * 2.45 + phase);
-        const finePulse = Math.sin(elapsed * 5.1 + phase * 1.7);
-        flame.position.x = Number(flame.userData.baseX) + slowPulse * 0.026;
-        flame.position.y = Number(flame.userData.baseY) + finePulse * 0.018;
-        flame.scale.x = Number(flame.userData.baseWidth) * (1 + slowPulse * 0.025);
-        flame.scale.y = Number(flame.userData.baseHeight) * (1 + finePulse * 0.055);
-        flame.material.opacity = Number(flame.userData.baseOpacity) * (0.94 + slowPulse * 0.06);
-      });
-      emberMaterial.opacity = 0.3 + Math.sin(elapsed * 2.1) * 0.035;
+      fire.animate(elapsed);
       fireLight.intensity = 24 + Math.sin(elapsed * 3.2) * 1.8 + Math.sin(elapsed * 1.4) * 1.2;
     },
   };
