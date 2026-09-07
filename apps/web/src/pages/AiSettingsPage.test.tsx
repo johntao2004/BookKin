@@ -40,3 +40,26 @@ it("renders AI strategy and provider settings", async () => {
   expect(screen.getByText("deepseek-v4-flash")).toBeInTheDocument();
   await waitFor(() => expect(api.getAiSettings).toHaveBeenCalledTimes(1));
 });
+
+it("saves only the selected provider as enabled without an extra switch", async () => {
+  render(<TestProviders><AiSettingsPage /></TestProviders>);
+  await screen.findByRole("heading", { name: "OpenAI" });
+  expect(screen.queryByRole("switch", { name: /^启用$/ })).toBeNull();
+  fireEvent.mouseDown(screen.getByRole("combobox", { name: "选择厂商" }));
+  fireEvent.click(await screen.findByText("DeepSeek"));
+  fireEvent.click(screen.getByRole("button", { name: "保存设置" }));
+  await waitFor(() => expect(api.updateAiSettings).toHaveBeenCalledWith(expect.objectContaining({
+    providers: [
+      expect.objectContaining({ id: "openai", enabled: false }),
+      expect.objectContaining({ id: "deepseek", enabled: true }),
+    ],
+  })));
+});
+
+it("restores the saved enabled provider on load", async () => {
+  vi.mocked(api.getAiSettings).mockResolvedValue({ ...settings,
+    providers: settings.providers.map(provider => ({ ...provider, enabled: provider.id === "deepseek" })) });
+  render(<TestProviders><AiSettingsPage /></TestProviders>);
+  expect(await screen.findByRole("heading", { name: "DeepSeek" })).toBeInTheDocument();
+  expect(screen.queryByRole("heading", { name: "OpenAI" })).toBeNull();
+});

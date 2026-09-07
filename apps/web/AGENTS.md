@@ -177,3 +177,5 @@ All page-level action toolbars align to the right edge, including Create User, r
 Moving a book between libraries shows its current library, a destination library selector, validation, and confirmation. Preserve its relative path automatically; keep fingerprints and staging details behind the server safety flow rather than asking users to enter paths.
 
 Show operation feedback and error notices through the shared Ant Design bubble notification provider, outside page flow. Preserve retry actions and dismiss controls; success notices auto-dismiss. Keep a token-based gap below standalone settings save toolbars.
+
+The AI provider selector chooses the single active provider on save. Do not show a separate per-provider enable switch. Restore the enabled provider on load; retain the global AI switch.

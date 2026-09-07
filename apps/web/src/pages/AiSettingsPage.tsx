@@ -84,6 +84,7 @@ export function AiSettingsPage() {
     if (query.data) {
       setCurrentSettings(query.data);
       setDraft(toDraft(query.data));
+      setSelectedProviderId(query.data.providers.find((provider) => provider.enabled)?.id ?? query.data.providers[0]?.id ?? "");
     }
   }, [query.data]);
 
@@ -105,7 +106,7 @@ export function AiSettingsPage() {
     if (!draft) return;
     setBusy(true); setError(""); setMessage("");
     try {
-      const next = await api.updateAiSettings(draft);
+      const next = await api.updateAiSettings({ ...draft, providers: draft.providers.map((provider) => ({ ...provider, enabled: provider.id === selectedProviderId })) });
       setCurrentSettings(next);
       setDraft(toDraft(next));
       setMessage("AI 设置已保存。新的上传任务会按当前策略匹配书目信息。");
@@ -141,12 +142,12 @@ export function AiSettingsPage() {
         </Stack>
       </SettingsPanel>
 
-      <SettingsPanel title="AI 平台" description="选择厂商后配置模型和接口；不同厂商可以分别启用。">
+      <SettingsPanel title="AI 平台" description="选择要使用的厂商，配置模型和接口后保存。">
         <Stack spacing={2}>
           <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
             <FormControl fullWidth sx={{ maxWidth: { sm: 420 } }}>
               <InputLabel id="ai-provider-select-label">选择厂商</InputLabel>
-              <Select labelId="ai-provider-select-label" label="选择厂商" value={selectedProvider?.id ?? ""} onChange={(event) => setSelectedProviderId(event.target.value)}>
+              <Select labelId="ai-provider-select-label" label="选择厂商" value={selectedProvider?.id ?? ""} disabled={busy} onChange={(event) => setSelectedProviderId(event.target.value)}>
                 {draft.providers.map((provider) => <MenuItem key={provider.id} value={provider.id}>{provider.label}</MenuItem>)}
               </Select>
             </FormControl>
@@ -159,10 +160,9 @@ export function AiSettingsPage() {
 }
 
 function ProviderPanel({ provider, status, disabled, onChange }: { provider: AiProviderSettingInput; status?: AiProviderSetting; disabled: boolean; onChange: (patch: Partial<AiProviderSettingInput>) => void }) {
-  return <Stack spacing={1.5} sx={{ border: 1, borderColor: provider.enabled ? "primary.main" : "divider", borderRadius: 2, p: { xs: 2, sm: 2.5 }, bgcolor: provider.enabled ? "background.paper" : "background.default" }}>
+  return <Stack spacing={1.5} sx={{ border: 1, borderColor: "divider", borderRadius: 2, p: { xs: 2, sm: 2.5 }, bgcolor: "background.paper" }}>
     <Stack direction={{ xs: "column", sm: "row" }} sx={{ alignItems: { sm: "center" }, justifyContent: "space-between", gap: 1, pb: 1.5, borderBottom: 1, borderColor: "divider" }}>
       <Typography variant="h5">{provider.label}</Typography>
-      <FormControlLabel control={<Switch checked={provider.enabled} disabled={disabled} onChange={(_, checked) => onChange({ enabled: checked })} />} label="启用" />
     </Stack>
     <Stack direction={{ xs: "column", md: "row" }} spacing={1.5}>
       <TextField fullWidth label="显示名称" value={provider.label} disabled={disabled} onChange={(event) => onChange({ label: event.target.value })} sx={{ flex: 1, minWidth: 0 }} />
