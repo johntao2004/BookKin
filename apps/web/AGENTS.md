@@ -175,3 +175,5 @@ Display-book management lives at the top-level /display-books route and is linke
 All page-level action toolbars align to the right edge, including Create User, refresh, add and upload actions. Keep the separate toolbar row below the header or tabs; this supersedes earlier left-aligned toolbar guidance. Use shared ActionToolbar for dedicated action rows and PageHeader actions.
 
 Moving a book between libraries shows its current library, a destination library selector, validation, and confirmation. Preserve its relative path automatically; keep fingerprints and staging details behind the server safety flow rather than asking users to enter paths.
+
+Show operation feedback and error notices through the shared Ant Design bubble notification provider, outside page flow. Preserve retry actions and dismiss controls; success notices auto-dismiss. Keep a token-based gap below standalone settings save toolbars.

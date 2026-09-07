@@ -1,3 +1,4 @@
+import { FeedbackProvider } from "../ui/notifications";
 import { ConfigProvider } from "../ui/antd";
 import { CssBaseline, UiThemeProvider } from "../ui/primitives";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type PropsWithChildren } from "react";
@@ -64,7 +65,7 @@ export function BookKinThemeProvider({ children }: PropsWithChildren) {
       <ConfigProvider theme={antdTheme} wave={{ disabled: true }}>
         <UiThemeProvider theme={uiTheme}>
           <CssBaseline />
-          {children}
+          <FeedbackProvider>{children}</FeedbackProvider>
         </UiThemeProvider>
       </ConfigProvider>
     </BookKinThemeContext.Provider>

@@ -122,9 +122,11 @@ export function AiSettingsPage() {
 
   const selectedProvider = draft.providers.find((provider) => provider.id === selectedProviderId) ?? draft.providers[0];
   return <PageContainer>
+    <Box sx={{ mb: 2 }}>
     <ActionToolbar>
       <Button variant="contained" disabled={busy} onClick={() => void save()}>{busy ? "保存中…" : "保存设置"}</Button>
     </ActionToolbar>
+    </Box>
     {message && <Alert severity="success" sx={{ mb: 2 }}>{message}</Alert>}
     {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
     <Stack spacing={2.5}>

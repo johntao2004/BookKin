@@ -47,7 +47,7 @@ describe("CategoriesPage", () => {
 
     fireEvent.click(await screen.findByRole("button", { name: "管理分类" }));
     const dialog = await screen.findByRole("dialog", { name: "管理分类" });
-    expect(within(dialog).getByText(/不会删除 NAS 文件/)).toBeInTheDocument();
+    expect(screen.getByText(/不会删除 NAS 文件/)).toBeInTheDocument();
     expect(within(dialog).getByRole("textbox", { name: "分类名称" })).toBeInTheDocument();
   });
 });

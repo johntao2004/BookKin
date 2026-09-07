@@ -1,3 +1,4 @@
+import { FeedbackBubble } from "./notifications";
 import type { CSSProperties, ElementType, HTMLAttributes, ReactElement, ReactNode } from "react";
 import { createPortal } from "react-dom";
 import {
@@ -469,13 +470,12 @@ export function Popover({ open, onClose, anchorEl, children, slotProps, ...props
 
 
 export function Snackbar({ open, message, onClose, autoHideDuration = 4000, children }: { open?: boolean; message?: ReactNode; onClose?: () => void; autoHideDuration?: number; children?: ReactNode }) {
-  useEffect(() => {
-    if (!open || !onClose) return undefined;
-    const timer = window.setTimeout(onClose, autoHideDuration);
-    return () => window.clearTimeout(timer);
-  }, [autoHideDuration, onClose, open]);
-  if (!open || typeof document === "undefined") return null;
-  return createPortal(<div role="status" className="bk-snackbar">{message ?? children}</div>, document.body);
+  if (!open) return null;
+  // Alert children already render a notification through the shared provider.
+  return message !== undefined
+    ? <FeedbackBubble duration={autoHideDuration / 1000} onClose={onClose}>{message}</FeedbackBubble>
+    : children;
+
 }
 
 export function Breadcrumbs({ children, separator = "/", sx, className, ...props }: BoxProps & { separator?: ReactNode }) {
