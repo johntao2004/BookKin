@@ -7,6 +7,33 @@ import { TestProviders } from "../test/TestProviders";
 import { FileOperationDialog } from "./FileOperationDialog";
 
 describe("FileOperationDialog", () => {
+  it("移动通过书库选择校验，保留相对路径并等待确认", async () => {
+    const book = demoBooks[0];
+    vi.spyOn(api, "listLibraryRoots").mockResolvedValue([
+      { id: "destination", name: "目标书库", configuredPath: "/library/other", status: "ONLINE",
+        canRead: true, canWrite: true, canAtomicMove: true, canStage: true },
+    ]);
+    const preview = { previewToken: "move-preview", type: "MOVE" as const,
+      sourcePath: book.relativePath, targetPath: book.relativePath, requiredBytes: 0,
+      expectedFingerprint: book.fingerprint, expiresAt: new Date(Date.now() + 300000).toISOString(),
+      warnings: [], conflicts: [] };
+    const prepare = vi.spyOn(api, "previewFileOperation").mockResolvedValue(preview);
+    const execute = vi.spyOn(api, "executeFileOperation");
+    render(<TestProviders><FileOperationDialog book={book} type="MOVE" onClose={vi.fn()} onCompleted={vi.fn()} /></TestProviders>);
+    expect(screen.getByText(`当前书库：${book.libraryRoot}`)).toBeInTheDocument();
+    expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.getByRole("combobox")).not.toBeDisabled());
+    fireEvent.mouseDown(screen.getByRole("combobox"));
+    fireEvent.click(await screen.findByText("目标书库", { selector: ".ant-select-item-option-content" }));
+    fireEvent.click(screen.getByRole("button", { name: "校验目标书库" }));
+    await waitFor(() => expect(prepare).toHaveBeenCalledWith(book, "MOVE", book.relativePath, "destination"));
+    expect(await screen.findByText("校验通过，可以移动。")).toBeInTheDocument();
+    expect(execute).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "确认移动" }));
+    await waitFor(() => expect(execute).toHaveBeenCalledWith(preview));
+    vi.restoreAllMocks();
+  });
+
   it("重命名只输入书名，路径和扩展名交给服务端计算", async () => {
     const previewRequest = vi.spyOn(api, "previewFileOperation").mockResolvedValue({
       previewToken: "rename-preview",

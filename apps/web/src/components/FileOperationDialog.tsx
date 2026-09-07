@@ -16,11 +16,13 @@ import { DialogContent } from "@/ui/overlays";
 import { DialogTitle } from "@/ui/overlays";
 import { Divider } from "@/ui/feedback";
 import { Stack } from "@/ui/primitives";
+import { MenuItem } from "@/ui/primitives";
+import { Select } from "@/ui/forms";
 import { TextField } from "@/ui/forms";
 import { Typography } from "@/ui/primitives";
 import { useEffect, useState } from "react";
 import { api } from "../api/client";
-import type { Book, FileOperation, FileOperationPreview, FileOperationType } from "../domain/types";
+import type { Book, FileOperation, FileOperationPreview, FileOperationType, LibraryRoot } from "../domain/types";
 import { tokens } from "../theme/generated-tokens";
 
 const labels: Record<FileOperationType, string> = {
@@ -40,6 +42,9 @@ interface FileOperationDialogProps {
 }
 
 export function FileOperationDialog({ book, type, onClose, onCompleted }: FileOperationDialogProps) {
+  const [roots, setRoots] = useState<LibraryRoot[]>([]);
+  const [targetRootId, setTargetRootId] = useState("");
+  const [rootsLoading, setRootsLoading] = useState(false);
   const [targetPath, setTargetPath] = useState("");
   const [preview, setPreview] = useState<FileOperationPreview | null>(null);
   const [loading, setLoading] = useState(false);
@@ -51,9 +56,19 @@ export function FileOperationDialog({ book, type, onClose, onCompleted }: FileOp
     setPreview(null);
     setError("");
     setLoading(false);
+    setTargetRootId("");
+    setRoots([]);
+    setRootsLoading(false);
     if (book && type) {
-      const extension = book.format.toLowerCase();
-      setTargetPath(type === "RENAME" ? book.title : type === "MOVE" ? `家庭藏书/${book.author}/${book.title}.${extension}` : "");
+      setTargetPath(type === "RENAME" ? book.title : type === "MOVE" ? book.relativePath : "");
+      if (type === "MOVE") {
+        setRootsLoading(true);
+        void api.listLibraryRoots().then((result) => {
+          if (active) setRoots(result);
+        }).catch((reason: unknown) => {
+          if (active) setError(reason instanceof Error ? reason.message : "无法加载书库，请关闭后重试");
+        }).finally(() => { if (active) setRootsLoading(false); });
+      }
       if (type === "TRASH") {
         setLoading(true);
         void api.previewFileOperation(book, type).then((result) => {
@@ -73,7 +88,9 @@ export function FileOperationDialog({ book, type, onClose, onCompleted }: FileOp
     setLoading(true);
     setError("");
     try {
-      setPreview(await api.previewFileOperation(book, type, targetPath || undefined));
+      setPreview(await (type === "MOVE"
+        ? api.previewFileOperation(book, type, targetPath, targetRootId)
+        : api.previewFileOperation(book, type, targetPath || undefined)));
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "无法生成预览");
     } finally {
@@ -97,12 +114,13 @@ export function FileOperationDialog({ book, type, onClose, onCompleted }: FileOp
   };
 
   return (
-    <Dialog open={Boolean(book && type)} onClose={executing ? undefined : onClose} fullWidth maxWidth={type === "TRASH" ? "sm" : "md"}>
+    <Dialog open={Boolean(book && type)} onClose={executing ? undefined : onClose} fullWidth maxWidth={type === "TRASH" || type === "MOVE" ? "sm" : "md"}>
       <DialogTitle sx={{ pb: 1 }}>
         <Typography variant="h4" component="div">{type ? labels[type] : "文件操作"}</Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
           {type === "TRASH"
             ? "请确认是否将这本书移入回收站。"
+            : type === "MOVE" ? "选择目标书库，校验通过后确认移动。"
             : "先由服务端计算真实路径、指纹、空间和冲突；确认后才会排入 Worker。"}
         </Typography>
       </DialogTitle>
@@ -113,26 +131,44 @@ export function FileOperationDialog({ book, type, onClose, onCompleted }: FileOp
               <Box component="img" src={book?.coverUrl} alt="" sx={{ width: 56, aspectRatio: "2 / 3", objectFit: "cover", borderRadius: 1 }} />
               <Box sx={{ minWidth: 0 }}>
                 <Typography variant="h6">{book?.title}</Typography>
-                <Typography variant="body2" color="text.secondary" sx={type === "TRASH" ? undefined : { fontFamily: tokens.typography.fontFamily.mono, overflowWrap: "anywhere" }}>
-                  {book ? type === "TRASH" ? book.author : `${book.libraryRoot}/${book.relativePath}` : ""}
+                <Typography variant="body2" color="text.secondary" sx={type === "TRASH" || type === "MOVE" ? undefined : { fontFamily: tokens.typography.fontFamily.mono, overflowWrap: "anywhere" }}>
+                  {book ? type === "TRASH" || type === "MOVE" ? book.author : `${book.libraryRoot}/${book.relativePath}` : ""}
                 </Typography>
               </Box>
             </Stack>
           </Box>
 
-          {(type === "RENAME" || type === "MOVE") && (
+          {type === "MOVE" && (
+            <Stack spacing={2}>
+              <Typography>当前书库：{book?.libraryRoot}</Typography>
+              <Select label="目标书库" placeholder="选择目标书库" value={targetRootId || undefined}
+                loading={rootsLoading} disabled={loading || executing || rootsLoading}
+                onChange={(event) => { setTargetRootId(event.target.value); setPreview(null); setError(""); }}>
+                {roots.filter((root) => root.name !== book?.libraryRoot).map((root) => (
+                  <MenuItem key={root.id} value={root.id} disabled={!root.canWrite || root.status !== "ONLINE"}>
+                    {root.name}{root.status === "OFFLINE" ? "（离线）" : !root.canWrite ? "（只读）" : ""}
+                  </MenuItem>
+                ))}
+              </Select>
+              {!rootsLoading && !error && !roots.some((root) => root.name !== book?.libraryRoot && root.canWrite && root.status === "ONLINE") &&
+                <Alert severity="info">暂无可用的目标书库，请先在设置中添加可写书库。</Alert>}
+              {preview && <Alert severity={preview.conflicts.length ? "error" : "success"}>
+                {preview.conflicts.length ? preview.conflicts.map((conflict) => conflict.message).join("；") : "校验通过，可以移动。"}
+              </Alert>}
+            </Stack>
+          )}
+
+          {type === "RENAME" && (
             <TextField
-              label={type === "MOVE" ? "目标根目录与相对路径" : "新书名"}
+              label="新书名"
               value={targetPath}
               onChange={(event: any) => { setTargetPath(event.target.value); setPreview(null); }}
-              helperText={type === "RENAME"
-                ? "只填写书名；原目录和文件格式会自动保留，无需填写路径或扩展名。"
-                : "路径会规范化；不允许 ..、软链接逃逸、保留名称或覆盖已有文件。"}
+              helperText="只填写书名；原目录和文件格式会自动保留，无需填写路径或扩展名。"
               fullWidth
             />
           )}
 
-          {type === "TRASH" ? (
+          {type === "MOVE" ? null : type === "TRASH" ? (
             <Stack spacing={2}>
               {(loading || (!preview && !error)) && (
                 <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", color: "text.secondary" }}>
@@ -147,7 +183,7 @@ export function FileOperationDialog({ book, type, onClose, onCompleted }: FileOp
               {!loading && error && <Button variant="text" startIcon={<RefreshRounded />} onClick={createPreview}>重试</Button>}
             </Stack>
           ) : !preview ? (
-            <Button variant="outlined" startIcon={loading ? <CircularProgress size={18} /> : <GppGoodOutlined />} onClick={createPreview} disabled={loading || ((type === "RENAME" || type === "MOVE") && !targetPath.trim())}>
+            <Button variant="outlined" startIcon={loading ? <CircularProgress size={18} /> : <GppGoodOutlined />} onClick={createPreview} disabled={loading || (type === "RENAME" && !targetPath.trim())}>
               {loading ? "正在安全检查…" : "生成安全预览"}
             </Button>
           ) : (
@@ -171,15 +207,19 @@ export function FileOperationDialog({ book, type, onClose, onCompleted }: FileOp
       </DialogContent>
       <DialogActions sx={{ p: 3, pt: 1 }}>
         <Button onClick={onClose} color="inherit" disabled={executing}>取消</Button>
-        <Button
+        {type === "MOVE" && (!preview || preview.conflicts.length > 0 || error) && <Button variant="contained" onClick={createPreview}
+          disabled={!targetRootId || loading || rootsLoading} startIcon={loading ? <CircularProgress size={18} /> : undefined}>
+          {loading ? "正在校验…" : "校验目标书库"}
+        </Button>}
+        {(type !== "MOVE" || preview) && <Button
           variant="contained"
           color={type === "TRASH" ? "error" : "primary"}
           startIcon={executing ? <CircularProgress color="inherit" size={18} /> : type === "TRASH" ? <DeleteOutlineRounded /> : <FolderOutlined />}
           disabled={!preview || preview.conflicts.length > 0 || executing || loading}
           onClick={execute}
         >
-          {executing ? (type === "TRASH" ? "正在移入回收站…" : "正在提交…") : type === "TRASH" ? "确认移入回收站" : "确认并执行"}
-        </Button>
+          {executing ? (type === "TRASH" ? "正在移入回收站…" : "正在提交…") : type === "TRASH" ? "确认移入回收站" : type === "MOVE" ? "确认移动" : "确认并执行"}
+        </Button>}
       </DialogActions>
     </Dialog>
   );

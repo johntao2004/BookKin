@@ -878,10 +878,10 @@ export const api = {
     await pause();
   },
 
-  async previewFileOperation(book: Book, type: FileOperationType, targetPath?: string): Promise<FileOperationPreview> {
+  async previewFileOperation(book: Book, type: FileOperationType, targetPath?: string, targetRootId?: string): Promise<FileOperationPreview> {
     if (!demoMode) return request("/file-operations/preview", {
       method: "POST",
-      body: JSON.stringify({ bookFileId: book.fileId ?? book.id, type, targetPath, expectedFingerprint: book.fingerprint }),
+      body: JSON.stringify({ bookFileId: book.fileId ?? book.id, type, targetPath, targetRootId, expectedFingerprint: book.fingerprint }),
     }, { timeoutMs: 12_000 });
     await pause();
     const normalizedTarget = type === "RENAME" && targetPath
