@@ -26,6 +26,9 @@ if previous != candidate:
         raise SystemExit('Schema changed: use a reviewed migration/recovery plan instead of automatic image rollback')
     print('Reviewed additive migration: existing tables unchanged; rollback retains new settings tables.')
 PYCODE
+# Generate once, reuse forever. Refuse replacement when encrypted data already exists.
+ENCRYPTED=$(docker compose exec -T postgres psql -U bookkin -d bookkin -Atc "SELECT count(*) FROM ai_provider_settings WHERE api_key_ciphertext IS NOT NULL")
+python3 "$CANDIDATE/init-secrets.py" "$LIVE/.env" "$ENCRYPTED"
 # Build without modifying the live JAR; both services receive the same immutable image.
 printf 'FROM eclipse-temurin:21-jre-noble\nWORKDIR /app\nCOPY --chmod=0644 bookkin.jar /app/bookkin.jar\nENV JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=75 -Djava.io.tmpdir=/tmp/bookkin"\nENTRYPOINT ["java","-jar","/app/bookkin.jar"]\n' > "$CANDIDATE/Dockerfile"
 docker build --tag "$IMAGE" "$CANDIDATE"

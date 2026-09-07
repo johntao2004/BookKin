@@ -13,7 +13,7 @@ mkdir -p "$DEST/server/src/main/resources/static"
 rsync -a --delete apps/web/dist/client/ "$DEST/server/src/main/resources/static/"
 (cd "$DEST/server" && ./mvnw verify)
 cp "$DEST/server/target/bookkin-0.1.0-SNAPSHOT.jar" "$DEST/bookkin.jar"
-cp ops/release/check.py ops/release/install.sh "$DEST/"
+cp ops/release/check.py ops/release/install.sh ops/release/init-secrets.py "$DEST/"
 python3 - "$DEST" <<'PY'
 import hashlib,json,pathlib,re,subprocess,sys
 out=pathlib.Path(sys.argv[1])
