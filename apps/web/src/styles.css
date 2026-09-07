@@ -254,7 +254,7 @@ select {
 
 /* Keep the selected value legible while its options are open. */
 .bk-select.ant-select-open .ant-select-content-has-value {
-  opacity: 1;
+  opacity: 1 !important;
 }
 
 .bk-select .ant-select-selection-placeholder {
