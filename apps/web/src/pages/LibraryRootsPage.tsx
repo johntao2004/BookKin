@@ -1,3 +1,6 @@
+import { useState } from "react";
+import { Dialog, DialogTitle, DialogContent, DialogActions, TextField } from "@/ui";
+import { randomId } from "../utils/random-id";
 import { CheckCircleOutlineRounded } from "@/ui/icons";
 import { ErrorOutlineRounded } from "@/ui/icons";
 import { FolderOutlined } from "@/ui/icons";
@@ -15,7 +18,7 @@ import { Stack } from "@/ui";
 import { Typography } from "@/ui";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../api/client";
-import { PageContainer, PageHeader } from "../components/PageHeader";
+import { ActionToolbar, PageContainer } from "../components/PageHeader";
 import type { LibraryRoot } from "../domain/types";
 import { tokens } from "../theme/generated-tokens";
 
@@ -24,14 +27,44 @@ export function LibraryRootsPage() {
   const roots = query.data ?? [];
   const degraded = roots.filter((root) => !root.canRead || !root.canWrite);
 
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState("");
+  const [path, setPath] = useState("");
+  const [preview, setPreview] = useState<Awaited<ReturnType<typeof api.previewLibraryRoot>> | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [key, setKey] = useState(randomId);
+  async function perform(action: () => Promise<void>) {
+    setBusy(true); setError("");
+    try { await action(); } catch (cause) { setError(cause instanceof Error ? cause.message : "操作失败，请重试"); }
+    finally { setBusy(false); }
+  }
   return (
     <PageContainer>
-      <PageHeader
-        eyebrow="NAS LIBRARIES"
-        title="书库与 NAS"
-        description="BookKin每分钟复查读取、写入、原子移动、暂存目录和剩余空间；不满足写入条件时自动降级，不冒险修改原文件。"
-        action={<Button startIcon={<RefreshRounded />} variant="outlined" onClick={() => query.refetch()}>重新检查</Button>}
-      />
+      <Stack sx={{ mb: 3 }}><ActionToolbar>
+        <Button variant="contained" onClick={() => { setOpen(true); setPreview(null); setError(""); setKey(randomId()); }}>新增书库</Button>
+        <Button startIcon={<RefreshRounded />} variant="outlined" disabled={busy} onClick={() => perform(async () => { await api.checkLibraryRoots(); await query.refetch(); })}>重新检查</Button>
+      </ActionToolbar></Stack>
+      {error && !open && <Alert severity="error">{error}</Alert>}
+      <Dialog open={open} onClose={() => { if (!busy) setOpen(false); }} maxWidth="sm" fullWidth>
+        <DialogTitle>新增书库</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2}>
+            <TextField label="书库名称" value={name} onChange={event => setName(event.target.value)} fullWidth />
+            <TextField label="容器内目录" value={path} onChange={event => { setPath(event.target.value); setPreview(null); }} helperText="先在 Docker 的应用和任务容器中挂载同一目录，例如 /library/books。" fullWidth />
+            {error && <Alert severity="error">{error}</Alert>}
+            {preview && <Alert severity={preview.writable ? "success" : "warning"}>目录可访问 · {preview.writable ? "可读写，新增时将验证写入能力" : "只读"} · 可用 {formatBytes(preview.freeBytes)}</Alert>}
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button disabled={busy} onClick={() => setOpen(false)}>取消</Button>
+          <Button variant="contained" disabled={busy || !name.trim() || !path.trim()} onClick={() => perform(async () => {
+            if (!preview) { setPreview(await api.previewLibraryRoot(path.trim())); return; }
+            await api.createLibraryRoot({ name: name.trim(), path: preview.path, expectedFingerprint: preview.fingerprint, idempotencyKey: key });
+            await query.refetch(); setOpen(false); setName(""); setPath(""); setPreview(null);
+          })}>{busy ? "检查中…" : preview ? "确认新增" : "检查位置"}</Button>
+        </DialogActions>
+      </Dialog>
 
       {degraded.length > 0 && (
         <Alert severity="warning" sx={{ mb: 3 }}>
@@ -47,7 +80,7 @@ export function LibraryRootsPage() {
         <Stack spacing={1} sx={{ py: 12, alignItems: "center", textAlign: "center" }}>
           <StorageRounded sx={{ fontSize: 46, color: "text.disabled" }} />
           <Typography variant="h4">尚未配置书库</Typography>
-          <Typography color="text.secondary">先在 Docker Compose 中挂载 NAS 目录，再以 BOOKKIN_STORAGE_ROOTS_* 配置名称与容器路径。</Typography>
+          <Typography color="text.secondary">点击新增书库，检查并添加已挂载的目录。</Typography>
         </Stack>
       ) : (
         <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: roots.length === 1 ? "1fr" : "repeat(2, minmax(0, 1fr))" }, gap: 3 }}>

@@ -18,8 +18,8 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 @Component
-@Profile("worker")
-public class LibraryRootCapabilityService implements ApplicationRunner {
+@Profile({"api", "worker"})
+public class LibraryRootCapabilityService  {
     private static final Logger log = LoggerFactory.getLogger(LibraryRootCapabilityService.class);
     private final LibraryRootRepository roots;
     private final BookKinProperties properties;
@@ -29,18 +29,9 @@ public class LibraryRootCapabilityService implements ApplicationRunner {
         this.properties = properties;
     }
 
-    @Override
-    public void run(ApplicationArguments args) {
-        for (var configured : properties.storage().roots()) roots.upsertConfigured(configured.name(), configured.path());
-        checkAll();
-    }
+    public void checkAll() { roots.findAll().forEach(this::check); }
 
-    @Scheduled(fixedDelayString = "1m", initialDelayString = "30s")
-    public void checkAll() {
-        roots.findAll().forEach(this::check);
-    }
-
-    private void check(LibraryRoot root) {
+    public void check(LibraryRoot root) {
         Path configured = Path.of(root.configuredPath());
         String canonical = null;
         boolean readable = false;

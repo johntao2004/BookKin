@@ -16,6 +16,11 @@ public class LibraryRootRepository {
         this.dsl = dsl;
     }
 
+    public void lockRegistration() { dsl.execute("lock table library_roots in exclusive mode"); }
+    public LibraryRoot insert(UUID id, String name, String path) {
+        dsl.execute("insert into library_roots(id, name, configured_path) values (?, ?, ?)", id, name, path);
+        return findById(id).orElseThrow();
+    }
     public List<LibraryRoot> findAll() {
         return dsl.fetch("select * from library_roots order by name").map(this::map);
     }

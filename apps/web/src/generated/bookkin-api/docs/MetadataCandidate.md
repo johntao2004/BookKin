@@ -8,6 +8,7 @@ Name | Type
 ------------ | -------------
 `id` | string
 `provider` | [MetadataSource](MetadataSource.md)
+`providerLabel` | string
 `title` | string
 `subtitle` | string
 `authors` | Array&lt;string&gt;
@@ -17,6 +18,9 @@ Name | Type
 `description` | string
 `tags` | Array&lt;string&gt;
 `coverUrl` | string
+`confidence` | number
+`matchReason` | string
+`requiresReview` | boolean
 
 ## Example
 
@@ -27,6 +31,7 @@ import type { MetadataCandidate } from ''
 const example = {
   "id": null,
   "provider": null,
+  "providerLabel": null,
   "title": null,
   "subtitle": null,
   "authors": null,
@@ -36,6 +41,9 @@ const example = {
   "description": null,
   "tags": null,
   "coverUrl": null,
+  "confidence": null,
+  "matchReason": null,
+  "requiresReview": null,
 } satisfies MetadataCandidate
 
 console.log(example)

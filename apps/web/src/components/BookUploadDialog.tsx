@@ -1,9 +1,9 @@
+import { useNavigate } from "react-router-dom";
+import { randomId } from "../utils/random-id";
 import { AutoAwesomeOutlined } from "@/ui/icons";
 import { CheckCircleOutlineRounded } from "@/ui/icons";
 import { CloudUploadOutlined } from "@/ui/icons";
 import { DeleteOutlineRounded } from "@/ui/icons";
-import { EditNoteRounded } from "@/ui/icons";
-import { ErrorOutlineRounded } from "@/ui/icons";
 import { ImageOutlined } from "@/ui/icons";
 import { InsertDriveFileOutlined } from "@/ui/icons";
 import { WarningAmberRounded } from "@/ui/icons";
@@ -26,9 +26,7 @@ import { Select } from "@/ui";
 import { Stack } from "@/ui";
 import { TextField } from "@/ui";
 import { Typography } from "@/ui";
-import { useMediaQuery } from "@/ui";
-import { useTheme } from "@/ui";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState, type DragEvent } from "react";
 import { api } from "../api/client";
 import type { BookMetadataDraft, BookUpload, LibraryRoot, MetadataCandidate, MetadataSource } from "../domain/types";
@@ -43,208 +41,111 @@ interface LocalUpload {
   error?: string;
 }
 
-const statusText: Record<BookUpload["status"], string> = {
-  RECEIVING: "等待文件",
-  INSPECTING: "正在识别",
-  ENRICHING: "正在补全",
-  READY_FOR_REVIEW: "等待校对",
-  COMMITTING: "正在入库",
-  SUCCEEDED: "已入库",
-  DUPLICATE: "完全重复",
-  FAILED: "处理失败",
-  CANCELLED: "已取消",
-  EXPIRED: "已过期",
-};
-
 const sourceText: Record<MetadataSource, string> = {
   FILE: "文件内置",
   FILENAME: "文件名推断",
   OPEN_LIBRARY: "Open Library",
   GOOGLE_BOOKS: "Google Books",
+  AI: "AI 候选",
   MANUAL: "手工编辑",
 };
 
-export function BookUploadDialog({ open, initialRootId, publishToDisplay = false, onClose, onCompleted }: {
-  open: boolean;
-  initialRootId?: string;
-  publishToDisplay?: boolean;
-  onClose: () => void;
-  onCompleted: (message: string) => void;
+export function BookUploadDialog({ open, initialRootId, publishToDisplay = false, onClose }: {
+  open: boolean; initialRootId?: string; publishToDisplay?: boolean;
+  onClose: () => void; onCompleted: (message: string) => void;
 }) {
-  const theme = useTheme();
-  const fullScreen = useMediaQuery(theme.breakpoints.down("sm"));
-  const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const fileInput = useRef<HTMLInputElement>(null);
+  const uploading = useRef(false);
   const [rootId, setRootId] = useState(initialRootId ?? "");
   const [local, setLocal] = useState<LocalUpload[]>([]);
-  const [reviewId, setReviewId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const rootsQuery = useQuery({ queryKey: ["library-roots"], queryFn: api.listLibraryRoots, enabled: open });
-  const uploadsQuery = useQuery({
-    queryKey: ["book-uploads"],
-    queryFn: api.listBookUploads,
-    enabled: open,
-    refetchInterval: (query) => query.state.data?.some((item) => ["INSPECTING", "ENRICHING", "COMMITTING"].includes(item.status)) ? 1200 : 5000,
-  });
+  const pendingQuery = useQuery({ queryKey: ["book-uploads"], queryFn: api.listBookUploads, enabled: open });
   const writableRoots = useMemo(() => (rootsQuery.data ?? []).filter(isWritable), [rootsQuery.data]);
-  const uploads = uploadsQuery.data ?? [];
-  const review = uploads.find((item) => item.id === reviewId) ?? null;
-
+  const completedIds = local.filter(item => item.state === "UPLOADED" && item.uploadId).map(item => item.uploadId!);
+  const pendingIds = (pendingQuery.data ?? []).filter(item => ["READY_FOR_REVIEW", "INSPECTING", "ENRICHING"].includes(item.status)).map(item => item.id);
+  const editIds = [...new Set([...completedIds, ...pendingIds])];
   useEffect(() => {
     if (!open) return;
-    if (initialRootId && writableRoots.some((root) => root.id === initialRootId)) setRootId(initialRootId);
-    else if (!rootId && writableRoots[0]) setRootId(writableRoots[0].id);
-  }, [initialRootId, open, rootId, writableRoots]);
+    if (!rootId && writableRoots[0]) setRootId(writableRoots[0].id);
+  }, [open, rootId, writableRoots]);
 
-  const addFiles = (files: FileList | File[]) => {
-    setMessage("");
-    const accepted = Array.from(files).filter((file) => /\.(epub|pdf)$/i.test(file.name));
-    if (accepted.length !== files.length) setMessage("只支持 EPUB 和 PDF；压缩包不会加入队列。");
-    setLocal((current) => {
-      const remaining = Math.max(0, 20 - current.length);
-      return [...current, ...accepted.slice(0, remaining).map((file) => ({ id: crypto.randomUUID(), file, progress: 0, state: "QUEUED" as const }))];
-    });
-  };
-
-  const start = async () => {
-    if (!rootId) return;
-    const queue = local.filter((item) => item.state === "QUEUED" || item.state === "FAILED");
-    if (queue.length === 0) return;
+  const start = async (queue: LocalUpload[]) => {
+    if (!rootId || uploading.current || !queue.length) return;
+    uploading.current = true;
     setBusy(true);
-    setMessage("");
     let cursor = 0;
     const worker = async () => {
       while (cursor < queue.length) {
         const item = queue[cursor++];
-        setLocal((current) => patchLocal(current, item.id, { state: "UPLOADING", progress: 0, error: undefined }));
+        setLocal(current => patchLocal(current, item.id, { state: "UPLOADING", error: undefined }));
         try {
           const session = await api.createBookUpload({ libraryRootId: rootId, filename: item.file.name, sizeBytes: item.file.size });
-          setLocal((current) => patchLocal(current, item.id, { uploadId: session.id }));
-          await api.uploadBookContent(session.id, item.file, (progress) => setLocal((current) => patchLocal(current, item.id, { progress })));
-          setLocal((current) => patchLocal(current, item.id, { state: "UPLOADED", progress: 100 }));
+          await api.uploadBookContent(session.id, item.file, progress => setLocal(current => patchLocal(current, item.id, { progress })));
+          setLocal(current => patchLocal(current, item.id, { uploadId: session.id, state: "UPLOADED", progress: 100 }));
         } catch (reason) {
-          setLocal((current) => patchLocal(current, item.id, { state: "FAILED", error: errorMessage(reason) }));
+          setLocal(current => patchLocal(current, item.id, { state: "FAILED", error: errorMessage(reason) }));
         }
       }
     };
-    await Promise.all([worker(), worker()]);
-    await uploadsQuery.refetch();
-    setBusy(false);
+    try { await Promise.all([worker(), worker()]); }
+    finally { uploading.current = false; setBusy(false); }
   };
-
-  const cancel = async (upload: BookUpload) => {
-    try {
-      await api.cancelBookUpload(upload.id);
-      await uploadsQuery.refetch();
-    } catch (reason) { setMessage(errorMessage(reason)); }
+  const addFiles = (files: FileList | File[]) => {
+    if (uploading.current || !rootId) return;
+    const accepted = Array.from(files).filter(file => /\.(epub|pdf)$/i.test(file.name));
+    setMessage(accepted.length !== files.length ? "只支持 EPUB 和 PDF。" : accepted.length > 20 ? "单次最多上传20本，其余文件请下一次上传。" : "");
+    const queue: LocalUpload[] = accepted.slice(0, 20).map(file => ({ id: randomId(), file, progress: 0, state: "QUEUED" }));
+    setLocal(current => [...current, ...queue]);
+    void start(queue);
   };
-
-  const commitAll = async () => {
-    const ready = uploads.filter((item) => item.status === "READY_FOR_REVIEW");
-    if (ready.length === 0) return;
-    setBusy(true);
-    try {
-      for (const upload of ready) await api.commitBookUpload(upload.id, publishToDisplay);
-      await Promise.all([uploadsQuery.refetch(), queryClient.invalidateQueries({ queryKey: ["books"] }), queryClient.invalidateQueries({ queryKey: ["display-books"] })]);
-      onCompleted(publishToDisplay ? `已将 ${ready.length} 本书写入书库并加入公共书单` : `已将 ${ready.length} 本书安全写入书库`);
-    } catch (reason) { setMessage(errorMessage(reason)); }
-    finally { setBusy(false); }
+  const edit = () => {
+    onClose();
+    setLocal([]);
+    navigate(`/library/uploads/${editIds[0]}?${new URLSearchParams({ next: editIds.slice(1).join(","), publish: String(publishToDisplay) })}`);
   };
-
-  const drop = (event: DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    addFiles(event.dataTransfer.files);
-  };
-
-  return (
-    <Dialog open={open} onClose={busy ? undefined : onClose} fullWidth maxWidth="lg" fullScreen={fullScreen}>
-      <DialogTitle>
-        <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center", gap: 2 }}>
-          <Box><Typography variant="h4">{review ? "校对书籍信息" : "上传书籍"}</Typography><Typography variant="body2" color="text.secondary">{review ? review.originalFilename : "文件先进入暂存区，确认后才会写入 NAS 书库。"}</Typography></Box>
-          {review && <Button color="inherit" onClick={() => setReviewId(null)}>返回队列</Button>}
-        </Stack>
-      </DialogTitle>
-      <DialogContent dividers sx={{ p: { xs: 2, sm: 3 } }}>
-        {review ? (
-          <UploadReview upload={review} publishToDisplay={publishToDisplay} onChanged={async () => { await uploadsQuery.refetch(); }} onCommitted={async () => {
-            await Promise.all([uploadsQuery.refetch(), queryClient.invalidateQueries({ queryKey: ["books"] }), queryClient.invalidateQueries({ queryKey: ["display-books"] })]);
-            setReviewId(null);
-            onCompleted("书籍已安全入库并建立索引");
-          }} />
-        ) : (
-          <Stack spacing={3}>
-            <FormControl fullWidth>
-              <InputLabel id="upload-root-label">目标书库</InputLabel>
-              <Select labelId="upload-root-label" label="目标书库" value={rootId} onChange={(event: any) => setRootId(event.target.value)}>
-                {writableRoots.map((root) => <MenuItem key={root.id} value={root.id}>{root.name} · 可用 {formatBytes(root.freeBytes)}</MenuItem>)}
-              </Select>
-            </FormControl>
-            {writableRoots.length === 0 && <Alert severity="warning">没有在线且具备写入、暂存能力的书库根目录。</Alert>}
-            <Box
-              onDragOver={(event: any) => event.preventDefault()}
-              onDrop={drop}
-              onClick={() => fileInput.current?.click()}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(event: any) => { if (event.key === "Enter" || event.key === " ") fileInput.current?.click(); }}
-              sx={{ border: 1, borderStyle: "dashed", borderColor: "divider", borderRadius: 3, bgcolor: "background.default", px: 3, py: 5, textAlign: "center", cursor: "pointer", "&:focus-visible": { outline: 2, outlineColor: "primary.main", outlineOffset: 2 } }}
-            >
-              <CloudUploadOutlined color="primary" sx={{ fontSize: 42 }} />
-              <Typography variant="h5" sx={{ mt: 1 }}>拖入 EPUB 或 PDF</Typography>
-              <Typography color="text.secondary" sx={{ mt: 0.5 }}>也可以点击选择，单次最多20本，不接受ZIP等压缩包</Typography>
-              <input ref={fileInput} hidden multiple type="file" accept=".epub,.pdf,application/epub+zip,application/pdf" onChange={(event: any) => { if (event.target.files) addFiles(event.target.files); event.target.value = ""; }} />
-            </Box>
-            {local.length > 0 && <LocalQueue items={local} onRemove={(id) => setLocal((current) => current.filter((item) => item.id !== id))} />}
-            <PersistentQueue uploads={uploads} onReview={setReviewId} onCancel={cancel} />
-            {message && <Alert severity="warning">{message}</Alert>}
-          </Stack>
-        )}
-      </DialogContent>
-      {!review && <DialogActions sx={{ p: 3, flexWrap: "wrap" }}>
-        <Button color="inherit" onClick={onClose} disabled={busy}>关闭</Button>
-        <Box sx={{ flex: 1 }} />
-        {uploads.some((item) => item.status === "READY_FOR_REVIEW") && <Button variant="outlined" onClick={commitAll} disabled={busy}>确认所有就绪项</Button>}
-        <Button variant="contained" startIcon={busy ? <CircularProgress size={18} color="inherit" /> : <CloudUploadOutlined />} disabled={busy || !rootId || !local.some((item) => item.state === "QUEUED" || item.state === "FAILED")} onClick={start}>{busy ? "正在上传…" : "开始上传"}</Button>
-      </DialogActions>}
-    </Dialog>
-  );
+  return <Dialog open={open} onClose={busy ? undefined : onClose} fullWidth maxWidth="sm">
+    <DialogTitle><Typography component="span" variant="h4">上传书籍</Typography><Typography component="span" variant="body2" color="text.secondary" sx={{ display: "block" }}>选择或拖入文件即可自动上传。</Typography></DialogTitle>
+    <DialogContent dividers>
+      <Stack spacing={2}>
+        <FormControl fullWidth><InputLabel id="upload-root-label">目标书库</InputLabel><Select labelId="upload-root-label" label="目标书库" value={rootId} disabled={busy} onChange={(event: any) => setRootId(event.target.value)}>{writableRoots.map(root => <MenuItem key={root.id} value={root.id}>{root.name} · 可用 {formatBytes(root.freeBytes)}</MenuItem>)}</Select></FormControl>
+        {rootsQuery.isError && <Alert severity="error">无法加载书库，请关闭后重试。</Alert>}
+        {!rootsQuery.isPending && writableRoots.length === 0 && <Alert severity="warning">没有可上传的书库。</Alert>}
+        <Box onDragOver={(event: any) => event.preventDefault()} onDrop={(event: DragEvent<HTMLDivElement>) => { event.preventDefault(); addFiles(event.dataTransfer.files); }} sx={{ border: 1, borderStyle: "dashed", borderColor: "divider", borderRadius: 3, bgcolor: "background.default", p: 2, textAlign: "center" }}>
+          <CloudUploadOutlined color="primary" sx={{ fontSize: 42 }} /><Typography variant="h5">拖入 EPUB 或 PDF</Typography><Typography color="text.secondary">单次最多20本</Typography>
+          <input ref={fileInput} hidden multiple type="file" accept=".epub,.pdf,application/epub+zip,application/pdf" onChange={(event: any) => { if (event.target.files) addFiles(event.target.files); event.target.value = ""; }} />
+        </Box>
+        {local.length > 0 && <LocalQueue items={local} onRemove={id => setLocal(current => current.filter(item => item.id !== id))} />}
+        {!busy && editIds.length > 0 && <Alert severity="success">已上传。你可以更改书籍信息，点击“确定”进入编辑页面。</Alert>}
+        {message && <Alert severity="warning">{message}</Alert>}
+      </Stack>
+    </DialogContent>
+    <DialogActions>
+      {!busy && editIds.length > 0 ? <Button variant="contained" onClick={edit}>确定</Button> : <Button variant="contained" disabled={busy || !rootId} startIcon={busy ? <CircularProgress size={18} /> : <CloudUploadOutlined />} onClick={() => { const failed = local.filter(item => item.state === "FAILED"); if (failed.length) void start(failed); else fileInput.current?.click(); }}>{busy ? "正在上传…" : "开始上传"}</Button>}
+    </DialogActions>
+  </Dialog>;
 }
 
 function LocalQueue({ items, onRemove }: { items: LocalUpload[]; onRemove: (id: string) => void }) {
   return <Stack spacing={1.25}>{items.map((item) => (
     <Stack key={item.id} direction="row" sx={{ gap: 1.5, alignItems: "center", border: 1, borderColor: "divider", borderRadius: 2, p: 1.5 }}>
       <InsertDriveFileOutlined color={item.state === "FAILED" ? "error" : "action"} />
-      <Box sx={{ flex: 1, minWidth: 0 }}><Typography variant="body2" noWrap>{item.file.name}</Typography><Typography variant="caption" color={item.state === "FAILED" ? "error" : "text.secondary"}>{item.error ?? `${formatBytes(item.file.size)} · ${item.state === "QUEUED" ? "等待上传" : item.state === "UPLOADED" ? "上传完成，正在识别" : "正在上传"}`}</Typography>{item.state === "UPLOADING" && <LinearProgress variant="determinate" value={item.progress} sx={{ mt: 0.75 }} />}</Box>
+      <Box sx={{ flex: 1, minWidth: 0 }}><Typography variant="body2" noWrap>{item.file.name}</Typography><Typography variant="caption" color={item.state === "FAILED" ? "error" : "text.secondary"}>{item.error ?? `${formatBytes(item.file.size)} · ${item.state === "QUEUED" ? "等待上传" : item.state === "UPLOADED" ? "已上传" : "正在上传"}`}</Typography>{item.state === "UPLOADING" && <LinearProgress variant="determinate" value={item.progress} sx={{ mt: 0.75 }} />}</Box>
       {item.state !== "UPLOADING" && <IconButton aria-label={`移除 ${item.file.name}`} onClick={() => onRemove(item.id)}><DeleteOutlineRounded /></IconButton>}
     </Stack>
   ))}</Stack>;
 }
 
-function PersistentQueue({ uploads, onReview, onCancel }: { uploads: BookUpload[]; onReview: (id: string) => void; onCancel: (upload: BookUpload) => void }) {
-  const visible = uploads.filter((item) => !["CANCELLED", "EXPIRED"].includes(item.status));
-  if (visible.length === 0) return null;
-  return <Stack spacing={1.25}><Typography variant="h6">识别与入库队列</Typography>{visible.map((upload) => {
-    const active = ["INSPECTING", "ENRICHING", "COMMITTING"].includes(upload.status);
-    const error = ["FAILED", "DUPLICATE"].includes(upload.status);
-    return <Stack key={upload.id} direction={{ xs: "column", sm: "row" }} sx={{ gap: 1.5, alignItems: { sm: "center" }, border: 1, borderColor: error ? "error.light" : "divider", borderRadius: 2, p: 2 }}>
-      {active ? <CircularProgress size={22} /> : error ? <ErrorOutlineRounded color="error" /> : <CheckCircleOutlineRounded color={upload.status === "SUCCEEDED" ? "success" : "primary"} />}
-      <Box sx={{ flex: 1, minWidth: 0 }}><Typography variant="body2" noWrap>{upload.originalFilename}</Typography><Typography variant="caption" color={error ? "error" : "text.secondary"}>{statusText[upload.status]}{upload.errorDetail ? ` · ${upload.errorDetail}` : ""}</Typography></Box>
-      {upload.status === "READY_FOR_REVIEW" && <Button startIcon={<EditNoteRounded />} onClick={() => onReview(upload.id)}>校对</Button>}
-      {upload.status === "SUCCEEDED" && <Chip label="已完成" color="success" size="small" />}
-      {!["COMMITTING", "SUCCEEDED"].includes(upload.status) && <IconButton aria-label={`取消 ${upload.originalFilename}`} onClick={() => onCancel(upload)}><DeleteOutlineRounded /></IconButton>}
-    </Stack>;
-  })}</Stack>;
-}
-
-function UploadReview({ upload, publishToDisplay, onChanged, onCommitted }: { upload: BookUpload; publishToDisplay: boolean; onChanged: () => Promise<void>; onCommitted: () => Promise<void> }) {
+export function UploadReview({ upload, publishToDisplay, onChanged, onCommitted }: { upload: BookUpload; publishToDisplay: boolean; onChanged: () => Promise<void>; onCommitted: () => Promise<void> }) {
   const coverInput = useRef<HTMLInputElement>(null);
   const [draft, setDraft] = useState<BookMetadataDraft | null>(upload.draftMetadata ?? null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => setDraft(upload.draftMetadata ?? null), [upload]);
-  if (!draft) return <Alert severity="info">识别尚未完成，请稍后返回。</Alert>;
+  if (!draft) return <Alert severity="info">正在准备书籍信息…</Alert>;
 
   const update = <K extends keyof BookMetadataDraft>(key: K, value: BookMetadataDraft[K]) => setDraft((current) => current ? ({ ...current, [key]: value, sources: { ...current.sources, [key]: "MANUAL" } }) : current);
   const save = async () => run(async () => { await api.updateBookUploadMetadata(upload.id, draft); await onChanged(); });
@@ -267,7 +168,7 @@ function UploadReview({ upload, publishToDisplay, onChanged, onCommitted }: { up
   };
   const coverChanged = async (file: File) => run(async () => { const blob = await cropCover(file); await api.uploadBookCover(upload.id, blob); await onChanged(); });
 
-  return <Stack spacing={3}>
+  return <Stack spacing={2}>
     {upload.similarBookIds.length > 0 && <Alert severity="warning" icon={<WarningAmberRounded />}>发现标题和作者相似的藏书。它不是完全重复文件，确认后仍可作为独立版本入库。</Alert>}
     {(upload.encrypted || upload.drmProtected || upload.digitallySigned) && <Alert severity="warning">该文件包含{upload.encrypted ? "加密" : ""}{upload.drmProtected ? " DRM" : ""}{upload.digitallySigned ? "数字签名" : ""}标记；可以入库，但默认禁止元数据写回原文件。</Alert>}
     <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "240px minmax(0, 1fr)" }, gap: 4 }}>
@@ -297,12 +198,13 @@ function UploadReview({ upload, publishToDisplay, onChanged, onCommitted }: { up
     </Box>
     <Divider />
     <Stack direction={{ xs: "column", sm: "row" }} spacing={1}><Chip label={upload.format} variant="outlined" /><Chip label={formatBytes(upload.declaredSizeBytes)} variant="outlined" /><Chip label={draft.pageCount ? `${draft.pageCount} 页` : draft.wordCount ? `${draft.wordCount.toLocaleString("zh-CN")} 字` : "页数/字数未知"} variant="outlined" /><Typography variant="caption" color="text.secondary" sx={{ alignSelf: "center", overflowWrap: "anywhere" }}>{upload.fingerprint}</Typography></Stack>
-    {upload.metadataCandidates.length > 0 && <Stack spacing={1.5}><Typography variant="h6">在线候选信息</Typography>{upload.metadataCandidates.map((candidate) => <CandidateCard key={`${candidate.provider}-${candidate.id}`} candidate={candidate} onUse={() => useCandidate(candidate)} onCover={candidate.coverUrl ? () => run(async () => { await api.selectBookUploadCover(upload.id, candidate.id); await onChanged(); }) : undefined} />)}</Stack>}
+    {upload.metadataCandidates.length > 0 && <Stack spacing={1.5}><Typography variant="h6">候选书目信息</Typography>{upload.metadataCandidates.map((candidate) => <CandidateCard key={`${candidate.provider}-${candidate.id}`} candidate={candidate} onUse={() => useCandidate(candidate)} onCover={candidate.coverUrl ? () => run(async () => { await api.selectBookUploadCover(upload.id, candidate.id); await onChanged(); }) : undefined} />)}</Stack>}
     {error && <Alert severity="error">{error}</Alert>}
     <Stack direction={{ xs: "column", sm: "row" }} sx={{ justifyContent: "flex-end", gap: 1.5 }}>
       <Button startIcon={<AutoAwesomeOutlined />} onClick={() => run(async () => { await api.enrichBookUpload(upload.id); await onChanged(); })} disabled={busy}>重新在线补全</Button>
-      <Button variant="outlined" onClick={save} disabled={busy}>保存校对</Button>
-      <Button variant="contained" startIcon={busy ? <CircularProgress size={18} color="inherit" /> : <CheckCircleOutlineRounded />} onClick={commit} disabled={busy || !draft.title.trim() || draft.authors.length === 0}>{busy ? "正在处理…" : "确认并安全入库"}</Button>
+      <Button startIcon={<AutoAwesomeOutlined />} color="secondary" onClick={() => run(async () => { await api.aiMatchBookUpload(upload.id); await onChanged(); })} disabled={busy}>AI 查找未匹配</Button>
+      <Button variant="outlined" onClick={save} disabled={busy}>保存草稿</Button>
+      <Button variant="contained" startIcon={busy ? <CircularProgress size={18} color="inherit" /> : <CheckCircleOutlineRounded />} onClick={commit} disabled={busy || !draft.title.trim() || draft.authors.length === 0}>{busy ? "正在处理…" : "保存并完成"}</Button>
     </Stack>
   </Stack>;
 }
@@ -314,7 +216,7 @@ function SourcedField({ label, value, source, onChange, required, helperText, pl
 function CandidateCard({ candidate, onUse, onCover }: { candidate: MetadataCandidate; onUse: () => void; onCover?: () => void }) {
   return <Stack direction={{ xs: "column", sm: "row" }} sx={{ gap: 2, alignItems: { sm: "center" }, border: 1, borderColor: "divider", borderRadius: 2, p: 2 }}>
     {candidate.coverUrl && <Box component="img" src={candidate.coverUrl} alt="在线候选封面" sx={{ width: 52, aspectRatio: "2 / 3", objectFit: "cover", borderRadius: 1 }} />}
-    <Box sx={{ flex: 1, minWidth: 0 }}><Stack direction="row" spacing={1} sx={{ alignItems: "center" }}><Typography variant="subtitle2">{candidate.title ?? "未命名候选"}</Typography><Chip label={sourceText[candidate.provider]} size="small" /></Stack><Typography variant="caption" color="text.secondary">{candidate.authors?.join(" / ")}{candidate.publisher ? ` · ${candidate.publisher}` : ""}{candidate.publishedDate ? ` · ${candidate.publishedDate}` : ""}</Typography></Box>
+    <Box sx={{ flex: 1, minWidth: 0 }}><Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap" }}><Typography variant="subtitle2">{candidate.title ?? "未命名候选"}</Typography><Chip label={candidate.providerLabel ?? sourceText[candidate.provider]} size="small" />{candidate.requiresReview && <Chip label={`需核对${candidate.confidence != null ? ` · ${Math.round(candidate.confidence * 100)}%` : ""}`} size="small" color="warning" variant="outlined" />}</Stack><Typography variant="caption" color="text.secondary">{candidate.authors?.join(" / ")}{candidate.publisher ? ` · ${candidate.publisher}` : ""}{candidate.publishedDate ? ` · ${candidate.publishedDate}` : ""}</Typography>{candidate.matchReason && <Typography variant="caption" color="text.secondary">{candidate.matchReason}</Typography>}</Box>
     <Stack direction="row" spacing={1}>{onCover && <Button size="small" onClick={onCover}>采用封面</Button>}<Button size="small" variant="outlined" onClick={onUse}>采用信息</Button></Stack>
   </Stack>;
 }

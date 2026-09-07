@@ -86,12 +86,12 @@ public class AuthController {
             var user = users.findByUsername(input.username()).orElseThrow();
             users.recordLogin(user.id());
             rateLimiter.success(key);
-            audit.record(user.id(), "LOGIN", "USER", user.id().toString(), null, null, null, null, "SUCCEEDED", "{}");
+            audit.recordLogin(user.id(), input.username(), "SUCCEEDED", request.getRemoteAddr());
             return SessionUser.from(user);
         } catch (AuthenticationException exception) {
             rateLimiter.failure(key);
-            audit.record(users.findByUsername(input.username()).map(BookKinUser::id).orElse(null), "LOGIN", "USER",
-                    input.username().toLowerCase(Locale.ROOT), null, null, null, null, "FAILED", "{}");
+            audit.recordLogin(users.findByUsername(input.username()).map(BookKinUser::id).orElse(null),
+                    input.username().toLowerCase(Locale.ROOT), "FAILED", request.getRemoteAddr());
             throw new ApiException(HttpStatus.UNAUTHORIZED, "BAD_CREDENTIALS", "用户名或密码不正确。");
         }
     }

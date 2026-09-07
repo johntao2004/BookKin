@@ -26,15 +26,17 @@ curl --fail http://localhost:8080/actuator/health/readiness
 
 ## 备份与恢复
 
-`ops/backup.sh` 备份 PostgreSQL，以及仍处于保留期的回收站。元数据写回只保留当前文件，原始 EPUB/PDF 应继续由 NAS 自身快照或备份策略保护。
-多书库部署需把所有宿主机根目录按固定顺序写入 `BOOKKIN_LIBRARY_BACKUP_ROOTS`（冒号分隔）；备份与恢复必须使用相同顺序。
+`ops/backup.sh` 生成可校验的完整恢复点：PostgreSQL、每个书库根目录中的书籍、封面资产、暂存区、回收站和兼容版本目录，以及独立挂载的自定义字体目录；只排除可重建的 `.bookkin-cache`。备份目录包含 `manifest.txt` 和 `SHA256SUMS`，缺少任一根目录或字体目录时脚本会失败，避免生成看似成功的不完整快照。备份文件应放在与源书库不同的物理存储上。
+多书库部署需把所有宿主机根目录按固定顺序写入 `BOOKKIN_LIBRARY_BACKUP_ROOTS`（冒号分隔）；字体宿主机目录使用 `BOOKKIN_FONT_BACKUP_ROOT`，默认取 Compose 的 `BOOKKIN_FONT_STORAGE`。备份与恢复必须使用相同顺序和路径。
 
 ```bash
 BOOKKIN_BACKUP_DIR=/volume/backups ./ops/backup.sh
 ./ops/restore.sh /volume/backups/20260820T120000Z
+# 只验证校验和、清单及归档路径，不停服务、不改数据库或书库
+./ops/restore.sh --dry-run /volume/backups/20260820T120000Z
 ```
 
-恢复必须在隔离环境先演练。恢复完成后抽查：用户登录、藏书总数、随机文件指纹与回收站记录。
+恢复会替换数据库并把归档内容解出到当前配置的挂载目录，必须先在隔离 Compose 项目演练。恢复完成后抽查：用户登录、藏书总数、随机文件指纹、封面和字体、回收站记录；确认 App 和 Worker 健康后再开放访问。
 
 ## 故障处理
 
@@ -61,6 +63,6 @@ pnpm benchmark:catalog
 
 本机开发通过 `pnpm start:local` 启动 API/Worker，再运行 `pnpm dev`（4173）。启动脚本将 JAR 复制至 `.local/run/`，禁止直接启动会被构建覆盖的 `target/bookkin-*.jar`。停止 API/Worker 使用 `pnpm stop:local`。端口已占用时先检查健康服务，避免重复启动。
 
-自定义字体目录由 `BOOKKIN_FONT_STORAGE_PATH` 配置；备份脚本只覆盖数据库和回收站，不包含字体、封面资产或全部原书。部署备份策略须另外覆盖字体目录与各根目录的 `.bookkin-assets`，并与数据库恢复点配套。
+自定义字体在容器内由 `BOOKKIN_FONT_STORAGE_PATH` 配置，在宿主机备份时使用对应的 `BOOKKIN_FONT_BACKUP_ROOT`（Compose 默认是 `BOOKKIN_FONT_STORAGE`）。完整备份将字体、封面资产、暂存区、回收站和全部原书与同一数据库恢复点绑定；`.bookkin-cache` 可在恢复后由扫描重新生成。
 
 提交前运行 README 中的前后端质量门禁，并检查 `pnpm check:tokens`、Sites 路由测试和实际浏览器关键流程。GitHub 的 Docker 工作流在 main 推送、PR、版本标签或手动触发时构建双架构镜像；只有 `v*` 标签发布 GHCR 镜像。推送功能分支不代表已部署或已通过远端 CI。

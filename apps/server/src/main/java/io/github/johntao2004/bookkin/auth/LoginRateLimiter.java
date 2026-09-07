@@ -26,6 +26,14 @@ public class LoginRateLimiter {
         this.clock = clock;
     }
 
+    public synchronized void consumeRegistration(String address) {
+        String key = "registration:" + address;
+        Deque<Instant> attempts = failures.computeIfAbsent(key, ignored -> new ArrayDeque<>());
+        evict(attempts);
+        if (attempts.size() >= LIMIT) throw new ApiException(HttpStatus.TOO_MANY_REQUESTS, "REGISTRATION_RATE_LIMITED", "注册尝试过于频繁，请稍后再试。");
+        attempts.addLast(clock.instant());
+    }
+
     public synchronized void check(String key) {
         Deque<Instant> attempts = failures.computeIfAbsent(key, ignored -> new ArrayDeque<>());
         evict(attempts);

@@ -4,6 +4,7 @@ All URIs are relative to */api/v1*
 
 | Method | HTTP request | Description |
 |------------- | ------------- | -------------|
+| [**aiMatchBookUpload**](BookUploadsApi.md#aimatchbookupload) | **POST** /book-uploads/{id}/ai-match |  |
 | [**cancelBookUpload**](BookUploadsApi.md#cancelbookupload) | **DELETE** /book-uploads/{id} |  |
 | [**commitBookUpload**](BookUploadsApi.md#commitbookuploadoperation) | **POST** /book-uploads/{id}/commit |  |
 | [**createBookUpload**](BookUploadsApi.md#createbookuploadoperation) | **POST** /book-uploads |  |
@@ -16,6 +17,78 @@ All URIs are relative to */api/v1*
 | [**uploadBookContent**](BookUploadsApi.md#uploadbookcontent) | **PUT** /book-uploads/{id}/content |  |
 | [**uploadBookCover**](BookUploadsApi.md#uploadbookcover) | **PUT** /book-uploads/{id}/cover |  |
 
+
+
+## aiMatchBookUpload
+
+> BookUpload aiMatchBookUpload(id, aiMatchRequest)
+
+
+
+### Example
+
+```ts
+import {
+  Configuration,
+  BookUploadsApi,
+} from '';
+import type { AiMatchBookUploadRequest } from '';
+
+async function example() {
+  console.log("🚀 Testing  SDK...");
+  const config = new Configuration({
+    // To configure API key authorization: sessionCookie
+    apiKey: "YOUR API KEY",
+  });
+  const api = new BookUploadsApi(config);
+
+  const body = {
+    // string
+    id: 38400000-8cf0-11bd-b23e-10b96e4ef00d,
+    // AiMatchRequest (optional)
+    aiMatchRequest: ...,
+  } satisfies AiMatchBookUploadRequest;
+
+  try {
+    const data = await api.aiMatchBookUpload(body);
+    console.log(data);
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+// Run the test
+example().catch(console.error);
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **id** | `string` |  | [Defaults to `undefined`] |
+| **aiMatchRequest** | [AiMatchRequest](AiMatchRequest.md) |  | [Optional] |
+
+### Return type
+
+[**BookUpload**](BookUpload.md)
+
+### Authorization
+
+[sessionCookie](../README.md#sessionCookie)
+
+### HTTP request headers
+
+- **Content-Type**: `application/json`
+- **Accept**: `application/json`
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | AI metadata candidates added for manual review |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 
 ## cancelBookUpload

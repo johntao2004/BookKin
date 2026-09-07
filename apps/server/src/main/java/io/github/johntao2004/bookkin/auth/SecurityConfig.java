@@ -31,10 +31,10 @@ public class SecurityConfig {
                 .securityContext(context -> context.securityContextRepository(repository).requireExplicitSave(true))
                 .sessionManagement(session -> session.sessionFixation(fixation -> fixation.migrateSession()))
                 .authorizeHttpRequests(requests -> requests
-                        .requestMatchers("/", "/index.html", "/login", "/setup", "/change-password", "/library", "/library/**", "/categories", "/categories/**",
-                                "/booklists", "/booklists/**", "/settings/display-books", "/recycle-bin",
-                                "/annotations", "/reader/**", "/admin/**", "/assets/**", "/covers/**", "/favicon.ico").permitAll()
-                        .requestMatchers("/api/v1/auth/csrf", "/api/v1/auth/login", "/api/v1/auth/setup", "/api/v1/auth/setup-status", "/actuator/health/**").permitAll()
+                        .requestMatchers("/", "/index.html", "/login", "/register", "/setup", "/change-password", "/library", "/library/**", "/categories", "/categories/**",
+                                "/booklists", "/booklists/**", "/settings", "/settings/display-books", "/display-books", "/recycle-bin",
+                                "/annotations", "/virtual-library", "/reader/**", "/admin/**", "/assets/**", "/covers/**", "/favicon.ico").permitAll()
+                        .requestMatchers("/api/v1/auth/csrf", "/api/v1/auth/login", "/api/v1/auth/register", "/api/v1/auth/registration-status", "/api/v1/auth/setup", "/api/v1/auth/setup-status", "/actuator/health/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/display-books", "/api/v1/display-books/**").permitAll()
                         .requestMatchers(HttpMethod.HEAD, "/api/v1/display-books/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/categories", "/api/v1/categories/**").permitAll()

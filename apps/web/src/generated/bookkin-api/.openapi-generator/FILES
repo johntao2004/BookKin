@@ -1,3 +1,4 @@
+apis/AIApi.ts
 apis/AnnotationsApi.ts
 apis/AuthApi.ts
 apis/BookUploadsApi.ts
@@ -10,8 +11,17 @@ apis/ReaderFontsApi.ts
 apis/ReadingApi.ts
 apis/UsersApi.ts
 apis/index.ts
+docs/AIApi.md
 docs/AddBooklistBooksRequest.md
 docs/AddDisplayBookRequest.md
+docs/AiMatchRequest.md
+docs/AiProvider.md
+docs/AiProviderList.md
+docs/AiProviderSetting.md
+docs/AiProviderSettingRequest.md
+docs/AiProviderType.md
+docs/AiSettings.md
+docs/AiSettingsRequest.md
 docs/Annotation.md
 docs/AnnotationBookPage.md
 docs/AnnotationBookSummary.md
@@ -105,6 +115,14 @@ docs/WeeklyReadingStats.md
 index.ts
 models/AddBooklistBooksRequest.ts
 models/AddDisplayBookRequest.ts
+models/AiMatchRequest.ts
+models/AiProvider.ts
+models/AiProviderList.ts
+models/AiProviderSetting.ts
+models/AiProviderSettingRequest.ts
+models/AiProviderType.ts
+models/AiSettings.ts
+models/AiSettingsRequest.ts
 models/Annotation.ts
 models/AnnotationBookPage.ts
 models/AnnotationBookSummary.ts

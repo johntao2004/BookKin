@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 import java.io.IOException;
 import java.security.Principal;
 import java.util.List;
@@ -61,6 +62,11 @@ public class BookUploadController {
     @PostMapping("/{id}/enrich")
     BookUpload enrich(@PathVariable UUID id, Principal principal) { return service.enrich(id, principal); }
 
+    @PostMapping("/{id}/ai-match")
+    BookUpload aiMatch(@PathVariable UUID id, @Valid @RequestBody(required = false) AiMatchRequest input, Principal principal) {
+        return service.aiMatch(id, input == null ? null : input.providerId(), principal);
+    }
+
     @PutMapping(path = "/{id}/cover", consumes = {MediaType.IMAGE_JPEG_VALUE, MediaType.IMAGE_PNG_VALUE, "image/webp", MediaType.APPLICATION_OCTET_STREAM_VALUE})
     BookUpload cover(@PathVariable UUID id, @RequestBody byte[] bytes, Principal principal) { return service.customCover(id, bytes, principal); }
 
@@ -87,6 +93,7 @@ public class BookUploadController {
 
     public record CreateUpload(@NotNull UUID libraryRootId, @NotBlank String filename, @Positive long sizeBytes) {}
     public record CoverSelection(@NotBlank String candidateId) {}
+    public record AiMatchRequest(@Size(max = 80) String providerId) {}
     public record CommitRequest(boolean publishToDisplay) {}
     public record UploadList(List<BookUpload> items) {}
 }

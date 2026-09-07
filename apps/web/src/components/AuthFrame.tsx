@@ -1,3 +1,6 @@
+import { Button } from "@/ui";
+import { ArrowBackRounded } from "@/ui/icons";
+import { Link } from "react-router-dom";
 import { Box } from "@/ui";
 import { Stack } from "@/ui";
 import { Typography } from "@/ui";
@@ -75,17 +78,33 @@ export function AuthFrame({ children, title, description, greeting }: AuthFrameP
           </Box>
         </Stack>
       </Box>
-      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", px: { xs: 2, sm: 6 }, py: 6 }}>
-        <Box sx={{ width: "100%", maxWidth: 440 }}>
-          <Typography variant="h5" sx={{ display: { xs: "block", md: "none" }, mb: 7 }}>BookKin</Typography>
-          {greeting && (
-            <Typography variant="body2" color="primary" sx={{ mb: 1, fontWeight: tokens.typography.fontWeight.medium }}>
-              {greeting}
-            </Typography>
-          )}
-          <Typography variant="h2" component="h1" sx={{ mb: description ? 0 : 4 }}>{title}</Typography>
-          {description && <Typography color="text.secondary" sx={{ mt: 1.5, mb: 4 }}>{description}</Typography>}
-          {children}
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          minHeight: "100dvh",
+          bgcolor: "background.paper",
+          borderLeft: { md: "1px solid" },
+          borderColor: "divider",
+          px: { xs: 2, sm: 4, lg: 6 },
+          py: { xs: 2, sm: 3 },
+        }}
+      >
+        <Stack direction={{ xs: "column", md: "row" }} spacing={{ xs: 1, md: 0 }} sx={{ width: "100%", alignItems: "flex-start" }}>
+          <Typography variant="h5" sx={{ display: { xs: "block", md: "none" } }}>BookKin</Typography>
+          <Button component={Link} to="/library" startIcon={<ArrowBackRounded />} sx={{ px: 0 }}>返回首页</Button>
+        </Stack>
+        <Box sx={{ flex: 1, display: "flex", alignItems: { xs: "flex-start", md: "center" }, justifyContent: "center", py: { xs: 4, sm: 6, md: 4 } }}>
+          <Box sx={{ width: "100%", maxWidth: 440 }}>
+            {greeting && (
+              <Typography variant="body2" color="primary" sx={{ mb: 1, fontWeight: tokens.typography.fontWeight.medium }}>
+                {greeting}
+              </Typography>
+            )}
+            <Typography variant="h2" component="h1" sx={{ mb: description ? 0 : 4 }}>{title}</Typography>
+            {description && <Typography color="text.secondary" sx={{ mt: 1.5, mb: 4 }}>{description}</Typography>}
+            {children}
+          </Box>
         </Box>
       </Box>
     </Box>

@@ -2,6 +2,7 @@ package io.github.johntao2004.bookkin.ingestion.upload;
 
 import static io.github.johntao2004.bookkin.ingestion.upload.BookUploadModels.*;
 
+import io.github.johntao2004.bookkin.ai.AiSettingsService;
 import io.github.johntao2004.bookkin.catalog.BookFormat;
 import io.github.johntao2004.bookkin.filemanagement.FileInspector;
 import io.github.johntao2004.bookkin.ingestion.BookMetadataExtractor;
@@ -24,15 +25,18 @@ public class BookUploadProcessor {
     private final FileInspector inspector;
     private final BookMetadataExtractor extractor;
     private final MetadataEnrichmentService enrichment;
+    private final AiSettingsService aiSettings;
 
     public BookUploadProcessor(BookUploadRepository uploads, LibraryRootRepository roots, CatalogIngestionRepository catalog,
-                               FileInspector inspector, BookMetadataExtractor extractor, MetadataEnrichmentService enrichment) {
+                               FileInspector inspector, BookMetadataExtractor extractor, MetadataEnrichmentService enrichment,
+                               AiSettingsService aiSettings) {
         this.uploads = uploads;
         this.roots = roots;
         this.catalog = catalog;
         this.inspector = inspector;
         this.extractor = extractor;
         this.enrichment = enrichment;
+        this.aiSettings = aiSettings;
     }
 
     @Async("bookUploadExecutor")
@@ -53,14 +57,15 @@ public class BookUploadProcessor {
             if (!inspection.parseable()) throw new IllegalArgumentException("文件无法被解析");
             ExtractedBook extracted = extractor.extract(staged, upload.format(), rootPath, upload.fingerprint());
             MetadataDraft detected = draft(extracted, upload.originalFilename(), upload.format());
-            uploads.processing(upload.id(), BookUploadStatus.ENRICHING);
-            var enriched = enrichment.enrich(detected);
-            MetadataDraft ready = withTarget(enriched.draft(), defaultTarget(enriched.draft(), upload.format()));
+            MetadataDraft ready = withTarget(detected, defaultTarget(detected, upload.format()));
+            var ai = aiSettings.effective();
+            var enrichmentResult = enrichment.enrich(ready, ai.enabled() && ai.autoMatch(), null, false);
+            ready = enrichmentResult.draft();
             java.util.UUID[] similar = catalog.similarBooks(ready.title(), String.join(" / ", ready.authors()));
             CoverSource coverSource = upload.format() == BookFormat.PDF && extracted.pageCount() != null && extracted.pageCount() > 0
                     ? CoverSource.PDF_FIRST_PAGE : CoverSource.EMBEDDED;
             uploads.ready(upload.id(), inspection.encrypted(), inspection.drmProtected(), inspection.digitallySigned(),
-                    detected, ready, enriched.candidates(), extracted.coverCacheKey(), coverSource, similar);
+                    detected, ready, enrichmentResult.candidates(), extracted.coverCacheKey(), coverSource, similar);
         } catch (Exception exception) {
             uploads.failed(uploadId, "INSPECTION_FAILED", safeMessage(exception));
         }

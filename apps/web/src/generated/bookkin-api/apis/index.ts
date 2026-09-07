@@ -1,5 +1,6 @@
 /* tslint:disable */
 /* eslint-disable */
+export * from './AIApi';
 export * from './AnnotationsApi';
 export * from './AuthApi';
 export * from './BookUploadsApi';

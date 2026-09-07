@@ -5,9 +5,9 @@
 | 文档范围 | 核对依据与处理 |
 |---|---|
 | README | package.json、路由、运行脚本、目录；补充虚拟书库与许可边界、文档入口 |
-| docs/technical-architecture.md | Java 模块、Flyway V1–V7、路由、API 客户端、场景入口；补充浏览器与字体实现 |
+| docs/technical-architecture.md | Java 模块、Flyway V1–V10、路由、API 客户端、场景入口；补充浏览器与字体实现 |
 | docs/design-system.md | Token、PageHeader、ui 适配、页面；修正组件名、响应式描述并记录现行交互 |
-| docs/operations-runbook.md | 启停、备份与 benchmark 脚本、Docker 工作流；说明备份缺口和分支推送边界 |
+| docs/operations-runbook.md | 启停、完整备份/恢复与 benchmark 脚本、Docker 工作流；说明恢复演练边界和分支推送边界 |
 | docs/implementation-status.md | 本次命令结果；把旧数据、容器与运行环境结论标记为历史验收 |
 | docs/repository-layout.md | 当前目录；记录前后端、场景、生成代码和文件放置规则 |
 | docs/virtual-library.md | 当前场景、查询与资源；作为现行功能说明 |

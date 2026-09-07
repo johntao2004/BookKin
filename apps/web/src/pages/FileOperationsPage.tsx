@@ -1,3 +1,4 @@
+import { Alert } from "@/ui";
 import { RefreshRounded } from "@/ui/icons";
 import { Button } from "@/ui";
 import { Chip } from "@/ui";
@@ -12,7 +13,7 @@ import { TableRow } from "@/ui";
 import { Typography } from "@/ui";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../api/client";
-import { PageContainer, PageHeader } from "../components/PageHeader";
+import { ActionToolbar, PageContainer } from "../components/PageHeader";
 import type { FileOperationStatus, FileOperationType } from "../domain/types";
 import { tokens } from "../theme/generated-tokens";
 
@@ -57,18 +58,13 @@ export function FileOperationsPage() {
 
   return (
     <PageContainer>
-      <PageHeader
-        eyebrow="FILE JOURNAL"
-        title="文件任务"
-        description="每次重命名、移动、删除、恢复和写回都保留源目标、指纹、操作者与结果。"
-        action={<Button startIcon={<RefreshRounded />} variant="outlined" onClick={() => query.refetch()}>刷新</Button>}
-      />
+      <Stack sx={{ mb: 2 }}><ActionToolbar><Button startIcon={<RefreshRounded />} variant="outlined" onClick={() => query.refetch()}>刷新</Button></ActionToolbar></Stack>
 
-      {query.isPending ? (
+      {query.isError ? <Alert severity="error">无法读取操作日志，请刷新重试。</Alert> : query.isPending ? (
         <Stack sx={{ py: `${tokens.spacing[20]}px`, alignItems: "center" }}><CircularProgress /></Stack>
       ) : (query.data ?? []).length === 0 ? (
         <Stack spacing={tokens.spacing[1] / tokens.meta.baseUnit} sx={{ py: `${tokens.spacing[24]}px`, alignItems: "center" }}>
-          <Typography variant="h4">暂无文任务</Typography>
+          <Typography variant="h4">暂无操作日志</Typography>
           <Typography color="text.secondary">从藏书卡片的更多菜单发起安全预览。</Typography>
         </Stack>
       ) : (
@@ -81,7 +77,7 @@ export function FileOperationsPage() {
             overflow: "hidden",
           }}
         >
-          <Table aria-label="文件任务列表">
+          <Table aria-label="操作日志列表">
             <TableHead>
               <TableRow sx={{ bgcolor: "background.default" }}>
                 <TableCell sx={{ width: "19%" }}>任务</TableCell>

@@ -60,4 +60,10 @@ describe("LoginPage", () => {
 
     expect(await screen.findByRole("link", { name: "初始化主人账户" })).toHaveAttribute("href", "/setup");
   });
+  it("offers registration when enabled and always provides a return route", async () => {
+    vi.spyOn(api, "registrationStatus").mockResolvedValue({ registrationEnabled: true });
+    render(<TestProviders initialPath="/login"><LoginPage /></TestProviders>);
+    expect(screen.getByRole("link", { name: "返回首页" })).toHaveAttribute("href", "/library");
+    expect(await screen.findByRole("link", { name: "注册账户" })).toHaveAttribute("href", "/register");
+  });
 });

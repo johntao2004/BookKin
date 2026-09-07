@@ -89,7 +89,7 @@ describe("AppShell", () => {
 
   it("keeps management pages in the account menu instead of the main drawer", async () => {
     renderShell("/library");
-    const managementLabels = ["书库状态", "用户管理", "文件任务", "阅读字体"];
+    const managementLabels = ["用户管理", "设置"];
 
     fireEvent.click(screen.getByRole("button", { name: "打开导航" }));
     const drawer = screen.getByRole("navigation");
@@ -99,6 +99,7 @@ describe("AppShell", () => {
     expect(within(drawer).getAllByRole("button").map((button) => button.textContent)).toEqual([
       "首页",
       "藏书库",
+      "展示书目",
       "分类",
       "书单",
       "阅读笔记",
@@ -109,7 +110,7 @@ describe("AppShell", () => {
     fireEvent.click(await screen.findByRole("button", { name: "账户菜单" }));
     const accountMenu = screen.getByRole("menu");
     for (const label of managementLabels) expect(within(accountMenu).getByRole("menuitem", { name: label })).toBeInTheDocument();
-    expect(within(accountMenu).getByRole("menuitem", { name: "展示书目设置" })).toBeInTheDocument();
+    expect(within(accountMenu).queryByRole("menuitem", { name: "展示书目设置" })).not.toBeInTheDocument();
   });
 
   it("prefetches the 3D catalog when the virtual-library link is approached", async () => {
@@ -130,7 +131,23 @@ describe("AppShell", () => {
     fireEvent.click(screen.getByRole("button", { name: "切换全站主题" }));
     fireEvent.click(screen.getByRole("menuitem", { name: "夜间" }));
 
-    await waitFor(() => expect(document.documentElement).toHaveAttribute("data-bookkin-theme", "night"));
+    await waitFor(() => {
+      expect(document.documentElement).toHaveAttribute("data-bookkin-theme", "night");
+      expect(screen.getByRole("button", { name: "切换全站主题" })).toHaveAttribute("aria-expanded", "false");
+    });
     expect(localStorage.getItem("bookkin-site-theme")).toBe("NIGHT");
+  });
+
+  it("switches back to the bright theme and closes the menu after selection", async () => {
+    renderShell("/library");
+
+    fireEvent.click(screen.getByRole("button", { name: "切换全站主题" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "明亮" }));
+
+    await waitFor(() => {
+      expect(document.documentElement).toHaveAttribute("data-bookkin-theme", "white");
+      expect(screen.getByRole("button", { name: "切换全站主题" })).toHaveAttribute("aria-expanded", "false");
+    });
+    expect(localStorage.getItem("bookkin-site-theme")).toBe("WHITE");
   });
 });

@@ -1,4 +1,4 @@
-import { PageContainer, PageHeader } from "../components/PageHeader";
+import { PageContainer } from "../components/PageHeader";
 import { CloudUploadOutlined } from "@/ui/icons";
 import { Alert } from "@/ui";
 import { Box } from "@/ui";
@@ -81,7 +81,6 @@ export function ReaderFontsPage() {
   return (
     <PageContainer>
       {fonts.filter((font) => font.source === "CUSTOM" && font.contentUrl).map((font) => <style key={font.id}>{`@font-face { font-family: "${font.familyName}"; src: url("${font.contentUrl}") format("${font.format?.toLowerCase() ?? "woff2"}"); font-display: swap; }`}</style>)}
-      <PageHeader eyebrow="READER TYPOGRAPHY" title="阅读字体" description="为全家成员提供清晰、稳定的正文排版。预设字体随应用发布；自定义字体独立存储，不写入书籍原目录。" />
 
       <Card variant="outlined" sx={{ mb: 4, borderRadius: `${tokens.radius.xl}px`, bgcolor: "background.paper" }}>
         <CardContent sx={{ p: { xs: 2.5, sm: 4 } }}>

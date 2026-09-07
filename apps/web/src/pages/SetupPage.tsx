@@ -2,10 +2,10 @@ import { Alert } from "@/ui";
 import { Button } from "@/ui";
 import { CircularProgress } from "@/ui";
 import { Stack } from "@/ui";
-import { TextField } from "@/ui";
+import { Form, Input } from "@/ui";
 import { Typography } from "@/ui";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState, type FormEvent } from "react";
+import { useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import { setupStatusQueryKey, setupStatusQueryOptions } from "../auth/setup-status";
@@ -17,13 +17,11 @@ export function SetupPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const setupStatus = useQuery(setupStatusQueryOptions);
-  const [form, setForm] = useState({ username: "owner", displayName: "", password: "", confirmPassword: "" });
+  const [formInstance] = Form.useForm();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const submit = async (event: FormEvent) => {
-    event.preventDefault();
-    if (form.password !== form.confirmPassword) return setError("两次输入的密码不一致");
+  const submit = async (form: { username: string; displayName: string; password: string; confirmPassword: string }) => {
     setLoading(true);
     setError("");
     try {
@@ -61,14 +59,24 @@ export function SetupPage() {
 
   return (
     <AuthFrame title="建立第一把钥匙" description="主人是唯一可永久清理文件的账户。初始化只允许执行一次。">
-      <Stack component="form" spacing={2.5} onSubmit={submit}>
-        <TextField label="显示名称" value={form.displayName} onChange={(event: any) => setForm({ ...form, displayName: event.target.value })} required autoFocus />
-        <TextField label="用户名" value={form.username} onChange={(event: any) => setForm({ ...form, username: event.target.value })} required />
-        <TextField label="密码" type="password" autoComplete="new-password" value={form.password} onChange={(event: any) => setForm({ ...form, password: event.target.value })} helperText="至少 12 位，建议使用密码管理器生成。" required slotProps={{ htmlInput: { minLength: 12 } }} />
-        <TextField label="确认密码" type="password" autoComplete="new-password" value={form.confirmPassword} onChange={(event: any) => setForm({ ...form, confirmPassword: event.target.value })} required />
-        {error && <Alert severity="error">{error}</Alert>}
-        <Button type="submit" variant="contained" size="large" disabled={loading}>{loading ? "正在初始化…" : "创建主人账户"}</Button>
-      </Stack>
+      <Form form={formInstance} name="setup" layout="vertical" autoComplete="off" noValidate onFinish={submit} requiredMark validateTrigger="onBlur">
+        <Form.Item label="昵称" name="displayName" rules={[{ required: true, whitespace: true, message: "请输入昵称" }]}>
+          <Input autoComplete="off" size="large" />
+        </Form.Item>
+        <Form.Item label="用户名" name="username" rules={[{ required: true, whitespace: true, message: "请输入用户名" }]}>
+          <Input autoComplete="off" size="large" />
+        </Form.Item>
+        <Form.Item label="密码" name="password" extra="至少 12 位，建议使用密码管理器生成。" rules={[{ required: true, message: "请输入密码" }, { min: 12, message: "密码至少需要 12 个字符" }]}>
+          <Input.Password autoComplete="new-password" size="large" />
+        </Form.Item>
+        <Form.Item label="确认密码" name="confirmPassword" dependencies={["password"]} rules={[{ required: true, message: "请再次输入密码" }, ({ getFieldValue }) => ({ validator(_, value) { return !value || getFieldValue("password") === value ? Promise.resolve() : Promise.reject(new Error("两次输入的密码不一致")); } })]}>
+          <Input.Password autoComplete="new-password" size="large" />
+        </Form.Item>
+        <Stack spacing={2}>
+          {error && <Alert severity="error">{error}</Alert>}
+          <Button type="submit" variant="contained" size="large" disabled={loading}>{loading ? "正在初始化…" : "创建主人账户"}</Button>
+        </Stack>
+      </Form>
       <Typography variant="body2" color="text.secondary" sx={{ mt: 3 }}>已经初始化？<Link to="/login">返回登录</Link></Typography>
     </AuthFrame>
   );

@@ -24,16 +24,17 @@ import { Switch } from "@/ui";
 import { TextField } from "@/ui";
 import { Typography } from "@/ui";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState, type FormEvent } from "react";
+import { useState, useContext, type FormEvent } from "react";
 import { api } from "../api/client";
 import { useAuth } from "../auth/AuthContext";
-import { PageContainer, PageHeader } from "../components/PageHeader";
+import { ActionToolbar, EmbeddedSettingsContext, PageContainer, PageHeader } from "../components/PageHeader";
 import type { ManagedUser, SessionUser, UserRole } from "../domain/types";
 import { tokens } from "../theme/generated-tokens";
 
 const roleLabels: Record<UserRole, string> = { OWNER: "主人", ADMIN: "管理员", MEMBER: "成员" };
 
 export function UsersPage() {
+  const embedded = useContext(EmbeddedSettingsContext);
   const { user: sessionUser } = useAuth();
   const client = useQueryClient();
   const usersQuery = useQuery({ queryKey: ["users"], queryFn: api.listUsers });
@@ -66,17 +67,16 @@ export function UsersPage() {
 
   return (
     <PageContainer>
-      <PageHeader
+      {embedded ? <Stack sx={{ mb: 2 }}><ActionToolbar><Button variant="contained" startIcon={<AddRounded />} onClick={() => setCreateOpen(true)}>创建用户</Button></ActionToolbar></Stack> : <PageHeader
         eyebrow="ACCESS CONTROL"
         title="用户管理"
-        description="BookKin不开放注册。主人和管理员直接创建家庭成员账户；每个人的进度、书签与笔记默认私有。"
         action={<Button variant="contained" startIcon={<AddRounded />} onClick={() => setCreateOpen(true)}>创建用户</Button>}
-      />
-      <Alert severity="info" sx={{ mb: 3 }}>成员只能阅读；管理员可整理书库和文件；只有主人能永久清理回收站。</Alert>
+        description="管理家庭成员账户；每个人的进度、书签与笔记默认私有。"
+      />}
 
       {usersQuery.isPending ? <Stack sx={{ alignItems: "center", py: 10 }}><CircularProgress /></Stack> : (
         <>
-          <Box sx={{ display: { xs: "none", md: "block" } }}>
+          <Box sx={{ display: { xs: "none", sm: "block" } }}>
             <DataTable<ManagedUser>
               aria-label="用户列表"
               rowKey="id"
@@ -101,7 +101,7 @@ export function UsersPage() {
               ]}
             />
           </Box>
-          <Stack component="section" aria-label="移动端用户列表" spacing={2} sx={{ display: { xs: "flex", md: "none" } }}>
+          <Stack component="section" aria-label="移动端用户列表" spacing={2} sx={{ display: { xs: "flex", sm: "none" } }}>
             {(usersQuery.data ?? []).map((user) => (
               <UserCard
                 key={user.id}
@@ -240,15 +240,23 @@ function CreateUserDialog({ open, allowAdmin, onClose, onCreated }: {
 
 function CredentialsDialog({ value, onClose }: { value: { username: string; temporaryPassword: string } | null; onClose: () => void }) {
   const [copied, setCopied] = useState(false);
+  const [copyError, setCopyError] = useState("");
   const copy = async () => {
     if (!value) return;
-    await navigator.clipboard.writeText(`BookKin用户名：${value.username}\n临时密码：${value.temporaryPassword}`);
-    setCopied(true);
+    setCopyError("");
+    try {
+      if (!navigator.clipboard?.writeText) throw new Error("CLIPBOARD_UNAVAILABLE");
+      await navigator.clipboard.writeText(`BookKin用户名：${value.username}\n临时密码：${value.temporaryPassword}`);
+      setCopied(true);
+    } catch {
+      setCopyError("当前浏览器无法自动复制，请选择上方登录信息手动复制。");
+    }
   };
   return (
     <Dialog open={Boolean(value)} onClose={onClose} fullWidth maxWidth="sm">
       <DialogTitle><Typography variant="h4" component="span">只显示这一次</Typography></DialogTitle>
       <DialogContent><Alert severity="warning" sx={{ mb: 3 }}>临时密码不会再次显示。请通过可信渠道交给该成员。</Alert><Stack spacing={2}><TextField label="用户名" value={value?.username ?? ""} slotProps={{ input: { readOnly: true } }} /><TextField label="临时密码" value={value?.temporaryPassword ?? ""} slotProps={{ input: { readOnly: true } }} /></Stack></DialogContent>
+      {copyError && <Alert severity="info">{copyError}</Alert>}
       <DialogActions sx={{ p: 3 }}><Button onClick={onClose} color="inherit">完成</Button><Button variant="contained" startIcon={<ContentCopyRounded />} onClick={copy}>{copied ? "已复制" : "复制登录信息"}</Button></DialogActions>
     </Dialog>
   );

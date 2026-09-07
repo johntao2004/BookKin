@@ -2,6 +2,7 @@ package io.github.johntao2004.bookkin.ingestion.upload;
 
 import static io.github.johntao2004.bookkin.ingestion.upload.BookUploadModels.*;
 
+import io.github.johntao2004.bookkin.ai.AiMetadataService;
 import io.github.johntao2004.bookkin.config.BookKinProperties;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.JsonNode;
@@ -30,26 +31,40 @@ public class MetadataEnrichmentService {
     private static final Set<String> COVER_HOSTS = Set.of("covers.openlibrary.org", "books.google.com", "books.googleusercontent.com");
     private final BookUploadRepository uploads;
     private final BookKinProperties properties;
+    private final AiMetadataService ai;
     private final ObjectMapper json;
     private final HttpClient http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(3)).followRedirects(HttpClient.Redirect.NORMAL).build();
 
-    public MetadataEnrichmentService(BookUploadRepository uploads, BookKinProperties properties, ObjectMapper json) {
+    public MetadataEnrichmentService(BookUploadRepository uploads, BookKinProperties properties, AiMetadataService ai, ObjectMapper json) {
         this.uploads = uploads;
         this.properties = properties;
+        this.ai = ai;
         this.json = json;
     }
 
     public EnrichmentResult enrich(MetadataDraft local) {
+        return enrich(local, false, null, false);
+    }
+
+    public EnrichmentResult enrich(MetadataDraft local, boolean includeAi, String providerId, boolean forceAi) {
         List<MetadataCandidate> candidates = new ArrayList<>();
         if (properties.metadataProviders().openLibraryEnabled()) candidates.addAll(safely("OPEN_LIBRARY", () -> openLibrary(local)));
         if (properties.metadataProviders().googleApiKey() != null && !properties.metadataProviders().googleApiKey().isBlank()) {
             candidates.addAll(safely("GOOGLE_BOOKS", () -> google(local)));
         }
-        return new EnrichmentResult(fillBlanks(local, candidates), List.copyOf(candidates));
+        MetadataDraft enriched = fillBlanks(local, candidates);
+        if (includeAi && (forceAi || needsAiHelp(enriched, candidates))) {
+            var result = ai.match(enriched, candidates, providerId);
+            candidates.addAll(result.candidates());
+            enriched = fillBlanks(enriched, result.candidates());
+        }
+        return new EnrichmentResult(enriched, List.copyOf(candidates));
     }
 
     public byte[] downloadCover(MetadataCandidate candidate, long maxBytes) throws Exception {
-        if (candidate == null || candidate.coverUrl() == null) throw new IllegalArgumentException("候选项没有封面");
+        if (candidate == null || candidate.provider() == MetadataSource.AI || candidate.coverUrl() == null) {
+            throw new IllegalArgumentException("候选项没有可下载的权威封面");
+        }
         URI uri = URI.create(candidate.coverUrl().replace("http://", "https://"));
         assertCoverHost(uri);
         var request = HttpRequest.newBuilder(uri).timeout(Duration.ofSeconds(8)).header("User-Agent", "BookKin/1.0").GET().build();
@@ -108,7 +123,7 @@ public class MetadataEnrichmentService {
     private MetadataDraft fillBlanks(MetadataDraft local, List<MetadataCandidate> candidates) {
         String title = local.title();
         String subtitle = local.subtitle();
-        List<String> authors = local.authors();
+        List<String> authors = unknownAuthors(local.authors()) ? List.of() : local.authors();
         String publisher = local.publisher();
         String date = local.publishedDate();
         String isbn = local.isbn();
@@ -125,8 +140,22 @@ public class MetadataEnrichmentService {
             if (blank(description) && !blank(candidate.description())) { description = candidate.description(); sources.put("description", candidate.provider()); }
             if (tags.isEmpty() && candidate.tags() != null && !candidate.tags().isEmpty()) { tags = candidate.tags(); sources.put("tags", candidate.provider()); }
         }
-        return new MetadataDraft(title, subtitle, authors, local.translators(), local.language(), publisher, date, isbn,
+        return new MetadataDraft(title, subtitle, authors.isEmpty() ? local.authors() : authors, local.translators(), local.language(), publisher, date, isbn,
                 description, local.series(), local.seriesIndex(), tags, local.pageCount(), local.wordCount(), sources, local.targetPath());
+    }
+
+    private boolean needsAiHelp(MetadataDraft local, List<MetadataCandidate> candidates) {
+        if (candidates.isEmpty()) return true;
+        String isbn = normalize(local.isbn());
+        String title = normalize(local.title());
+        String authors = normalize(String.join(" ", meaningfulAuthors(local.authors())));
+        return candidates.stream().noneMatch(candidate -> {
+            String candidateIsbn = normalize(candidate.isbn());
+            if (!isbn.isBlank() && !candidateIsbn.isBlank()) return isbn.equals(candidateIsbn);
+            String candidateTitle = normalize(candidate.title());
+            String candidateAuthors = normalize(String.join(" ", candidate.authors() == null ? List.of() : candidate.authors()));
+            return !title.isBlank() && title.equals(candidateTitle) && (authors.isBlank() || candidateAuthors.contains(authors) || authors.contains(candidateAuthors));
+        });
     }
 
     private List<MetadataCandidate> cached(String provider, String cacheInput, CandidateSupplier supplier) throws Exception {
@@ -168,6 +197,11 @@ public class MetadataEnrichmentService {
     }
     private String first(List<String> values) { return values == null || values.isEmpty() ? null : values.getFirst(); }
     private boolean blank(String value) { return value == null || value.isBlank(); }
+    private String normalize(String value) { return value == null ? "" : value.toLowerCase(Locale.ROOT).replaceAll("[\\p{Punct}\\s]+", ""); }
+    private List<String> meaningfulAuthors(List<String> values) {
+        return values == null ? List.of() : values.stream().filter(value -> value != null && !value.isBlank() && !"未知作者".equals(value.strip())).toList();
+    }
+    private boolean unknownAuthors(List<String> values) { return meaningfulAuthors(values).isEmpty(); }
     private String encode(String value) { return URLEncoder.encode(value == null ? "" : value, StandardCharsets.UTF_8); }
 
     public record EnrichmentResult(MetadataDraft draft, List<MetadataCandidate> candidates) {}

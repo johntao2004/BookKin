@@ -1,14 +1,11 @@
 import { AddRounded } from "@/ui/icons";
 import { AutoStoriesOutlined } from "@/ui/icons";
-import { SearchRounded } from "@/ui/icons";
 import { Alert } from "@/ui";
 import { Box } from "@/ui";
 import { Button } from "@/ui";
 import { CircularProgress } from "@/ui";
-import { InputAdornment } from "@/ui";
 import { Snackbar } from "@/ui";
 import { Stack } from "@/ui";
-import { TextField } from "@/ui";
 import { Typography } from "@/ui";
 import { useQuery } from "@tanstack/react-query";
 import { useDeferredValue, useState, type ReactNode } from "react";
@@ -54,13 +51,6 @@ export function BooklistsPage() {
         title="书单"
         description={user ? "把想读的书收在一起，也看看家人和馆内正在整理什么。" : "浏览官方与读者公开分享的阅读路径。"}
         action={user ? <Button variant="contained" startIcon={<AddRounded />} onClick={() => setCreateOpen(true)}>新建书单</Button> : undefined}
-      />
-      <TextField
-        label="搜索书单"
-        value={query}
-        onChange={(event: any) => updateQuery(event.target.value)}
-        sx={{ width: { xs: "100%", sm: 360 }, mb: `${tokens.spacing[10]}px` }}
-        slotProps={{ input: { startAdornment: <InputAdornment position="start"><SearchRounded /></InputAdornment> } }}
       />
       {booklistsQuery.isPending ? (
         <Stack sx={{ alignItems: "center", py: `${tokens.spacing[20]}px` }}><CircularProgress /><Typography color="text.secondary" sx={{ mt: 2 }}>正在展开书单…</Typography></Stack>

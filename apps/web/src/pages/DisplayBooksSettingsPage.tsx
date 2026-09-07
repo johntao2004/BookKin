@@ -127,9 +127,9 @@ export function DisplayBooksSettingsPage() {
     <PageContainer>
       <PageHeader
         eyebrow="DISPLAY CATALOG"
-        title="展示书目设置"
+        title="展示书目"
         description="维护所有访客都能看到的公共书单。移出这里只会解除展示关系，不会删除平台书籍、NAS 文件或个人阅读数据。"
-        action={<Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}><Button startIcon={<RefreshRounded />} onClick={refresh} disabled={displayQuery.isFetching}>刷新</Button>{canUpload && <Button variant="contained" startIcon={<CloudUploadOutlined />} onClick={() => setUploadOpen(true)}>上传并展示</Button>}</Stack>}
+        action={<Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", justifyContent: "flex-end" }}><Button startIcon={<RefreshRounded />} onClick={refresh} disabled={displayQuery.isFetching}>刷新</Button>{canUpload && <Button variant="contained" startIcon={<CloudUploadOutlined />} onClick={() => setUploadOpen(true)}>上传并展示</Button>}</Stack>}
       />
       {displayQuery.isError ? <Alert severity="error" action={<Button color="inherit" onClick={refresh}>重试</Button>}>公共书单暂时无法读取。</Alert> : null}
       <Stack spacing={2} component="section" aria-labelledby="display-order-heading">

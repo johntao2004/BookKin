@@ -11,7 +11,7 @@ public final class BookUploadModels {
     private BookUploadModels() {}
 
     public enum BookUploadStatus { RECEIVING, INSPECTING, ENRICHING, READY_FOR_REVIEW, COMMITTING, SUCCEEDED, DUPLICATE, FAILED, CANCELLED, EXPIRED }
-    public enum MetadataSource { FILE, FILENAME, OPEN_LIBRARY, GOOGLE_BOOKS, MANUAL }
+    public enum MetadataSource { FILE, FILENAME, OPEN_LIBRARY, GOOGLE_BOOKS, AI, MANUAL }
     public enum CoverSource { EMBEDDED, PDF_FIRST_PAGE, OPEN_LIBRARY, GOOGLE_BOOKS, CUSTOM, GENERATED }
 
     public record MetadataDraft(
@@ -31,9 +31,16 @@ public final class BookUploadModels {
     }
 
     public record MetadataCandidate(
-            String id, MetadataSource provider, String title, String subtitle, List<String> authors,
+            String id, MetadataSource provider, String providerLabel, String title, String subtitle, List<String> authors,
             String publisher, String publishedDate, String isbn, String description, List<String> tags,
-            String coverUrl) {}
+            String coverUrl, Double confidence, String matchReason, boolean requiresReview) {
+        public MetadataCandidate(String id, MetadataSource provider, String title, String subtitle, List<String> authors,
+                                  String publisher, String publishedDate, String isbn, String description, List<String> tags,
+                                  String coverUrl) {
+            this(id, provider, null, title, subtitle, authors, publisher, publishedDate, isbn, description, tags,
+                    coverUrl, null, null, false);
+        }
+    }
 
     public record BookUpload(
             UUID id, UUID libraryRootId, String libraryRootName, String originalFilename, BookFormat format,

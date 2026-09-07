@@ -59,7 +59,7 @@ RECEIVING → INSPECTING → ENRICHING → READY_FOR_REVIEW → COMMITTING → S
 
 ## 4. 身份与安全
 
-- 不开放注册。空系统仅允许本机/局域网首次创建 OWNER；完成后 setup 接口永久关闭。
+- 注册默认关闭，由主人在安全设置中开启；自行注册固定为 MEMBER，密码至少 12 位，注册请求按来源限流。空系统仅允许本机/局域网首次创建 OWNER；完成后 setup 接口永久关闭。
 - 密码使用 Spring Security 5.8 预设参数的 Argon2id；临时密码只在创建/重置响应中返回一次。
 - Spring Session JDBC 保存 Session；Cookie 为 `HttpOnly`、`SameSite=Strict`，生产环境通过反向代理 HTTPS 时开启 `Secure`。
 - SPA 使用 Cookie CSRF Token，所有状态变更要求 `X-XSRF-TOKEN`。
@@ -116,10 +116,10 @@ Compose 只包含 `app`、`worker`、`postgres`。`app` 与 `worker` 使用同�
 
 ## 9. 备份与恢复
 
-- 每日 `pg_dump --format=custom`；备份与源书不放同一物理盘。
-- `.bookkin-trash` 纳入 NAS 快照策略；原始 EPUB/PDF 由 NAS 自身快照或备份策略保护。元数据写回成功后只保留当前文件。
-- 恢复顺序：数据库 → 根目录挂载 → 能力检查 → 只读校验扫描 → 开启 worker。
-- 每个版本发布前演练 NAS 断连、空间不足、跨根复制中断和数据库恢复。
+- `ops/backup.sh` 每次生成一个带清单和 SHA-256 校验的完整恢复点：`pg_dump --format=custom`、所有登记根目录（含原书、`.bookkin-assets`、`.bookkin-staging`、`.bookkin-trash` 和兼容的 `.bookkin-versions`）以及独立的自定义字体目录；只排除可重建的 `.bookkin-cache`。
+- 备份与源书不放同一物理盘。`BOOKKIN_LIBRARY_BACKUP_ROOTS` 的顺序必须和 Compose 挂载顺序一致，`BOOKKIN_FONT_BACKUP_ROOT` 必须指向 Compose 字体 bind mount 的宿主机路径。
+- `ops/restore.sh --dry-run` 先校验清单、所有归档和路径安全；正式恢复顺序为停止 App/Worker → 恢复数据库 → 解出书库与字体 → 启动服务 → 能力检查和只读校验扫描。数据库替换前必须在隔离 Compose 项目演练。
+- 每个版本发布前演练 NAS 断连、空间不足、跨根复制中断和数据库恢复；不能把仅有数据库的发布前快照当成完整灾备。
 
 ## 10. 性能目标与可观测性
 

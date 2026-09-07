@@ -44,6 +44,12 @@ export interface MetadataCandidate {
      * @type {string}
      * @memberof MetadataCandidate
      */
+    providerLabel?: string | null;
+    /**
+     *
+     * @type {string}
+     * @memberof MetadataCandidate
+     */
     title?: string | null;
     /**
      *
@@ -93,6 +99,24 @@ export interface MetadataCandidate {
      * @memberof MetadataCandidate
      */
     coverUrl?: string | null;
+    /**
+     *
+     * @type {number}
+     * @memberof MetadataCandidate
+     */
+    confidence?: number | null;
+    /**
+     *
+     * @type {string}
+     * @memberof MetadataCandidate
+     */
+    matchReason?: string | null;
+    /**
+     *
+     * @type {boolean}
+     * @memberof MetadataCandidate
+     */
+    requiresReview?: boolean;
 }
 
 
@@ -118,6 +142,7 @@ export function MetadataCandidateFromJSONTyped(json: any, ignoreDiscriminator: b
 
         'id': json['id'],
         'provider': MetadataSourceFromJSON(json['provider']),
+        'providerLabel': json['providerLabel'] === undefined ? undefined : json['providerLabel'] === null ? null : json['providerLabel'],
         'title': json['title'] === undefined ? undefined : json['title'] === null ? null : json['title'],
         'subtitle': json['subtitle'] === undefined ? undefined : json['subtitle'] === null ? null : json['subtitle'],
         'authors': json['authors'] == null ? undefined : json['authors'],
@@ -127,6 +152,9 @@ export function MetadataCandidateFromJSONTyped(json: any, ignoreDiscriminator: b
         'description': json['description'] === undefined ? undefined : json['description'] === null ? null : json['description'],
         'tags': json['tags'] == null ? undefined : json['tags'],
         'coverUrl': json['coverUrl'] === undefined ? undefined : json['coverUrl'] === null ? null : json['coverUrl'],
+        'confidence': json['confidence'] === undefined ? undefined : json['confidence'] === null ? null : json['confidence'],
+        'matchReason': json['matchReason'] === undefined ? undefined : json['matchReason'] === null ? null : json['matchReason'],
+        'requiresReview': json['requiresReview'] == null ? undefined : json['requiresReview'],
     };
 }
 
@@ -143,6 +171,7 @@ export function MetadataCandidateToJSONTyped(value?: MetadataCandidate | null, i
 
         'id': value['id'],
         'provider': MetadataSourceToJSON(value['provider']),
+        'providerLabel': value['providerLabel'],
         'title': value['title'],
         'subtitle': value['subtitle'],
         'authors': value['authors'],
@@ -152,5 +181,8 @@ export function MetadataCandidateToJSONTyped(value?: MetadataCandidate | null, i
         'description': value['description'],
         'tags': value['tags'],
         'coverUrl': value['coverUrl'],
+        'confidence': value['confidence'],
+        'matchReason': value['matchReason'],
+        'requiresReview': value['requiresReview'],
     };
 }

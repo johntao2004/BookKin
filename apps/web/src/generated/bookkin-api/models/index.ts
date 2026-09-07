@@ -2,6 +2,14 @@
 /* eslint-disable */
 export * from './AddBooklistBooksRequest';
 export * from './AddDisplayBookRequest';
+export * from './AiMatchRequest';
+export * from './AiProvider';
+export * from './AiProviderList';
+export * from './AiProviderSetting';
+export * from './AiProviderSettingRequest';
+export * from './AiProviderType';
+export * from './AiSettings';
+export * from './AiSettingsRequest';
 export * from './Annotation';
 export * from './AnnotationBookPage';
 export * from './AnnotationBookSummary';

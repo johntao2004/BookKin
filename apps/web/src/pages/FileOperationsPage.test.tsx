@@ -33,7 +33,7 @@ describe("FileOperationsPage", () => {
   it("用紧凑表格呈现任务，并移除已完成阶段的重复信息", async () => {
     render(<TestProviders><FileOperationsPage /></TestProviders>);
 
-    const table = await screen.findByRole("table", { name: "文件任务列表" });
+    const table = await screen.findByRole("table", { name: "操作日志列表" });
     expect(within(table).getAllByRole("columnheader").map((cell) => cell.textContent)).toEqual([
       "任务",
       "文件变更",
@@ -52,7 +52,7 @@ describe("FileOperationsPage", () => {
 
     render(<TestProviders><FileOperationsPage /></TestProviders>);
 
-    expect(await screen.findByRole("heading", { name: "暂无文任务" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "暂无操作日志" })).toBeInTheDocument();
     expect(screen.getByText("从藏书卡片的更多菜单发起安全预览。")).toBeInTheDocument();
   });
 });

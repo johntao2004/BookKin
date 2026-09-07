@@ -104,6 +104,39 @@ select {
   text-transform: none;
 }
 
+/* Router links use the same visual button variants as Ant controls. */
+.bk-button:not(.ant-btn) {
+  padding: var(--spacing-2) var(--spacing-4);
+  border: 1px solid transparent;
+  text-decoration: none;
+}
+
+.bk-button-contained:not(.ant-btn) {
+  background: var(--color-primary);
+  color: var(--color-text-on-dark);
+}
+
+.bk-button-contained:not(.ant-btn):hover {
+  background: var(--color-primary-hover);
+  color: var(--color-text-on-dark);
+}
+
+.bk-button-outlined:not(.ant-btn) {
+  background: var(--color-surface);
+  border-color: var(--color-border);
+  color: var(--color-text-primary);
+}
+
+.bk-button-outlined:not(.ant-btn):hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.bk-button:not(.ant-btn):focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus);
+}
+
 .bk-button-icon {
   display: inline-flex;
   align-items: center;
@@ -507,4 +540,23 @@ select {
   font-style: normal;
   font-weight: 400;
   font-display: swap;
+}
+
+/* Keep modal controls reachable even on short and narrow viewports. */
+.bk-dialog.ant-modal {
+  max-width: calc(100vw - var(--spacing-4) * 2);
+  padding-bottom: 0;
+}
+.bk-dialog .ant-modal-body {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100dvh - var(--spacing-8) * 2);
+  overflow: hidden;
+}
+.bk-dialog .bk-dialog-title,
+.bk-dialog .bk-dialog-actions { flex-shrink: 0; }
+.bk-dialog .bk-dialog-content {
+  min-height: 0;
+  overflow-y: auto;
+  overflow-wrap: anywhere;
 }

@@ -1,3 +1,4 @@
+import { randomId } from "../utils/random-id";
 import { demoBooks, demoRecycleBin, demoUsers } from "../data/demo";
 import type {
   Book,
@@ -15,6 +16,9 @@ import type {
   BookMetadata,
   BookMetadataDraft,
   BookUpload,
+  AiProviderInfo,
+  AiSettings,
+  AiSettingsInput,
   FileOperation,
   FileOperationPreview,
   FileOperationType,
@@ -99,6 +103,21 @@ let users = [...demoUsers];
 let books = [...demoBooks];
 let displayBookIds = demoBooks.filter((book) => book.status === "AVAILABLE").map((book) => book.id);
 let displayRevision = 0;
+let demoAiSettings: AiSettings = {
+  enabled: false,
+  autoMatch: true,
+  maxCandidates: 4,
+  timeoutSeconds: 20,
+  providers: [
+    { id: "openai", label: "OpenAI", type: "OPENAI_COMPATIBLE", enabled: false, baseUrl: "https://api.openai.com/v1", model: "gpt-4o-mini", configured: false, available: false, apiKeyConfigured: false },
+    { id: "deepseek", label: "DeepSeek", type: "OPENAI_COMPATIBLE", enabled: false, baseUrl: "https://api.deepseek.com", model: "deepseek-v4-flash", configured: false, available: false, apiKeyConfigured: false },
+    { id: "qwen", label: "通义千问", type: "OPENAI_COMPATIBLE", enabled: false, baseUrl: "https://dashscope.aliyuncs.com/compatible-mode/v1", model: "qwen-plus", configured: false, available: false, apiKeyConfigured: false },
+    { id: "siliconflow", label: "SiliconFlow", type: "OPENAI_COMPATIBLE", enabled: false, baseUrl: "https://api.siliconflow.cn/v1", model: "Qwen/Qwen3-32B", configured: false, available: false, apiKeyConfigured: false },
+    { id: "anthropic", label: "Anthropic", type: "ANTHROPIC", enabled: false, baseUrl: "https://api.anthropic.com", model: "claude-sonnet-4-6", configured: false, available: false, apiKeyConfigured: false },
+    { id: "gemini", label: "Google Gemini", type: "GEMINI", enabled: false, baseUrl: "https://generativelanguage.googleapis.com/v1beta", model: "gemini-3.5-flash", configured: false, available: false, apiKeyConfigured: false },
+    { id: "ollama", label: "Ollama（本地）", type: "OPENAI_COMPATIBLE", enabled: false, baseUrl: "http://127.0.0.1:11434/v1", model: "qwen3", configured: false, available: false, apiKeyConfigured: false },
+  ],
+};
 interface DemoCategory {
   id: string;
   name: string;
@@ -825,7 +844,7 @@ export const api = {
     await pause();
     if (users.some((user) => user.username === input.username)) throw new Error("用户名已存在");
     const user: ManagedUser = {
-      id: crypto.randomUUID(),
+      id: randomId(),
       ...input,
       status: "ACTIVE",
       mustChangePassword: true,
@@ -869,7 +888,7 @@ export const api = {
       ? demoRenameTarget(book, targetPath)
       : targetPath?.replaceAll("//", "/").trim();
     return {
-      previewToken: crypto.randomUUID(),
+      previewToken: randomId(),
       type,
       sourcePath: `${book.libraryRoot}/${book.relativePath}`,
       targetPath: normalizedTarget,
@@ -894,7 +913,7 @@ export const api = {
     }, { timeoutMs: 12_000 });
     await pause();
     return {
-      previewToken: crypto.randomUUID(),
+      previewToken: randomId(),
       type,
       sourcePath: entry.trashPath,
       targetPath: type === "RESTORE" ? entry.originalPath : undefined,
@@ -924,14 +943,14 @@ export const api = {
     if (book && preview.type === "TRASH") {
       books = books.map((candidate) => candidate.id === book.id ? { ...candidate, status: "TRASHED" } : candidate);
       recycleBin = [{
-        id: crypto.randomUUID(),
+        id: randomId(),
         bookId: book.id,
         bookTitle: book.title,
         bookAuthor: book.author,
         format: book.format,
         coverUrl: book.coverUrl,
         originalPath: preview.sourcePath,
-        trashPath: `.bookkin-trash/${crypto.randomUUID()}/${book.relativePath.split("/").at(-1)}`,
+        trashPath: `.bookkin-trash/${randomId()}/${book.relativePath.split("/").at(-1)}`,
         sizeBytes: 8_842_122,
         deletedBy: "林",
         deletedAt: new Date().toISOString(),
@@ -940,7 +959,7 @@ export const api = {
       }, ...recycleBin];
     }
     const operation: FileOperation = {
-      id: crypto.randomUUID(),
+      id: randomId(),
       type: preview.type,
       status: "SUCCEEDED",
       sourcePath: preview.sourcePath,
@@ -964,10 +983,33 @@ export const api = {
     return [...recycleBin];
   },
 
+  async registrationStatus(): Promise<{ registrationEnabled: boolean }> { return request("/auth/registration-status"); },
+  async securitySettings(): Promise<{ registrationEnabled: boolean }> { return request("/users/security-settings"); },
+  async updateSecuritySettings(registrationEnabled: boolean): Promise<{ registrationEnabled: boolean }> {
+    return request("/users/security-settings", {method:"PUT",body:JSON.stringify({registrationEnabled})});
+  },
+  async register(input: { username: string; displayName: string; password: string }): Promise<{registered:boolean}> {
+    return request("/auth/register",{method:"POST",body:JSON.stringify(input)});
+  },
+
+  async listLoginLogs(page: number): Promise<{ items: { id: string; actorId: string | null; subjectId: string; outcome: string; ip: string | null; occurredAt: string }[]; total: number }> {
+    return request(`/users/login-logs?page=${page}&size=20`);
+  },
+
   async listLibraryRoots(): Promise<LibraryRoot[]> {
     if (!demoMode) return request<{ items: LibraryRoot[] }>("/library-roots").then((result) => result.items);
     await pause();
     return [...libraryRoots];
+  },
+
+  async previewLibraryRoot(path: string): Promise<{ path: string; fingerprint: string; writable: boolean; freeBytes: number }> {
+    return request("/library-roots/preview", { method: "POST", body: JSON.stringify({ path }) });
+  },
+  async createLibraryRoot(input: { name: string; path: string; expectedFingerprint: string; idempotencyKey: string }): Promise<LibraryRoot> {
+    return request("/library-roots", { method: "POST", body: JSON.stringify(input) });
+  },
+  async checkLibraryRoots(): Promise<LibraryRoot[]> {
+    return request<{ items: LibraryRoot[] }>("/library-roots/check", { method: "POST" }).then(result => result.items);
   },
 
   async listBookUploads(): Promise<BookUpload[]> {
@@ -990,13 +1032,17 @@ export const api = {
         if (event.lengthComputable) onProgress(Math.round((event.loaded / event.total) * 100));
       });
       xhr.addEventListener("load", () => {
-        if (xhr.status >= 200 && xhr.status < 300) resolve(JSON.parse(xhr.responseText) as BookUpload);
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try { resolve(JSON.parse(xhr.responseText) as BookUpload); }
+          catch { reject(new Error("服务器返回了无效响应，请刷新上传列表确认状态后重试")); }
+        }
         else {
           try { const problem = JSON.parse(xhr.responseText) as { detail?: string; title?: string }; reject(new Error(problem.detail ?? problem.title ?? "上传失败")); }
           catch { reject(new Error("上传失败")); }
         }
       });
       xhr.addEventListener("error", () => reject(new Error("网络中断，上传未完成")));
+      xhr.addEventListener("abort", () => reject(new Error("上传已中止")));
       xhr.send(file);
     });
   },
@@ -1011,6 +1057,35 @@ export const api = {
 
   async enrichBookUpload(uploadId: string): Promise<BookUpload> {
     return request(`/book-uploads/${uploadId}/enrich`, { method: "POST" });
+  },
+
+  async aiMatchBookUpload(uploadId: string, providerId?: string): Promise<BookUpload> {
+    return request(`/book-uploads/${uploadId}/ai-match`, {
+      method: "POST",
+      body: JSON.stringify(providerId ? { providerId } : {}),
+    });
+  },
+
+  async listAiProviders(): Promise<AiProviderInfo[]> {
+    return request<{ items: AiProviderInfo[] }>("/ai/providers").then((result) => result.items);
+  },
+
+  async getAiSettings(): Promise<AiSettings> {
+    if (!demoMode) return request("/ai/settings");
+    await pause(80);
+    return structuredClone(demoAiSettings);
+  },
+
+  async updateAiSettings(input: AiSettingsInput): Promise<AiSettings> {
+    if (!demoMode) return request("/ai/settings", { method: "PUT", body: JSON.stringify(input) });
+    await pause(100);
+    const providers = input.providers.map((provider) => {
+      const previous = demoAiSettings.providers.find((item) => item.id === provider.id);
+      const apiKeyConfigured = provider.clearApiKey ? false : Boolean(provider.apiKey?.trim()) || Boolean(previous?.apiKeyConfigured);
+      return { ...provider, configured: provider.enabled && (apiKeyConfigured || provider.baseUrl.includes("127.0.0.1") || provider.baseUrl.includes("localhost")), available: input.enabled && provider.enabled && (apiKeyConfigured || provider.baseUrl.includes("127.0.0.1") || provider.baseUrl.includes("localhost")), apiKeyConfigured };
+    });
+    demoAiSettings = { enabled: input.enabled, autoMatch: input.autoMatch, maxCandidates: input.maxCandidates, timeoutSeconds: input.timeoutSeconds, providers };
+    return structuredClone(demoAiSettings);
   },
 
   async uploadBookCover(uploadId: string, cover: Blob): Promise<BookUpload> {
@@ -1050,7 +1125,7 @@ export const api = {
     await pause(220);
     const extension = input.filename.split(".").at(-1)?.toUpperCase() as ReaderFont["format"];
     const font: ReaderFont = {
-      id: crypto.randomUUID(),
+      id: randomId(),
       displayName: input.displayName || input.filename,
       familyName: input.displayName || input.filename,
       kind: input.kind,
@@ -1084,7 +1159,8 @@ export const api = {
           }
         });
         xhr.addEventListener("error", () => reject(new Error("网络中断，字体上传未完成")));
-        xhr.send(file);
+        xhr.addEventListener("abort", () => reject(new Error("上传已中止")));
+      xhr.send(file);
       });
     }
     onProgress(100);
@@ -1111,7 +1187,7 @@ export const api = {
       books = books.map((book) => book.id === entry.bookId ? { ...book, status: "AVAILABLE" } : book);
     }
     const operation: FileOperation = {
-      id: crypto.randomUUID(),
+      id: randomId(),
       type: preview.type,
       status: "SUCCEEDED",
       sourcePath: preview.sourcePath,
@@ -1193,7 +1269,7 @@ export const api = {
     const now = new Date().toISOString();
     const annotation: Annotation = {
       ...input,
-      id: crypto.randomUUID(),
+      id: randomId(),
       createdAt: now,
       updatedAt: now,
     };

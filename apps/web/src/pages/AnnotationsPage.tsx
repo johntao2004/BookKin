@@ -4,7 +4,6 @@ import { FormatQuoteRounded } from "@/ui/icons";
 import { GridOnRounded } from "@/ui/icons";
 import { MenuBookOutlined } from "@/ui/icons";
 import { NotesOutlined } from "@/ui/icons";
-import { SearchRounded } from "@/ui/icons";
 import { Alert } from "@/ui";
 import { Box } from "@/ui";
 import { Button } from "@/ui";
@@ -13,10 +12,8 @@ import { CardActionArea } from "@/ui";
 import { CardContent } from "@/ui";
 import { Chip } from "@/ui";
 import { CircularProgress } from "@/ui";
-import { InputAdornment } from "@/ui";
 import { Snackbar } from "@/ui";
 import { Stack } from "@/ui";
-import { TextField } from "@/ui";
 import { Typography } from "@/ui";
 import type { SxProps, Theme } from "@/ui";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
@@ -46,7 +43,8 @@ export function AnnotationsPage() {
 }
 
 function AnnotationBooks({ onOpen }: { onOpen: (bookId: string) => void }) {
-  const [search, setSearch] = useState("");
+  const [params] = useSearchParams();
+  const search = params.get("q") ?? "";
   const deferredSearch = useDeferredValue(search.trim());
   const query = useInfiniteQuery({
     queryKey: ["annotation-books", deferredSearch],
@@ -59,14 +57,6 @@ function AnnotationBooks({ onOpen }: { onOpen: (bookId: string) => void }) {
   return (
     <PageContainer>
       <PageHeader eyebrow="READING NOTES" title="阅读笔记" description="按书籍整理高亮、下划线、加粗与阅读笔记；所有内容仅当前账户可见。" />
-      <TextField
-        value={search}
-        onChange={(event: any) => setSearch(event.target.value)}
-        placeholder="搜索做过阅读笔记的书或作者"
-        aria-label="搜索阅读笔记书籍"
-        sx={{ width: "100%", maxWidth: 560, mb: 4 }}
-        slotProps={{ input: { startAdornment: <InputAdornment position="start"><SearchRounded /></InputAdornment> } }}
-      />
       {query.isPending ? <Loading /> : query.isError ? <Alert severity="error">无法读取阅读笔记书目</Alert> : books.length === 0 ? (
         <Stack spacing={1} sx={{ py: 12, alignItems: "center", textAlign: "center" }}>
           <NotesOutlined sx={{ fontSize: 46, color: "text.disabled" }} />

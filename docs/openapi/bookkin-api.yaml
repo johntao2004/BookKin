@@ -18,6 +18,7 @@ tags:
   - name: Annotations
   - name: File operations
   - name: Book uploads
+  - name: AI
   - name: Reader fonts
 
 paths:
@@ -390,6 +391,24 @@ paths:
       requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/MetadataRequest' } } } }
       responses:
         '200': { description: Database metadata and optional write-back preview, content: { application/json: { schema: { type: object, required: [metadata], properties: { metadata: { $ref: '#/components/schemas/BookMetadata' }, writeBackPreview: { $ref: '#/components/schemas/FileOperationPreview' } } } } } }
+  /ai/providers:
+    get:
+      tags: [AI]
+      operationId: listAiProviders
+      responses:
+        '200': { description: AI providers available to managers, content: { application/json: { schema: { $ref: '#/components/schemas/AiProviderList' } } } }
+  /ai/settings:
+    get:
+      tags: [AI]
+      operationId: getAiSettings
+      responses:
+        '200': { description: AI matching settings without secret values, content: { application/json: { schema: { $ref: '#/components/schemas/AiSettings' } } } }
+    put:
+      tags: [AI]
+      operationId: updateAiSettings
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/AiSettingsRequest' } } } }
+      responses:
+        '200': { description: Updated AI matching settings without secret values, content: { application/json: { schema: { $ref: '#/components/schemas/AiSettings' } } } }
   /books/{id}/cover:
     get:
       tags: [Catalog]
@@ -558,6 +577,13 @@ paths:
       operationId: enrichBookUpload
       parameters: [{ $ref: '#/components/parameters/Id' }]
       responses: { '200': { description: Online enrichment retried, content: { application/json: { schema: { $ref: '#/components/schemas/BookUpload' } } } } }
+  /book-uploads/{id}/ai-match:
+    post:
+      tags: [Book uploads]
+      operationId: aiMatchBookUpload
+      parameters: [{ $ref: '#/components/parameters/Id' }]
+      requestBody: { required: false, content: { application/json: { schema: { $ref: '#/components/schemas/AiMatchRequest' } } } }
+      responses: { '200': { description: AI metadata candidates added for manual review, content: { application/json: { schema: { $ref: '#/components/schemas/BookUpload' } } } } }
   /book-uploads/{id}/cover:
     get:
       tags: [Book uploads]
@@ -837,7 +863,7 @@ components:
     CommitBookUploadRequest:
       type: object
       properties: { publishToDisplay: { type: boolean, default: false } }
-    MetadataSource: { type: string, enum: [FILE, FILENAME, OPEN_LIBRARY, GOOGLE_BOOKS, MANUAL] }
+    MetadataSource: { type: string, enum: [FILE, FILENAME, OPEN_LIBRARY, GOOGLE_BOOKS, AI, MANUAL] }
     CoverSource: { type: string, enum: [EMBEDDED, PDF_FIRST_PAGE, OPEN_LIBRARY, GOOGLE_BOOKS, CUSTOM, GENERATED] }
     BookUploadStatus: { type: string, enum: [RECEIVING, INSPECTING, ENRICHING, READY_FOR_REVIEW, COMMITTING, SUCCEEDED, DUPLICATE, FAILED, CANCELLED, EXPIRED] }
     BookMetadata:
@@ -867,7 +893,35 @@ components:
     MetadataCandidate:
       type: object
       required: [id, provider]
-      properties: { id: { type: string }, provider: { $ref: '#/components/schemas/MetadataSource' }, title: { type: [string, 'null'] }, subtitle: { type: [string, 'null'] }, authors: { type: array, items: { type: string } }, publisher: { type: [string, 'null'] }, publishedDate: { type: [string, 'null'] }, isbn: { type: [string, 'null'] }, description: { type: [string, 'null'] }, tags: { type: array, items: { type: string } }, coverUrl: { type: [string, 'null'], format: uri } }
+      properties: { id: { type: string }, provider: { $ref: '#/components/schemas/MetadataSource' }, providerLabel: { type: [string, 'null'] }, title: { type: [string, 'null'] }, subtitle: { type: [string, 'null'] }, authors: { type: array, items: { type: string } }, publisher: { type: [string, 'null'] }, publishedDate: { type: [string, 'null'] }, isbn: { type: [string, 'null'] }, description: { type: [string, 'null'] }, tags: { type: array, items: { type: string } }, coverUrl: { type: [string, 'null'], format: uri }, confidence: { type: [number, 'null'], minimum: 0, maximum: 1 }, matchReason: { type: [string, 'null'] }, requiresReview: { type: boolean } }
+    AiProviderType: { type: string, enum: [OPENAI_COMPATIBLE, ANTHROPIC, GEMINI] }
+    AiProvider:
+      type: object
+      required: [id, label, type, enabled, configured, available, model]
+      properties: { id: { type: string }, label: { type: string }, type: { $ref: '#/components/schemas/AiProviderType' }, enabled: { type: boolean }, configured: { type: boolean }, available: { type: boolean }, model: { type: string } }
+    AiProviderList:
+      type: object
+      required: [items]
+      properties: { items: { type: array, items: { $ref: '#/components/schemas/AiProvider' } } }
+    AiProviderSetting:
+      type: object
+      required: [id, label, type, enabled, baseUrl, model, configured, available, apiKeyConfigured]
+      properties: { id: { type: string }, label: { type: string }, type: { $ref: '#/components/schemas/AiProviderType' }, enabled: { type: boolean }, baseUrl: { type: string }, model: { type: string }, configured: { type: boolean }, available: { type: boolean }, apiKeyConfigured: { type: boolean }, updatedAt: { type: [string, 'null'], format: date-time } }
+    AiSettings:
+      type: object
+      required: [enabled, autoMatch, maxCandidates, timeoutSeconds, providers]
+      properties: { enabled: { type: boolean }, autoMatch: { type: boolean }, maxCandidates: { type: integer, minimum: 1, maximum: 10 }, timeoutSeconds: { type: integer, minimum: 5, maximum: 120 }, providers: { type: array, items: { $ref: '#/components/schemas/AiProviderSetting' } }, updatedAt: { type: [string, 'null'], format: date-time } }
+    AiProviderSettingRequest:
+      type: object
+      required: [id, label, type, enabled, baseUrl, model, clearApiKey]
+      properties: { id: { type: string, maxLength: 80 }, label: { type: string, maxLength: 120 }, type: { $ref: '#/components/schemas/AiProviderType' }, enabled: { type: boolean }, baseUrl: { type: string, maxLength: 500 }, model: { type: string, maxLength: 200 }, apiKey: { type: [string, 'null'], maxLength: 500, writeOnly: true }, clearApiKey: { type: boolean } }
+    AiSettingsRequest:
+      type: object
+      required: [enabled, autoMatch, maxCandidates, timeoutSeconds, providers]
+      properties: { enabled: { type: boolean }, autoMatch: { type: boolean }, maxCandidates: { type: integer, minimum: 1, maximum: 10 }, timeoutSeconds: { type: integer, minimum: 5, maximum: 120 }, providers: { type: array, maxItems: 20, items: { $ref: '#/components/schemas/AiProviderSettingRequest' } } }
+    AiMatchRequest:
+      type: object
+      properties: { providerId: { type: [string, 'null'], maxLength: 80 } }
     CreateBookUploadRequest:
       type: object
       required: [libraryRootId, filename, sizeBytes]

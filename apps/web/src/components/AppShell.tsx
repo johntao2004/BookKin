@@ -1,9 +1,7 @@
-import { pageWidthSx } from "./PageHeader";
 import { AdminPanelSettingsOutlined } from "@/ui/icons";
-import { AutoStoriesOutlined } from "@/ui/icons";
+import { pageWidthSx } from "./PageHeader";
 import { CategoryOutlined } from "@/ui/icons";
 import { CollectionsBookmarkOutlined } from "@/ui/icons";
-import { FontDownloadOutlined } from "@/ui/icons";
 import { HomeOutlined } from "@/ui/icons";
 import { LibraryBooksOutlined } from "@/ui/icons";
 import { LogoutOutlined } from "@/ui/icons";
@@ -12,7 +10,6 @@ import { NotesOutlined } from "@/ui/icons";
 import { PaletteOutlined } from "@/ui/icons";
 import { SearchRounded } from "@/ui/icons";
 import { SettingsOutlined } from "@/ui/icons";
-import { StorageRounded } from "@/ui/icons";
 import { ThreeDRotationOutlined } from "@/ui/icons";
 import { AppBar } from "@/ui";
 import { Avatar } from "@/ui";
@@ -48,19 +45,11 @@ import { bookKinThemeOptions } from "../theme/theme";
 const navigation = [
   { label: "首页", path: "/library", icon: <HomeOutlined /> },
   { label: "藏书库", path: "/library/all", icon: <LibraryBooksOutlined /> },
+  { label: "展示书目", path: "/display-books", icon: <LibraryBooksOutlined /> },
   { label: "分类", path: "/categories", icon: <CategoryOutlined /> },
   { label: "书单", path: "/booklists", icon: <CollectionsBookmarkOutlined /> },
   { label: "阅读笔记", path: "/annotations", icon: <NotesOutlined /> },
   { label: "虚拟书库", path: "/virtual-library", icon: <ThreeDRotationOutlined /> },
-];
-
-const displaySettings = { label: "展示书目设置", path: "/settings/display-books", icon: <AutoStoriesOutlined /> };
-
-const management = [
-  { label: "书库状态", path: "/admin/library-roots", icon: <StorageRounded /> },
-  { label: "用户管理", path: "/admin/users", icon: <AdminPanelSettingsOutlined /> },
-  { label: "文件任务", path: "/admin/file-operations", icon: <SettingsOutlined /> },
-  { label: "阅读字体", path: "/admin/reader-fonts", icon: <FontDownloadOutlined /> },
 ];
 
 export function AppShell({ children }: PropsWithChildren) {
@@ -73,11 +62,18 @@ export function AppShell({ children }: PropsWithChildren) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const [themeMenuOpen, setThemeMenuOpen] = useState(false);
-  const canManage = user?.role === "OWNER" || user?.role === "ADMIN";
+  const themeMenuSelectionRef = useRef(false);
   const libraryNavigation = user
     ? navigation
     : navigation.filter((item) => ["/library", "/categories", "/booklists"].includes(item.path));
-  const searchableLibrary = ["/library", "/library/all", "/recycle-bin"].includes(location.pathname);
+  const searchLabel = location.pathname === "/booklists" ? "搜索书单"
+    : location.pathname.startsWith("/booklists/") ? "搜索当前书单"
+    : location.pathname.startsWith("/categories") ? "搜索当前分类"
+    : location.pathname === "/annotations" && !searchParams.has("bookId") ? "搜索阅读笔记书籍"
+    : location.pathname === "/recycle-bin" ? "搜索回收站"
+    : location.pathname === "/library" ? "搜索展示书目"
+    : location.pathname === "/library/all" ? "搜索藏书" : null;
+  const searchableLibrary = Boolean(searchLabel);
   const readerRoute = location.pathname.startsWith("/reader/");
   const query = searchableLibrary ? searchParams.get("q") ?? "" : "";
   const [searchExpanded, setSearchExpanded] = useState(Boolean(query));
@@ -107,7 +103,7 @@ export function AppShell({ children }: PropsWithChildren) {
   }, [location.pathname, prepareVirtualLibrary, readerRoute, user]);
 
   const updateQuery = (value: string) => {
-    if (!searchableLibrary) navigate(`/library?q=${encodeURIComponent(value)}`);
+    if (!searchableLibrary) return;
     else {
       const next = new URLSearchParams(searchParams);
       if (value) next.set("q", value);
@@ -190,7 +186,7 @@ export function AppShell({ children }: PropsWithChildren) {
             </Stack>
 
             <Stack direction="row" sx={{ alignItems: "center", gap: { xs: 0.5, sm: 2 }, flexShrink: 0, ml: { xs: "auto", lg: 0 }, justifySelf: { lg: "end" } }}>
-              <Box onMouseEnter={() => setSearchExpanded(true)} onMouseLeave={() => setSearchExpanded(false)} sx={{ position: "relative", width: tokens.layout.touchTarget, height: tokens.layout.touchTarget, flexShrink: 0 }}>
+              {searchableLibrary && <Box onMouseEnter={() => setSearchExpanded(true)} onMouseLeave={() => setSearchExpanded(false)} sx={{ position: "relative", width: tokens.layout.touchTarget, height: tokens.layout.touchTarget, flexShrink: 0 }}>
                 <IconButton ref={searchTriggerRef} aria-label="展开搜索" aria-expanded={searchExpanded} onClick={() => setSearchExpanded(true)}>
                   <SearchRounded fontSize="small" />
                 </IconButton>
@@ -213,16 +209,19 @@ export function AppShell({ children }: PropsWithChildren) {
                         searchTriggerRef.current?.focus();
                       }
                     }}
-                    placeholder={location.pathname === "/recycle-bin" ? "搜索回收站" : location.pathname === "/library" ? "搜索展示书目" : "搜索整座书库"}
-                    aria-label={location.pathname === "/recycle-bin" ? "搜索回收站" : location.pathname === "/library" ? "搜索展示书目" : "搜索整座书库"}
+                    placeholder={searchLabel ?? undefined}
+                    aria-label={searchLabel ?? undefined}
                     sx={{ width: "100%", "& .bk-field-control": { height: tokens.layout.touchTarget, bgcolor: "background.paper" } }}
                     slotProps={{ input: { startAdornment: <InputAdornment position="start"><SearchRounded fontSize="small" /></InputAdornment> } }}
                   />}
                 </Box>
-              </Box>
+              </Box>}
               <Dropdown
                 open={themeMenuOpen}
-                onOpenChange={setThemeMenuOpen}
+                onOpenChange={(open) => {
+                  if (open && themeMenuSelectionRef.current) return;
+                  setThemeMenuOpen(open);
+                }}
                 trigger={["hover", "click"]}
                 placement="bottomRight"
                 menu={{
@@ -233,7 +232,12 @@ export function AppShell({ children }: PropsWithChildren) {
                     label: bookKinThemeOptions[mode].label,
                     icon: <Box sx={{ width: tokens.spacing[5], height: tokens.spacing[5], borderRadius: `${tokens.radius.pill}px`, bgcolor: bookKinThemeOptions[mode].reader.background, border: 1, borderColor: "divider" }} />,
                   })),
-                  onClick: ({ key }) => { setBookKinTheme(key as ReaderTheme); setThemeMenuOpen(false); },
+                  onClick: ({ key }) => {
+                    themeMenuSelectionRef.current = true;
+                    setBookKinTheme(key as ReaderTheme);
+                    setThemeMenuOpen(false);
+                    globalThis.setTimeout(() => { themeMenuSelectionRef.current = false; }, 400);
+                  },
                 }}
               >
                 <IconButton color="inherit" aria-label="切换全站主题" aria-haspopup="menu" aria-expanded={themeMenuOpen}>
@@ -245,8 +249,8 @@ export function AppShell({ children }: PropsWithChildren) {
                   items: [
                     { key: "account", label: user.displayName, disabled: true },
                     { type: "divider" },
-                    ...(canManage ? management.map((item) => ({ key: item.path, label: item.label, icon: item.icon })) : []),
-                    { key: displaySettings.path, label: displaySettings.label, icon: displaySettings.icon },
+                    ...(["OWNER", "ADMIN"].includes(user.role) ? [{ key: "/admin/users", label: "用户管理", icon: <AdminPanelSettingsOutlined /> }] : []),
+                    { key: "/settings", label: "设置", icon: <SettingsOutlined /> },
                     { type: "divider" },
                     { key: "logout", label: "退出登录", icon: <LogoutOutlined /> },
                   ],

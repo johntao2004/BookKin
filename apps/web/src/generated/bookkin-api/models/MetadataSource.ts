@@ -22,6 +22,7 @@ export const MetadataSource = {
     Filename: 'FILENAME',
     OpenLibrary: 'OPEN_LIBRARY',
     GoogleBooks: 'GOOGLE_BOOKS',
+    Ai: 'AI',
     Manual: 'MANUAL'
 } as const;
 export type MetadataSource = typeof MetadataSource[keyof typeof MetadataSource];

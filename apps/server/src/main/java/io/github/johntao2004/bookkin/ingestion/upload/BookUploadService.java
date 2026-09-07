@@ -2,6 +2,8 @@ package io.github.johntao2004.bookkin.ingestion.upload;
 
 import static io.github.johntao2004.bookkin.ingestion.upload.BookUploadModels.*;
 
+import io.github.johntao2004.bookkin.ai.AiMetadataService;
+import io.github.johntao2004.bookkin.ai.AiSettingsService;
 import io.github.johntao2004.bookkin.audit.AuditService;
 import io.github.johntao2004.bookkin.catalog.BookFormat;
 import io.github.johntao2004.bookkin.catalog.DisplayCatalogService;
@@ -52,6 +54,8 @@ public class BookUploadService {
     private final BookUploadRepository uploads;
     private final BookUploadProcessor processor;
     private final MetadataEnrichmentService enrichment;
+    private final AiMetadataService ai;
+    private final AiSettingsService aiSettings;
     private final LibraryRootRepository roots;
     private final CatalogIngestionRepository catalog;
     private final DisplayCatalogService displayCatalog;
@@ -64,13 +68,15 @@ public class BookUploadService {
     private final ObjectMapper json;
 
     public BookUploadService(BookUploadRepository uploads, BookUploadProcessor processor,
-                             MetadataEnrichmentService enrichment, LibraryRootRepository roots,
+                             MetadataEnrichmentService enrichment, AiMetadataService ai, AiSettingsService aiSettings, LibraryRootRepository roots,
                              CatalogIngestionRepository catalog, UserRepository users, FileInspector inspector,
                              FileFingerprints fingerprints, PathPolicy paths, BookKinProperties properties,
                              AuditService audit, ObjectMapper json, DisplayCatalogService displayCatalog) {
         this.uploads = uploads;
         this.processor = processor;
         this.enrichment = enrichment;
+        this.ai = ai;
+        this.aiSettings = aiSettings;
         this.roots = roots;
         this.catalog = catalog;
         this.displayCatalog = displayCatalog;
@@ -166,12 +172,32 @@ public class BookUploadService {
         var upload = requireReady(owned(id, actor));
         uploads.processing(id, BookUploadStatus.ENRICHING);
         try {
-            var result = enrichment.enrich(upload.draftMetadata());
+            var result = enrichment.enrich(upload.draftMetadata(), aiSettings.effective().enabled(), null, false);
             uploads.ready(id, upload.encrypted(), upload.drmProtected(), upload.digitallySigned(), upload.detectedMetadata(),
                     result.draft(), result.candidates(), upload.coverCacheKey(), upload.selectedCoverSource(),
                     upload.similarBookIds().toArray(UUID[]::new));
         } catch (Exception exception) {
             uploads.resetReady(id, "ENRICHMENT_FAILED", "在线补全暂时不可用，本地识别结果仍可继续使用。");
+        }
+        return uploads.findOwned(id, actor).orElseThrow().view();
+    }
+
+    public BookUpload aiMatch(UUID id, String providerId, Principal principal) {
+        UUID actor = actor(principal);
+        var upload = requireReady(owned(id, actor));
+        if (!ai.hasAvailableProvider(providerId)) {
+            throw ApiException.conflict("AI_PROVIDER_UNAVAILABLE", "没有可用的 AI 平台，请先在服务端配置并启用至少一个平台。");
+        }
+        uploads.processing(id, BookUploadStatus.ENRICHING);
+        try {
+            var result = enrichment.enrich(upload.draftMetadata(), true, providerId, true);
+            uploads.ready(id, upload.encrypted(), upload.drmProtected(), upload.digitallySigned(), upload.detectedMetadata(),
+                    result.draft(), result.candidates(), upload.coverCacheKey(), upload.selectedCoverSource(),
+                    upload.similarBookIds().toArray(UUID[]::new));
+            audit.record(actor, "BOOK_UPLOAD_AI_MATCHED", "BOOK_UPLOAD", id.toString(), upload.originalFilename(), null,
+                    upload.fingerprint(), upload.fingerprint(), "SUCCEEDED", "{\"providerId\":\"" + safeAudit(providerId) + "\"}");
+        } catch (Exception exception) {
+            uploads.resetReady(id, "AI_MATCH_FAILED", "AI 平台暂时不可用，本地识别结果仍可继续使用。");
         }
         return uploads.findOwned(id, actor).orElseThrow().view();
     }
@@ -187,6 +213,9 @@ public class BookUploadService {
         var upload = requireReady(owned(id, actor));
         MetadataCandidate candidate = upload.metadataCandidates().stream().filter(value -> Objects.equals(value.id(), candidateId)).findFirst()
                 .orElseThrow(() -> ApiException.notFound("COVER_CANDIDATE_NOT_FOUND", "未找到这个在线封面候选项。"));
+        if (candidate.provider() == MetadataSource.AI) {
+            throw ApiException.conflict("AI_COVER_NOT_VERIFIED", "AI 候选只用于书目信息核对，不能直接下载封面。");
+        }
         try {
             byte[] bytes = enrichment.downloadCover(candidate, properties.upload().maxCoverSize());
             CoverSource source = candidate.provider() == MetadataSource.OPEN_LIBRARY ? CoverSource.OPEN_LIBRARY : CoverSource.GOOGLE_BOOKS;
@@ -387,7 +416,8 @@ public class BookUploadService {
 
     private void mark(Map<String, MetadataSource> sources, String field, Object before, Object after) {
         MetadataSource requested = sources.get(field);
-        if (!Objects.equals(before, after) && requested != MetadataSource.OPEN_LIBRARY && requested != MetadataSource.GOOGLE_BOOKS) {
+        if (!Objects.equals(before, after) && requested != MetadataSource.OPEN_LIBRARY && requested != MetadataSource.GOOGLE_BOOKS
+                && requested != MetadataSource.AI) {
             sources.put(field, MetadataSource.MANUAL);
         }
     }
@@ -480,6 +510,11 @@ public class BookUploadService {
     private String blank(String value) { return value == null || value.isBlank() ? null : value.strip(); }
     private String relative(Path root, Path target) { return root.relativize(target).toString().replace('\\', '/'); }
     private String safeMessage(Exception exception) { String value = exception.getMessage(); return value == null || value.isBlank() ? "操作失败" : value.substring(0, Math.min(500, value.length())); }
+    private String safeAudit(String value) {
+        if (value == null) return "";
+        String clean = value.replaceAll("[^a-zA-Z0-9_.-]", "");
+        return clean.substring(0, Math.min(80, clean.length()));
+    }
     private void deleteQuietly(Path path) { try { Files.deleteIfExists(path); } catch (Exception ignored) {} }
     private void cleanupEmpty(Path directory) { try { Files.deleteIfExists(directory); } catch (Exception ignored) {} }
 

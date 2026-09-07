@@ -127,3 +127,49 @@ Every chandelier must have a continuous interlocking chain and ceiling mounting 
 Use separate icon and label slots in every shared button, including leading/trailing icons and router links. Never wrap the entire icon-plus-label composition in a Fragment passed to Ant Button, which flattens it into one text span and loses the gap. Keep a consistent token-based icon size and preserve keyboard and disabled behavior.
 
 The fireplace fire must occupy the actual hearth volume behind the grate, with a grounded coal bed and upward turbulent motion. Do not use overlapping camera-facing flame sprites or a floating circular glow plate; orbiting must preserve the fire depth and its occlusion by the grate and masonry.
+
+Access-denied page navigation must look like buttons: primary login/return action and outlined public-library action. Preserve router destinations and login return state; shared router-link buttons must retain the same visual variants as ordinary buttons.
+
+The featured cover must scale with both available slot width and height, including tablet widths; use a generous cover column and a fitted 2:3 image box so rounded corners touch the artwork. Do not leave it constrained to its intrinsic size.
+
+The setup form starts with all fields empty, disables automatic filling for nickname and username, and labels displayName as `昵称`. Do not prefill an owner username or autofocus a field that triggers saved-account filling.
+
+Keep standard page content close to the navigation with compact shared top padding. Use the navigation search as the sole page search for booklists, category contents, library collections and annotation books; retain current route and filters, and never redirect unrelated pages into a global library search. Hide search where no page search is implemented.
+
+Use Ant Design Form/Form.Item for setup validation with field-level errors and noValidate; do not use native browser validation bubbles. Preserve the minimum password length and confirmation checks.
+
+Always render all four library overview modules, including an empty library or empty search result. Featured-book availability must never control the recent-annotations panel; show an explicit empty state instead.
+
+The four library overview cards must have equal widths and equal heights: use two equal columns on tablet/desktop and retain shared row sizing. Do not restore an asymmetric featured/statistics split.
+
+LAN HTTP is a supported deployment origin. Generate client UUIDs through utils/random-id.ts using crypto.getRandomValues; never call secure-context-only crypto.randomUUID directly. Test file queue selection with randomUUID unavailable.
+
+Production acceptance must exercise LAN HTTP file selection and upload parsing, not only localhost, HTML and health. Preserve the application error boundary so render failures display a recovery action instead of blanking the screen. Clipboard actions must handle unsupported origins and rejected permissions.
+
+Keep upload dialogs compact and viewport-bounded, with a scrolling content area and reachable fixed title/actions. Use the small dialog width for the queue and medium width for metadata review; do not force mobile uploads into full-screen dialogs.
+
+Ant Design 6 Modal shell styles use the container semantic slot, not the obsolete content slot. Keep shell padding zero so title/content/actions supply exactly one layer of token-based padding.
+
+Upload selection or drop starts transfer automatically. Keep one primary upload action, show uploaded confirmation, and navigate to the persistent book-information editor on confirmation. Do not expose the inspection queue or batch commit in the upload dialog. Preserve server validation and staging; metadata editing completes safe ingestion.
+
+Do not show a batch-rename action on the library collection page. Keep individual book metadata editing in the book action menu.
+
+Shared menus and popovers must use their measured dimensions, flip above bottom-edge anchors, respect transform origins, and stay within the visual viewport during scrolling/resizing. Never position them with a guessed fixed menu width.
+
+Consolidate the five account management entries into one Settings entry. Settings tabs use persistent URL hashes; preserve role checks, redirect former routes to their tab, and render existing functions without nested page padding or duplicate large headings.
+
+User management is an independent account-menu entry at /admin/users. Keep only library roots, file tasks, reader fonts, and display books in Settings tabs; legacy #users redirects to the independent page. This supersedes the five-tab consolidation.
+
+User management keeps the table from the sm breakpoint upward, including iPad portrait widths; reserve user cards for phones below sm. Keep horizontal overflow inside the table container.
+
+Keep management pages focused on controls and data. Do not restore the static role-permissions information banner above the user table; reserve alerts for actionable current states.
+
+Place Create User on its own left-aligned toolbar row immediately above the user table, separate from the page title and introduction.
+
+Standard page headers consistently place eyebrow, title and description above a separate left-aligned action row at every breakpoint. Use shared PageHeader action layout instead of floating page actions alongside the introduction. Keep collection toolbars below their section heading.
+
+Settings contains library roots, reader fonts and display books only. User management has anchored tabs for user list (#users), operation logs (#operations) and login logs (#logins). Redirect former file-task routes and the settings file-operations anchor to /admin/users#operations. Do not repeat page headings within these tabs.
+
+Display-book management lives at the top-level /display-books route and is linked from the signed-in main navigation. Settings now contains library roots and reader fonts only. Redirect /settings/display-books and /settings#display-books to /display-books.
+
+All page-level action toolbars align to the right edge, including Create User, refresh, add and upload actions. Keep the separate toolbar row below the header or tabs; this supersedes earlier left-aligned toolbar guidance. Use shared ActionToolbar for dedicated action rows and PageHeader actions.

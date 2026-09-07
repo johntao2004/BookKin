@@ -1,7 +1,6 @@
 import { ArrowForwardRounded } from "@/ui/icons";
 import { AutoStoriesOutlined } from "@/ui/icons";
 import { CategoryOutlined } from "@/ui/icons";
-import { SearchRounded } from "@/ui/icons";
 import { TuneRounded } from "@/ui/icons";
 import { Alert } from "@/ui";
 import { Box } from "@/ui";
@@ -10,13 +9,11 @@ import { Chip } from "@/ui";
 import { CircularProgress } from "@/ui";
 import { Divider } from "@/ui";
 import { FormControl } from "@/ui";
-import { InputAdornment } from "@/ui";
 import { InputLabel } from "@/ui";
 import { MenuItem } from "@/ui";
 import { Paper } from "@/ui";
 import { Select } from "@/ui";
 import { Stack } from "@/ui";
-import { TextField } from "@/ui";
 import { Typography } from "@/ui";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useCallback, useDeferredValue, useMemo, type ReactNode } from "react";
@@ -130,15 +127,6 @@ export function CategoriesPage() {
       ) : categories.length && selectedCategory ? (
         <>
           <Stack direction={{ xs: "column", md: "row" }} sx={{ alignItems: { xs: "stretch", md: "center" }, gap: `${tokens.spacing[3]}px`, mb: `${tokens.spacing[4]}px` }}>
-            <TextField
-              size="small"
-              value={query}
-              onChange={(event: any) => updateParam("q", event.target.value)}
-              label="搜索书目"
-              placeholder={`在“${selectedCategory.name}”中搜索书名或作者`}
-              sx={{ width: "100%", maxWidth: { md: tokens.layout.readingMax / 2 } }}
-              slotProps={{ input: { startAdornment: <InputAdornment position="start"><SearchRounded fontSize="small" /></InputAdornment> } }}
-            />
             <FormControl size="small" sx={{ minWidth: { md: tokens.spacing[24] + tokens.spacing[12] } }}>
               <InputLabel id="categories-sort-label">排序</InputLabel>
               <Select labelId="categories-sort-label" label="排序" value={sort} onChange={(event: any) => updateParam("sort", event.target.value, "recent")}>

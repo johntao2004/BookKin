@@ -1,7 +1,6 @@
 import { ArrowBackRounded } from "@/ui/icons";
 import { AutoStoriesOutlined } from "@/ui/icons";
 import { EditOutlined } from "@/ui/icons";
-import { SearchRounded } from "@/ui/icons";
 import { TuneRounded } from "@/ui/icons";
 import { Alert } from "@/ui";
 import { Box } from "@/ui";
@@ -9,14 +8,12 @@ import { Breadcrumbs } from "@/ui";
 import { Button } from "@/ui";
 import { CircularProgress } from "@/ui";
 import { FormControl } from "@/ui";
-import { InputAdornment } from "@/ui";
 import { InputLabel } from "@/ui";
 import { Link as UiLink } from "@/ui";
 import { MenuItem } from "@/ui";
 import { Select } from "@/ui";
 import { Snackbar } from "@/ui";
 import { Stack } from "@/ui";
-import { TextField } from "@/ui";
 import { Typography } from "@/ui";
 import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useDeferredValue, useMemo, useState } from "react";
@@ -114,7 +111,6 @@ export function BooklistDetailPage() {
       <Stack direction={{ xs: "column", sm: "row" }} sx={{ justifyContent: "space-between", alignItems: { xs: "stretch", sm: "center" }, gap: `${tokens.spacing[3]}px`, mb: `${tokens.spacing[8]}px` }}>
         <Typography variant="h3">书单内容</Typography>
         <Stack direction={{ xs: "column", sm: "row" }} sx={{ gap: `${tokens.spacing[3]}px` }}>
-          <TextField size="small" label="搜索书名或作者" value={query} onChange={(event: any) => updateParam("q", event.target.value)} slotProps={{ input: { startAdornment: <InputAdornment position="start"><SearchRounded fontSize="small" /></InputAdornment> } }} />
           <FormControl size="small" sx={{ minWidth: 126 }}>
             <InputLabel id="booklist-format-label">格式</InputLabel>
             <Select labelId="booklist-format-label" label="格式" value={format} onChange={(event: any) => updateParam("format", event.target.value, "ALL")}>

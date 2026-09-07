@@ -9,7 +9,7 @@ export type AnnotationStyle = "HIGHLIGHT" | "UNDERLINE" | "BOLD";
 export type HighlightColor = "YELLOW" | "GREEN" | "PINK" | "BLUE" | "ORANGE";
 export type AnnotationColor = HighlightColor | "CORAL" | "GOLD" | "TEAL";
 export type BookUploadStatus = "RECEIVING" | "INSPECTING" | "ENRICHING" | "READY_FOR_REVIEW" | "COMMITTING" | "SUCCEEDED" | "DUPLICATE" | "FAILED" | "CANCELLED" | "EXPIRED";
-export type MetadataSource = "FILE" | "FILENAME" | "OPEN_LIBRARY" | "GOOGLE_BOOKS" | "MANUAL";
+export type MetadataSource = "FILE" | "FILENAME" | "OPEN_LIBRARY" | "GOOGLE_BOOKS" | "AI" | "MANUAL";
 export type CoverSource = "EMBEDDED" | "PDF_FIRST_PAGE" | "OPEN_LIBRARY" | "GOOGLE_BOOKS" | "CUSTOM" | "GENERATED";
 export type ReaderFontSource = "PRESET" | "CUSTOM";
 export type ReaderFontKind = "SERIF" | "SANS";
@@ -180,6 +180,7 @@ export interface BookMetadataDraft {
 export interface MetadataCandidate {
   id: string;
   provider: MetadataSource;
+  providerLabel?: string;
   title?: string;
   subtitle?: string;
   authors?: string[];
@@ -189,6 +190,60 @@ export interface MetadataCandidate {
   description?: string;
   tags?: string[];
   coverUrl?: string;
+  confidence?: number;
+  matchReason?: string;
+  requiresReview?: boolean;
+}
+
+export interface AiProviderInfo {
+  id: string;
+  label: string;
+  type: "OPENAI_COMPATIBLE" | "ANTHROPIC" | "GEMINI";
+  enabled: boolean;
+  configured: boolean;
+  available: boolean;
+  model: string;
+}
+
+export interface AiProviderSetting {
+  id: string;
+  label: string;
+  type: "OPENAI_COMPATIBLE" | "ANTHROPIC" | "GEMINI";
+  enabled: boolean;
+  baseUrl: string;
+  model: string;
+  configured: boolean;
+  available: boolean;
+  apiKeyConfigured: boolean;
+  updatedAt?: string;
+}
+
+export interface AiSettings {
+  enabled: boolean;
+  autoMatch: boolean;
+  maxCandidates: number;
+  timeoutSeconds: number;
+  providers: AiProviderSetting[];
+  updatedAt?: string;
+}
+
+export interface AiSettingsInput {
+  enabled: boolean;
+  autoMatch: boolean;
+  maxCandidates: number;
+  timeoutSeconds: number;
+  providers: AiProviderSettingInput[];
+}
+
+export interface AiProviderSettingInput {
+  id: string;
+  label: string;
+  type: AiProviderSetting["type"];
+  enabled: boolean;
+  baseUrl: string;
+  model: string;
+  apiKey?: string;
+  clearApiKey: boolean;
 }
 
 export interface BookUpload {

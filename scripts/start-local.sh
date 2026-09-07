@@ -23,6 +23,27 @@ export BOOKKIN_STORAGE_ROOTS_0_NAME="${BOOKKIN_STORAGE_ROOTS_0_NAME:-主书库}"
 export BOOKKIN_STORAGE_ROOTS_0_PATH="${BOOKKIN_STORAGE_ROOTS_0_PATH:-$LOCAL_LIBRARY_ROOT}"
 export BOOKKIN_FONT_STORAGE_PATH="${BOOKKIN_FONT_STORAGE_PATH:-$LOCAL_LIBRARY_ROOT/.bookkin-assets/fonts}"
 
+# Keep local encrypted AI settings usable across restarts without shipping a
+# reusable key in application configuration. Production deployments must set
+# BOOKKIN_AI_SETTINGS_ENCRYPTION_KEY themselves.
+LOCAL_AI_KEY_FILE="${BOOKKIN_LOCAL_AI_SETTINGS_KEY_FILE:-$REPO_ROOT/.local/ai-settings-encryption-key}"
+if [[ -z "${BOOKKIN_AI_SETTINGS_ENCRYPTION_KEY:-}" ]]; then
+  umask 077
+  if [[ ! -s "$LOCAL_AI_KEY_FILE" ]]; then
+    mkdir -p "$(dirname "$LOCAL_AI_KEY_FILE")"
+    if command -v openssl >/dev/null 2>&1; then
+      openssl rand -hex 32 > "$LOCAL_AI_KEY_FILE"
+    else
+      python3 - "$LOCAL_AI_KEY_FILE" <<'PY'
+import secrets, sys
+with open(sys.argv[1], "w", encoding="ascii") as key_file:
+    key_file.write(secrets.token_hex(32))
+PY
+    fi
+  fi
+  export BOOKKIN_AI_SETTINGS_ENCRYPTION_KEY="$(tr -d '\n' < "$LOCAL_AI_KEY_FILE")"
+fi
+
 mkdir -p "$RUN_DIR" "$LOG_DIR"
 mkdir -p "$LOCAL_LIBRARY_ROOT" "$BOOKKIN_FONT_STORAGE_PATH"
 

@@ -23,7 +23,7 @@ RUN apt-get update \
     && apt-get install --yes --no-install-recommends curl ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
-COPY --from=server-build /workspace/apps/server/target/bookkin-0.1.0-SNAPSHOT.jar /app/bookkin.jar
+COPY --chmod=0644 --from=server-build /workspace/apps/server/target/bookkin-0.1.0-SNAPSHOT.jar /app/bookkin.jar
 EXPOSE 8080
 ENV JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=75 -Djava.io.tmpdir=/tmp/bookkin"
 ENTRYPOINT ["java", "-jar", "/app/bookkin.jar"]

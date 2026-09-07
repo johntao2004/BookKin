@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { Route, Routes } from "react-router-dom";
 import { afterEach, vi } from "vitest";
 import { api } from "../api/client";
@@ -31,4 +31,20 @@ describe("SetupPage", () => {
 
     expect(await screen.findByRole("button", { name: "创建主人账户" })).toBeInTheDocument();
   });
+  it("shows inline required, password length and confirmation errors", async () => {
+    vi.spyOn(api, "getSetupStatus").mockResolvedValue({ initialized: false });
+    const setup = vi.spyOn(api, "setupOwner");
+    render(<TestProviders initialPath="/setup"><SetupPage /></TestProviders>);
+    const submit = await screen.findByRole("button", { name: "创建主人账户" });
+    fireEvent.click(submit);
+    expect(await screen.findByText("请输入昵称")).toBeInTheDocument();
+    expect(await screen.findByText("请输入用户名")).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("密码", { exact: true }), { target: { value: "short" } });
+    fireEvent.change(screen.getByLabelText("确认密码", { exact: true }), { target: { value: "different" } });
+    fireEvent.click(submit);
+    expect(await screen.findByText("密码至少需要 12 个字符")).toBeInTheDocument();
+    expect(await screen.findByText("两次输入的密码不一致")).toBeInTheDocument();
+    expect(setup).not.toHaveBeenCalled();
+  });
+
 });

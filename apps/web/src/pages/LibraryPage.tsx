@@ -3,7 +3,6 @@ import { AutoAwesomeOutlined } from "@/ui/icons";
 import { BookmarkAddOutlined } from "@/ui/icons";
 import { EditNoteRounded } from "@/ui/icons";
 import { FilterListRounded } from "@/ui/icons";
-import { DriveFileRenameOutlineRounded } from "@/ui/icons";
 import { KeyboardArrowUpRounded } from "@/ui/icons";
 import { MenuBookRounded } from "@/ui/icons";
 import { CloudUploadOutlined } from "@/ui/icons";
@@ -30,7 +29,6 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { api } from "../api/client";
 import { useAuth } from "../auth/AuthContext";
 import { BookCard } from "../components/BookCard";
-import { BatchRenameDialog } from "../components/BatchRenameDialog";
 import { AddToBooklistDialog } from "../components/AddToBooklistDialog";
 import { BookUploadDialog } from "../components/BookUploadDialog";
 import { FileOperationDialog } from "../components/FileOperationDialog";
@@ -56,7 +54,6 @@ export function LibraryPage() {
   const [operation, setOperation] = useState<{ book: Book; type: FileOperationType } | null>(null);
   const [metadataBook, setMetadataBook] = useState<Book | null>(null);
   const [booklistBook, setBooklistBook] = useState<Book | null>(null);
-  const [batchRenameOpen, setBatchRenameOpen] = useState(false);
   const [uploadOpen, setUploadOpen] = useState(false);
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [notice, setNotice] = useState("");
@@ -124,8 +121,7 @@ export function LibraryPage() {
             display: "grid",
             gridTemplateColumns: {
               xs: "minmax(0, 1fr)",
-              sm: "minmax(0, 1.18fr) minmax(0, 0.82fr)",
-              lg: "minmax(0, 1.38fr) minmax(0, 0.62fr)",
+              sm: "repeat(2, minmax(0, 1fr))",
             },
             // Keep the four overview cards on a shared two-row rhythm.  A
             // fixed token-derived track prevents the compact empty states
@@ -142,8 +138,7 @@ export function LibraryPage() {
               <Skeleton active paragraph={{ rows: 4 }} />
             </Box>
           )) : <>
-          {featured && (
-            <>
+          <>
               <Box
                 component="article"
                 aria-labelledby="featured-book-title"
@@ -162,18 +157,18 @@ export function LibraryPage() {
                 }}
               >
                 <OverviewCardHeader id="featured-card-title" icon={<AutoAwesomeOutlined />}>本周新藏</OverviewCardHeader>
-                <Box
+                {featured ? <Box
                   sx={{
                     display: "grid",
-                    gridTemplateColumns: { xs: "minmax(0, 0.72fr) minmax(0, 1.28fr)", sm: "minmax(0, 0.68fr) minmax(0, 1.32fr)" },
+                    gridTemplateColumns: "minmax(0, 0.92fr) minmax(0, 1.08fr)",
                     gap: { xs: `${tokens.spacing[4]}px`, md: `${tokens.spacing[6]}px` },
                     flex: 1,
                     minHeight: 0,
                     mt: `${tokens.spacing[4]}px`,
                   }}
                 >
-                  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", minWidth: 0, minHeight: 0 }}>
-                    <Box component="img" src={featured.coverUrl} alt={`${featured.title}封面`} loading="eager" decoding="async" fetchPriority="high" sx={{ display: "block", width: "auto", height: "auto", maxWidth: "100%", maxHeight: "100%", borderRadius: `${tokens.radius.lg}px` }} />
+                  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", minWidth: 0, minHeight: 0, containerType: "size" }}>
+                    <Box component="img" src={featured.coverUrl} alt={`${featured.title}封面`} loading="eager" decoding="async" fetchPriority="high" sx={{ display: "block", width: "min(100cqw, calc(100cqh * 2 / 3))", height: "auto", aspectRatio: "2 / 3", objectFit: "cover", borderRadius: `${tokens.radius.lg}px` }} />
                   </Box>
                   <Stack sx={{ minWidth: 0, justifyContent: "center", alignItems: "flex-start" }}>
                     <Typography id="featured-book-title" variant="h4" component="h3">{featured.title}</Typography>
@@ -182,14 +177,13 @@ export function LibraryPage() {
                       <Button variant="contained" startIcon={<MenuBookRounded />} onClick={() => navigate(`/reader/${featured.id}`)}>开始阅读</Button>
                     </Stack>
                   </Stack>
-                </Box>
+                </Box> : <OverviewEmptyState titleId="featured-book-title" title="还没有藏书" description="添加第一本书后，新藏会显示在这里。" />}
               </Box>
 
               <Box sx={{ minWidth: 0, gridColumn: { sm: 1 }, gridRow: { sm: 2 }, display: "flex", "& > *": { flex: 1 } }}>
                 <RecentAnnotationsPanel embedded />
               </Box>
-            </>
-          )}
+          </>
 
           <>
             <Box sx={{ minWidth: 0, gridColumn: { sm: 2 }, gridRow: { sm: 1 }, display: "flex", "& > *": { flex: 1 } }}>
@@ -245,7 +239,7 @@ export function LibraryPage() {
           </>}
         </Box>
 
-        <Stack direction={{ xs: "column", md: "row" }} sx={{ justifyContent: "space-between", alignItems: { xs: "stretch", md: "flex-end" }, gap: 2, mb: 3 }}>
+        <Stack sx={{ alignItems: "stretch", gap: 2, mb: 3 }}>
           <Box sx={{ minWidth: 0 }}>
             <Typography variant="h3">全部藏书</Typography>
             {query && <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>找到 {books.length} 本相关藏书</Typography>}
@@ -254,13 +248,13 @@ export function LibraryPage() {
             direction={{ xs: "column", sm: "row" }}
             spacing={1.5}
             sx={{
-              width: { xs: "100%", md: "auto" },
+              width: "100%",
+              justifyContent: "flex-end",
               flexWrap: { xs: "nowrap", sm: "wrap" },
               alignItems: { xs: "stretch", sm: "center" },
             }}
           >
             {canManage && <Button variant="contained" startIcon={<CloudUploadOutlined />} onClick={() => setUploadOpen(true)} sx={{ whiteSpace: "nowrap" }}>上传书籍</Button>}
-            {canManage && <Button variant="outlined" startIcon={<DriveFileRenameOutlineRounded />} onClick={() => setBatchRenameOpen(true)} sx={{ whiteSpace: "nowrap" }}>批量重命名</Button>}
             <FormControl size="small" sx={{ minWidth: 118 }}>
               <Select label="格式" value={format} onChange={(event: any) => updateParam("format", event.target.value, "ALL")} startAdornment={<FilterListRounded sx={{ mr: 1, color: "text.secondary" }} />}>
                 <MenuItem value="ALL">全部格式</MenuItem>
@@ -364,7 +358,6 @@ export function LibraryPage() {
         onSaveFailed={setNotice}
         onCompleted={(message) => { setNotice(message); void queryClient.invalidateQueries({ queryKey: ["books"] }); }}
       />
-      <BatchRenameDialog open={batchRenameOpen} books={books} onClose={() => setBatchRenameOpen(false)} onCompleted={(message) => { setNotice(message); void queryClient.invalidateQueries({ queryKey: ["books"] }); }} />
       <BookUploadDialog open={uploadOpen} onClose={() => setUploadOpen(false)} onCompleted={(message) => { setNotice(message); void queryClient.invalidateQueries({ queryKey: ["books"] }); }} />
       <Snackbar open={Boolean(notice)} autoHideDuration={4500} onClose={() => setNotice("")} message={notice} />
       {showBackToTop && (

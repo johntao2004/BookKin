@@ -14,6 +14,16 @@ describe("LibraryPage", () => {
 
   afterEach(() => vi.restoreAllMocks());
 
+  it("keeps all four overview modules when the library has no books", async () => {
+    vi.spyOn(api, "listBooks").mockResolvedValue({ items: [] });
+    render(<TestProviders initialPath="/library/all"><LibraryPage /></TestProviders>);
+    const overview = screen.getByRole("region", { name: "书库概览" });
+    expect(await within(overview).findByText("还没有藏书")).toBeInTheDocument();
+    for (const name of ["本周新藏", "最近批注", "本周阅读时长", "阅读进度"]) {
+      expect(within(overview).getByRole("heading", { name })).toBeInTheDocument();
+    }
+  });
+
   it("filters the gallery from the URL query", async () => {
     render(<TestProviders initialPath="/library?q=夜航"><LibraryPage /></TestProviders>);
     await waitFor(() => expect(screen.getAllByText("夜航记").length).toBeGreaterThan(0));

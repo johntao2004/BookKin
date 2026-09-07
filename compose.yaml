@@ -13,6 +13,9 @@ x-bookkin-common: &bookkin-common
     BOOKKIN_DATABASE_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
     BOOKKIN_COOKIE_SECURE: ${BOOKKIN_SESSION_COOKIE_SECURE:-false}
     BOOKKIN_PUBLIC_BASE_URL: ${BOOKKIN_PUBLIC_BASE_URL:-http://localhost:8080}
+    # No insecure default. Leave empty only while AI is disabled; enabling or
+    # saving a provider key requires a stable instance-specific value.
+    BOOKKIN_AI_SETTINGS_ENCRYPTION_KEY: ${BOOKKIN_AI_SETTINGS_ENCRYPTION_KEY:-}
     BOOKKIN_STORAGE_ROOTS_0_NAME: ${BOOKKIN_LIBRARY_NAME:-主书库}
     BOOKKIN_STORAGE_ROOTS_0_PATH: /library/main
     TZ: ${TZ:-Asia/Shanghai}

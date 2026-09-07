@@ -1,3 +1,4 @@
+export { default as Tabs } from "antd/es/tabs";
 export { default as Skeleton } from "antd/es/skeleton";
 export { default as Dropdown } from "antd/es/dropdown";
 import AntAlert from "antd/es/alert";
@@ -39,8 +40,8 @@ import {
   isValidElement,
   useContext,
   useEffect,
+  useLayoutEffect,
   useId,
-  useMemo,
   useRef,
   useState,
 } from "react";
@@ -574,7 +575,7 @@ export function ListItemText({ primary, secondary, sx, className, ...props }: { 
 }
 
 interface OverlayProps extends Record<string, any> { open?: boolean; onClose?: () => void; anchorEl?: HTMLElement | null; anchorPosition?: { top: number; left: number }; children?: ReactNode; sx?: SxProps; role?: string; className?: string }
-function Overlay({ open, onClose, anchorEl, anchorPosition, children, sx, role = "menu", className, anchorReference: _anchorReference, marginThreshold: _marginThreshold, ...props }: OverlayProps) {
+function Overlay({ open, onClose, anchorEl, anchorPosition, children, sx, role = "menu", className, anchorReference: _anchorReference, marginThreshold: _marginThreshold, anchorOrigin, transformOrigin, ...props }: OverlayProps) {
   const theme = useTheme();
   const overlayRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -595,10 +596,42 @@ function Overlay({ open, onClose, anchorEl, anchorPosition, children, sx, role =
       document.removeEventListener("keydown", dismissEscape);
     };
   }, [open, onClose, anchorEl]);
-  const position = useMemo(() => ({ top: 80, left: 24 }), []);
+  const [position, setPosition] = useState({ top: 0, left: 0 });
+  useLayoutEffect(() => {
+    if (!open || !overlayRef.current) return;
+    const overlay = overlayRef.current;
+    const update = () => {
+      const gap = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--spacing-2")) || 8;
+      const view = window.visualViewport;
+      const width = view?.width ?? window.innerWidth;
+      const height = view?.height ?? window.innerHeight;
+      const ox = view?.offsetLeft ?? 0;
+      const oy = view?.offsetTop ?? 0;
+      overlay.style.maxHeight = `${Math.max(0, height - gap * 2)}px`;
+      overlay.style.maxWidth = `${Math.max(0, width - gap * 2)}px`;
+      const rect = anchorEl?.getBoundingClientRect();
+      const box = overlay.getBoundingClientRect();
+      const offset = (value: string | number | undefined, size: number) => typeof value === "number" ? value : value === "center" ? size / 2 : value === "bottom" || value === "right" ? size : 0;
+      const ax = anchorPosition?.left ?? (rect ? rect.left + offset(anchorOrigin?.horizontal ?? "right", rect.width) : ox + gap);
+      const ay = anchorPosition?.top ?? (rect ? rect.top + offset(anchorOrigin?.vertical ?? "bottom", rect.height) + gap : oy + gap);
+      let left = ax - offset(transformOrigin?.horizontal ?? "right", box.width);
+      let top = ay - offset(transformOrigin?.vertical ?? "top", box.height);
+      if (rect && top + box.height > oy + height - gap && rect.top - gap - box.height >= oy + gap) top = rect.top - gap - box.height;
+      left = Math.max(ox + gap, Math.min(left, ox + width - box.width - gap));
+      top = Math.max(oy + gap, Math.min(top, oy + height - box.height - gap));
+      setPosition(old => old.top === top && old.left === left ? old : { top, left });
+    };
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(overlay);
+    window.addEventListener("resize", update);
+    window.addEventListener("scroll", update, true);
+    window.visualViewport?.addEventListener("resize", update);
+    window.visualViewport?.addEventListener("scroll", update);
+    return () => { observer.disconnect(); window.removeEventListener("resize", update); window.removeEventListener("scroll", update, true); window.visualViewport?.removeEventListener("resize", update); window.visualViewport?.removeEventListener("scroll", update); };
+  }, [open, anchorEl, anchorPosition?.top, anchorPosition?.left, anchorOrigin?.horizontal, anchorOrigin?.vertical, transformOrigin?.horizontal, transformOrigin?.vertical]);
   if (!open || typeof document === "undefined") return null;
-  const rect = anchorEl?.getBoundingClientRect();
-  const style: CSSProperties = { position: "fixed", top: anchorPosition?.top ?? (rect ? rect.bottom + 8 : position.top), left: anchorPosition?.left ?? (rect ? Math.max(8, rect.right - 260) : position.left), zIndex: 1400, minWidth: 220, maxWidth: "min(94vw, 420px)", background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "var(--radius-lg)", boxShadow: "var(--shadow-popover)", padding: 8, ...flattenSx(sx, theme) };
+  const style: CSSProperties = { position: "fixed", zIndex: 1400, minWidth: "min(220px, calc(100vw - var(--spacing-2) * 2))", maxWidth: "min(94vw, 420px)", background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "var(--radius-lg)", boxShadow: "var(--shadow-popover)", padding: "var(--spacing-2)", ...flattenSx(sx, theme), ...position };
   return createPortal(<div {...props} ref={overlayRef} role={role} className={mergeClassNames("bk-overlay", className)} style={style}>{children}</div>, document.body);
 }
 
@@ -619,7 +652,7 @@ const DialogContext = createContext<{ titleId: string }>({ titleId: "" });
 export function Dialog({ open, onClose, children, fullWidth, maxWidth = "sm", fullScreen, slotProps, sx, ...props }: { open?: boolean; onClose?: () => void; children?: ReactNode; fullWidth?: boolean; maxWidth?: "xs" | "sm" | "md" | "lg" | "xl" | false; fullScreen?: boolean; slotProps?: { paper?: { sx?: SxProps } }; sx?: SxProps } & Record<string, unknown>) {
   const titleId = useId();
   const width = fullScreen ? "100vw" : maxWidth === "xs" ? 360 : maxWidth === "sm" ? 560 : maxWidth === "md" ? 760 : maxWidth === "lg" ? 1040 : 1280;
-  return <DialogContext.Provider value={{ titleId }}><AntModal {...(props as any)} open={open} onCancel={onClose} destroyOnHidden role="presentation" footer={null} width={fullWidth ? width : undefined} centered={!fullScreen} transitionName="" maskTransitionName="" modalRender={(node) => <div role="dialog" aria-modal="true" aria-labelledby={titleId}>{node}</div>} styles={{ content: { background: "var(--color-surface)", borderRadius: "var(--radius-xl)", padding: 0, ...flattenSx(sx, useTheme()), ...flattenSx(slotProps?.paper?.sx, useTheme()) as CSSProperties }, body: { maxHeight: fullScreen ? "calc(100vh - 80px)" : undefined, overflow: "auto" } } as any}>{children}</AntModal></DialogContext.Provider>;
+  return <DialogContext.Provider value={{ titleId }}><AntModal {...(props as any)} open={open} onCancel={onClose} destroyOnHidden role="presentation" footer={null} className="bk-dialog" width={fullWidth ? width : undefined} centered={!fullScreen} transitionName="" maskTransitionName="" modalRender={(node) => <div role="dialog" aria-modal="true" aria-labelledby={titleId}>{node}</div>} styles={{ container: { background: "var(--color-surface)", borderRadius: "var(--radius-xl)", padding: 0, ...flattenSx(sx, useTheme()), ...flattenSx(slotProps?.paper?.sx, useTheme()) as CSSProperties }, body: { maxHeight: fullScreen ? "calc(100vh - 80px)" : undefined, overflow: "auto" } } as any}>{children}</AntModal></DialogContext.Provider>;
 }
 
 export function DialogTitle({ sx, className, children, ...props }: BoxProps) {
@@ -743,3 +776,6 @@ export { AntTable as DataTable };
 export function TableAction(props: React.ComponentProps<typeof AntButton>) {
   return <AntButton {...props} type="link" size="small" style={{ padding: 0, height: "auto" }} />;
 }
+
+export { default as Form } from "antd/es/form";
+export { default as Input } from "antd/es/input";

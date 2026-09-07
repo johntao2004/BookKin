@@ -14,6 +14,11 @@
 
 import * as runtime from '../runtime';
 import {
+    type AiMatchRequest,
+    AiMatchRequestFromJSON,
+    AiMatchRequestToJSON,
+} from '../models/AiMatchRequest';
+import {
     type BookMetadataDraft,
     BookMetadataDraftFromJSON,
     BookMetadataDraftToJSON,
@@ -43,6 +48,11 @@ import {
     SelectBookUploadCoverRequestFromJSON,
     SelectBookUploadCoverRequestToJSON,
 } from '../models/SelectBookUploadCoverRequest';
+
+export interface AiMatchBookUploadRequest {
+    id: string;
+    aiMatchRequest?: AiMatchRequest;
+}
 
 export interface CancelBookUploadRequest {
     id: string;
@@ -94,6 +104,52 @@ export interface UploadBookCoverRequest {
  *
  */
 export class BookUploadsApi extends runtime.BaseAPI {
+
+    /**
+     * Creates request options for aiMatchBookUpload without sending the request
+     */
+    async aiMatchBookUploadRequestOpts(requestParameters: AiMatchBookUploadRequest): Promise<runtime.RequestOpts> {
+        if (requestParameters['id'] == null) {
+            throw new runtime.RequiredError(
+                'id',
+                'Required parameter "id" was null or undefined when calling aiMatchBookUpload().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+
+        let urlPath = `/book-uploads/{id}/ai-match`;
+        urlPath = urlPath.replace('{id}', encodeURIComponent(String(requestParameters['id'])));
+
+        return {
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: AiMatchRequestToJSON(requestParameters['aiMatchRequest']),
+        };
+    }
+
+    /**
+     */
+    async aiMatchBookUploadRaw(requestParameters: AiMatchBookUploadRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BookUpload>> {
+        const requestOptions = await this.aiMatchBookUploadRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => BookUploadFromJSON(jsonValue));
+    }
+
+    /**
+     */
+    async aiMatchBookUpload(requestParameters: AiMatchBookUploadRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BookUpload> {
+        const response = await this.aiMatchBookUploadRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
 
     /**
      * Creates request options for cancelBookUpload without sending the request

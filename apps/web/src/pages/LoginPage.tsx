@@ -32,6 +32,7 @@ export function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const registration = useQuery({queryKey:["registration-status"],queryFn:api.registrationStatus,staleTime:0,refetchOnMount:"always",refetchOnWindowFocus:"always",refetchInterval:5000});
   const setupStatus = useQuery(setupStatusQueryOptions);
 
   const submit = async (event: FormEvent) => {
@@ -50,7 +51,8 @@ export function LoginPage() {
   };
 
   return (
-    <AuthFrame title="回到你的书房" greeting={getLoginGreeting(new Date().getHours())}>
+    <AuthFrame title="回到你的书房" description="请输入用户名和密码，继续访问你的书房。" greeting={getLoginGreeting(new Date().getHours())}>
+      {(location.state as {registered?:boolean} | null)?.registered && <Alert severity="success">注册成功，请登录。</Alert>}
       <Stack component="form" spacing={2.5} onSubmit={submit}>
         <TextField label="用户名" autoComplete="username" value={username} onChange={(event: any) => setUsername(event.target.value)} required autoFocus />
         <TextField
@@ -80,6 +82,9 @@ export function LoginPage() {
           首次运行？<Link to="/setup">初始化主人账户</Link>
         </Typography>
       )}
+      {registration.data?.registrationEnabled && <Typography variant="body2" color="text.secondary" sx={{ mt: 3 }}>
+        还没有账户？ <Link aria-label="注册账户" to="/register">立即注册</Link>
+      </Typography>}
       {defaults.hint && <Typography variant="caption" color="text.disabled" sx={{ display: "block", mt: 2 }}>
         {defaults.hint}
       </Typography>}
