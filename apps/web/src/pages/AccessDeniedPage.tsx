@@ -1,7 +1,7 @@
 import { LockOutlined } from "@/ui/icons";
-import { Button } from "@/ui";
-import { Stack } from "@/ui";
-import { Typography } from "@/ui";
+import { Button } from "@/ui/buttons";
+import { Stack } from "@/ui/primitives";
+import { Typography } from "@/ui/primitives";
 import { Link } from "react-router-dom";
 import { tokens } from "../theme/generated-tokens";
 

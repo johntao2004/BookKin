@@ -2,7 +2,10 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../api/client";
 import { useAuth } from "../auth/AuthContext";
-import { Alert, Stack, Switch, Typography, Skeleton } from "../ui";
+import { Alert } from "../ui/feedback";
+import { Stack, Typography } from "../ui/primitives";
+import { Switch } from "../ui/forms";
+import { Skeleton } from "../ui/antd";
 export function SecuritySettingsPage() {
  const {user} = useAuth(); const client=useQueryClient();
  const query=useQuery({queryKey:["security-settings"],queryFn:api.securitySettings});

@@ -1,8 +1,8 @@
-import { Alert } from "@/ui";
-import { Button } from "@/ui";
-import { LinearProgress } from "@/ui";
-import { Stack } from "@/ui";
-import { TextField } from "@/ui";
+import { Alert } from "@/ui/feedback";
+import { Button } from "@/ui/buttons";
+import { LinearProgress } from "@/ui/feedback";
+import { Stack } from "@/ui/primitives";
+import { TextField } from "@/ui/forms";
 import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";

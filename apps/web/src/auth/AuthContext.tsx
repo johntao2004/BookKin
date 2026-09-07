@@ -1,5 +1,5 @@
-import { CircularProgress } from "@/ui";
-import { Stack } from "@/ui";
+import { CircularProgress } from "@/ui/feedback";
+import { Stack } from "@/ui/primitives";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type PropsWithChildren } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { api } from "../api/client";

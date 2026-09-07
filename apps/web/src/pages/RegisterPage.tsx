@@ -4,7 +4,10 @@ import { Link, Navigate, useNavigate } from "react-router-dom";
 import { api } from "../api/client";
 import { useAuth } from "../auth/AuthContext";
 import { AuthFrame } from "../components/AuthFrame";
-import { Alert, Button, Form, Input, Skeleton, Typography } from "../ui";
+import { Alert } from "../ui/feedback";
+import { Button } from "../ui/buttons";
+import { Form, Input, Skeleton } from "../ui/antd";
+import { Typography } from "../ui/primitives";
 export function RegisterPage() {
  const {user}=useAuth(); const navigate=useNavigate();
  const policy=useQuery({queryKey:["registration-status"],queryFn:api.registrationStatus,staleTime:0,refetchOnMount:"always",refetchOnWindowFocus:"always",refetchInterval:5000});

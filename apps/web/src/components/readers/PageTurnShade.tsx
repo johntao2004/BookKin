@@ -1,5 +1,5 @@
-import { Box } from "@/ui";
-import { alpha } from "@/ui";
+import { Box } from "@/ui/primitives";
+import { alpha } from "@/ui/primitives";
 
 export function PageTurnShade() {
   return (

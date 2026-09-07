@@ -1,9 +1,9 @@
-import { Alert } from "@/ui";
-import { Button } from "@/ui";
-import { CircularProgress } from "@/ui";
-import { Stack } from "@/ui";
-import { Form, Input } from "@/ui";
-import { Typography } from "@/ui";
+import { Alert } from "@/ui/feedback";
+import { Button } from "@/ui/buttons";
+import { CircularProgress } from "@/ui/feedback";
+import { Stack } from "@/ui/primitives";
+import { Form, Input } from "@/ui/antd";
+import { Typography } from "@/ui/primitives";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";

@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { RequireAuth, useAuth } from "../auth/AuthContext";
-import { Tabs, Skeleton } from "../ui";
+import { Tabs, Skeleton } from "../ui/antd";
 import { EmbeddedSettingsContext, PageContainer, PageHeader } from "../components/PageHeader";
 
 const LibraryRoots = lazy(() => import("./LibraryRootsPage").then(m => ({ default: m.LibraryRootsPage })));

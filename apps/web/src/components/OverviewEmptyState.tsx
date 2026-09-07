@@ -1,6 +1,6 @@
-import { Box } from "@/ui";
-import { Stack } from "@/ui";
-import { Typography } from "@/ui";
+import { Box } from "@/ui/primitives";
+import { Stack } from "@/ui/primitives";
+import { Typography } from "@/ui/primitives";
 import type { ReactNode } from "react";
 import { tokens } from "../theme/generated-tokens";
 

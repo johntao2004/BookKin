@@ -1,7 +1,10 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { Alert, Button, Skeleton, Stack } from "../ui";
+import { Alert } from "../ui/feedback";
+import { Button } from "../ui/buttons";
+import { Skeleton } from "../ui/antd";
+import { Stack } from "../ui/primitives";
 import { api } from "../api/client";
 import { UploadReview } from "../components/BookUploadDialog";
 import { PageContainer, PageHeader } from "../components/PageHeader";

@@ -1,5 +1,5 @@
-import { Box } from "@/ui";
-import { keyframes } from "@/ui";
+import { Box } from "@/ui/primitives";
+import { keyframes } from "@/ui/primitives";
 import type { PropsWithChildren } from "react";
 import { tokens } from "../theme/generated-tokens";
 

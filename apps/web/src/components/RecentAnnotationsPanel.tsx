@@ -1,9 +1,9 @@
 import { FormatQuoteRounded } from "@/ui/icons";
 import { NotesOutlined } from "@/ui/icons";
-import { Box } from "@/ui";
-import { Skeleton } from "@/ui";
-import { Stack } from "@/ui";
-import { Typography } from "@/ui";
+import { Box } from "@/ui/primitives";
+import { Skeleton } from "@/ui/antd";
+import { Stack } from "@/ui/primitives";
+import { Typography } from "@/ui/primitives";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { api } from "../api/client";

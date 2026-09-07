@@ -2,19 +2,19 @@ import { ArrowForwardRounded } from "@/ui/icons";
 import { AutoStoriesOutlined } from "@/ui/icons";
 import { CategoryOutlined } from "@/ui/icons";
 import { TuneRounded } from "@/ui/icons";
-import { Alert } from "@/ui";
-import { Box } from "@/ui";
-import { Button } from "@/ui";
-import { Chip } from "@/ui";
-import { CircularProgress } from "@/ui";
-import { Divider } from "@/ui";
-import { FormControl } from "@/ui";
-import { InputLabel } from "@/ui";
-import { MenuItem } from "@/ui";
-import { Paper } from "@/ui";
-import { Select } from "@/ui";
-import { Stack } from "@/ui";
-import { Typography } from "@/ui";
+import { Alert } from "@/ui/feedback";
+import { Box } from "@/ui/primitives";
+import { Button } from "@/ui/buttons";
+import { Chip } from "@/ui/feedback";
+import { CircularProgress } from "@/ui/feedback";
+import { Divider } from "@/ui/feedback";
+import { FormControl } from "@/ui/primitives";
+import { InputLabel } from "@/ui/primitives";
+import { MenuItem } from "@/ui/primitives";
+import { Paper } from "@/ui/primitives";
+import { Select } from "@/ui/forms";
+import { Stack } from "@/ui/primitives";
+import { Typography } from "@/ui/primitives";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useCallback, useDeferredValue, useMemo, type ReactNode } from "react";
 import { Link, useSearchParams } from "react-router-dom";
@@ -45,7 +45,11 @@ export function CategoriesPage() {
     enabled: ready,
   });
   const categories = categoriesQuery.data?.items ?? [];
-  const canManage = categoriesQuery.data?.editable ?? false;
+  // Keep the management action available while the category list is loading.
+  // The server response remains authoritative once it arrives, while the
+  // role fallback prevents the header from shifting and makes the action
+  // discoverable immediately for owners and administrators.
+  const canManage = categoriesQuery.data?.editable ?? (user?.role === "OWNER" || user?.role === "ADMIN");
   const selectedCategory = useMemo(
     () => categories.find((category) => category.id === categoryParam) ?? categories[0],
     [categories, categoryParam],

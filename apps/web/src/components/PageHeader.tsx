@@ -1,7 +1,7 @@
-import { Box } from "@/ui";
-import { Stack } from "@/ui";
-import { Typography } from "@/ui";
-import type { SxProps, Theme } from "@/ui";
+import { Box } from "@/ui/primitives";
+import { Stack } from "@/ui/primitives";
+import { Typography } from "@/ui/primitives";
+import type { SxProps, Theme } from "@/ui/primitives";
 import { createContext, useContext, type ReactNode } from "react";
 
 export const EmbeddedSettingsContext = createContext(false);

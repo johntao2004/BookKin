@@ -1,9 +1,9 @@
 import { AccessTimeRounded } from "@/ui/icons";
-import { Alert } from "@/ui";
-import { Box } from "@/ui";
-import { Skeleton } from "@/ui";
-import { Stack } from "@/ui";
-import { Typography } from "@/ui";
+import { Alert } from "@/ui/feedback";
+import { Box } from "@/ui/primitives";
+import { Skeleton } from "@/ui/antd";
+import { Stack } from "@/ui/primitives";
+import { Typography } from "@/ui/primitives";
 import type { WeeklyReadingStats } from "../domain/types";
 import { tokens } from "../theme/generated-tokens";
 import { OverviewCardHeader } from "./OverviewCardHeader";
@@ -13,7 +13,25 @@ export function ReadingStatsPanel({ stats, loading, error }: {
   loading: boolean;
   error: boolean;
 }) {
-  if (loading) return <Box role="status" aria-label="正在加载阅读时长" sx={{ height: "100%", p: 3, border: 1, borderColor: "divider", borderRadius: `${tokens.radius.xl}px`, bgcolor: "background.paper" }}><Skeleton active paragraph={{ rows: 4 }} /></Box>;
+  if (loading) return (
+    <Box
+      component="section"
+      aria-labelledby="reading-time-title"
+      sx={{
+        height: "100%",
+        border: 1,
+        borderColor: "divider",
+        borderRadius: `${tokens.radius.xl}px`,
+        bgcolor: "background.paper",
+        p: { xs: `${tokens.spacing[6]}px`, lg: `${tokens.spacing[8]}px` },
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      <OverviewCardHeader id="reading-time-title" icon={<AccessTimeRounded />}>本周阅读时长</OverviewCardHeader>
+      <Box role="status" aria-label="正在加载阅读时长" sx={{ mt: `${tokens.spacing[4]}px` }}><Skeleton active paragraph={{ rows: 4 }} /></Box>
+    </Box>
+  );
   if (error) return <Alert severity="warning">阅读时长暂时无法读取，不影响藏书浏览。</Alert>;
   const days = stats?.days ?? [];
   const maximum = Math.max(1, ...days.map((day) => day.seconds));

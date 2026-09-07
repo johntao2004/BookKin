@@ -1,5 +1,7 @@
 import { Component, type ReactNode } from "react";
-import { Alert, Button, Stack } from "../ui";
+import { Alert } from "../ui/feedback";
+import { Button } from "../ui/buttons";
+import { Stack } from "../ui/primitives";
 import { PageContainer } from "./PageHeader";
 
 const chunkReloadKey = "bookkin:chunk-reload-at";

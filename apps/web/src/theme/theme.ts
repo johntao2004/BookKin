@@ -1,5 +1,5 @@
 import type { ReaderTheme } from "../components/readers/reader-fonts";
-import type { UiTheme } from "../ui";
+import type { UiTheme } from "../ui/primitives";
 import { tokens } from "./generated-tokens";
 
 type BookKinThemeColors = { [Key in keyof typeof tokens.color.semantic]: string };

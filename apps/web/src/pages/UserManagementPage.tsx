@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Tabs, Skeleton } from "../ui";
+import { Tabs, Skeleton } from "../ui/antd";
 import { EmbeddedSettingsContext, PageContainer, PageHeader } from "../components/PageHeader";
 const Users = lazy(() => import("./UsersPage").then(m => ({ default: m.UsersPage })));
 const Operations = lazy(() => import("./FileOperationsPage").then(m => ({ default: m.FileOperationsPage })));

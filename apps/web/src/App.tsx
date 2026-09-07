@@ -1,6 +1,6 @@
 const RegisterPage = lazy(() => import("./pages/RegisterPage").then(m => ({default:m.RegisterPage})));
 const DisplayBooksPage = lazy(() => import("./pages/DisplayBooksSettingsPage").then(m => ({ default: m.DisplayBooksSettingsPage })));
-import { Skeleton } from "@/ui";
+import { Skeleton } from "@/ui/antd";
 import { PageContainer } from "./components/PageHeader";
 import { lazy, Suspense } from "react";
 import { Navigate, Outlet, Route, Routes } from "react-router-dom";

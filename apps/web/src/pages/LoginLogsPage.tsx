@@ -1,7 +1,10 @@
 import { ActionToolbar } from "../components/PageHeader";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Alert, Button, DataTable, Chip, Stack } from "../ui";
+import { Alert, Chip } from "../ui/feedback";
+import { Button } from "../ui/buttons";
+import { DataTable } from "../ui/antd";
+import { Stack } from "../ui/primitives";
 import { RefreshRounded } from "../ui/icons";
 import { api } from "../api/client";
 type Entry = Awaited<ReturnType<typeof api.listLoginLogs>>["items"][number];

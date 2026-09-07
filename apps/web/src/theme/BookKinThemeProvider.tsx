@@ -1,4 +1,5 @@
-import { ConfigProvider, CssBaseline, UiThemeProvider } from "../ui";
+import { ConfigProvider } from "../ui/antd";
+import { CssBaseline, UiThemeProvider } from "../ui/primitives";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type PropsWithChildren } from "react";
 import { useAuth } from "../auth/AuthContext";
 import { readReaderSettings, type ReaderTheme } from "../components/readers/reader-fonts";
