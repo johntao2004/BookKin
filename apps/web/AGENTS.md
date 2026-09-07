@@ -179,3 +179,5 @@ Moving a book between libraries shows its current library, a destination library
 Show operation feedback and error notices through the shared Ant Design bubble notification provider, outside page flow. Preserve retry actions and dismiss controls; success notices auto-dismiss. Keep a token-based gap below standalone settings save toolbars.
 
 The AI provider selector chooses the single active provider on save. Do not show a separate per-provider enable switch. Restore the enabled provider on load; retain the global AI switch.
+
+Ant Design uses the dark algorithm for Night mode. Select values remain fully legible while open; selected and active options use theme semantic colors.

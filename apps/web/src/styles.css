@@ -252,6 +252,11 @@ select {
   color: var(--color-text-primary);
 }
 
+/* Keep the selected value legible while its options are open. */
+.bk-select.ant-select-open .ant-select-content-has-value {
+  opacity: 1;
+}
+
 .bk-select .ant-select-selection-placeholder {
   color: var(--color-text-muted);
 }

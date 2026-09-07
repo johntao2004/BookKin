@@ -1,3 +1,4 @@
+import antdTheme from "antd/es/theme";
 import type { ReaderTheme } from "../components/readers/reader-fonts";
 import type { UiTheme } from "../ui/primitives";
 import { tokens } from "./generated-tokens";
@@ -80,6 +81,10 @@ export function createBookKinTheme(mode: ReaderTheme): UiTheme {
 export function createAntdTheme(mode: ReaderTheme) {
   const colors = bookKinThemeOptions[mode].colors;
   return {
+    algorithm: mode === "NIGHT" ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
+    components: {
+      Select: { optionSelectedBg: colors.primarySoft, optionSelectedColor: colors.textPrimary, optionActiveBg: colors.surfaceSoft },
+    },
     token: {
       colorPrimary: colors.primary,
       colorPrimaryHover: colors.primaryHover,
@@ -91,6 +96,12 @@ export function createAntdTheme(mode: ReaderTheme) {
       colorInfo: colors.focus,
       colorText: colors.textPrimary,
       colorTextSecondary: colors.textSecondary,
+      colorTextTertiary: colors.textMuted,
+      colorTextQuaternary: colors.textMuted,
+      colorTextPlaceholder: colors.textMuted,
+      colorTextDisabled: colors.textMuted,
+      colorIcon: colors.textSecondary,
+      colorIconHover: colors.textPrimary,
       colorBgBase: colors.canvas,
       colorBgContainer: colors.surface,
       colorBgElevated: colors.surface,
