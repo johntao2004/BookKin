@@ -27,7 +27,6 @@ import { Stack } from "@/ui/primitives";
 import { TextField } from "@/ui/forms";
 import { Toolbar } from "@/ui/primitives";
 import { Typography } from "@/ui/primitives";
-import { alpha } from "@/ui/primitives";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState, type PropsWithChildren } from "react";
 import { NavLink, useLocation, useNavigate, useSearchParams } from "react-router-dom";
@@ -121,18 +120,20 @@ export function AppShell({ children }: PropsWithChildren) {
       onFocus={item.path === "/virtual-library" ? prepareVirtualLibrary : undefined}
       onTouchStart={item.path === "/virtual-library" ? prepareVirtualLibrary : undefined}
       color="inherit"
+      className="bk-nav-link"
       sx={{
         minWidth: 0,
         px: 1.25,
-        borderRadius: 0,
+        minHeight: tokens.layout.controlHeight,
+        borderRadius: `${tokens.radius.md}px`,
         position: "relative",
         color: isActivePath(item.path) ? "text.primary" : "text.secondary",
         "&::after": isActivePath(item.path) ? {
           content: '""',
           position: "absolute",
-          left: 12,
-          right: 12,
-          bottom: -14,
+          left: tokens.spacing.sm,
+          right: tokens.spacing.sm,
+          bottom: 0,
           height: 2,
           bgcolor: "primary.main",
         } : undefined,
@@ -146,28 +147,28 @@ export function AppShell({ children }: PropsWithChildren) {
     <Box sx={{ minHeight: "100vh" }}>
       {!readerRoute && <>
         <AppBar
+          className="bk-top-nav"
           position="sticky"
           elevation={0}
           color="transparent"
-          sx={(theme: any) => ({
-            bgcolor: alpha(theme.palette.background.default, 0.94),
+          sx={{
+            bgcolor: "background.default",
             color: "text.primary",
-            backdropFilter: "blur(16px)",
-            borderBottom: 1,
-            borderColor: "divider",
-          })}
+            borderBottom: 0,
+          }}
         >
           <Toolbar
+            className="bk-top-nav-inner"
             sx={{
               minHeight: `${tokens.layout.navHeight}px !important`,
               ...pageWidthSx,
-              display: { xs: "flex", lg: "grid" },
-              gridTemplateColumns: { lg: "max-content max-content" },
-              justifyContent: { lg: "space-between" },
-              gap: { xs: 0.5, sm: 1, md: 4, lg: 6 },
+              display: { xs: "flex", sm: "grid" },
+              gridTemplateColumns: { sm: "minmax(0, 1fr) max-content" },
+              justifyContent: { sm: "space-between" },
+              gap: { xs: 1, sm: 2, md: 3 },
             }}
           >
-            <IconButton onClick={() => setDrawerOpen(true)} sx={{ display: { lg: "none" } }} aria-label="打开导航">
+            <IconButton onClick={() => setDrawerOpen(true)} sx={{ display: { sm: "none" } }} aria-label="打开导航">
               <MenuRounded />
             </IconButton>
             <Stack direction="row" sx={{ alignItems: "center", gap: 3, flexShrink: 0 }}>
@@ -175,24 +176,24 @@ export function AppShell({ children }: PropsWithChildren) {
                 component={NavLink}
                 to="/library"
                 variant="h5"
-                sx={{ color: "text.primary", textDecoration: "none", whiteSpace: "nowrap" }}
+                sx={{ color: "text.primary", textDecoration: "none", whiteSpace: "nowrap", fontFamily: tokens.typography.fontFamily.display, fontWeight: tokens.typography.fontWeight.regular }}
               >
                 BookKin
               </Typography>
 
-              <Stack direction="row" spacing={0.5} sx={{ display: { xs: "none", lg: "flex" } }}>
+              <Stack direction="row" spacing={0.5} sx={{ display: { xs: "none", sm: "flex" }, minWidth: 0 }}>
                 {libraryNavigation.map(linkButton)}
               </Stack>
             </Stack>
 
-            <Stack direction="row" sx={{ alignItems: "center", gap: { xs: 0.5, sm: 2 }, flexShrink: 0, ml: { xs: "auto", lg: 0 }, justifySelf: { lg: "end" } }}>
-              {searchableLibrary && <Box onMouseEnter={() => setSearchExpanded(true)} onMouseLeave={() => setSearchExpanded(false)} sx={{ position: "relative", width: tokens.layout.touchTarget, height: tokens.layout.touchTarget, flexShrink: 0 }}>
+            <Stack direction="row" sx={{ alignItems: "center", gap: { xs: 1, sm: 2 }, flexShrink: 0, ml: { xs: "auto", sm: 0 }, justifySelf: { sm: "end" } }}>
+              {searchableLibrary && <Box onMouseEnter={() => setSearchExpanded(true)} onMouseLeave={() => setSearchExpanded(false)} sx={{ position: "relative", width: tokens.layout.iconButtonSize, height: tokens.layout.iconButtonSize, flexShrink: 0 }}>
                 <IconButton ref={searchTriggerRef} aria-label="展开搜索" aria-expanded={searchExpanded} onClick={() => setSearchExpanded(true)}>
                   <SearchRounded fontSize="small" />
                 </IconButton>
                 <Box sx={(theme: any) => ({
                   position: "absolute", right: 0, top: 0,
-                  width: searchExpanded ? `min(${tokens.layout.touchTarget * 7}px, calc(100vw - ${tokens.spacing[20] * 2}px))` : `${tokens.layout.touchTarget}px`,
+                  width: searchExpanded ? `min(280px, calc(100vw - ${tokens.spacing[8] * 2}px))` : `${tokens.layout.iconButtonSize}px`,
                   visibility: searchExpanded ? "visible" : "hidden",
                   transition: theme.transitions.create("width"),
                   "@media (prefers-reduced-motion: reduce)": { transition: "none" },
@@ -211,7 +212,7 @@ export function AppShell({ children }: PropsWithChildren) {
                     }}
                     placeholder={searchLabel ?? undefined}
                     aria-label={searchLabel ?? undefined}
-                    sx={{ width: "100%", "& .bk-field-control": { height: tokens.layout.touchTarget, bgcolor: "background.paper" } }}
+                    sx={{ width: "100%", "& .bk-field-control": { height: tokens.layout.controlHeight, bgcolor: "background.default" } }}
                     slotProps={{ input: { startAdornment: <InputAdornment position="start"><SearchRounded fontSize="small" /></InputAdornment> } }}
                   />}
                 </Box>
@@ -260,8 +261,8 @@ export function AppShell({ children }: PropsWithChildren) {
                     else navigate(key);
                   },
                 }}
-              ><IconButton aria-label="账户菜单" aria-haspopup="menu" aria-expanded={accountMenuOpen}>
-                <Avatar sx={{ width: 38, height: 38, bgcolor: "secondary.main", color: "common.white", fontFamily: tokens.typography.fontFamily.display }}>
+              ><IconButton className="bk-account-trigger" aria-label="账户菜单" aria-haspopup="menu" aria-expanded={accountMenuOpen}>
+                <Avatar className="bk-account-avatar" sx={{ width: 40, height: 40, flexShrink: 0, bgcolor: "secondary.main", color: "common.white", fontFamily: tokens.typography.fontFamily.display }}>
                   {user.displayName.slice(0, 1)}
                 </Avatar>
               </IconButton></Dropdown> : <Button color="inherit" onClick={() => navigate("/login")} sx={{ whiteSpace: "nowrap", px: 1, minWidth: tokens.layout.touchTarget, flexShrink: 0 }}>登录</Button>}
@@ -269,8 +270,8 @@ export function AppShell({ children }: PropsWithChildren) {
           </Toolbar>
         </AppBar>
 
-        <Drawer open={drawerOpen} onClose={() => setDrawerOpen(false)} width={tokens.spacing[24] * 3} title={<Typography variant="h5">BookKin</Typography>}>
-          <Box role="navigation" sx={{ width: "100%", p: 2 }}>
+        <Drawer open={drawerOpen} onClose={() => setDrawerOpen(false)} width={tokens.spacing[24] * 3} title={<Typography variant="h5" sx={{ fontFamily: tokens.typography.fontFamily.display, fontWeight: tokens.typography.fontWeight.regular }}>BookKin</Typography>}>
+          <Box role="navigation" sx={{ width: "100%", p: 3 }}>
             <List>
               {libraryNavigation.map((item) => (
                 <ListItemButton

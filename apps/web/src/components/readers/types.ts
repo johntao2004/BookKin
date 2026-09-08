@@ -1,3 +1,5 @@
+import { tokens } from "../../theme/generated-tokens";
+
 export interface ReaderSelection {
   quote: string;
   locator: string;
@@ -17,14 +19,14 @@ export function readerSelectionFromRect({ quote, locator, rect, frameRect }: {
   const left = offsetLeft + rect.left;
   const top = offsetTop + rect.top;
   const bottom = offsetTop + rect.bottom;
-  const toolbarWidth = window.innerWidth < 600 ? 280 : 312;
+  const toolbarWidth = window.innerWidth < tokens.layout.breakpointMobile ? 280 : 312;
   const halfToolbar = toolbarWidth / 2;
   const edgeGap = 12;
   const x = Math.min(
     window.innerWidth - halfToolbar - edgeGap,
     Math.max(halfToolbar + edgeGap, left + rect.width / 2),
   );
-  const placement = top >= (window.innerWidth < 600 ? 154 : 164) ? "ABOVE" : "BELOW";
+  const placement = top >= (window.innerWidth < tokens.layout.breakpointMobile ? 154 : 164) ? "ABOVE" : "BELOW";
 
   return {
     quote,

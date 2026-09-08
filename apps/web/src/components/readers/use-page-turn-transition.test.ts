@@ -71,7 +71,7 @@ describe("pageTurnKeyframes", () => {
     reader.append(page);
     document.body.append(reader);
 
-    expect(resolvePageSurfaceBackground(page)).toBe("rgb(250, 247, 240)");
+    expect(resolvePageSurfaceBackground(page)).toBe("rgb(250, 249, 245)");
 
     reader.remove();
   });

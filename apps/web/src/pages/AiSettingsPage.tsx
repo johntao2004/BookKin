@@ -17,6 +17,7 @@ import { Typography } from "@/ui/primitives";
 import { ActionToolbar, PageContainer } from "../components/PageHeader";
 import { api } from "../api/client";
 import type { AiProviderSetting, AiProviderSettingInput, AiSettings, AiSettingsInput } from "../domain/types";
+import { tokens } from "../theme/generated-tokens";
 import type { ReactNode } from "react";
 
 type ModelPreset = { value: string; label: string };
@@ -102,14 +103,22 @@ export function AiSettingsPage() {
     providers: current.providers.map((provider) => provider.id === id ? { ...provider, ...patch } : provider),
   } : current);
 
-  const save = async () => {
+  const save = async (scope: "strategy" | "provider") => {
     if (!draft) return;
     setBusy(true); setError(""); setMessage("");
     try {
-      const next = await api.updateAiSettings({ ...draft, providers: draft.providers.map((provider) => ({ ...provider, enabled: provider.id === selectedProviderId })) });
+      const savedDraft = currentSettings ? toDraft(currentSettings) : draft;
+      const savedProviderId = currentSettings?.providers.find((provider) => provider.enabled)?.id
+        ?? savedDraft.providers[0]?.id
+        ?? selectedProviderId;
+      const providers = scope === "provider"
+        ? draft.providers.map((provider) => ({ ...provider, enabled: provider.id === selectedProviderId }))
+        : savedDraft.providers.map((provider) => ({ ...provider, enabled: provider.id === savedProviderId }));
+      const next = await api.updateAiSettings(scope === "provider" ? { ...savedDraft, providers } : { ...draft, providers });
       setCurrentSettings(next);
       setDraft(toDraft(next));
-      setMessage("AI 设置已保存。新的上传任务会按当前策略匹配书目信息。");
+      setSelectedProviderId(next.providers.find((provider) => provider.enabled)?.id ?? next.providers[0]?.id ?? "");
+      setMessage(scope === "strategy" ? "匹配策略已保存。" : "AI 平台设置已保存。新的上传任务会按当前策略匹配书目信息。");
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "AI 设置保存失败，请重试。");
     } finally {
@@ -123,15 +132,14 @@ export function AiSettingsPage() {
 
   const selectedProvider = draft.providers.find((provider) => provider.id === selectedProviderId) ?? draft.providers[0];
   return <PageContainer>
-    <Box sx={{ mb: 2 }}>
-    <ActionToolbar>
-      <Button variant="contained" disabled={busy} onClick={() => void save()}>{busy ? "保存中…" : "保存设置"}</Button>
-    </ActionToolbar>
-    </Box>
     {message && <Alert severity="success" sx={{ mb: 2 }}>{message}</Alert>}
     {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
     <Stack spacing={2.5}>
-      <SettingsPanel title="匹配策略" description="AI 只接收解析出的结构化书目信息，不会上传 EPUB/PDF 原文。">
+      <SettingsPanel
+        title="匹配策略"
+        description="AI 只接收解析出的结构化书目信息，不会上传 EPUB/PDF 原文。"
+        footer={<Button variant="contained" disabled={busy} onClick={() => void save("strategy")}>{busy ? "保存中…" : "保存匹配策略"}</Button>}
+      >
         <Stack spacing={1.5}>
           <FormControlLabel control={<Switch checked={draft.enabled} onChange={(_, checked) => update("enabled", checked)} />} label={<SettingLabel title="启用 AI 书目匹配" description="关闭后不会调用任何 AI 平台，普通本地和在线书目识别仍可使用。" />} />
           <FormControlLabel control={<Switch checked={draft.autoMatch} disabled={!draft.enabled} onChange={(_, checked) => update("autoMatch", checked)} />} label={<SettingLabel title="入库时自动查找未匹配书目" description="常规来源没有强 ISBN 或书名/作者匹配时，自动请求已启用的平台。" />} />
@@ -142,16 +150,18 @@ export function AiSettingsPage() {
         </Stack>
       </SettingsPanel>
 
-      <SettingsPanel title="AI 平台" description="选择要使用的厂商，配置模型和接口后保存。">
-        <Stack spacing={2}>
-          <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-            <FormControl fullWidth sx={{ maxWidth: { sm: 420 } }}>
-              <InputLabel id="ai-provider-select-label">选择厂商</InputLabel>
-              <Select labelId="ai-provider-select-label" label="选择厂商" value={selectedProvider?.id ?? ""} disabled={busy} onChange={(event) => setSelectedProviderId(event.target.value)}>
-                {draft.providers.map((provider) => <MenuItem key={provider.id} value={provider.id}>{provider.label}</MenuItem>)}
-              </Select>
-            </FormControl>
-          </Stack>
+      <SettingsPanel
+        title="AI 平台"
+        description="选择要使用的厂商，配置模型和接口后保存。"
+        footer={<Button variant="contained" disabled={busy} onClick={() => void save("provider")}>{busy ? "保存中…" : "保存 AI 平台"}</Button>}
+      >
+        <Stack spacing={2} sx={{ width: "100%", maxWidth: 420 }}>
+          <FormControl fullWidth>
+            <InputLabel id="ai-provider-select-label">选择厂商</InputLabel>
+            <Select labelId="ai-provider-select-label" label="选择厂商" value={selectedProvider?.id ?? ""} disabled={busy} onChange={(event) => setSelectedProviderId(event.target.value)}>
+              {draft.providers.map((provider) => <MenuItem key={provider.id} value={provider.id}>{provider.label}</MenuItem>)}
+            </Select>
+          </FormControl>
           {selectedProvider && <ProviderPanel key={selectedProvider.id} provider={selectedProvider} status={statuses.get(selectedProvider.id)} disabled={busy} onChange={(patch) => updateProvider(selectedProvider.id, patch)} />}
         </Stack>
       </SettingsPanel>
@@ -160,18 +170,13 @@ export function AiSettingsPage() {
 }
 
 function ProviderPanel({ provider, status, disabled, onChange }: { provider: AiProviderSettingInput; status?: AiProviderSetting; disabled: boolean; onChange: (patch: Partial<AiProviderSettingInput>) => void }) {
-  return <Stack spacing={1.5} sx={{ border: 1, borderColor: "divider", borderRadius: 2, p: { xs: 2, sm: 2.5 }, bgcolor: "background.paper" }}>
-    <Stack direction={{ xs: "column", sm: "row" }} sx={{ alignItems: { sm: "center" }, justifyContent: "space-between", gap: 1, pb: 1.5, borderBottom: 1, borderColor: "divider" }}>
-      <Typography variant="h5">{provider.label}</Typography>
-    </Stack>
-    <Stack direction={{ xs: "column", md: "row" }} spacing={1.5}>
-      <TextField fullWidth label="显示名称" value={provider.label} disabled={disabled} onChange={(event) => onChange({ label: event.target.value })} sx={{ flex: 1, minWidth: 0 }} />
-      <ModelField provider={provider} disabled={disabled} onChange={onChange} />
-    </Stack>
+  return <Stack spacing={1.5}>
+    <TextField fullWidth label="显示名称" value={provider.label} disabled={disabled} onChange={(event) => onChange({ label: event.target.value })} />
+    <ModelField provider={provider} disabled={disabled} onChange={onChange} />
     <TextField fullWidth label="接口地址" value={provider.baseUrl} disabled={disabled} onChange={(event) => onChange({ baseUrl: event.target.value })} />
-    <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} sx={{ alignItems: { sm: "flex-start" } }}>
+    <Stack spacing={1.5}>
       <TextField fullWidth type="password" label="API 密钥" value={provider.apiKey ?? ""} disabled={disabled} onChange={(event) => onChange({ apiKey: event.target.value, clearApiKey: false })} placeholder={status?.apiKeyConfigured ? "已配置，留空保持不变" : "请输入 API 密钥"} helperText={status?.apiKeyConfigured ? "服务端已保存密钥；留空不会覆盖。" : undefined} autoComplete="new-password" />
-      {status?.apiKeyConfigured && <FormControlLabel sx={{ minWidth: 132, mt: { sm: 1 } }} control={<Checkbox checked={provider.clearApiKey} disabled={disabled} onChange={(event) => onChange({ clearApiKey: event.target.checked, apiKey: "" })} />} label="清除密钥" />}
+      {status?.apiKeyConfigured && <FormControlLabel control={<Checkbox checked={provider.clearApiKey} disabled={disabled} onChange={(event) => onChange({ clearApiKey: event.target.checked, apiKey: "" })} />} label="清除密钥" />}
     </Stack>
   </Stack>;
 }
@@ -200,10 +205,11 @@ function ModelField({ provider, disabled, onChange }: { provider: AiProviderSett
   </Stack>;
 }
 
-function SettingsPanel({ title, description, children }: { title: string; description: string; children: ReactNode }) {
+function SettingsPanel({ title, description, children, footer }: { title: string; description: string; children: ReactNode; footer?: ReactNode }) {
   return <Stack spacing={1.5} sx={{ border: 1, borderColor: "divider", borderRadius: 3, p: { xs: 2, sm: 2.5 }, bgcolor: "background.paper" }}>
     <Box><Typography variant="h4">{title}</Typography><Typography color="text.secondary" sx={{ mt: 0.5 }}>{description}</Typography></Box>
     {children}
+    {footer && <Stack sx={{ alignItems: "flex-end", pt: tokens.spacing.sm, borderTop: 1, borderColor: "divider" }}><ActionToolbar>{footer}</ActionToolbar></Stack>}
   </Stack>;
 }
 

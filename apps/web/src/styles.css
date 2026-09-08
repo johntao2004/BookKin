@@ -27,6 +27,11 @@ body,
 body {
   min-width: 320px;
   overflow-x: hidden;
+  background: var(--color-canvas);
+  color: var(--color-text-primary);
+  font-family: var(--typography-font-family-body);
+  font-size: var(--typography-font-size-body);
+  line-height: var(--typography-line-height-body);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
@@ -44,6 +49,13 @@ input,
 textarea,
 select {
   font: inherit;
+}
+
+/* The product floor is always warm paper; individual surfaces provide the
+   contrast instead of a cool gray reset or a shadow-heavy card stack. */
+html {
+  background: var(--color-canvas);
+  color: var(--color-text-primary);
 }
 
 .reader-prose {
@@ -97,7 +109,7 @@ select {
   align-items: center;
   justify-content: center;
   gap: var(--spacing-2);
-  min-height: var(--layout-touch-target);
+  min-height: var(--layout-control-height);
   border-radius: var(--radius-md);
   font-family: var(--typography-font-family-body);
   font-weight: var(--typography-font-weight-medium);
@@ -209,7 +221,7 @@ select {
 .bk-field > .ant-input,
 .bk-field .ant-input-affix-wrapper,
 .bk-field .ant-input-textarea {
-  min-height: var(--layout-touch-target);
+  min-height: var(--layout-control-height);
   border-color: var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-surface);
@@ -228,11 +240,11 @@ select {
 }
 
 .bk-select {
-  min-height: var(--layout-touch-target);
+  min-height: var(--layout-control-height);
 }
 
 .bk-select .ant-select-selector {
-  min-height: var(--layout-touch-target) !important;
+  min-height: var(--layout-control-height) !important;
   align-items: center;
   border-color: var(--color-border) !important;
   border-radius: var(--radius-md) !important;
@@ -274,7 +286,7 @@ select {
 
 .bk-form-control-label {
   display: inline-flex;
-  min-height: var(--layout-touch-target);
+  min-height: var(--layout-control-height);
   align-items: center;
   gap: var(--spacing-2);
   color: var(--color-text-primary);
@@ -340,7 +352,7 @@ select {
   position: relative;
   display: flex;
   align-items: center;
-  min-height: var(--layout-touch-target);
+  min-height: var(--layout-control-height);
   padding: var(--spacing-3) var(--spacing-4);
 }
 
@@ -454,7 +466,10 @@ select {
   align-items: center;
   gap: var(--spacing-1);
   margin-inline-end: 0;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-pill);
+  padding: var(--spacing-xxs) var(--spacing-sm);
+  font-size: var(--typography-font-size-caption);
+  line-height: var(--typography-line-height-caption);
   font-weight: var(--typography-font-weight-medium);
 }
 
@@ -487,7 +502,7 @@ select {
 
 .bk-chip-clickable {
   display: inline-flex;
-  min-height: var(--layout-touch-target);
+  min-height: var(--layout-control-height);
   align-items: center;
   justify-content: center;
   gap: var(--spacing-1);
@@ -530,7 +545,7 @@ select {
   color: var(--color-primary);
 }
 
-@media (max-width: 599px) {
+@media (max-width: 767px) {
   .bk-snackbar {
     right: var(--spacing-3);
     bottom: var(--spacing-3);
@@ -564,4 +579,563 @@ select {
   min-height: 0;
   overflow-y: auto;
   overflow-wrap: anywhere;
+}
+
+/* -------------------------------------------------------------------------
+   BookKin editorial control layer
+
+   Ant Design supplies behavior and accessibility; these shared rules keep
+   every screen on the same cream/coral/navy system. Page components should
+   not need to restyle Ant internals locally.
+   ------------------------------------------------------------------------- */
+
+.bk-top-nav,
+.bk-top-nav-inner {
+  background: var(--color-canvas);
+  box-shadow: none;
+}
+
+.bk-top-nav {
+  border-bottom: 0;
+}
+
+.bk-top-nav-inner {
+  min-height: var(--layout-nav-height);
+}
+
+.bk-nav-link {
+  min-height: var(--layout-control-height);
+  color: var(--color-text-secondary);
+  font-size: var(--typography-font-size-nav-link);
+  font-weight: var(--typography-font-weight-medium);
+  line-height: var(--typography-line-height-nav-link);
+  white-space: nowrap;
+}
+
+.bk-nav-link:hover,
+.bk-nav-link:focus-visible {
+  color: var(--color-text-primary);
+  background: transparent;
+}
+
+.ant-btn {
+  min-height: var(--layout-control-height);
+  border-radius: var(--radius-md);
+  border-color: var(--color-border);
+  background: var(--color-canvas);
+  color: var(--color-text-primary);
+  font-family: var(--typography-font-family-body);
+  font-size: var(--typography-font-size-button);
+  font-weight: var(--typography-font-weight-medium);
+  line-height: var(--typography-line-height-button);
+  box-shadow: none !important;
+}
+
+.ant-btn-default:hover,
+.ant-btn-default:focus-visible {
+  border-color: var(--color-border);
+  background: var(--color-canvas);
+  color: var(--color-text-primary);
+}
+
+.ant-btn-default:active {
+  border-color: var(--color-border);
+  background: var(--color-surface-strong);
+  color: var(--color-text-primary);
+}
+
+.ant-btn-primary {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  color: var(--color-text-on-primary);
+}
+
+.ant-btn-primary:hover,
+.ant-btn-primary:focus-visible {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  color: var(--color-text-on-primary);
+}
+
+.ant-btn-primary:active {
+  border-color: var(--color-primary-hover);
+  background: var(--color-primary-hover);
+  color: var(--color-text-on-primary);
+}
+
+.ant-btn-text,
+.ant-btn-link {
+  border-color: transparent;
+  background: transparent;
+  color: var(--color-text-primary);
+}
+
+.ant-btn-text:hover,
+.ant-btn-text:focus-visible,
+.ant-btn-link:hover,
+.ant-btn-link:focus-visible {
+  border-color: transparent;
+  background: var(--color-surface-soft);
+  color: var(--color-text-primary);
+}
+
+.ant-btn-link {
+  color: var(--color-primary);
+}
+
+.ant-btn-link:hover,
+.ant-btn-link:focus-visible {
+  color: var(--color-primary);
+  text-decoration: underline;
+}
+
+.ant-btn-sm {
+  min-height: 32px;
+  padding-inline: var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  font-size: var(--typography-font-size-caption);
+}
+
+.ant-btn-lg {
+  min-height: 48px;
+  padding-inline: var(--spacing-lg);
+  font-size: var(--typography-font-size-title-sm);
+}
+
+.ant-btn-icon-only,
+.bk-icon-button {
+  width: var(--layout-icon-button-size) !important;
+  min-width: var(--layout-icon-button-size) !important;
+  height: var(--layout-icon-button-size) !important;
+  min-height: var(--layout-icon-button-size) !important;
+  padding: 0 !important;
+  border-radius: var(--radius-full) !important;
+}
+
+.ant-btn-icon-only:hover,
+.ant-btn-icon-only:focus-visible,
+.bk-icon-button:hover,
+.bk-icon-button:focus-visible {
+  background: var(--color-surface-soft);
+}
+
+/* The account avatar is a 40px circle inside a 44px touch target. Keeping
+   both dimensions explicit prevents a flex parent from turning it into an
+   oval when the navigation cluster is tight. */
+.bk-account-trigger {
+  width: var(--layout-touch-target) !important;
+  min-width: var(--layout-touch-target) !important;
+  height: var(--layout-touch-target) !important;
+  min-height: var(--layout-touch-target) !important;
+}
+
+.bk-account-avatar.ant-avatar {
+  width: var(--spacing-10) !important;
+  min-width: var(--spacing-10) !important;
+  height: var(--spacing-10) !important;
+  min-height: var(--spacing-10) !important;
+  flex: 0 0 var(--spacing-10);
+  border-radius: var(--radius-full);
+}
+
+.ant-btn:focus-visible,
+.ant-input:focus,
+.ant-input-affix-wrapper-focused,
+.ant-select-focused .ant-select-selector,
+.ant-input-textarea:focus {
+  outline: none;
+  box-shadow: var(--shadow-focus) !important;
+}
+
+.ant-input,
+.ant-input-affix-wrapper,
+.ant-input-textarea {
+  min-height: var(--layout-control-height);
+  border-color: var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-canvas);
+  color: var(--color-text-primary);
+  font-family: var(--typography-font-family-body);
+  font-size: var(--typography-font-size-body);
+}
+
+.ant-input {
+  padding-block: var(--layout-input-padding-block);
+  padding-inline: var(--layout-input-padding-inline);
+}
+
+.ant-input-affix-wrapper {
+  padding-block: 0;
+  padding-inline: var(--layout-input-padding-inline);
+}
+
+.ant-input-affix-wrapper .ant-input {
+  padding-inline: var(--spacing-xs);
+}
+
+.ant-input:hover,
+.ant-input-affix-wrapper:hover,
+.ant-input:focus,
+.ant-input-affix-wrapper-focused,
+.ant-input-textarea:hover,
+.ant-input-textarea:focus {
+  border-color: var(--color-primary);
+}
+
+.ant-input::placeholder,
+.ant-input-affix-wrapper input::placeholder,
+.ant-input-textarea::placeholder {
+  color: var(--color-text-muted);
+}
+
+.ant-input[readonly],
+.ant-input-affix-wrapper:has(input[readonly]) {
+  background: var(--color-surface-soft);
+}
+
+.ant-select {
+  min-height: var(--layout-control-height);
+  font-family: var(--typography-font-family-body);
+}
+
+.ant-select .ant-select-selector {
+  min-height: var(--layout-control-height) !important;
+  border-color: var(--color-border) !important;
+  border-radius: var(--radius-md) !important;
+  background: var(--color-canvas) !important;
+  color: var(--color-text-primary);
+}
+
+.ant-select:not(.ant-select-disabled):hover .ant-select-selector,
+.ant-select-focused .ant-select-selector {
+  border-color: var(--color-primary) !important;
+  box-shadow: var(--shadow-focus) !important;
+}
+
+.ant-select-selection-placeholder,
+.ant-select .ant-select-selection-item {
+  color: var(--color-text-primary);
+}
+
+.ant-select-selection-placeholder {
+  color: var(--color-text-muted);
+}
+
+.ant-select-dropdown,
+.ant-dropdown,
+.ant-dropdown-menu {
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-card);
+  box-shadow: var(--shadow-popover);
+}
+
+.ant-select-item,
+.ant-dropdown-menu-item,
+.ant-dropdown-menu-submenu-title {
+  min-height: var(--layout-control-height);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-primary);
+  font-family: var(--typography-font-family-body);
+}
+
+.ant-select-item-option-active:not(.ant-select-item-option-disabled),
+.ant-dropdown-menu-item:hover,
+.ant-dropdown-menu-submenu-title:hover {
+  background: var(--color-surface-soft);
+}
+
+.ant-select-item-option-selected:not(.ant-select-item-option-disabled),
+.ant-dropdown-menu-item-selected {
+  background: var(--color-surface-strong);
+  color: var(--color-text-primary);
+  font-weight: var(--typography-font-weight-medium);
+}
+
+.ant-card,
+.bk-card,
+.bk-paper {
+  border-radius: var(--radius-lg);
+  border-color: var(--color-border);
+  background: var(--color-surface-card);
+  background-image: none;
+  box-shadow: none !important;
+}
+
+.ant-card-bordered {
+  border: 1px solid var(--color-border);
+}
+
+.ant-card-head {
+  border-bottom-color: var(--color-border-soft);
+  background: transparent;
+  color: var(--color-text-primary);
+}
+
+.ant-card-head-title {
+  font-family: var(--typography-font-family-body);
+  font-size: var(--typography-font-size-title-sm);
+  font-weight: var(--typography-font-weight-medium);
+}
+
+.ant-card-body {
+  color: var(--color-text-primary);
+}
+
+.ant-drawer .ant-drawer-content,
+.ant-drawer .ant-drawer-header,
+.ant-drawer .ant-drawer-body {
+  background: var(--color-surface-card);
+}
+
+.ant-drawer .ant-drawer-header {
+  border-bottom-color: var(--color-border-soft);
+  padding: var(--spacing-lg);
+}
+
+.ant-drawer .ant-drawer-title,
+.ant-modal .ant-modal-title {
+  color: var(--color-text-primary);
+  font-family: var(--typography-font-family-body);
+  font-size: var(--typography-font-size-title);
+  font-weight: var(--typography-font-weight-medium);
+}
+
+.ant-drawer .ant-drawer-close,
+.ant-modal .ant-modal-close {
+  color: var(--color-text-secondary);
+}
+
+.ant-modal .ant-modal-content,
+.ant-modal .ant-modal-header {
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-card);
+}
+
+.ant-modal .ant-modal-content {
+  box-shadow: none;
+}
+
+.ant-modal .ant-modal-header {
+  margin-bottom: 0;
+  padding: var(--spacing-lg) var(--spacing-xl) var(--spacing-sm);
+}
+
+.ant-modal .ant-modal-body {
+  padding: var(--spacing-lg) var(--spacing-xl);
+  color: var(--color-text-secondary);
+}
+
+.ant-modal .ant-modal-footer {
+  border-top: 1px solid var(--color-border-soft);
+  margin-top: 0;
+  padding: var(--spacing-lg) var(--spacing-xl);
+}
+
+.ant-tabs .ant-tabs-nav {
+  margin-bottom: var(--spacing-lg);
+}
+
+.ant-tabs .ant-tabs-tab {
+  margin: 0;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-md);
+  color: var(--color-text-muted);
+  font-size: var(--typography-font-size-body-sm);
+  font-weight: var(--typography-font-weight-medium);
+}
+
+.ant-tabs .ant-tabs-tab:hover {
+  color: var(--color-text-primary);
+}
+
+.ant-tabs .ant-tabs-tab-active {
+  background: var(--color-surface-card);
+}
+
+.ant-tabs .ant-tabs-tab-btn,
+.ant-tabs .ant-tabs-tab-active .ant-tabs-tab-btn {
+  color: inherit;
+}
+
+.ant-tabs .ant-tabs-ink-bar {
+  background: var(--color-primary);
+}
+
+.ant-table-wrapper,
+.ant-table {
+  color: var(--color-text-primary);
+}
+
+.ant-table-container,
+.ant-table-content {
+  border-radius: var(--radius-lg);
+}
+
+.ant-table-thead > tr > th {
+  background: var(--color-surface-soft) !important;
+  border-bottom-color: var(--color-border) !important;
+  color: var(--color-text-secondary);
+  font-weight: var(--typography-font-weight-medium);
+}
+
+.ant-table-tbody > tr > td {
+  border-bottom-color: var(--color-border-soft);
+}
+
+.ant-table-tbody > tr.ant-table-row:hover > td {
+  background: var(--color-surface-soft) !important;
+}
+
+.ant-pagination .ant-pagination-item {
+  border-color: var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-canvas);
+}
+
+.ant-pagination .ant-pagination-item-active {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+}
+
+.ant-pagination .ant-pagination-item a {
+  color: var(--color-text-primary);
+}
+
+.ant-pagination .ant-pagination-item-active a {
+  color: var(--color-text-on-primary);
+}
+
+.ant-tag,
+.bk-chip {
+  border-radius: var(--radius-pill);
+  border-color: var(--color-border);
+  background: var(--color-surface-card);
+  color: var(--color-text-primary);
+}
+
+.bk-chip-color-primary {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  color: var(--color-text-on-primary);
+}
+
+.bk-chip-color-success {
+  border-color: var(--color-success);
+  background: color-mix(in srgb, var(--color-success) 14%, var(--color-surface-card));
+  color: var(--color-success);
+}
+
+.bk-chip-color-warning {
+  border-color: var(--color-warning);
+  background: color-mix(in srgb, var(--color-warning) 14%, var(--color-surface-card));
+  color: var(--color-warning);
+}
+
+.bk-chip-color-error {
+  border-color: var(--color-error);
+  background: color-mix(in srgb, var(--color-error) 14%, var(--color-surface-card));
+  color: var(--color-error);
+}
+
+.ant-notification-notice {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-dark);
+  color: var(--color-text-on-dark);
+  box-shadow: var(--shadow-popover);
+}
+
+.ant-notification-notice-message,
+.ant-notification-notice-description,
+.ant-notification-notice-close {
+  color: var(--color-text-on-dark);
+}
+
+.ant-notification-notice-success .ant-notification-notice-icon {
+  color: var(--color-success);
+}
+
+.ant-notification-notice-warning .ant-notification-notice-icon {
+  color: var(--color-warning);
+}
+
+.ant-notification-notice-error .ant-notification-notice-icon {
+  color: var(--color-error);
+}
+
+.ant-notification-notice-info .ant-notification-notice-icon {
+  color: var(--color-accent-teal);
+}
+
+.ant-alert {
+  border-radius: var(--radius-md);
+  border-color: var(--color-border);
+  background: var(--color-surface-soft);
+  color: var(--color-text-primary);
+}
+
+.ant-switch-checked {
+  background: var(--color-primary) !important;
+}
+
+.ant-checkbox-checked .ant-checkbox-inner,
+.ant-radio-checked .ant-radio-inner::after {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+}
+
+.ant-checkbox-wrapper,
+.ant-radio-wrapper,
+.ant-form,
+.ant-form-item,
+.ant-dropdown,
+.ant-table,
+.ant-pagination {
+  font-family: var(--typography-font-family-body);
+}
+
+.ant-form-item-label > label {
+  color: var(--color-text-secondary);
+  font-size: var(--typography-font-size-body-sm);
+  font-weight: var(--typography-font-weight-medium);
+}
+
+.ant-form-item-explain-error {
+  color: var(--color-error);
+  font-size: var(--typography-font-size-caption);
+}
+
+.ant-empty .ant-empty-description,
+.ant-spin-text {
+  color: var(--color-text-muted);
+}
+
+.ant-skeleton .ant-skeleton-title,
+.ant-skeleton .ant-skeleton-paragraph > li {
+  background: var(--color-surface-soft);
+}
+
+@media (max-width: 767px) {
+  .bk-top-nav-inner {
+    padding-inline: var(--spacing-md);
+  }
+
+  .bk-action-toolbar {
+    align-items: stretch;
+  }
+
+  .bk-action-toolbar > .ant-btn,
+  .bk-action-toolbar > .bk-button {
+    flex: 1 1 auto;
+  }
+
+  .ant-modal {
+    max-width: calc(100vw - var(--spacing-lg) * 2);
+  }
+
+  .ant-modal .ant-modal-header,
+  .ant-modal .ant-modal-body,
+  .ant-modal .ant-modal-footer {
+    padding-inline: var(--spacing-lg);
+  }
 }

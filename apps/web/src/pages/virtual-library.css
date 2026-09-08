@@ -257,7 +257,7 @@
 
 }
 
-@media (max-width: 720px) {
+@media (max-width: 767px) {
   .virtual-library-back {
     top: var(--spacing-3);
     left: var(--spacing-3);

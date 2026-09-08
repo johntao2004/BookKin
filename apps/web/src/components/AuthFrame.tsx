@@ -16,10 +16,10 @@ type AuthFrameProps = {
 
 export function AuthFrame({ children, title, description, greeting }: AuthFrameProps) {
   return (
-    <Box sx={{ minHeight: "100vh", display: "grid", gridTemplateColumns: { xs: "1fr", md: "1.08fr minmax(420px, 0.92fr)" } }}>
+    <Box sx={{ minHeight: "100vh", display: "grid", gridTemplateColumns: { xs: "1fr", sm: "minmax(0, 1.08fr) minmax(360px, 0.92fr)" } }}>
       <Box
         sx={{
-          display: { xs: "none", md: "grid" },
+          display: { xs: "none", sm: "grid" },
           position: "relative",
           overflow: "hidden",
           bgcolor: "secondary.dark",
@@ -44,9 +44,9 @@ export function AuthFrame({ children, title, description, greeting }: AuthFrameP
           sx={{
             position: "absolute",
             zIndex: 2,
-            top: { md: tokens.spacing[10], lg: tokens.spacing[12] },
-            left: { md: tokens.spacing[12], lg: tokens.spacing[16] },
-            color: "secondary.dark",
+            top: { sm: tokens.spacing[10], lg: tokens.spacing[12] },
+            left: { sm: tokens.spacing[12], lg: tokens.spacing[16] },
+            color: "primary.main",
             whiteSpace: "nowrap",
           }}
         >
@@ -60,8 +60,8 @@ export function AuthFrame({ children, title, description, greeting }: AuthFrameP
             height: "100%",
             alignItems: "center",
             justifyContent: "center",
-            px: { md: 6, lg: 8 },
-            py: { md: 5, lg: 6 },
+            px: { sm: 4, md: 6, lg: 8 },
+            py: { sm: 5, lg: 6 },
             color: "common.white",
           }}
         >
@@ -83,15 +83,15 @@ export function AuthFrame({ children, title, description, greeting }: AuthFrameP
           display: "flex",
           flexDirection: "column",
           minHeight: "100dvh",
-          bgcolor: "background.paper",
-          borderLeft: { md: "1px solid" },
+          bgcolor: "background.default",
+          borderLeft: { sm: "1px solid" },
           borderColor: "divider",
-          px: { xs: 2, sm: 4, lg: 6 },
-          py: { xs: 2, sm: 3 },
+          px: { xs: 3, sm: 4, lg: 6 },
+          py: { xs: 3, sm: 4 },
         }}
       >
         <Stack direction={{ xs: "column", md: "row" }} spacing={{ xs: 1, md: 0 }} sx={{ width: "100%", alignItems: "flex-start" }}>
-          <Typography variant="h5" sx={{ display: { xs: "block", md: "none" } }}>BookKin</Typography>
+          <Typography variant="h5" sx={{ display: { xs: "block", sm: "none" }, fontFamily: tokens.typography.fontFamily.display, fontWeight: tokens.typography.fontWeight.regular }}>BookKin</Typography>
           <Button component={Link} to="/library" startIcon={<ArrowBackRounded />} sx={{ px: 0 }}>返回首页</Button>
         </Stack>
         <Box sx={{ flex: 1, display: "flex", alignItems: { xs: "flex-start", md: "center" }, justifyContent: "center", py: { xs: 4, sm: 6, md: 4 } }}>

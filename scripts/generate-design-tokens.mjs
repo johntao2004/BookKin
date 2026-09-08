@@ -31,6 +31,7 @@ const cssPairs = [
   ...Object.entries(tokens.typography.fontFamily).map(([key, value]) => [`--typography-font-family-${kebab(key)}`, value]),
   ...Object.entries(tokens.typography.fontSize).map(([key, value]) => [`--typography-font-size-${kebab(key)}`, `${value}px`]),
   ...Object.entries(tokens.typography.lineHeight).map(([key, value]) => [`--typography-line-height-${kebab(key)}`, value]),
+  ...Object.entries(tokens.typography.letterSpacing ?? {}).map(([key, value]) => [`--typography-letter-spacing-${kebab(key)}`, value]),
   ...Object.entries(tokens.typography.fontWeight).map(([key, value]) => [`--typography-font-weight-${kebab(key)}`, value]),
   ...Object.entries(tokens.shadow).map(([key, value]) => [`--shadow-${kebab(key)}`, value]),
   ...Object.entries(tokens.layout).map(([key, value]) => [`--layout-${kebab(key)}`, `${value}px`]),

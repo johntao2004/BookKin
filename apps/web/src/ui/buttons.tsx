@@ -43,7 +43,7 @@ export const Button = forwardRef<HTMLElement, ButtonProps>(function Button({ var
 export const ButtonBase = Button;
 
 export const IconButton = forwardRef<HTMLElement, ButtonProps>(function IconButton({ sx, className, children, ...props }, ref) {
-  return <Button ref={ref} variant="text" size="small" sx={{ minWidth: tokens.layout.touchTarget, minHeight: tokens.layout.touchTarget, borderRadius: tokens.radius.pill, p: 0.5, ...flattenSx(sx, useTheme()) }} className={mergeClassNames("bk-icon-button", className)} {...props}>{children}</Button>;
+  return <Button ref={ref} variant="text" size="small" sx={{ minWidth: tokens.layout.iconButtonSize, width: tokens.layout.iconButtonSize, minHeight: tokens.layout.iconButtonSize, height: tokens.layout.iconButtonSize, borderRadius: tokens.radius.full, p: 0, ...flattenSx(sx, useTheme()) }} className={mergeClassNames("bk-icon-button", className)} {...props}>{children}</Button>;
 });
 
 export function Fab({ sx, className, children, ...props }: ButtonProps) {

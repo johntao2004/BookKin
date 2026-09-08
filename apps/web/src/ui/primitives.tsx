@@ -45,13 +45,19 @@ export interface UiTheme {
   zIndex: { fab: number };
 }
 
-const breakpointValues: Record<string, number> = { xs: 0, sm: 600, md: 1024, lg: 1440, xl: 1920 };
+const breakpointValues: Record<string, number> = {
+  xs: 0,
+  sm: tokens.layout.breakpointMobile,
+  md: tokens.layout.breakpointTablet,
+  lg: tokens.layout.breakpointDesktop,
+  xl: 1920,
+};
 
 const defaultTheme: UiTheme = {
   palette: {
     mode: "light",
     primary: { main: tokens.color.semantic.primary, light: tokens.color.semantic.primarySoft, dark: tokens.color.semantic.primaryHover },
-    secondary: { main: tokens.color.semantic.focus },
+    secondary: { main: tokens.color.semantic.accentTeal },
     success: { main: tokens.color.semantic.success },
     warning: { main: tokens.color.semantic.warning },
     error: { main: tokens.color.semantic.error },
@@ -59,7 +65,7 @@ const defaultTheme: UiTheme = {
     text: {
       primary: tokens.color.semantic.textPrimary,
       secondary: tokens.color.semantic.textSecondary,
-      disabled: tokens.color.semantic.textMuted,
+      disabled: tokens.color.semantic.textMutedSoft,
       onDark: tokens.color.semantic.textOnDark,
     },
     divider: tokens.color.semantic.border,
@@ -72,7 +78,7 @@ const defaultTheme: UiTheme = {
     duration: { standard: 180, shorter: 120 },
     easing: { easeInOut: "cubic-bezier(0.4, 0, 0.2, 1)" },
   },
-  breakpoints: { down: (key) => `@media (max-width: ${(breakpointValues[key] ?? 600) - 0.05}px)`, up: (key) => `@media (min-width: ${breakpointValues[key] ?? 0}px)` },
+  breakpoints: { down: (key) => `@media (max-width: ${(breakpointValues[key] ?? tokens.layout.breakpointMobile) - 0.05}px)`, up: (key) => `@media (min-width: ${breakpointValues[key] ?? 0}px)` },
   zIndex: { fab: 1100 },
 };
 
@@ -98,13 +104,21 @@ export function cssVarPath(value: string) {
     primary: "var(--color-primary)",
     "primary.light": "var(--color-primary-soft)",
     "primary.dark": "var(--color-primary-hover)",
-    "secondary.main": "var(--color-focus)",
+    "secondary.main": "var(--color-accent-teal)",
     // MUI derived `secondary.dark` was used by the original theme for the
     // reading-progress card and the authentication artwork layer.  Keep the
     // semantic mapping here so those surfaces do not silently fall back to an
     // invalid CSS value after the Ant Design migration.
-    "secondary.light": "color-mix(in srgb, var(--color-focus) 78%, var(--color-primitive-white))",
-    "secondary.dark": "color-mix(in srgb, var(--color-focus) 78%, var(--color-primitive-black))",
+    "secondary.light": "color-mix(in srgb, var(--color-accent-teal) 78%, var(--color-primitive-white))",
+    "secondary.dark": "color-mix(in srgb, var(--color-accent-teal) 78%, var(--color-primitive-black))",
+    "text.strong": "var(--color-body-strong)",
+    "text.muted": "var(--color-text-muted)",
+    "text.mutedSoft": "var(--color-text-muted-soft)",
+    "text.onDark": "var(--color-text-on-dark)",
+    "text.onDarkSoft": "var(--color-text-on-dark-soft)",
+    "text.onPrimary": "var(--color-text-on-primary)",
+    "accent.teal": "var(--color-accent-teal)",
+    "accent.amber": "var(--color-accent-amber)",
     "success.main": "var(--color-success)",
     success: "var(--color-success)",
     "warning.main": "var(--color-warning)",
@@ -297,16 +311,18 @@ export const Stack = forwardRef<HTMLElement, StackProps>(function Stack({ direct
 
 const typographyElements: Record<string, string> = { h1: "h1", h2: "h2", h3: "h3", h4: "h4", h5: "h5", h6: "h6", body1: "p", body2: "p", caption: "span", overline: "span", subtitle1: "p", subtitle2: "p" };
 const typographyStyles: Record<string, CSSProperties> = {
-  h1: { fontFamily: "var(--typography-font-family-display)", fontSize: "var(--typography-font-size-display-lg)", fontWeight: 400, lineHeight: 1.15, letterSpacing: "-0.02em" },
-  h2: { fontFamily: "var(--typography-font-family-display)", fontSize: "var(--typography-font-size-display)", fontWeight: 400, lineHeight: 1.25, letterSpacing: "-0.015em" },
-  h3: { fontFamily: "var(--typography-font-family-display)", fontSize: "var(--typography-font-size-heading)", fontWeight: 400, lineHeight: 1.25 },
-  h4: { fontFamily: "var(--typography-font-family-display)", fontSize: "var(--typography-font-size-heading-sm)", fontWeight: 400, lineHeight: 1.25 },
-  h5: { fontFamily: "var(--typography-font-family-display)", fontSize: "var(--typography-font-size-title)", fontWeight: 400, lineHeight: 1.25 },
-  h6: { fontFamily: "var(--typography-font-family-display)", fontSize: "var(--typography-font-size-title-sm)", fontWeight: 500, lineHeight: 1.25 },
-  body1: { fontSize: "var(--typography-font-size-body)", lineHeight: 1.65 },
-  body2: { fontSize: "var(--typography-font-size-body-sm)", lineHeight: 1.65 },
-  caption: { fontSize: "var(--typography-font-size-caption)", lineHeight: 1.4 },
-  overline: { fontSize: "var(--typography-font-size-caption)", lineHeight: 1.4, letterSpacing: "0.12em", textTransform: "uppercase" },
+  h1: { fontFamily: "var(--typography-font-family-display)", fontSize: "var(--typography-font-size-display-lg)", fontWeight: 400, lineHeight: "var(--typography-line-height-tight)", letterSpacing: "var(--typography-letter-spacing-display-xl)" },
+  h2: { fontFamily: "var(--typography-font-family-display)", fontSize: "var(--typography-font-size-display)", fontWeight: 400, lineHeight: "var(--typography-line-height-display-lg)", letterSpacing: "var(--typography-letter-spacing-display-lg)" },
+  h3: { fontFamily: "var(--typography-font-family-display)", fontSize: "var(--typography-font-size-heading)", fontWeight: 400, lineHeight: "var(--typography-line-height-display-md)", letterSpacing: "var(--typography-letter-spacing-display-md)" },
+  h4: { fontFamily: "var(--typography-font-family-display)", fontSize: "var(--typography-font-size-heading-sm)", fontWeight: 400, lineHeight: "var(--typography-line-height-display-sm)", letterSpacing: "var(--typography-letter-spacing-display-sm)" },
+  h5: { fontFamily: "var(--typography-font-family-body)", fontSize: "var(--typography-font-size-title)", fontWeight: 500, lineHeight: "var(--typography-line-height-title-lg)" },
+  h6: { fontFamily: "var(--typography-font-family-body)", fontSize: "var(--typography-font-size-label)", fontWeight: 500, lineHeight: "var(--typography-line-height-title-sm)" },
+  subtitle1: { fontFamily: "var(--typography-font-family-body)", fontSize: "var(--typography-font-size-title-sm)", fontWeight: 500, lineHeight: "var(--typography-line-height-title-md)" },
+  subtitle2: { fontFamily: "var(--typography-font-family-body)", fontSize: "var(--typography-font-size-label)", fontWeight: 500, lineHeight: "var(--typography-line-height-title-sm)" },
+  body1: { fontFamily: "var(--typography-font-family-body)", fontSize: "var(--typography-font-size-body)", fontWeight: 400, lineHeight: "var(--typography-line-height-body)" },
+  body2: { fontFamily: "var(--typography-font-family-body)", fontSize: "var(--typography-font-size-body-sm)", fontWeight: 400, lineHeight: "var(--typography-line-height-body)" },
+  caption: { fontFamily: "var(--typography-font-family-body)", fontSize: "var(--typography-font-size-caption)", fontWeight: 500, lineHeight: "var(--typography-line-height-caption)" },
+  overline: { fontFamily: "var(--typography-font-family-body)", fontSize: "var(--typography-font-size-caption-uppercase)", fontWeight: 500, lineHeight: "var(--typography-line-height-caption)", letterSpacing: "1.5px", textTransform: "uppercase" },
 };
 
 export function Typography({ variant = "body1", component, color, noWrap, align, sx, className, children, ...props }: BoxProps & { variant?: string; component?: ElementType; color?: string; noWrap?: boolean; align?: CSSProperties["textAlign"] }) {
@@ -331,7 +347,7 @@ export function Typography({ variant = "body1", component, color, noWrap, align,
 }
 
 export const CardContent = forwardRef<HTMLDivElement, BoxProps>(function CardContent({ sx, className, ...props }, ref) {
-  return <Box ref={ref} sx={{ p: 3, ...flattenSx(sx, useTheme()) }} className={mergeClassNames("bk-card-content", className)} {...props} />;
+  return <Box ref={ref} sx={{ p: 4, ...flattenSx(sx, useTheme()) }} className={mergeClassNames("bk-card-content", className)} {...props} />;
 });
 
 export function CardActionArea({ component: Component, to, href, sx, className, children, ...props }: BoxProps & { to?: string; href?: string }) {

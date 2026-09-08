@@ -21,8 +21,8 @@ export function PageContainer({ children, sx }: { children: ReactNode; sx?: SxPr
     <Box
       sx={{
         ...pageWidthSx,
-        pt: { xs: 2, md: 3 },
-        pb: { xs: 4, md: 6 },
+        pt: { xs: 4, sm: 6, md: 8 },
+        pb: { xs: 6, md: 8 },
         ...sx,
       }}
     >
@@ -44,11 +44,19 @@ export function PageHeader({
 }) {
   const embedded = useContext(EmbeddedSettingsContext);
   return (
-    <Stack sx={{ alignItems: "stretch", gap: embedded ? 2 : 4, mb: action || embedded ? 2 : 4 }}>
+    <Stack
+      direction={{ xs: "column", sm: "row" }}
+      sx={{
+        alignItems: { xs: "stretch", sm: "flex-end" },
+        justifyContent: "space-between",
+        gap: embedded ? 2 : 3,
+        mb: action || embedded ? 3 : 4,
+      }}
+    >
       <Box sx={{ minWidth: 0 }}>
-        {eyebrow && !embedded && <Typography variant="overline" color="primary.main" sx={{ fontWeight: 700, letterSpacing: "0.12em" }}>{eyebrow}</Typography>}
-        <Typography variant={embedded ? "h5" : "h2"} component={embedded ? "h2" : "h1"}>{title}</Typography>
-        {description && <Typography color="text.secondary" sx={{ mt: 1 }}>{description}</Typography>}
+        {eyebrow && !embedded && <Typography variant="overline" color="text.secondary" sx={{ fontWeight: tokens.typography.fontWeight.medium }}>{eyebrow}</Typography>}
+        <Typography variant={embedded ? "h5" : "h1"} component={embedded ? "h2" : "h1"} sx={embedded ? undefined : { fontSize: { xs: 32, sm: tokens.typography.fontSize.displayLg } }}>{title}</Typography>
+        {description && <Typography color="text.secondary" sx={{ mt: 1.5, maxWidth: 720 }}>{description}</Typography>}
       </Box>
       {action && <ActionToolbar>{action}</ActionToolbar>}
     </Stack>
@@ -56,5 +64,5 @@ export function PageHeader({
 }
 
 export function ActionToolbar({ children }: { children: ReactNode }) {
-  return <Stack direction="row" sx={{ width: "100%", justifyContent: "flex-end", alignItems: "center", flexWrap: "wrap", gap: 1.5 }}>{children}</Stack>;
+  return <Stack className="bk-action-toolbar" direction="row" sx={{ width: { xs: "100%", sm: "auto" }, justifyContent: { xs: "flex-start", sm: "flex-end" }, alignItems: "center", flexWrap: "wrap", gap: 1.5 }}>{children}</Stack>;
 }

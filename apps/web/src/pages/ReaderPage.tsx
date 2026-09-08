@@ -91,7 +91,7 @@ export function ReaderPage() {
       quote: "河面先暗了一层",
       locator: "epubcfi(/6/14!/4/2)",
       x: Number.isFinite(previewX) && previewX > 0 ? previewX : window.innerWidth / 2,
-      y: Number.isFinite(previewY) && previewY > 0 ? previewY : window.innerWidth < 600 ? 289 : 315,
+      y: Number.isFinite(previewY) && previewY > 0 ? previewY : window.innerWidth < tokens.layout.breakpointMobile ? 289 : 315,
       placement: "ABOVE",
     };
   });

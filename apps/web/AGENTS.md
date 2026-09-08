@@ -180,4 +180,6 @@ Show operation feedback and error notices through the shared Ant Design bubble n
 
 The AI provider selector chooses the single active provider on save. Do not show a separate per-provider enable switch. Restore the enabled provider on load; retain the global AI switch.
 
+Keep AI platform settings in one left-aligned form column, with each field on its own row. All inputs and selects, including custom model IDs and API keys, share the provider selector's compact maximum width and shrink to fit narrower screens. Place the optional clear-key control below the API key input so it cannot reduce that input's width.
+
 Ant Design uses the dark algorithm for Night mode. Select values remain fully legible while open; selected and active options use theme semantic colors.
