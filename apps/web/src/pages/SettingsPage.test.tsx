@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { expect, it, vi } from "vitest";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Routes, Route, useLocation, useNavigate } from "react-router-dom";
 import { TestProviders } from "../test/TestProviders";
 import { SettingsPage } from "./SettingsPage";
 vi.mock('../auth/AuthContext', async importOriginal => ({ ...await importOriginal<object>(), useAuth: () => ({ user: { role: 'OWNER' } }), RequireAuth: ({children}: any) => children }));
@@ -17,4 +17,11 @@ it('restores anchored tabs and supports browser history', async () => {
  fireEvent.click(screen.getByText('后退'));
  await waitFor(() => expect(screen.getByText('#reader-fonts')).toBeInTheDocument());
  expect(await screen.findByText('字体面板')).toBeInTheDocument();
+});
+
+it('moves the legacy recovery email entry to personal information', async () => {
+ function Path() { return <output>{useLocation().pathname}</output>; }
+ render(<TestProviders initialPath='/settings#recovery-email'><Routes><Route path="/settings" element={<SettingsPage />} /><Route path="/profile" element={<Path />} /></Routes></TestProviders>);
+ await waitFor(() => expect(screen.getByText('/profile')).toBeInTheDocument());
+ expect(screen.queryByRole('tab', {name:'找回邮箱'})).not.toBeInTheDocument();
 });

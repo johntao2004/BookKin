@@ -78,6 +78,7 @@ export const EXTERIOR_PRESETS: readonly ExteriorPreset[] = [
 export interface LibraryConfig {
   tower: {
     innerRadius: number;
+    floorCount: number;
     wallThickness: number;
     mainHeight: number;
     galleryY: number;
@@ -114,9 +115,10 @@ export interface LibraryConfig {
  */
 export const LIBRARY: LibraryConfig = {
   tower: {
-    innerRadius: 14.4,
+    innerRadius: 19.2,
+    floorCount: 4,
     wallThickness: 0.72,
-    mainHeight: 12.8,
+    mainHeight: 25.2,
     galleryY: 6.2,
     galleryDepth: 4.35,
     roofHeight: 6.8,
@@ -132,7 +134,7 @@ export const LIBRARY: LibraryConfig = {
   window: {
     width: 2.55,
     height: 4,
-    sillHeight: 8.1,
+    sillHeight: 20.5,
   },
   atmosphere: {
     fogColor: 0x090908,
@@ -155,8 +157,8 @@ export interface CameraPreset {
 
 export const CAMERA_PRESETS: Record<ViewId, CameraPreset> = {
   hall: {
-    position: new THREE.Vector3(0.15, 2.35, 11.7),
-    target: new THREE.Vector3(0, 4.7, -3.4),
+    position: new THREE.Vector3(0.15, 3.4, 12.8),
+    target: new THREE.Vector3(0, 11.8, -3.4),
     fov: 58,
     index: '01',
     title: '圆形主阅览区',
@@ -168,7 +170,7 @@ export const CAMERA_PRESETS: Record<ViewId, CameraPreset> = {
     fov: 55,
     index: '02',
     title: '上层环形回廊',
-    body: '木质回廊沿塔壁连续展开，栏杆、书墙与下层尖拱形成双层环带。',
+    body: '木质回廊沿塔壁连续展开，栏杆、书墙与下层尖拱形成四层环带。',
   },
   stair: {
     position: new THREE.Vector3(1.8, 2.55, 2.2),

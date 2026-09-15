@@ -26,7 +26,7 @@ class AuthControllerTest {
     @Test
     void setupStatusReflectsWhetherTheLibraryAlreadyHasUsers() {
         var users = mock(UserRepository.class);
-        var controller = new AuthController(users, null, null, null, null, null);
+        var controller = new AuthController(users, null, null, null, null, null, null);
 
         when(users.count()).thenReturn(0L);
         assertFalse(controller.setupStatus().initialized());

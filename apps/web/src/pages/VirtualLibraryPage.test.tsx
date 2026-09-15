@@ -19,12 +19,18 @@ describe("VirtualLibraryPage", () => {
     render(<TestProviders initialPath="/virtual-library"><VirtualLibraryPage /></TestProviders>);
 
     expect(screen.getByRole("region", { name: "虚拟 3D 图书馆" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "返回书库" })).toHaveAttribute("href", "/library");
+    expect(screen.getByRole("link", { name: "返回书库" })).toHaveAttribute("href", "/library/all");
     expect(screen.queryByRole("heading", { name: "虚拟图书馆" })).not.toBeInTheDocument();
     expect(screen.queryByText(/^\d+ 本藏书已入架 · 点击书架展开$/)).not.toBeInTheDocument();
     expect(screen.getByRole("navigation", { name: "图书馆区域切换" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "禁书区" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "馆长办公室" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "我的藏书" })).toBeInTheDocument();
+    for (const name of ["前往二楼楼梯", "服务楼梯上楼", "Fagel 室", "西端储藏室"]) {
+      expect(screen.queryByRole("button", { name })).not.toBeInTheDocument();
+    }
+    expect(screen.queryByRole("button", { name: "Henry Jones 室" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "沿长厅前行" })).toBeInTheDocument();
+    expect(screen.getByText("按住 W/A/S/D 可沿视角连续前后与左右平移，滚轮也可前后移动，拖动环顾。")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "馆长办公室" })).not.toBeInTheDocument();
     expect(screen.queryByText("360° 环视")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "向左" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "正前" })).not.toBeInTheDocument();
@@ -38,11 +44,6 @@ describe("VirtualLibraryPage", () => {
     );
     const canvas = screen.getByLabelText("可 360 度环视的虚拟图书馆 3D 场景");
     expect(canvas).toHaveAttribute("data-scene-zoom", "1.00");
-    fireEvent.click(screen.getByRole("button", { name: "馆长办公室" }));
-    expect(canvas).toHaveAttribute("data-active-room", "director");
-    expect(screen.getByRole("heading", { level: 1, name: "馆长办公室" })).toBeInTheDocument();
-    expect(screen.queryByText("拖拽查看空间 · 滚轮缩放 · 按 Esc 返回大厅")).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "返回大厅" }));
     expect(canvas).toHaveAttribute("data-active-room", "hall");
   });
 

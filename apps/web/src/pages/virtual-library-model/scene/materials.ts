@@ -1,5 +1,7 @@
 import * as THREE from 'three';
+import {createWestOakFinish} from './longRoomWestOak';
 import { PALETTE } from '../config';
+import { createLongRoomFloorTextures } from './longRoomFloor';
 
 const textureCanvas = (width: number, height = width) => {
   const canvas = document.createElement('canvas');
@@ -141,6 +143,7 @@ function createFloorTexture() {
   return textureFromCanvas(canvas, 2.6, 8.5);
 }
 
+/** Photo-matched warm oak, with twelve boards in a 2.88 m world-space tile. */
 function createRugTexture() {
   const { canvas, context } = textureCanvas(512, 2048);
   const random = seededRandom(1941);
@@ -191,10 +194,11 @@ export interface LibraryMaterials {
   lampGlass: THREE.MeshStandardMaterial;
 }
 
-export function createLibraryMaterials(): LibraryMaterials {
-  const woodMap = createWoodTexture();
-  const darkWoodMap = createWoodTexture('#211008', '#482519');
-  const warmWoodMap = createWoodTexture('#4b2715', '#8f5630');
+export function createLibraryMaterials(existingWoodMap?: THREE.Texture, includeStoneAndRugTextures = true, floorFinish: 'dark' | 'historic-oak' = 'dark'): LibraryMaterials {
+  const historicFloor = floorFinish === 'historic-oak' ? createLongRoomFloorTextures() : null;
+  const woodMap = historicFloor ? null : existingWoodMap ?? createWoodTexture();
+  const darkWoodMap = historicFloor ? null : existingWoodMap ?? createWoodTexture('#211008', '#482519');
+  const warmWoodMap = historicFloor ? null : existingWoodMap ?? createWoodTexture('#4b2715', '#8f5630');
   const glass = new THREE.MeshStandardMaterial({
     color: 0x9bb3ca,
     emissive: 0x20374d,
@@ -206,10 +210,10 @@ export function createLibraryMaterials(): LibraryMaterials {
   });
   glass.forceSinglePass = true;
   glass.userData.batchTransparent = true;
-  return {
+  const materials:LibraryMaterials = {
     stone: new THREE.MeshStandardMaterial({
       color: PALETTE.stone,
-      map: createStoneTexture(),
+      map: includeStoneAndRugTextures ? createStoneTexture() : null,
       roughness: 0.93,
       metalness: 0,
     }),
@@ -239,14 +243,16 @@ export function createLibraryMaterials(): LibraryMaterials {
       roughness: 0.68,
     }),
     floor: new THREE.MeshStandardMaterial({
-      color: 0x775238,
-      map: createFloorTexture(),
-      roughness: 0.78,
+      color: floorFinish === 'historic-oak' ? PALETTE.parchment : 0x775238,
+      map: historicFloor?.map ?? createFloorTexture(),
+      bumpMap: historicFloor?.bumpMap, bumpScale: 0.003,
+      roughnessMap: historicFloor?.roughnessMap,
+      roughness: floorFinish === 'historic-oak' ? 0.7 : 0.78,
       metalness: 0.02,
     }),
     rug: new THREE.MeshStandardMaterial({
       color: 0xffffff,
-      map: createRugTexture(),
+      map: includeStoneAndRugTextures ? createRugTexture() : null,
       roughness: 0.96,
     }),
     brass: new THREE.MeshStandardMaterial({
@@ -275,4 +281,12 @@ export function createLibraryMaterials(): LibraryMaterials {
       roughness: 0.3,
     }),
   };
+  if(historicFloor) {
+    const finish=createWestOakFinish(materials.wood,'Long Room');
+    materials.wood.dispose();materials.woodWarm.dispose();materials.woodDark.dispose();
+    Object.assign(materials,finish);
+    // The Long Room's aged lining is less polished than the west stair handrails.
+    materials.wood.roughness=0.94;materials.woodWarm.roughness=0.88;materials.woodDark.roughness=0.96;
+  }
+  return materials;
 }

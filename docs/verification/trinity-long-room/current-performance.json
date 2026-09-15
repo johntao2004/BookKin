@@ -1,0 +1,47 @@
+{
+  "date": "2026-09-09",
+  "scope": "local desktop browser; existing server; uncontrolled cache/host load; no mobile or cold-start comparison",
+  "componentBeforeDiagnosticFix": {
+    "catalogBooks": 0,
+    "elapsedMs": 476.3,
+    "longestStepMs": 25.4,
+    "drawCalls": 189,
+    "triangles": 6551006,
+    "staticPhaseReport": "incorrectly omitted due obsolete prefix"
+  },
+  "componentAfterDiagnosticFix": {
+    "catalogBooks": 0,
+    "elapsedMs": 481.1,
+    "longestStepMs": 25.5,
+    "staticSteps": 469,
+    "staticCpuMs": 31.5,
+    "staticMaxStepMs": 2.8,
+    "stepsOver50ms": 0
+  },
+  "authenticatedMainPage": {
+    "catalogBooks": 4,
+    "worldBuildMs": 501.2,
+    "worldFinalizeMs": 16.8,
+    "shaderCompileMs": 73.3,
+    "longestStepMs": 25.5,
+    "longestStage": "construction-0",
+    "drawCalls": 188,
+    "triangles": 6547238,
+    "lastRenderSubmissionCpuMs": 4.5,
+    "settledRenderState": "idle"
+  },
+  "categoryInteraction": {
+    "focusedBooks": 4,
+    "collision": "clear",
+    "frameWithinNDCViewport": true,
+    "lastRenderSubmissionCpuMs": 2.5,
+    "settledRenderState": "idle"
+  },
+  "limitations": [
+    "Per-stage timing is not a PerformanceObserver long-task trace",
+    "Render submission CPU time is not GPU frame time or FPS",
+    "Model construction excludes catalog fetch and first displayed frame",
+    "No before/after speedup claimed",
+    "Large catalogs and mobile performance remain unverified"
+  ]
+}

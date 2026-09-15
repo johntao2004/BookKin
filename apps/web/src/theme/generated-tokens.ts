@@ -41,8 +41,8 @@ export const tokens = {
     },
     "semantic": {
       "canvas": "#FAF9F5",
-      "surface": "#EFE9DE",
-      "surfaceCard": "#EFE9DE",
+      "surface": "#FFFDF8",
+      "surfaceCard": "#FFFDF8",
       "surfaceSoft": "#F5F0E8",
       "surfaceStrong": "#E8E0D2",
       "surfaceCreamStrong": "#E8E0D2",
@@ -69,7 +69,8 @@ export const tokens = {
       "focus": "#CC785C",
       "success": "#5DB872",
       "warning": "#D4A017",
-      "error": "#C64545"
+      "error": "#C64545",
+      "surfaceInput": "#F5F0E8"
     }
   },
   "spacing": {

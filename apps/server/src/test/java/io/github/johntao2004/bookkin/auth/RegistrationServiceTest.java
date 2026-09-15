@@ -12,7 +12,7 @@ class RegistrationServiceTest {
  final UserRepository users=mock(UserRepository.class);
  final PasswordEncoder encoder=mock(PasswordEncoder.class);
  final AuditService audit=mock(AuditService.class);
- final RegistrationService service=new RegistrationService(policy,users,encoder,audit);
+ final RegistrationService service=new RegistrationService(policy,users,encoder,audit,mock(PasswordPolicyService.class));
  @Test void closedPolicyRejectsWithoutCreatingAccount() {
   when(policy.lock()).thenReturn(false);
   assertThatThrownBy(()->service.register("reader","Reader","password12345")).isInstanceOf(ApiException.class);

@@ -42,16 +42,17 @@ public class AuthController {
     private final HttpSessionSecurityContextRepository contextRepository;
     private final LoginRateLimiter rateLimiter;
     private final AuditService audit;
+    private final io.github.johntao2004.bookkin.auth.PasswordPolicyService passwordPolicy;
 
     public AuthController(UserRepository users, PasswordEncoder passwords, AuthenticationManager authenticationManager,
                           HttpSessionSecurityContextRepository contextRepository, LoginRateLimiter rateLimiter,
-                          AuditService audit) {
+                          AuditService audit, io.github.johntao2004.bookkin.auth.PasswordPolicyService passwordPolicy) {
         this.users = users;
         this.passwords = passwords;
         this.authenticationManager = authenticationManager;
         this.contextRepository = contextRepository;
         this.rateLimiter = rateLimiter;
-        this.audit = audit;
+        this.audit = audit; this.passwordPolicy=passwordPolicy;
     }
 
     @GetMapping("/csrf")
@@ -69,6 +70,7 @@ public class AuthController {
         if (!isTrustedSetupAddress(request.getRemoteAddr())) {
             throw ApiException.forbidden("SETUP_NETWORK_FORBIDDEN", "主人初始化只允许从 NAS 本机或局域网访问。");
         }
+        passwordPolicy.validate(input.password());
         var created = users.createOwnerIfEmpty(input.username(), input.displayName(), passwords.encode(input.password()))
                 .orElseThrow(() -> ApiException.conflict("ALREADY_INITIALIZED", "BookKin已经完成初始化。"));
         authenticateAndSave(created.username(), input.password(), request, response);
@@ -107,6 +109,7 @@ public class AuthController {
         if (!passwords.matches(input.currentPassword(), user.passwordHash())) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "CURRENT_PASSWORD_INVALID", "当前密码不正确。");
         }
+        passwordPolicy.validate(input.newPassword());
         users.updatePassword(user.id(), passwords.encode(input.newPassword()));
         audit.record(user.id(), "PASSWORD_CHANGED", "USER", user.id().toString(), null, null, null, null,
                 "SUCCEEDED", "{}");
@@ -158,8 +161,8 @@ public class AuthController {
     public record SetupRequest(
             @NotBlank @Pattern(regexp = "[a-zA-Z0-9._-]{3,80}") String username,
             @NotBlank @Size(max = 120) String displayName,
-            @Size(min = 12, max = 200) String password) {}
-    public record ChangePasswordRequest(@NotBlank String currentPassword, @Size(min = 12, max = 200) String newPassword) {}
+            @NotBlank @Size(max = 200) String password) {}
+    public record ChangePasswordRequest(@NotBlank String currentPassword, @NotBlank @Size(max = 200) String newPassword) {}
     public record SessionUser(String id, String username, String displayName, UserRole role, boolean mustChangePassword) {
         static SessionUser from(BookKinUser user) {
             return new SessionUser(user.id().toString(), user.username(), user.displayName(), user.role(), user.mustChangePassword());

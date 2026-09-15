@@ -1,0 +1,96 @@
+{
+  "application": "2949/20",
+  "applicationUrl": "https://planning.agileapplications.ie/dublincity/application-details/139567",
+  "archiveUrl": "https://webapps.dublincity.ie/PublicAccess_Live/SearchResult/RunThirdPartySearch?FileSystemId=PL&Folder1_Ref=2949/20",
+  "catalogEntries": 122,
+  "received": "2020-06-30",
+  "documents": [
+    {
+      "file": ".local/research/trinity-long-room/dcc-2949-20/existing-01.pdf",
+      "guid": "1B693320C67911EA80E2005056B85853",
+      "url": "https://webapps.dublincity.ie/PublicAccess_Live/Document/ViewDocument?id=1B693320C67911EA80E2005056B85853",
+      "bytes": 13887680,
+      "sha256": "7716491b1d5944c3bfa3ba532525b91b8ce617d4286f741e6c624767c5154237",
+      "validPdfHeader": true,
+      "visualReview": true,
+      "sheet": "Y1.001 basement and basement mezzanine"
+    },
+    {
+      "file": ".local/research/trinity-long-room/dcc-2949-20/existing-02.pdf",
+      "guid": "1B693322C67911EA80E2005056B85853",
+      "url": "https://webapps.dublincity.ie/PublicAccess_Live/Document/ViewDocument?id=1B693322C67911EA80E2005056B85853",
+      "bytes": 8331221,
+      "sha256": "023e141b8523ee3e2ffa23f70b38819eee6e5e464710629a665aaf859fb56a63",
+      "validPdfHeader": true,
+      "visualReview": true,
+      "sheet": "Y1.002 ground and first floor"
+    },
+    {
+      "file": ".local/research/trinity-long-room/dcc-2949-20/existing-03.pdf",
+      "guid": "1B693324C67911EA80E2005056B85853",
+      "url": "https://webapps.dublincity.ie/PublicAccess_Live/Document/ViewDocument?id=1B693324C67911EA80E2005056B85853",
+      "bytes": 8186640,
+      "sha256": "fed41d98dfe75f9858ad9e7fdc1d39b142521065cb1319b5b4ef5335acaf8452",
+      "validPdfHeader": true,
+      "visualReview": true,
+      "sheet": "Y1.003 second and third floor"
+    },
+    {
+      "file": ".local/research/trinity-long-room/dcc-2949-20/existing-04.pdf",
+      "guid": "1B693326C67911EA80E2005056B85853",
+      "url": "https://webapps.dublincity.ie/PublicAccess_Live/Document/ViewDocument?id=1B693326C67911EA80E2005056B85853",
+      "bytes": 5647155,
+      "sha256": "0ca9513e79f6dbe19dd2d58f774a7abd915a1952c55b31b97e1247ca9c78562a",
+      "validPdfHeader": true,
+      "visualReview": true,
+      "sheet": "Y1.004 attic and roof"
+    },
+    {
+      "file": ".local/research/trinity-long-room/dcc-2949-20/existing-sections-01.pdf",
+      "guid": "4EF2FC06C67911EA80E2005056B85853",
+      "url": "https://webapps.dublincity.ie/PublicAccess_Live/Document/ViewDocument?id=4EF2FC06C67911EA80E2005056B85853",
+      "bytes": 7702634,
+      "sha256": "857880a8f373f53bf28f92c0da72130f0e4d8dca3e675d23d3528bbff742ca1c",
+      "validPdfHeader": true,
+      "visualReview": true,
+      "reviewedPages": [
+        1
+      ],
+      "sheet": "Y2.001 existing elevations and central section"
+    },
+    {
+      "file": ".local/research/trinity-long-room/dcc-2949-20/old-library-cross-sections.pdf",
+      "guid": "4EF2FBE2C67911EA80E2005056B85853",
+      "url": "https://webapps.dublincity.ie/PublicAccess_Live/Document/ViewDocument?id=4EF2FBE2C67911EA80E2005056B85853",
+      "bytes": 20500671,
+      "sha256": "5e9550188c7e59039a2e7240cd16bf71a3781bde50fb07e36a8c288f9e40a271",
+      "validPdfHeader": true,
+      "visualReview": true,
+      "reviewedPages": [
+        1,
+        15,
+        16,
+        32,
+        33
+      ],
+      "sheet": "Murphy Surveys 2019 cross sections and internal elevations"
+    },
+    {
+      "file": ".local/research/trinity-long-room/dcc-2949-20/old-library-survey-report.pdf",
+      "guid": "1B69332CC67911EA80E2005056B85853",
+      "url": "https://webapps.dublincity.ie/PublicAccess_Live/Document/ViewDocument?id=1B69332CC67911EA80E2005056B85853",
+      "bytes": 24322555,
+      "sha256": "268239b732502c5b8f11b7c80d5ff7da94737f845e14d9ca564b90ed3e13d18a",
+      "validPdfHeader": true,
+      "pages": 30,
+      "visualReview": true,
+      "reviewedPages": [
+        25,
+        26,
+        27,
+        28
+      ],
+      "sheet": "Detailed survey information: Old Library elevations and sections; XS-3A/3B and XS-4A/4B"
+    }
+  ]
+}

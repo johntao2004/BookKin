@@ -1,0 +1,15 @@
+{
+  "scope": "Named main-hall window details before static batching; temporary before/after regression test",
+  "before": {
+    "geometryResources": 1480,
+    "meshCount": 1480,
+    "singleBuildMs": 4335.483708000001
+  },
+  "after": {
+    "geometryResources": 74,
+    "meshCount": 1480,
+    "singleBuildMs": 3098.427667
+  },
+  "comparison": "Per-mesh names, world bounds rounded to 6 decimals, vertex counts and index counts exactly matched.",
+  "limitations": "Single runs under uncontrolled host load; not a controlled time-to-interactive benchmark. Geometry grouping does not reduce the final triangle count."
+}

@@ -74,12 +74,18 @@ pnpm install
 pnpm demo:library
 ```
 
-Run the API and Worker, then start the web app in another terminal:
+Start the complete local preview in the background (API, Worker and web):
 
 ```bash
-pnpm start:local
-pnpm dev
+pnpm start:preview
+pnpm status:preview
+# Stop processes created by this launcher:
+pnpm stop:preview
 ```
+
+The launcher waits for API health and the web CSRF proxy, reuses healthy services, and detaches newly started processes from the terminal. Logs are in `.local/logs/`. Closing the terminal does not stop the preview. It does not install a system service or start automatically after a reboot. Already running services reused by this launcher remain under their original owner; stop those through their original launcher.
+
+For foreground debugging, `pnpm start:local` and `pnpm dev` remain available in separate terminals; closing either terminal stops that part of the stack.
 
 Open `http://localhost:4173/setup` to create the owner account. After setup, `pnpm demo:seed` can populate the PostgreSQL-backed demo state.
 
@@ -148,3 +154,15 @@ The design-token source of truth is [`design/tokens.json`](design/tokens.json). 
 ## License
 
 BookKin source code is available under the [MIT License](LICENSE). Bundled fonts, artwork and models retain their own licenses and source notices in `apps/web/public/`; see [font sources](apps/web/public/fonts/FONT_SOURCES.md) and [virtual-library assets](docs/virtual-library.md#资源与许可).
+
+### 邮件与密码找回
+
+主人在「设置 → 邮件服务」填写 SMTP 主机、端口、连接加密、用户名、授权码、发件邮箱和 BookKin 站点地址，启用并保存后向自己的邮箱发送测试邮件。支持 STARTTLS（通常 587）与 TLS（通常 465）；不加密模式只允许本机测试。授权码加密存储，留空保存会保留原值。使用实例已有的 `BOOKKIN_AI_SETTINGS_ENCRYPTION_KEY`，部署后需持续保留此密钥。
+
+用户在「设置 → 找回邮箱」输入当前密码和邮箱，通过邮件中的链接确认绑定。登录页「忘记密码？」向已验证邮箱发送 30 分钟有效的一次性链接；重置成功撤销旧会话，需要重新登录。不存在或停用的账户使用相同申请响应。发送失败可由主人通过测试邮件检查 SMTP 配置，服务端记录重置投递失败审计。
+
+邮件中的站点地址必须为可访问的 HTTPS 根地址；本机测试可使用 `http://127.0.0.1:4175`。`BOOKKIN_WEB_PORT=4175 pnpm start:preview` 可选择空闲的本地端口，成功启动后会记住该端口供后续启动和状态检查使用。用户仍处于临时密码状态时，需要先设置自己的密码才能管理邮件配置或绑定邮箱。
+
+### 密码复杂度
+
+主人可在「用户管理 → 安全设置 → 密码复杂度」配置最小长度（8–128）以及大写字母、小写字母、数字、英文标点/符号要求。默认延续至少 12 位；密码最多 200 位。注册、主人初始化、首次改密与邮件重置共享服务端校验和页面提示。自动临时密码满足当前规则。规则变更只影响新设置的密码，不会阻止已有密码登录。密码规则与开放注册分别保存。

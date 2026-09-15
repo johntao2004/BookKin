@@ -34,6 +34,15 @@ public class LoginRateLimiter {
         attempts.addLast(clock.instant());
     }
 
+    public synchronized void consumeRecovery(String value) {
+        String key = "recovery:" + value;
+        failures.entrySet().removeIf(entry -> { evict(entry.getValue()); return entry.getValue().isEmpty(); });
+        Deque<Instant> attempts = failures.computeIfAbsent(key, ignored -> new ArrayDeque<>());
+        evict(attempts);
+        if (attempts.size() >= LIMIT) throw new ApiException(HttpStatus.TOO_MANY_REQUESTS, "RECOVERY_RATE_LIMITED", "邮件操作过于频繁，请稍后再试。");
+        attempts.addLast(clock.instant());
+    }
+
     public synchronized void check(String key) {
         Deque<Instant> attempts = failures.computeIfAbsent(key, ignored -> new ArrayDeque<>());
         evict(attempts);

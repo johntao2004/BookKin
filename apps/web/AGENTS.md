@@ -72,7 +72,7 @@ The director-office hall portal must read as one coherent architectural doorway:
 
 The restricted-archive hall portal is a closed original Gothic double-leaf iron gate: use seven symmetric vertical members including the center meeting stile, three horizontal rails and three hinge sets per leaf, restrained lancet finials, one centered slide bolt and one mechanical lock. Keep a deep dark pointed recess behind the bars, retain the outer stone arch, and omit the former solid timber leaves, decorative rivets, paired pulls, inner gold arch, keypad-like blocks, face-like rings, and intense red hardware wash.
 
-The main hall's interactive catalog layer must render exactly one 3D book model for each real catalog book and must not fill empty shelf space by repeating titles. Keep each unselected model naturally inserted between shelf boards, and pack real books assigned to the same shelf row into one centered contiguous run instead of leaving an arbitrary central gap. Shelf focus moves only the camera and persistent frame. Clicking a real book may pull that original model forward within the current focused-bookcase view for cover inspection, drag rotation, and wheel scaling; a short press and release on that same inspected model opens `/reader/:bookId`, while a drag continues to rotate it. Clicking another visible shelf book must switch inspection directly without a reset. Never move a book to the reception desk or spawn a duplicate floating model, and always restore its exact shelf transform when inspection closes. Non-interactive office background volumes are governed separately below and must never reuse catalog titles or cover textures.
+The main hall's interactive catalog layer must render exactly one 3D book model for each real catalog book and must not fill empty shelf space by repeating titles. Keep each unselected model naturally inserted between shelf boards, and pack real books assigned to the same shelf row into one centered contiguous run instead of leaving an arbitrary central gap. Shelf focus moves only the camera and persistent frame. Clicking a real book must pull that original model forward within the current focused-bookcase view for cover inspection, drag rotation, and wheel scaling; a short press and release on that same inspected model opens `/reader/:bookId`, while a drag continues to rotate it. Clicking another visible shelf book must switch inspection directly without a reset. Never move a book to the reception desk or spawn a duplicate floating model, and always restore its exact shelf transform when inspection closes. Non-interactive office background volumes are governed separately below and must never reuse catalog titles or cover textures.
 
 When refining the virtual library, build depth with layered inset wood panels, shelf supports and labels, fluted and collared masonry, modeled reception and fireplace props, localized shelf-wash lighting, and restrained bloom. Do not compensate for sparse catalog data in the main hall with decorative filler books, oversized glow, or flat dark shelf planes.
 
@@ -150,6 +150,8 @@ Keep upload dialogs compact and viewport-bounded, with a scrolling content area 
 
 Ant Design 6 Modal shell styles use the container semantic slot, not the obsolete content slot. Keep shell padding zero so title/content/actions supply exactly one layer of token-based padding.
 
+Keep the library metadata editor compact: retain only the separator between cover controls and bibliographic fields, place the original-file writeback checkbox directly after the description, and never reintroduce an extra modal-body padding layer around the shared title/content/actions.
+
 Upload selection or drop starts transfer automatically. Keep one primary upload action, show uploaded confirmation, and navigate to the persistent book-information editor on confirmation. Do not expose the inspection queue or batch commit in the upload dialog. Preserve server validation and staging; metadata editing completes safe ingestion.
 
 Do not show a batch-rename action on the library collection page. Keep individual book metadata editing in the book action menu.
@@ -170,7 +172,7 @@ Standard page headers consistently place eyebrow, title and description above a 
 
 Settings contains library roots, reader fonts and display books only. User management has anchored tabs for user list (#users), operation logs (#operations) and login logs (#logins). Redirect former file-task routes and the settings file-operations anchor to /admin/users#operations. Do not repeat page headings within these tabs.
 
-Display-book management lives at the top-level /display-books route and is linked from the signed-in main navigation. Settings now contains library roots and reader fonts only. Redirect /settings/display-books and /settings#display-books to /display-books.
+The homepage is the public display catalog. Do not show a separate 展示书目 item in desktop or mobile primary navigation. Signed-in users enter management via the homepage action 管理首页书目, retaining the protected /display-books management route for adding, removing and reordering homepage books. Keep legacy display-setting redirects compatible.
 
 All page-level action toolbars align to the right edge, including Create User, refresh, add and upload actions. Keep the separate toolbar row below the header or tabs; this supersedes earlier left-aligned toolbar guidance. Use shared ActionToolbar for dedicated action rows and PageHeader actions.
 
@@ -183,3 +185,75 @@ The AI provider selector chooses the single active provider on save. Do not show
 Keep AI platform settings in one left-aligned form column, with each field on its own row. All inputs and selects, including custom model IDs and API keys, share the provider selector's compact maximum width and shrink to fit narrower screens. Place the optional clear-key control below the API key input so it cannot reduce that input's width.
 
 Ant Design uses the dark algorithm for Night mode. Select values remain fully legible while open; selected and active options use theme semantic colors.
+
+The virtual library now has at least four vertical storage storeys with three circular galleries and a larger 38.4-unit interior diameter. Preserve this expanded rotunda scale when refining the architecture; this supersedes the original double-height baseline.
+
+The BookKin wordmark over the authentication artwork uses the shared white color, matching the white artwork copy.
+
+Global feedback bubbles use the shared bodySm typography token for notification titles and descriptions, keeping notices compact.
+
+Visiting /login or /login/ with an existing valid session enters the homepage; temporary-password sessions enter /change-password. Show visible session-loading and retry states, and only show the login form once the visitor is known to be signed out.
+
+Use Trinity College Dublin’s Long Room as the current virtual-library refinement reference: rhythmic oak vault bays, fitted timber lining, classical fluted bookcase pilasters and restrained metal details. Adapt these to the existing four-storey rotunda and its entrance-to-fireplace axis; preserve the clear central floor, reception orb, real catalog books and room interactions. This supersedes the fan-vault ornament direction.
+
+The user's full 1:1 Long Room reconstruction request supersedes ALL earlier rotunda/four-storey, moonlit Gothic, reception orb, fireplace, central-floor furniture, and fictional portal architecture rules. Use the Trinity College Dublin Old Library Long Room's 63.7 m × 12.2 m × 14.2 m interior, two storage levels, axial oak barrel vault, forty side alcoves, timber galleries and historically referenced furnishings. Keep private catalog/reader access functional; distinguish non-interactive historical scenery books from real catalog models. Do not describe guessed joinery or sculpture dimensions as measured. Track references and remaining fidelity gaps in docs/verification/trinity-long-room/reference.md.
+
+Global forms need visible grouping: use shared bk-form-section panels, white editable controls in light themes, stronger control borders and primary-colored labels. Preserve clear contrast in Night mode. This supersedes the rejected unfilled, low-contrast form treatment.
+
+After reviewing the measured Long Room, the user explicitly requested a much larger hall. The current experience expands the architectural envelope to 90 m × 18.3 m × 20.4 m while preserving human-sized books, busts and display cases. Retain the source dimensions separately; do not claim this enlarged experience is a strictly measured 1:1 replica.
+
+The user explicitly authorizes reconstructing missing Long Room data from public documents and photographs. Continue with source-linked dimensions and clearly identified estimates instead of waiting for a complete scan. Keep date-consistent references, preserve the enlarged experience and existing performance optimizations, and record evidence in docs/verification/trinity-long-room/public-reference-data.json.
+
+The user rejects the rough Long Room floor, ceiling and flat lighting: refine visible timber surfaces and architectural/contact shadows while preserving responsive rendering. The second level must have an obvious usable stair and continuous human-width walkways. Any circulation added for the enlarged hall must be identified as an adaptation, not surveyed original geometry.
+
+Hall exploration must move forward along the view direction beyond the former orbit zoom cap. Preserve collision descriptors during static mesh batching, include upper bookcases and gallery/stair guards, and apply collision to guided gallery travel. Shelf focus must use a clear stand point rather than animate through intervening shelves or the historic spiral. Stairs need supported rest landings and a clear transition into the gallery.
+
+The latest user review requests wider horizontal space, shorter bookcases with a complete shelf-focus view, real catalog category zones, visible modeled lamps, more detailed window joinery, coherent curved vault geometry and no repeated crude statues or central display tables. The active adaptation is 90 × 22.3 × 18.45 m, with a 14.2 m clear central aisle, 5.4 m lower cases and a 5.95 m gallery. Historic sculpture studies stay in the component review route until distinct likenesses are acceptable; do not repopulate the hall with generic duplicates. Keep central display tables and the harp display cabinet out of the live hall. These usability/proportion requests supersede the former enlarged dimensions while preserving source measurements separately.
+
+The user requests removal of the basement. Remove the central descending visitor stair, lower landing, associated lights and blocking volume, and close its floor aperture with continuous timber flooring. The later original-stair review also supersedes the freestanding gallery access stair: route upper-gallery access through the photo-derived iron alcove spiral and close the obsolete rail opening. Preserve explicit estimates rather than claiming exact surveyed geometry.
+
+The repeated basement-removal request also removes both live descending pavilion stairs and lower arrival spaces. Keep level room connections, continuous collision-supported floors, and first-to-second-floor stairs; remove east/west downward navigation buttons. Historical lower stair studies remain isolated references, not live hall geometry.
+
+The user removed the guided second-floor stair viewpoint and the live service stair, Fagel pavilion, and west upper storage areas. Remove their navigation and walking routes, omit these areas from live construction, and seal their former portals with solid geometry and collision. Retain the main hall, real catalog interactions, and Henry Jones room; historical component studies may remain isolated.
+
+Visible books in the live virtual library must correspond one-to-one to the current real catalog. Do not generate anonymous historical filler books on empty shelves. Render current catalog covers and actual titles on book spines; keep binding appearance stable by book ID when ordering changes. Historical filler belongs only in isolated reference studies.
+
+Real catalog books must read as ordinary paper books: restrained thickness, thin covers, inset page blocks and fine spines. Keep proportions consistent on shelves and during inspection; avoid oversized slab-like covers or thick colorful bindings.
+
+The live Long Room east and west ends are continuous timber walls. Remove their lower and upper door openings and leaves, paired arched niches or window-like treatments, pediments and associated architraves from the live hall, and enforce solid collision boundaries. Keep Henry Jones available through a direct area switch without routing the camera through the sealed west wall; retain the former end compositions only in isolated historical studies.
+
+The live historic spiral-stair alcove omits its lower and upper transverse bookcases so the stair reads as one clear, harmonious bay. Also omit the entrance-end north-side transverse case selected in the 2026-09-15 review at both levels, together with its shelf marks, case-mounted lamps, unsupported ladder and collision/click targets. Keep the adjacent window, end wall, continuous gallery floor, railing and balusters, and exclude both removed sections from real-catalog slot allocation. Historical reference assemblies may retain the former cases.
+
+Virtual-library keyboard navigation uses continuous, frame-rate-independent camera-relative movement: W/S move forward and back, A/D strafe left and right, diagonal input keeps the same speed, and all motion retains scene collision. Keep this behavior in both the Long Room and the Henry Jones room.
+
+The live virtual-library overlay does not expose a Henry Jones room switch. Start the control panel with the walking/catalog controls and keep the Henry Jones architectural model separate from the visible navigation UI.
+
+The live virtual-library walking eye height is 1.78 scene units above the current floor or route. Keep that modestly raised view consistent across free WASD movement and any retained guided route.
+
+The live historic spiral stair sits at x=-8 and z=41.1825, with its aisle-side edge aligned to the lower-case line instead of recessed toward the rear wall. Keep both wall lamps out of this stair bay. Move its gallery aperture, upper landing, guided path and collision geometry together whenever this anchor changes.
+
+Do not render shelf-letter marks in the live historic spiral-stair bay after its lower and upper transverse cases have been removed. Historical reference assemblies may retain those marks with their restored cases.
+
+The transverse case immediately beyond the live spiral-stair bay is single-faced. Its +z face toward the stair is a finished back without open shelf boards, books, shelf letters or shelf furniture; retain the -z shelf face for the following alcove and for future real-catalog capacity. Historical reference assemblies may retain both faces.
+
+The user removed every window-end double reading stand from the live Long Room. Do not restore these paired lecterns, their shaped lettering cartouches, or their circular scroll-relief supports anywhere in the hall.
+
+Focused real-catalog shelf books must be easy to select and must read as a compact, nearly contiguous run rather than isolated thin sticks. Keep a separate, non-rendered raycast target of at least 0.16 scene units around each spine, leave only a hairline gap between adjacent targets, use a broad visible binding, and render at most five large glyphs from the real title with a high-resolution, high-contrast spine texture. Keep the virtual-library renderer above 1× resolution on high-density screens when performance allows so the spine lettering stays crisp.
+
+Selecting a real catalog book must pull that same 3D model a short controlled distance straight out of its shelf and turn its cover toward the focused view while preserving its exact shelf scale on every axis at the default 1× zoom. Do not move it into a separate oversized inspection pose. User-controlled zoom may multiply the preserved shelf scale, and closing or switching inspection must restore the previous book's exact shelf transform.
+
+The live spiral stair needs a continuous outer guard and handrail from the first tread through the tread before the final exit, leaving only the last exit sector open, plus guards along both upper-landing edges. When retired east-end rooms are omitted, close their obsolete opening with the full gallery handrail, balusters and matching collision; do not leave an unguarded gap beside the stair.
+
+The latest selected-book review supersedes the shelf-scale-only inspection pose: animate the same catalog model out of its slot into a controlled, readable preview on the left side of the focused-bookcase view, facing the camera. Keep it separated from the remaining shelf hit targets so direct book-to-book switching still works, preserve its proportions while preview scaling, and restore the exact shelf transform on close or switch. Use six generous shelf tiers rather than ten in both lower and upper live cases; derive catalog-book height and resting position from that shelf pitch. Retain 120 catalog slots per section by using twenty books per row instead of reintroducing cramped vertical tiers.
+
+Reader top navigation and document bodies use the same responsive maximum width: `readingMax` below the tablet breakpoint and `contentMax` at and above it. Apply this consistently to EPUB, PDF and demo reading surfaces so the header and body remain aligned at every viewport size.
+
+Render the selected left-side book preview as a dedicated foreground 3D pass with its own depth buffer. Scene walls, ladders and bookcase parts must never cut through or erase the preview model, while the model's own cover, page block and spine still retain correct internal depth. Keep the default desktop preview close to one third of the viewport height so the cover is clearly readable, and leave user wheel scaling bounded.
+
+Real catalog book models must remain refined at both shelf and inspection scales: use the actual cover inside a thin binding lip, an inset textured page block, a rounded spine, restrained shoulders, caps, hinge grooves and headbands, plus a crisp high-contrast serif title. Keep those details inside the existing consistent proportions and never regress to plain colored slabs or oversized antique bindings.
+
+While a real-catalog shelf is focused, keep the camera at its controlled selection viewpoint: disable the visible forward and back controls, ignore movement-key walking, and never collapse the shelf as a side effect of a walk request. Restore walking only after the user explicitly exits shelf focus.
+
+Do not render the historical benefactor-name plaques or their green-and-gold frieze panels in the live Long Room. Keep the names only in source/reference records, and do not restore these plaques without a new explicit user request.
+
+The default Long Room entry view and the hall view restored after collapsing a focused shelf must use the same camera height. Reset the shelf-focus pitch to `LONG_ROOM.camera.pitch` while preserving the current horizontal facing direction.

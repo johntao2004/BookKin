@@ -29,5 +29,5 @@ public class RegistrationController {
  }
  public record Registered(boolean registered) {}
  public record Policy(@NotNull Boolean registrationEnabled) {}
- public record Registration(@NotBlank @Pattern(regexp="[a-zA-Z0-9._-]{3,80}") String username, @NotBlank @Size(max=120) String displayName, @NotBlank @Size(min=12,max=200) String password) {}
+ public record Registration(@NotBlank @Pattern(regexp="[a-zA-Z0-9._-]{3,80}") String username, @NotBlank @Size(max=120) String displayName, @NotBlank @Size(max=200) String password) {}
 }

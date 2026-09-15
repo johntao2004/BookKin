@@ -206,7 +206,7 @@ function ModelField({ provider, disabled, onChange }: { provider: AiProviderSett
 }
 
 function SettingsPanel({ title, description, children, footer }: { title: string; description: string; children: ReactNode; footer?: ReactNode }) {
-  return <Stack spacing={1.5} sx={{ border: 1, borderColor: "divider", borderRadius: 3, p: { xs: 2, sm: 2.5 }, bgcolor: "background.paper" }}>
+  return <Stack spacing={1.5} className="bk-form-section">
     <Box><Typography variant="h4">{title}</Typography><Typography color="text.secondary" sx={{ mt: 0.5 }}>{description}</Typography></Box>
     {children}
     {footer && <Stack sx={{ alignItems: "flex-end", pt: tokens.spacing.sm, borderTop: 1, borderColor: "divider" }}><ActionToolbar>{footer}</ActionToolbar></Stack>}

@@ -1,3 +1,4 @@
+const ProfilePage = lazy(() => import("./pages/ProfilePage").then(m => ({ default: m.ProfilePage })));
 const RegisterPage = lazy(() => import("./pages/RegisterPage").then(m => ({default:m.RegisterPage})));
 const DisplayBooksPage = lazy(() => import("./pages/DisplayBooksSettingsPage").then(m => ({ default: m.DisplayBooksSettingsPage })));
 import { Skeleton } from "@/ui/antd";
@@ -18,6 +19,7 @@ const BooklistsPage = lazy(() => import("./pages/BooklistsPage").then((module) =
 const BooklistDetailPage = lazy(() => import("./pages/BooklistDetailPage").then((module) => ({ default: module.BooklistDetailPage })));
 const LibraryPage = lazy(() => import("./pages/LibraryPage").then((module) => ({ default: module.LibraryPage })));
 const PublicLibraryPage = lazy(() => import("./pages/PublicLibraryPage").then((module) => ({ default: module.PublicLibraryPage })));
+const RecoveryPage = lazy(() => import("./pages/RecoveryPage").then(m => ({default:m.RecoveryPage})));
 const LoginPage = lazy(() => import("./pages/LoginPage").then((module) => ({ default: module.LoginPage })));
 const NotFoundPage = lazy(() => import("./pages/NotFoundPage").then((module) => ({ default: module.NotFoundPage })));
 const ReaderPage = lazy(() => import("./pages/ReaderPage").then((module) => ({ default: module.ReaderPage })));
@@ -37,6 +39,8 @@ export default function App() {
   return (
     <Suspense fallback={<PageContainer><div role="status" aria-label="正在加载页面"><Skeleton active paragraph={{ rows: 8 }} /></div></PageContainer>}>
       <Routes>
+        <Route path="/recover" element={<RecoveryPage />} />
+        <Route path="/forgot-password" element={<RecoveryPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/setup" element={<SetupPage />} />
         <Route path="/register" element={<RegisterPage />} />
@@ -51,6 +55,7 @@ export default function App() {
         </Route>
         <Route element={<ProtectedShell />}>
           <Route path="/library/uploads/:uploadId" element={<RequireAuth roles={["OWNER", "ADMIN"]}><UploadEditPage /></RequireAuth>} />
+          <Route path="/profile" element={<ProfilePage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/library/all" element={<LibraryPage />} />
           <Route path="/virtual-library" element={<VirtualLibraryPage />} />

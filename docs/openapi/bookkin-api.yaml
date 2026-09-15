@@ -22,6 +22,132 @@ tags:
   - name: Reader fonts
 
 paths:
+  /auth/profile:
+    put:
+      tags: [Auth]
+      summary: 修改当前账户用户名和显示名称
+      description: 需要当前密码；用户名变化时撤销旧身份会话并重建当前会话。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username, displayName, currentPassword]
+              properties:
+                username: { type: string, pattern: '^[a-zA-Z0-9._-]{3,80}$' }
+                displayName: { type: string, minLength: 1, maxLength: 120 }
+                currentPassword: { type: string, format: password, maxLength: 200 }
+      responses:
+        '200': { description: 更新后的当前会话用户 }
+        '400': { description: 输入格式不正确 }
+        '403': { description: 当前密码不正确或没有登录 }
+        '409': { description: 用户名已存在 }
+        '429': { description: 操作过于频繁 }
+  /auth/password-policy:
+    get:
+      tags: [Auth]
+      security: []
+      operationId: getPasswordPolicy
+      responses:
+        '200': { description: 当前密码规则, content: { application/json: { schema: { $ref: '#/components/schemas/PasswordPolicy' } } } }
+  /users/password-policy:
+    put:
+      tags: [Auth]
+      operationId: savePasswordPolicy
+      description: 仅主人可修改，对新设置的密码生效，不拒绝已有密码登录。
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/PasswordPolicy' } } } }
+      responses:
+        '200': { description: 已保存, content: { application/json: { schema: { $ref: '#/components/schemas/PasswordPolicy' } } } }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+  /mail/settings:
+    get:
+      tags: [Auth]
+      operationId: getMailSettings
+      description: 主人读取 SMTP 配置；密码不返回
+      responses:
+        "200": { description: 操作成功 }
+        "400": { $ref: "#/components/responses/Problem" }
+        "403": { $ref: "#/components/responses/Problem" }
+        "429": { $ref: "#/components/responses/Problem" }
+    put:
+      tags: [Auth]
+      operationId: saveMailSettings
+      description: 主人保存 SMTP 配置；空密码保留原值
+      requestBody: { required: true, content: { application/json: { schema: { $ref: "#/components/schemas/MailSettings" } } } }
+      responses:
+        "200": { description: 操作成功 }
+        "400": { $ref: "#/components/responses/Problem" }
+        "403": { $ref: "#/components/responses/Problem" }
+        "429": { $ref: "#/components/responses/Problem" }
+  /mail/test:
+    post:
+      tags: [Auth]
+      operationId: sendTestMail
+      description: 主人发送测试邮件
+      requestBody: { required: true, content: { application/json: { schema: { $ref: "#/components/schemas/RecoveryEmailInput" } } } }
+      responses:
+        "200": { description: 操作成功 }
+        "400": { $ref: "#/components/responses/Problem" }
+        "403": { $ref: "#/components/responses/Problem" }
+        "429": { $ref: "#/components/responses/Problem" }
+  /auth/recovery-email:
+    get:
+      tags: [Auth]
+      operationId: getRecoveryEmail
+      description: 读取当前用户已验证的找回邮箱
+      responses:
+        "200": { description: 操作成功 }
+        "400": { $ref: "#/components/responses/Problem" }
+        "403": { $ref: "#/components/responses/Problem" }
+        "429": { $ref: "#/components/responses/Problem" }
+    post:
+      tags: [Auth]
+      operationId: bindRecoveryEmail
+      description: 验证当前密码并发送邮箱确认链接
+      requestBody: { required: true, content: { application/json: { schema: { $ref: "#/components/schemas/RecoveryBindInput" } } } }
+      responses:
+        "200": { description: 操作成功 }
+        "400": { $ref: "#/components/responses/Problem" }
+        "403": { $ref: "#/components/responses/Problem" }
+        "429": { $ref: "#/components/responses/Problem" }
+  /auth/recovery/request:
+    post:
+      tags: [Auth]
+      operationId: requestPasswordReset
+      description: 申请重置链接；未知邮箱也返回相同响应
+      security: []
+      requestBody: { required: true, content: { application/json: { schema: { $ref: "#/components/schemas/RecoveryEmailInput" } } } }
+      responses:
+        "200": { description: 操作成功 }
+        "400": { $ref: "#/components/responses/Problem" }
+        "403": { $ref: "#/components/responses/Problem" }
+        "429": { $ref: "#/components/responses/Problem" }
+  /auth/recovery/verify:
+    post:
+      tags: [Auth]
+      operationId: verifyRecoveryEmail
+      description: 确认绑定邮箱；仅显式 POST 消耗链接
+      security: []
+      requestBody: { required: true, content: { application/json: { schema: { $ref: "#/components/schemas/RecoveryTokenInput" } } } }
+      responses:
+        "200": { description: 操作成功 }
+        "400": { $ref: "#/components/responses/Problem" }
+        "403": { $ref: "#/components/responses/Problem" }
+        "429": { $ref: "#/components/responses/Problem" }
+  /auth/recovery/reset:
+    post:
+      tags: [Auth]
+      operationId: resetPasswordByEmail
+      description: 重置密码并撤销全部旧会话
+      security: []
+      requestBody: { required: true, content: { application/json: { schema: { $ref: "#/components/schemas/RecoveryResetInput" } } } }
+      responses:
+        "200": { description: 操作成功 }
+        "400": { $ref: "#/components/responses/Problem" }
+        "403": { $ref: "#/components/responses/Problem" }
+        "429": { $ref: "#/components/responses/Problem" }
   /auth/csrf:
     get:
       tags: [Auth]
@@ -656,6 +782,52 @@ components:
       description: RFC 9457 problem
       content: { application/problem+json: { schema: { $ref: '#/components/schemas/Problem' } } }
   schemas:
+    PasswordPolicy:
+      type: object
+      required: [minLength, requireUppercase, requireLowercase, requireDigit, requireSpecial]
+      properties:
+        minLength: { type: integer, minimum: 8, maximum: 128 }
+        requireUppercase: { type: boolean }
+        requireLowercase: { type: boolean }
+        requireDigit: { type: boolean }
+        requireSpecial: { type: boolean }
+    MailSettings:
+      type: object
+      required: [enabled, host, port, security, username, sender, publicUrl]
+      properties:
+        enabled: { type: boolean }
+        host: { type: string, maxLength: 253 }
+        port: { type: integer, minimum: 1, maximum: 65535 }
+        security: { type: string, enum: [STARTTLS, TLS, LOCAL] }
+        username: { type: string, maxLength: 320 }
+        password: { type: string, writeOnly: true, maxLength: 1000 }
+        passwordConfigured: { type: boolean, readOnly: true }
+        sender: { type: string, format: email }
+        publicUrl: { type: string, format: uri }
+    RecoveryEmailInput:
+      type: object
+      required: [email]
+      properties:
+        email: { type: string, format: email, maxLength: 320 }
+    RecoveryBindInput:
+      allOf:
+        - { $ref: '#/components/schemas/RecoveryEmailInput' }
+        - type: object
+          required: [password]
+          properties:
+            password: { type: string, writeOnly: true, minLength: 1, maxLength: 200 }
+    RecoveryTokenInput:
+      type: object
+      required: [token]
+      properties:
+        token: { type: string, minLength: 43, maxLength: 43 }
+    RecoveryResetInput:
+      allOf:
+        - { $ref: '#/components/schemas/RecoveryTokenInput' }
+        - type: object
+          required: [password]
+          properties:
+            password: { type: string, writeOnly: true, minLength: 1, maxLength: 200 }
     Problem:
       type: object
       properties: { type: { type: string, format: uri }, title: { type: string }, status: { type: integer }, detail: { type: string }, code: { type: string } }
@@ -676,13 +848,13 @@ components:
     SetupRequest:
       type: object
       required: [username, displayName, password]
-      properties: { username: { type: string, pattern: '^[a-zA-Z0-9._-]{3,80}$' }, displayName: { type: string, maxLength: 120 }, password: { type: string, minLength: 12, maxLength: 200 } }
+      properties: { username: { type: string, pattern: '^[a-zA-Z0-9._-]{3,80}$' }, displayName: { type: string, maxLength: 120 }, password: { type: string, minLength: 1, maxLength: 200 } }
     SetupStatus:
       type: object
       required: [initialized]
       properties: { initialized: { type: boolean } }
     LoginRequest: { type: object, required: [username, password], properties: { username: { type: string }, password: { type: string } } }
-    ChangePasswordRequest: { type: object, required: [currentPassword, newPassword], properties: { currentPassword: { type: string }, newPassword: { type: string, minLength: 12 } } }
+    ChangePasswordRequest: { type: object, required: [currentPassword, newPassword], properties: { currentPassword: { type: string }, newPassword: { type: string, minLength: 1 } } }
     CreateUserRequest: { type: object, required: [username, displayName, role], properties: { username: { type: string }, displayName: { type: string }, role: { type: string, enum: [ADMIN, MEMBER] } } }
     BookFormat: { type: string, enum: [EPUB, PDF] }
     BookFileStatus: { type: string, enum: [AVAILABLE, OPERATING, TRASHED, MISSING, DELETED] }

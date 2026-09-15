@@ -1,0 +1,7 @@
+# Live basement removal — 2026-09-09
+
+The repeated user request removes all live below-hall pavilion spaces, extending the earlier central basement removal. The west descending stair is replaced by a level enclosed passage to Henry Jones Room; the east descending stair and lower enclosure are replaced by a continuous timber floor at hall zero. Upper gallery and first-to-second-floor service access remain. East/west downward guided routes, controls and help text are removed. Historic stair studies remain isolated reference components.
+
+Validation: live scene bounds remain above -0.5 m (floor thickness only); complete gallery, Henry Jones and service routes retain collision clearance after static batching. The east former stairwell has ray-tested floor support at hall zero. Eight focused model tests and three page tests passed; lint, typecheck and build passed. Browser checked the west doorway and east timber closure. The authenticated live page exposes only gallery, Henry Jones, Fagel and upward service access; Henry Jones route entry and return were checked. Full route traversal was tested geometrically, not repeated end-to-end in the browser. Fresh east model preview reported no console errors; the existing live tab retains Vite websocket and Ant Design Drawer deprecation logs.
+
+The local API/Worker were restarted through pnpm start:local using an immutable JAR snapshot after the browser reported an unavailable service. No production deployment or full-suite pass is claimed.

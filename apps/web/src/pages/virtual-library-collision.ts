@@ -378,7 +378,7 @@ function sweepBox(
     && Math.abs(localStart.z) < half.z
   ) return null;
 
-  let enterTime = 0;
+  let enterTime = -Infinity;
   let exitTime = 1;
   let enterNormal: CameraPosition = { x: 0, y: 0, z: 0 };
   for (const axis of ["x", "y", "z"] as const) {
@@ -407,6 +407,8 @@ function sweepBox(
     exitTime = Math.min(exitTime, farTime);
     if (enterTime > exitTime) return null;
   }
+  // A negative entry is an exit/tangent motion. At exactly zero retain the
+  // entering face normal so contact cannot stall or slide through a corner.
   if (enterTime < 0 || enterTime > 1) return null;
   return {
     collider,

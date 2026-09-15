@@ -39,6 +39,19 @@ const demoMode = import.meta.env.VITE_DEMO_MODE === "true";
 
 const pause = (duration = 180) => new Promise((resolve) => window.setTimeout(resolve, duration));
 
+export class ApiRequestError extends Error {
+  constructor(message: string, public readonly status: number) { super(message); }
+}
+
+const AUTH_TIMEOUT_MS = 15_000;
+const CONNECTION_ERROR = "无法连接书库服务，请检查网络或确认服务已启动后重试。";
+async function responseError(response: Response): Promise<ApiRequestError> {
+  if (response.status >= 500) return new ApiRequestError("书库服务暂时不可用，请稍后重试。", response.status);
+  const problem = await response.json().catch(() => ({}));
+  return new ApiRequestError(problem.detail ?? problem.title
+    ?? (response.status === 401 ? "登录已过期，请重新登录。" : "请求失败，请稍后重试。"), response.status);
+}
+
 let csrfToken: string | undefined;
 
 function readCookie(name: string): string | undefined {
@@ -51,7 +64,7 @@ function readCookie(name: string): string | undefined {
 async function ensureCsrfToken(signal?: AbortSignal): Promise<string> {
   if (csrfToken) return csrfToken;
   const response = await fetch("/api/v1/auth/csrf", { credentials: "include", signal });
-  if (!response.ok) throw new Error("无法建立安全会话");
+  if (!response.ok) throw await responseError(response);
   const body = await response.json() as { token: string };
   csrfToken = readCookie("XSRF-TOKEN") ?? body.token;
   return csrfToken;
@@ -60,7 +73,8 @@ async function ensureCsrfToken(signal?: AbortSignal): Promise<string> {
 async function request<T>(path: string, init: RequestInit = {}, options: { timeoutMs?: number } = {}): Promise<T> {
   const method = (init.method ?? "GET").toUpperCase();
   const needsCsrf = !["GET", "HEAD", "OPTIONS"].includes(method);
-  const timeoutSignal = options.timeoutMs ? AbortSignal.timeout(options.timeoutMs) : undefined;
+  const timeoutMs = options.timeoutMs ?? (path.startsWith("/mail/") || path.startsWith("/auth/recovery") ? 30000 : path.startsWith("/auth/") ? AUTH_TIMEOUT_MS : undefined);
+  const timeoutSignal = timeoutMs ? AbortSignal.timeout(timeoutMs) : undefined;
   const signal = init.signal && timeoutSignal
     ? AbortSignal.any([init.signal, timeoutSignal])
     : init.signal ?? timeoutSignal;
@@ -84,8 +98,10 @@ async function request<T>(path: string, init: RequestInit = {}, options: { timeo
       response = await send(requestCsrfToken);
     }
     if (!response.ok) {
-      const problem = await response.json().catch(() => ({ title: "请求失败" }));
-      throw new Error(problem.detail ?? problem.title ?? `HTTP ${response.status}`);
+      if (response.status === 401 && !["/auth/login", "/auth/session"].includes(path)) {
+        window.dispatchEvent(new Event("bookkin:session-expired"));
+      }
+      throw await responseError(response);
     }
     if (response.status === 204) return undefined as T;
     const text = await response.text();
@@ -93,8 +109,11 @@ async function request<T>(path: string, init: RequestInit = {}, options: { timeo
     return JSON.parse(text) as T;
   } catch (reason) {
     if (timeoutSignal?.aborted && !init.signal?.aborted) {
-      throw new Error("请求超时，未确认文件是否已移动。请刷新书库后重试。", { cause: reason });
+      throw new Error(path.startsWith("/auth/") || path.startsWith("/mail/")
+        ? "连接书库服务超时，请稍后重试。"
+        : "请求超时，未确认文件是否已移动。请刷新书库后重试。", { cause: reason });
     }
+    if (reason instanceof TypeError) throw new Error(CONNECTION_ERROR, { cause: reason });
     throw reason;
   }
 }
@@ -327,15 +346,35 @@ const libraryRoots: LibraryRoot[] = [
   },
 ];
 
+export interface PasswordPolicy { minLength: number; requireUppercase: boolean; requireLowercase: boolean; requireDigit: boolean; requireSpecial: boolean; }
+let demoPasswordPolicy: PasswordPolicy = {minLength:12, requireUppercase:false, requireLowercase:false, requireDigit:false, requireSpecial:false};
+export interface MailSettings {
+  enabled: boolean; host: string; port: number; security: string; username: string;
+  password: string; sender: string; publicUrl: string; passwordConfigured: boolean;
+}
 export const api = {
+  passwordPolicy: async (): Promise<PasswordPolicy> => demoMode ? {...demoPasswordPolicy} : request("/auth/password-policy"),
+  savePasswordPolicy: async (input: PasswordPolicy): Promise<PasswordPolicy> => {
+    if (demoMode) {demoPasswordPolicy={...input}; return {...input};}
+    return request("/users/password-policy", {method:"PUT", body:JSON.stringify(input)});
+  },
+  mailSettings: () => request<MailSettings>("/mail/settings"),
+  saveMailSettings: (input: MailSettings) => request<MailSettings>("/mail/settings", {method: "PUT", body: JSON.stringify(input)}),
+  testMail: (email: string) => request<void>("/mail/test", {method: "POST", body: JSON.stringify({email})}),
+  recoveryEmail: () => request<{email: string}>("/auth/recovery-email"),
+  bindRecoveryEmail: (email: string, password: string) => request<void>("/auth/recovery-email", {method: "POST", body: JSON.stringify({email, password})}),
+  requestPasswordReset: (email: string) => request<void>("/auth/recovery/request", {method: "POST", body: JSON.stringify({email})}),
+  verifyRecoveryEmail: (token: string) => request<void>("/auth/recovery/verify", {method: "POST", body: JSON.stringify({token})}),
+  resetPassword: (token: string, password: string) => request<void>("/auth/recovery/reset", {method: "POST", body: JSON.stringify({token, password})}),
   isDemo: demoMode,
 
   async getSession(): Promise<SessionUser | null> {
     if (demoMode) return null;
     try {
       return await request("/auth/session");
-    } catch {
-      return null;
+    } catch (reason) {
+      if (reason instanceof ApiRequestError && reason.status === 401) return null;
+      throw reason;
     }
   },
 
@@ -375,11 +414,21 @@ export const api = {
 
   async logout(): Promise<void> {
     if (!demoMode) {
-      await request("/auth/logout", { method: "POST" });
+      try {
+        await request("/auth/logout", { method: "POST" });
+      } catch (reason) {
+        if (!(reason instanceof ApiRequestError && reason.status === 401)) throw reason;
+      }
       csrfToken = undefined;
       return;
     }
     await pause(80);
+  },
+
+  async updateProfile(input: { username: string; displayName: string; currentPassword: string }): Promise<SessionUser> {
+    const result = await request<SessionUser>("/auth/profile", { method: "PUT", body: JSON.stringify(input) });
+    csrfToken = undefined;
+    return result;
   },
 
   async changePassword(_currentPassword: string, newPassword: string): Promise<SessionUser> {

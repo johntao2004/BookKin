@@ -28,7 +28,7 @@
 | Figma | React/Ant Design | Token |
 |---|---|---|
 | Button | `Button` / Ant Design Button adaptation | color/primary, radius/md, spacing |
-| Text Field | `TextField` / Ant Design Input adaptation | color/surface, border, focus |
+| Text Field | `TextField` / Ant Design Input adaptation | color/surface/input, border, focus |
 | Book Card | `BookCard` | radius/lg, shadow/cover |
 | Status Chip | `Chip` | semantic status colors |
 | Operation Preview | `OperationPreviewDialog` | Dialog + DataTable |
@@ -40,3 +40,7 @@
 - Figma 文件：[BookKin · 电子图书馆 V1](https://www.figma.com/design/zRtcdgwQ0yRMpeTHMV9hox)
 - 历史记录（本轮未重新验证远端）：5 个变量集合、73 个变量、9 个文本样式、3 个效果样式。
 - 待验证：Starter 套餐触发 MCP 调用上限后，`P1.g`/`P1.h` 尚未执行；恢复额度后从 Phase 1 验证继续，不得直接进入组件创建。
+
+### 2026-09-09 表单表面色同步
+
+已读取远端表面色变量并新增 `color/surface/input`（VariableID:12:2，引用 surface/soft）和 `color/surface/card`（VariableID:12:3，引用 surface/default）。代码新增 surfaceInput，并分别处理纸张、明亮、夜间主题；本次仅同步基础变量，未宣称所有 Figma 页面和主题模式完成重建。

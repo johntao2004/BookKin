@@ -12,7 +12,8 @@ public class RegistrationService {
  private final UserRepository users;
  private final PasswordEncoder passwords;
  private final AuditService audit;
- public RegistrationService(RegistrationPolicyRepository policy, UserRepository users, PasswordEncoder passwords, AuditService audit) { this.policy=policy; this.users=users; this.passwords=passwords; this.audit=audit; }
+ private final PasswordPolicyService passwordPolicy;
+ public RegistrationService(RegistrationPolicyRepository policy, UserRepository users, PasswordEncoder passwords, AuditService audit, io.github.johntao2004.bookkin.auth.PasswordPolicyService passwordPolicy) { this.policy=policy; this.users=users; this.passwords=passwords; this.audit=audit; this.passwordPolicy=passwordPolicy; }
  public boolean enabled() { return policy.enabled() && users.findOwner().isPresent(); }
  @Transactional
  public void configure(String username, boolean enabled) {
@@ -25,6 +26,7 @@ public class RegistrationService {
  public void register(String username, String nickname, String password) {
   if(!policy.lock() || users.findOwner().isEmpty()) throw ApiException.forbidden("REGISTRATION_CLOSED","当前未开放注册");
   if(users.findByUsername(username).isPresent()) throw ApiException.conflict("USERNAME_TAKEN","用户名已被使用");
+  passwordPolicy.validate(password);
   var user=users.create(username,nickname,passwords.encode(password),UserRole.MEMBER,false);
   audit.record(user.id(),"USER_REGISTERED","USER",user.id().toString(),null,null,null,null,"SUCCEEDED",null);
  }

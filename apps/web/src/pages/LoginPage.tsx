@@ -9,7 +9,7 @@ import { TextField } from "@/ui/forms";
 import { Typography } from "@/ui/primitives";
 import { useQuery } from "@tanstack/react-query";
 import { useState, type FormEvent } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import { setupStatusQueryOptions } from "../auth/setup-status";
 import { api } from "../api/client";
@@ -23,7 +23,7 @@ export function getLoginDefaults(isDemo: boolean) {
 }
 
 export function LoginPage() {
-  const { login } = useAuth();
+  const { login, user, ready, sessionError, retrySession } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const defaults = getLoginDefaults(api.isDemo);
@@ -49,6 +49,10 @@ export function LoginPage() {
       setLoading(false);
     }
   };
+
+  if (!ready) return <AuthFrame title="正在进入书房" description="正在确认登录状态…"><Typography role="status">正在加载…</Typography></AuthFrame>;
+  if (sessionError) return <AuthFrame title="暂时无法进入书房"><Alert severity="error">{sessionError}</Alert><Button onClick={retrySession}>重试连接</Button></AuthFrame>;
+  if (user) return <Navigate to={user.mustChangePassword ? "/change-password" : "/library"} replace />;
 
   return (
     <AuthFrame title="回到你的书房" description="请输入用户名和密码，继续访问你的书房。" greeting={getLoginGreeting(new Date().getHours())}>
@@ -77,6 +81,7 @@ export function LoginPage() {
         {error && <Alert severity="error">{error}</Alert>}
         <Button type="submit" variant="contained" size="large" disabled={loading}>{loading ? "正在登录…" : "登录"}</Button>
       </Stack>
+      <Typography variant="body2" sx={{ mt: 2 }}><Link to="/forgot-password">忘记密码？</Link></Typography>
       {setupStatus.isSuccess && !setupStatus.isFetching && setupStatus.data.initialized === false && (
         <Typography variant="body2" color="text.secondary" sx={{ mt: 3 }}>
           首次运行？<Link to="/setup">初始化主人账户</Link>

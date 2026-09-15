@@ -1,6 +1,7 @@
 import * as THREE from "three";
+import { LIBRARY } from "./virtual-library-model/config";
 import type { Book } from "../domain/types";
-import { classifyCatalogBook, sortCatalogBooksByClassification } from "./virtual-library-catalog";
+import { classifyCatalogBook, sortCatalogBooksByClassification, longRoomCatalogSectionCounts } from "./virtual-library-catalog";
 import {
   CAMERA_COLLISION_CLEARANCE,
   collectCameraColliders,
@@ -32,18 +33,29 @@ import {
   RESTRICTED_PORTAL_GATE_LAYOUT,
 } from "./virtual-library-model/scene/parts";
 import {
+  BOOK_SPINE_TEXTURE_SIZE,
   BOOK_INSPECTION_LAYOUT,
+  CATALOG_BOOK_DETAIL_LAYOUT,
+  CATALOG_BOOK_MODEL_SIZE,
   assignBooksToRotundaBays,
   assignBooksToShelfSlots,
+  createCatalogBookForeEdgeGeometry,
   findPortalRoom,
   findShelfSectionId,
   getBookInspectionTransform,
   getCenteredShelfBookOffsets,
+  getShelfBookInteractionWidth,
+  getSpineTitleGlyphs,
   getShelfPlaquePlacement,
   getShelfPlaqueRows,
   getShelvedBookTransform,
   placeSceneBookOnShelf,
+  setSceneBookRenderLayer,
+  SHELF_BOOK_CLUSTER_GAP,
+  SHELF_BOOK_MIN_HIT_WIDTH,
   SHELF_PLAQUE_MOUNT,
+  VIRTUAL_LIBRARY_BOOK_PREVIEW_LAYER,
+  VIRTUAL_LIBRARY_WORLD_LAYER,
 } from "./virtual-library-scene";
 import {
   createRoomShellCameraDescriptors,
@@ -127,12 +139,25 @@ describe("virtual library shelf layout", () => {
     expect(actualSpineNormal.distanceTo(expectedSpineNormal)).toBeLessThan(0.00001);
   });
 
-  it("pulls the original book toward the current shelf camera with its cover facing forward", () => {
-    const modelSize = { width: 0.92, height: 1.24, depth: 0.3 };
-    const cameraTarget = new THREE.Vector3(0, 3.4, -12);
-    const cameraPosition = new THREE.Vector3(0, 3.4, -5.8);
+  it("moves the whole selected model onto a foreground preview layer and restores it", () => {
+    const group = new THREE.Group();
+    const cover = new THREE.Mesh(new THREE.PlaneGeometry(1, 1));
+    const pageBlock = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1));
+    group.add(cover, pageBlock);
+
+    setSceneBookRenderLayer({ group }, VIRTUAL_LIBRARY_BOOK_PREVIEW_LAYER);
+    group.traverse(object => expect(object.layers.mask).toBe(1 << VIRTUAL_LIBRARY_BOOK_PREVIEW_LAYER));
+
+    setSceneBookRenderLayer({ group }, VIRTUAL_LIBRARY_WORLD_LAYER);
+    group.traverse(object => expect(object.layers.mask).toBe(1 << VIRTUAL_LIBRARY_WORLD_LAYER));
+  });
+
+  it("flies the selected book into a larger readable left-side preview without changing its proportions", () => {
+    const shelfScale = new THREE.Vector3(0.61, 0.68, 1.504);
+    const cameraTarget = new THREE.Vector3(0, 2.7, -12);
+    const cameraPosition = new THREE.Vector3(0, 2.7, -9.2);
     const transform = getBookInspectionTransform(
-      modelSize,
+      shelfScale,
       cameraPosition,
       cameraTarget,
       877,
@@ -140,43 +165,38 @@ describe("virtual library shelf layout", () => {
       0,
       1,
     );
-    const cameraDirection = cameraPosition.clone().sub(transform.position).normalize();
+    const cameraDirection = cameraPosition.clone().sub(cameraTarget).normalize();
+    const cameraRight = new THREE.Vector3(0, 1, 0).cross(cameraDirection).normalize();
+    const previewOffset = transform.position.clone().sub(cameraTarget);
+    const previewToCamera = cameraPosition.clone().sub(transform.position).normalize();
     const coverNormal = new THREE.Vector3(0, 0, 1).applyQuaternion(transform.quaternion);
-    const shelfToInspection = transform.position.clone().sub(cameraTarget);
-    const shelfCameraDirection = cameraPosition.clone().sub(cameraTarget).normalize();
-    const cameraRight = new THREE.Vector3(0, 1, 0).cross(shelfCameraDirection).normalize();
 
-    expect(shelfToInspection.dot(shelfCameraDirection)).toBeCloseTo(
-      BOOK_INSPECTION_LAYOUT.forwardOffset,
+    expect(previewOffset.dot(cameraDirection)).toBeCloseTo(BOOK_INSPECTION_LAYOUT.desktopForwardOffset);
+    expect(previewOffset.dot(cameraRight)).toBeCloseTo(-BOOK_INSPECTION_LAYOUT.desktopSideOffset);
+    expect(coverNormal.distanceTo(previewToCamera)).toBeLessThan(0.00001);
+    expect(BOOK_INSPECTION_LAYOUT.desktopPreviewScale).toBe(1.8);
+    expect(transform.scale.toArray()).toEqual(
+      shelfScale.clone().multiplyScalar(BOOK_INSPECTION_LAYOUT.desktopPreviewScale).toArray(),
     );
-    expect(shelfToInspection.dot(cameraRight)).toBeCloseTo(-BOOK_INSPECTION_LAYOUT.desktopSideOffset);
-    expect(coverNormal.distanceTo(cameraDirection)).toBeLessThan(0.00001);
-    expect(transform.scale.x).toBeCloseTo(BOOK_INSPECTION_LAYOUT.desktopHeight / modelSize.height);
-    expect(transform.scale.x).toBe(transform.scale.y);
-    expect(transform.scale.y).toBe(transform.scale.z);
   });
 
-  it("keeps the mobile inspection book above the shelf selection row", () => {
-    const modelSize = { width: 0.92, height: 1.24, depth: 0.3 };
-    const cameraTarget = new THREE.Vector3(0, 3.4, -12);
-    const cameraPosition = new THREE.Vector3(0, 3.4, -5.8);
+  it("keeps the left preview proportional when the user deliberately zooms it", () => {
+    const shelfScale = new THREE.Vector3(0.61, 0.68, 1.504);
     const transform = getBookInspectionTransform(
-      modelSize,
-      cameraPosition,
-      cameraTarget,
-      390,
+      shelfScale,
+      new THREE.Vector3(0, 2.7, -9.2),
+      new THREE.Vector3(0, 2.7, -12),
+      877,
       0,
       0,
-      1,
+      BOOK_INSPECTION_LAYOUT.maximumZoom + 1,
     );
+    const expectedMultiplier = BOOK_INSPECTION_LAYOUT.desktopPreviewScale
+      * BOOK_INSPECTION_LAYOUT.maximumZoom;
 
-    expect(transform.position.x).toBeCloseTo(cameraTarget.x);
-    expect(transform.position.y - cameraTarget.y).toBeCloseTo(BOOK_INSPECTION_LAYOUT.mobileVerticalOffset);
-    expect(transform.position.z - cameraTarget.z).toBeCloseTo(BOOK_INSPECTION_LAYOUT.forwardOffset);
-    expect(transform.scale.x).toBeCloseTo(BOOK_INSPECTION_LAYOUT.mobileHeight / modelSize.height);
-    expect(
-      transform.position.y - cameraTarget.y - BOOK_INSPECTION_LAYOUT.mobileHeight / 2,
-    ).toBeGreaterThan(0.8);
+    expect(transform.scale.x).toBeCloseTo(shelfScale.x * expectedMultiplier);
+    expect(transform.scale.y).toBeCloseTo(shelfScale.y * expectedMultiplier);
+    expect(transform.scale.z).toBeCloseTo(shelfScale.z * expectedMultiplier);
   });
 
   it("builds the curved reception body as one continuous half-annulus with rounded ends", () => {
@@ -722,7 +742,7 @@ describe("virtual library shelf layout", () => {
   });
 
   it("uses one centered contiguous slot run for books sharing a shelf row", () => {
-    const radius = 13.7;
+    const radius = LIBRARY.tower.innerRadius - 0.7;
     const slots = [-0.62, -0.44, -0.08, 0.08, 0.44, 0.62].map((x) => ({
       position: new THREE.Vector3(x, 1.73, -radius),
       scale: new THREE.Vector3(0.12, 0.62, 0.28),
@@ -752,6 +772,55 @@ describe("virtual library shelf layout", () => {
     expect((leftEdge + rightEdge) / 2).toBeCloseTo(0);
     expect(offsets[1]! - widths[1]! / 2 - (offsets[0]! + widths[0]! / 2)).toBeCloseTo(0.035);
     expect(offsets[2]! - widths[2]! / 2 - (offsets[1]! + widths[1]! / 2)).toBeCloseTo(0.035);
+  });
+
+  it("allocates a separate click-friendly lane around every thin shelf spine", () => {
+    const renderedSpines = [0.032, 0.056, 0.041, 0.063];
+    const hitWidths = renderedSpines.map(getShelfBookInteractionWidth);
+    const offsets = getCenteredShelfBookOffsets(hitWidths);
+
+    expect(hitWidths).toEqual(renderedSpines.map(() => SHELF_BOOK_MIN_HIT_WIDTH));
+    for (let index = 1; index < offsets.length; index += 1) {
+      const previousRight = offsets[index - 1]! + hitWidths[index - 1]! / 2;
+      const currentLeft = offsets[index]! - hitWidths[index]! / 2;
+      expect(currentLeft - previousRight).toBeCloseTo(SHELF_BOOK_CLUSTER_GAP);
+    }
+  });
+
+  it("keeps short spine titles complete and truncates long titles at a readable size", () => {
+    expect(getSpineTitleGlyphs("雾港信使")).toEqual(["雾", "港", "信", "使"]);
+    expect(getSpineTitleGlyphs("一本特别漫长的藏书标题")).toEqual(["一", "本", "特", "别", "…"]);
+  });
+
+  it("layers fine binding details inside one consistently sized catalog book", () => {
+    const { width, height, depth } = CATALOG_BOOK_MODEL_SIZE;
+    const details = CATALOG_BOOK_DETAIL_LAYOUT;
+
+    expect(width - details.pageBlockInset.width).toBeLessThan(width);
+    expect(height - details.pageBlockInset.height).toBeLessThan(height);
+    expect(depth - details.pageBlockInset.depth).toBeLessThan(depth);
+    expect(details.coverBoardThickness).toBeLessThan(depth / 4);
+    expect(details.coverArtInset.width).toBeGreaterThan(details.coverBoardThickness);
+    expect(details.spineBodyWidth).toBeGreaterThan(details.coverBoardThickness);
+    expect(details.spineLabelWidthRatio).toBeLessThan(1);
+    expect(details.spineLabelHeightRatio).toBeLessThan(1);
+    expect(BOOK_SPINE_TEXTURE_SIZE.width).toBeGreaterThanOrEqual(256);
+    expect(BOOK_SPINE_TEXTURE_SIZE.height).toBeGreaterThanOrEqual(1024);
+  });
+
+  it("curves the page fore edge gently while keeping its corners recessed", () => {
+    const geometry = createCatalogBookForeEdgeGeometry(0.08, 0.956, 0.0025);
+    const position = geometry.getAttribute("position");
+    const centerDepths: number[] = [];
+    const edgeDepths: number[] = [];
+    for (let index = 0; index < position.count; index += 1) {
+      if (Math.abs(position.getX(index)) < 0.00001) centerDepths.push(position.getZ(index));
+      if (Math.abs(Math.abs(position.getX(index)) - 0.04) < 0.00001) edgeDepths.push(position.getZ(index));
+    }
+
+    expect(Math.max(...centerDepths)).toBeCloseTo(0.0025);
+    expect(Math.max(...edgeDepths)).toBeCloseTo(0);
+    geometry.dispose();
   });
 
   it("keeps every catalog book assigned even while the architecture is still loading slots", () => {
@@ -805,6 +874,10 @@ describe("virtual library shelf layout", () => {
     const fictionBook = book({ id: "fiction", title: "雾港信使", description: "一部长篇幻想小说", tags: ["文学"] });
     const historyBook = book({ id: "history", title: "纸上群山", description: "从旧地图与家书拼出历史", tags: ["随笔"] });
 
+    // The essay is classified as literature by the existing keyword/tie-break rule.
+    expect(longRoomCatalogSectionCounts([naturalBook, historyBook, fictionBook])).toEqual([2, 1]);
+    expect(longRoomCatalogSectionCounts([naturalBook, {...historyBook, tags: ["历史", "传记", "人文"]}, fictionBook])).toEqual([1, 1, 1]);
+    expect(longRoomCatalogSectionCounts(Array.from({length: 121}, (_, i) => ({...fictionBook, id: `fiction-${i}`})))).toEqual([120, 1]);
     expect(classifyCatalogBook(naturalBook)).toMatchObject({
       category: { id: "nature" },
       subcategory: { id: "life" },

@@ -46,7 +46,7 @@ export function AuthFrame({ children, title, description, greeting }: AuthFrameP
             zIndex: 2,
             top: { sm: tokens.spacing[10], lg: tokens.spacing[12] },
             left: { sm: tokens.spacing[12], lg: tokens.spacing[16] },
-            color: "primary.main",
+            color: "common.white",
             whiteSpace: "nowrap",
           }}
         >

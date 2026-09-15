@@ -1,3 +1,4 @@
+import { PasswordRequirements, usePasswordPolicy, passwordRequirements } from "../auth/password-policy";
 import { Alert } from "@/ui/feedback";
 import { Button } from "@/ui/buttons";
 import { CircularProgress } from "@/ui/feedback";
@@ -13,6 +14,8 @@ import { AuthFrame } from "../components/AuthFrame";
 import { tokens } from "../theme/generated-tokens";
 
 export function SetupPage() {
+ const passwordPolicy=usePasswordPolicy();
+ const [passwordValue,setPasswordValue]=useState("");
   const { setupOwner, user } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -66,10 +69,11 @@ export function SetupPage() {
         <Form.Item label="用户名" name="username" rules={[{ required: true, whitespace: true, message: "请输入用户名" }]}>
           <Input autoComplete="off" size="large" />
         </Form.Item>
-        <Form.Item label="密码" name="password" extra="至少 12 位，建议使用密码管理器生成。" rules={[{ required: true, message: "请输入密码" }, { min: 12, message: "密码至少需要 12 个字符" }]}>
-          <Input.Password autoComplete="new-password" size="large" />
+        <Form.Item label="密码" name="password" rules={[{ required: true, message: "请输入密码" }, {validator:(_,value)=>passwordPolicy.data && !passwordPolicy.isError && passwordRequirements(passwordPolicy.data,value || "").every(r=>r.met)?Promise.resolve():Promise.reject(new Error("请满足密码要求"))}]}>
+          <Input.Password onChange={e=>setPasswordValue(e.target.value)} autoComplete="new-password" size="large" />
         </Form.Item>
-        <Form.Item label="确认密码" name="confirmPassword" dependencies={["password"]} rules={[{ required: true, message: "请再次输入密码" }, ({ getFieldValue }) => ({ validator(_, value) { return !value || getFieldValue("password") === value ? Promise.resolve() : Promise.reject(new Error("两次输入的密码不一致")); } })]}>
+        <PasswordRequirements policy={passwordPolicy} value={passwordValue} />
+   <Form.Item label="确认密码" name="confirmPassword" dependencies={["password"]} rules={[{ required: true, message: "请再次输入密码" }, ({ getFieldValue }) => ({ validator(_, value) { return !value || getFieldValue("password") === value ? Promise.resolve() : Promise.reject(new Error("两次输入的密码不一致")); } })]}>
           <Input.Password autoComplete="new-password" size="large" />
         </Form.Item>
         <Stack spacing={2}>

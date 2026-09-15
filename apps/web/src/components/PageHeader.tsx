@@ -66,3 +66,7 @@ export function PageHeader({
 export function ActionToolbar({ children }: { children: ReactNode }) {
   return <Stack className="bk-action-toolbar" direction="row" sx={{ width: { xs: "100%", sm: "auto" }, justifyContent: { xs: "flex-start", sm: "flex-end" }, alignItems: "center", flexWrap: "wrap", gap: 1.5 }}>{children}</Stack>;
 }
+
+export function FormActions({ children }: { children: ReactNode }) {
+  return <Stack direction="row" sx={{ width: "100%", justifyContent: "flex-end" }}>{children}</Stack>;
+}

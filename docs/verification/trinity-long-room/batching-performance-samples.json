@@ -1,0 +1,85 @@
+{
+  "scope": "Single local browser observations at model-review.html?component=performance, zero real catalog books, identical model dimensions and fixed review camera. Not a statistical benchmark or GPU/phone acceptance.",
+  "before": {
+    "elapsedMs": 2423.1,
+    "sourceMeshes": 11697,
+    "batchMeshes": 21,
+    "untouchedMeshes": 221,
+    "construction": {
+      "slices": 131,
+      "totalMs": 625.7,
+      "maxMs": 185.5,
+      "over50ms": 2
+    },
+    "staticBatching": {
+      "slices": 124,
+      "totalMs": 612.0,
+      "maxMs": 124.3,
+      "over50ms": 1
+    },
+    "drawCalls": 131,
+    "triangles": 6639716
+  },
+  "boundedMergingOnly": {
+    "elapsedMs": 2719.7,
+    "sourceMeshes": 11697,
+    "batchMeshes": 60,
+    "untouchedMeshes": 221,
+    "construction": {
+      "slices": 131,
+      "totalMs": 615.0,
+      "maxMs": 189.9,
+      "over50ms": 1
+    },
+    "staticBatching": {
+      "slices": 179,
+      "totalMs": 578.7,
+      "maxMs": 9.3,
+      "over50ms": 0
+    },
+    "drawCalls": 170,
+    "triangles": 6639716
+  },
+  "tradeoff": "More scheduling yields and draw calls. Same triangle count in this view; lower merge-task duration does not establish a faster total load or higher FPS.",
+  "finalWithSeparatedBuilders": {
+    "elapsedMs": 2691.4,
+    "sourceMeshes": 11697,
+    "batchMeshes": 60,
+    "untouchedMeshes": 221,
+    "construction": {
+      "slices": 140,
+      "totalMs": 659.0,
+      "maxMs": 71.2,
+      "over50ms": 3
+    },
+    "staticBatching": {
+      "slices": 179,
+      "totalMs": 576.2,
+      "maxMs": 8.3,
+      "over50ms": 0
+    },
+    "drawCalls": 170,
+    "triangles": 6639716,
+    "longestSteps": [
+      {
+        "stage": "construction-111",
+        "ms": 71.2
+      },
+      {
+        "stage": "construction-115",
+        "ms": 60.7
+      },
+      {
+        "stage": "construction-116",
+        "ms": 53.9
+      }
+    ]
+  },
+  "viewport": {
+    "width": 1280,
+    "height": 720,
+    "devicePixelRatio": 2,
+    "reviewRendererPixelRatioCap": 1.5
+  },
+  "remaining": "Ladder, historic spiral and binding-finalization construction slices remain above 50 ms in the final review sample. Main authenticated scene observed a 178.6 ms construction-116 slice after HMR; review-route timings must not be presented as main-route or all-device guarantees."
+}

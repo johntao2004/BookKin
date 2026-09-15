@@ -1,3 +1,4 @@
+import { PasswordRequirements, usePasswordPolicy, passwordRequirements } from "../auth/password-policy";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, Navigate, useNavigate } from "react-router-dom";
@@ -9,6 +10,8 @@ import { Button } from "../ui/buttons";
 import { Form, Input, Skeleton } from "../ui/antd";
 import { Typography } from "../ui/primitives";
 export function RegisterPage() {
+ const passwordPolicy=usePasswordPolicy();
+ const [passwordValue,setPasswordValue]=useState("");
  const {user}=useAuth(); const navigate=useNavigate();
  const policy=useQuery({queryKey:["registration-status"],queryFn:api.registrationStatus,staleTime:0,refetchOnMount:"always",refetchOnWindowFocus:"always",refetchInterval:5000});
  const [busy,setBusy]=useState(false);const [error,setError]=useState("");
@@ -23,7 +26,8 @@ export function RegisterPage() {
   }}>
    <Form.Item name="displayName" label="昵称" rules={[{required:true,whitespace:true,message:"请输入昵称"},{max:120,message:"昵称最多 120 字"}]}><Input autoComplete="off" /></Form.Item>
    <Form.Item name="username" label="用户名" rules={[{required:true,message:"请输入用户名"},{pattern:/^[a-zA-Z0-9._-]{3,80}$/,message:"使用 3–80 位字母、数字、点、下划线或短横线"}]}><Input autoComplete="off" /></Form.Item>
-   <Form.Item name="password" label="密码" rules={[{required:true,message:"请输入密码"},{min:12,max:200,message:"密码需为 12–200 位"}]}><Input.Password autoComplete="new-password" /></Form.Item>
+   <Form.Item name="password" label="密码" rules={[{required:true,message:"请输入密码"},{validator:(_,value)=>passwordPolicy.data && !passwordPolicy.isError && passwordRequirements(passwordPolicy.data,value || "").every(r=>r.met)?Promise.resolve():Promise.reject(new Error("请满足密码要求"))}]}><Input.Password onChange={e=>setPasswordValue(e.target.value)} autoComplete="new-password" /></Form.Item>
+   <PasswordRequirements policy={passwordPolicy} value={passwordValue} />
    <Form.Item name="confirmation" label="确认密码" dependencies={["password"]} rules={[{required:true,message:"请再次输入密码"},({getFieldValue})=>({validator(_,value){return !value || getFieldValue("password")===value ? Promise.resolve() : Promise.reject(new Error("两次密码不一致"));}})]}><Input.Password autoComplete="new-password" /></Form.Item>
    {error && <Alert severity="error">{error}</Alert>}
    <Button type="submit" variant="contained" disabled={busy}>{busy ? "正在注册…" : "注册"}</Button>

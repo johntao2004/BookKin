@@ -1,0 +1,2270 @@
+{
+  "schemaVersion": 1,
+  "researchedAt": "2026-09-09",
+  "targetPresentation": "Furnished Long Room before January 2023: 2015 architectural photographs and documented 2021 donor panels; not current conservation-state interior.",
+  "status": "public-source reconstruction input; not a survey or completed model",
+  "sources": {
+    "tcd2012": {
+      "url": "https://www.tcd.ie/library/exhibitions/choicebooks/newlibrary.php",
+      "title": "A Great Many Choice Books: The New Library",
+      "type": "official architectural history",
+      "verified": "text"
+    },
+    "tcdRegister": {
+      "url": "https://www.tcd.ie/library/old-library/long-room/",
+      "title": "The Long Room: sculpture location register",
+      "type": "official inventory",
+      "verified": "text; includes pre-January-2023 occupants"
+    },
+    "casey2018": {
+      "url": "https://www.tcd.ie/alumni/assets/pdf/trinity-today-2018.pdf",
+      "title": "Christine Casey, Architectural Trinity, Trinity Today 2018, printed p.26 / PDF p.28",
+      "type": "official publication by architectural historian",
+      "verified": "text and rendered page photograph"
+    },
+    "diliff2015": {
+      "url": "https://commons.wikimedia.org/wiki/File:Long_Room_Interior,_Trinity_College_Dublin,_Ireland_-_Diliff.jpg",
+      "title": "David Iliff, Long Room Interior, 2015",
+      "type": "photographic primary evidence",
+      "verified": "960px full-room photograph visually inspected",
+      "use": "reference only; not a runtime texture"
+    },
+    "murray": {
+      "url": "https://www.visittrinity.ie/wp-content/uploads/2023/01/SM_1561_0395_web_PhotoBySteMurray.jpg?w=720",
+      "title": "Ste Murray, gallery and vault detail, Visit Trinity",
+      "type": "official photographic reference",
+      "verified": "720px photograph visually inspected",
+      "use": "reference only"
+    },
+    "skyden": {
+      "url": "https://commons.wikimedia.org/wiki/File:Staircase_in_Trinity_College_Library.jpg",
+      "title": "Skyden67, Staircase in Trinity College Library",
+      "type": "photographic primary evidence",
+      "verified": "500px photograph and file page visually inspected",
+      "license": "CC BY-SA 4.0",
+      "dateCaution": "Caption says 2013; EXIF says 2007. Do not infer a precise construction date.",
+      "use": "reference only"
+    },
+    "planning2020": {
+      "url": "https://www.tcd.ie/news_events/articles/dublin-city-council-gives-greenlight-to-redevelopment-plans-for-the-old-library/",
+      "title": "Trinity redevelopment planning announcement, 8 October 2020",
+      "type": "official future project description",
+      "verified": "text",
+      "use": "exclude proposed visitor circulation from pre-conservation reconstruction"
+    },
+    "social2025": {
+      "url": "https://www.visittrinity.ie/wp-content/uploads/2025/09/Social-Story-Bokex.pdf",
+      "title": "Visit Trinity Social Story, PDF pages 13 and 15",
+      "type": "official visitor guide",
+      "verified": "text and both page photographs visually inspected"
+    },
+    "collections2012": {
+      "url": "https://www.tcd.ie/library/exhibitions/choicebooks/collections.php",
+      "title": "Collections: Old and New, Trinity Library exhibition",
+      "verified": "text",
+      "type": "official collection history"
+    },
+    "collegeHistory1891": {
+      "url": "https://readingroo.ms/6/1/0/0/61000/old/61000-h/61000-h.htm",
+      "title": "The Book of Trinity College Dublin, Library chapter, pp.177-180",
+      "type": "historical primary account",
+      "verified": "text; inner stair and entrance stair engravings visually inspected",
+      "temporalCaution": "Predates east-pavilion remodelling; do not treat all described stairs as surviving 2015 structures"
+    },
+    "fagelReport2023": {
+      "url": "https://www.tcd.ie/library/assets/img/research-collections/fagel/Unlocking%20the%20Fagel%20Collection_Final%20Project%20Report.pdf",
+      "title": "Unlocking the Fagel Collection, Final Project Report, September 2023",
+      "type": "official project report",
+      "verified": "text; PDF pages 2 and 8 visually inspected",
+      "use": "books and casework context; inspected pages do not establish the entrance grille geometry"
+    },
+    "swiftOfficial2017": {
+      "url": "https://www.tcd.ie/swift350/",
+      "image": "https://www.tcd.ie/swift350/assets/img/slider/swift-by-roubiliac.jpg",
+      "title": "Jonathan Swift 350: Roubiliac bust, Trinity College Dublin Art Collections",
+      "verified": "official text and side-view photograph inspected in browser"
+    },
+    "swiftCommons2015": {
+      "url": "https://commons.wikimedia.org/wiki/File:Louis_Francois_Roubiliac_-_Jonathan_Swift_bust.jpg",
+      "title": "Louis Francois Roubiliac - Jonathan Swift bust",
+      "creator": "Photograph by Illustratedjc; sculpture by Louis-Francois Roubiliac",
+      "license": "CC BY-SA 4.0 photograph; no photo asset bundled in runtime",
+      "verified": "500 x 752 frontal reference inspected in browser; photograph dated 10 May 2015"
+    },
+    "craftvalueStair2021": {
+      "url": "https://craftvalue.org/trickyjunctions/the-staircase-at-damer-house/",
+      "title": "Andrew Tierney, The Staircase at Damer House, 15 December 2021",
+      "type": "TCD research project; comparative architectural analysis with identified Old Library photograph",
+      "verified": "article text and TCD-staircase_AT-1.jpg visually inspected in browser",
+      "image": "https://craftvalue.org/wp-content/uploads/2021/12/TCD-staircase_AT-1.jpg",
+      "scope": "Only identified TCD photograph and explicit TCD comparisons; not all Damer House details apply to Trinity",
+      "use": "reference only; no source image bundled in runtime"
+    },
+    "craftvalueStairConstruction": {
+      "url": "https://craftvalue.org/woodwork-staircases/",
+      "title": "CRAFTVALUE, Woodwork-staircases",
+      "type": "TCD research project",
+      "verified": "text only; embedded animation located but not inspected",
+      "scope": "Old Library open string, side-return nosing and hidden dovetail joinery; dimensions not provided"
+    },
+    "tierney2023Stair": {
+      "url": "https://discovery.ucl.ac.uk/id/eprint/10162056/",
+      "pdf": "https://discovery.ucl.ac.uk/id/eprint/10162056/1/Enriching-Architecture.pdf",
+      "title": "Andrew Tierney, A glorious ascent, in Enriching Architecture (UCL Press, 2023)",
+      "type": "scholarly chapter with identified architectural photographs and historical drawing",
+      "verified": "complete 398-page PDF downloaded (70727252 bytes); printed pages 325-326 / PDF pages 360-361 rendered and visually inspected; note 16 on printed page 349 / PDF page 384 read",
+      "figures": {
+        "11.8": "existing Old Library stair photograph by Andrew Tierney",
+        "11.9": "historical completion proposal; contains unexecuted handrail changes"
+      },
+      "archivePointer": "TCD Mun P2 28, Estimate for finishing the staircase in the library; undated and unsigned",
+      "use": "reference only; no publication images included in the runtime"
+    },
+    "hayes2015WestPavilion": {
+      "url": "https://www.tara.tcd.ie/bitstreams/be6da7f9-b862-46a0-9fe5-93e8dda7ce5b/download",
+      "title": "Melanie Hayes, Anglo-Irish Architectural Exchange, PhD thesis, Volume I (2015)",
+      "type": "scholarly architectural analysis",
+      "verified": "printed page 145 / PDF page 153 text inspected; cites Casey, Dublin, p.402",
+      "scope": "West-pavilion stair begins immediately within the entrance; upper landing is immediately outside the Long Room doorway. No measured plan established."
+    },
+    "ruhland2009LibViz": {
+      "url": "https://visvar.github.io/assets/pdf/ruhland2009ijac.pdf",
+      "title": "K. Ruhland, M. Sedlmair, S. Bioletti and C. O Sullivan, LibViz: Data Visualisation of the Old Library (2009)",
+      "type": "primary reconstruction research paper, author-hosted PDF",
+      "verified": "section 3 text on printed p.182 / PDF p.6 read",
+      "scope": "No accurate plans were available to that project; its dimensions combined laser-meter measurements and image estimates. The paper is not a downloadable measured model.",
+      "modelAvailability": "Legacy project URL did not load in this check; no geometry obtained."
+    },
+    "abbott1892Library": {
+      "url": "https://readingroo.ms/6/1/0/0/61000/61000-h/61000-h.htm",
+      "title": "The Book of Trinity College Dublin, 1591–1891 (published 1892), chapter VII, The Library, T. K. Abbott",
+      "type": "contemporary account by the librarian; historical illustrations",
+      "verified": "Chapter text retrieved; printed p.177 and p.180 illustrations visually inspected in browser"
+    },
+    "craftvalueStairVideo": {
+      "url": "https://www.youtube.com/watch?v=Y9mu5mdCHrU",
+      "title": "Staircase model — CRAFTVALUE",
+      "type": "research reconstruction of a stair section",
+      "verified": "34-second player opened and played; thumbnail and rotated fragment inspected; not a whole stairhall model"
+    },
+    "twg2021Plans": {
+      "url": "https://www.trinitywomengraduates.ie/latest-news/transforming-the-long-room",
+      "title": "Transforming the Long Room, Trinity Women Graduates, December 2021",
+      "type": "public architect and librarian presentation",
+      "verified": "Video plan frame inspected at 20:11 in preceding evidence pass",
+      "scope": "Long Room level shows a staircase beside room 9; no readable scale, compass or represented-state legend.",
+      "player": "https://player.vimeo.com/video/654600999?h=ac5c86f801&app_id=122963"
+    },
+    "luttmann2024": {
+      "url": "https://www.tara.tcd.ie/items/2342207d-e4d5-4073-9921-0e7169dbd129",
+      "title": "Nele Lüttmann, European Architectural Draughtsmen in Early Eighteenth-Century Britain and Ireland, 2024",
+      "type": "doctoral archival research, Trinity College Dublin",
+      "verified": "Volume I indexed text, printed pp.35 and 262; repository item inspected in browser. Volume II image not inspected.",
+      "scope": "Figure 5.75 identifies developed stair interior MUN/MC/26; estimate MUN/P/2/28. Authorship qualified; design rather than current survey.",
+      "accessNote": "Direct PDF downloads returned challenge HTML; browser opening Volume II returned ERR_BLOCKED_BY_CLIENT. No valid local thesis PDF retained."
+    },
+    "diaWestStair": {
+      "url": "https://dia.ie/works/view/52708/building/CO.%2BDUBLIN%2C%2BDUBLIN%2C%2BCOLLEGE%2BGREEN%2C%2BTRINITY%2BCOLLEGE%2C%2BLIBRARY%2B%28OLD%29",
+      "title": "Dictionary of Irish Architects: Trinity College Old Library",
+      "type": "Irish Architectural Archive research catalogue",
+      "verified": "Published catalogue text",
+      "scope": "Corroborates MUN MC/26 and P2/28 references; photograph catalogued at IAA 86/6.2/1. Does not supply measured geometry."
+    }
+  },
+  "parameters": [
+    {
+      "id": "length",
+      "value": 63.7,
+      "unit": "m",
+      "evidence": "published",
+      "confidence": "high",
+      "sources": [
+        "tcd2012"
+      ],
+      "method": "Published interior dimension; not a new survey.",
+      "scope": "published physical room"
+    },
+    {
+      "id": "width",
+      "value": 12.2,
+      "unit": "m",
+      "evidence": "published",
+      "confidence": "high",
+      "sources": [
+        "tcd2012"
+      ],
+      "method": "Published interior dimension; not a new survey.",
+      "scope": "published physical room"
+    },
+    {
+      "id": "apexHeight",
+      "value": 14.2,
+      "unit": "m",
+      "evidence": "published",
+      "confidence": "high",
+      "sources": [
+        "tcd2012"
+      ],
+      "method": "Published interior dimension; not a new survey.",
+      "scope": "published physical room"
+    },
+    {
+      "id": "alcovesTotal",
+      "value": 40,
+      "unit": "count",
+      "evidence": "published",
+      "confidence": "high",
+      "sources": [
+        "tcd2012"
+      ],
+      "method": "Side alcoves, not the number of busts or total individual shelf panels.",
+      "scope": "published physical room"
+    },
+    {
+      "id": "alcovesPerSide",
+      "value": 20,
+      "unit": "count",
+      "evidence": "derived",
+      "confidence": "medium",
+      "sources": [
+        "tcd2012",
+        "diliff2015"
+      ],
+      "method": "40 / 2 with the bilateral repeating arrangement seen in the photograph.",
+      "scope": "source-scale derivation or early candidate; not an active runtime parameter"
+    },
+    {
+      "id": "grossBayAllocation",
+      "value": 3.185,
+      "unit": "m",
+      "evidence": "derived",
+      "confidence": "medium",
+      "sources": [
+        "tcd2012"
+      ],
+      "method": "63.7 / 20; includes end allowances, NOT clear bay width.",
+      "scope": "source-scale derivation or early candidate; not an active runtime parameter"
+    },
+    {
+      "id": "floorArea",
+      "value": 777.14,
+      "unit": "m2",
+      "evidence": "derived",
+      "confidence": "high",
+      "sources": [
+        "tcd2012"
+      ],
+      "method": "63.7 * 12.2; rectangular room envelope only.",
+      "scope": "source-scale derivation or early candidate; not an active runtime parameter"
+    },
+    {
+      "id": "semicircleRadius",
+      "value": 6.1,
+      "unit": "m",
+      "evidence": "geometric-assumption",
+      "confidence": "low",
+      "sources": [
+        "tcd2012",
+        "diliff2015"
+      ],
+      "method": "12.2 / 2 IF a full-width semicircle is used. Photograph alone does not verify the curve.",
+      "scope": "source-scale derivation or early candidate; not an active runtime parameter"
+    },
+    {
+      "id": "semicircleSpringHeight",
+      "value": 8.1,
+      "unit": "m",
+      "evidence": "geometric-assumption",
+      "confidence": "low",
+      "sources": [
+        "tcd2012",
+        "diliff2015"
+      ],
+      "method": "14.2 - 6.1 under the same semicircle assumption; not an independently measured datum.",
+      "scope": "source-scale derivation or early candidate; not an active runtime parameter"
+    },
+    {
+      "id": "galleryFloorHeight",
+      "value": 5.8,
+      "unit": "m",
+      "evidence": "visual-working-estimate",
+      "confidence": "low",
+      "sources": [
+        "diliff2015",
+        "murray"
+      ],
+      "method": "Working fit of two storage tiers within the published envelope. No rectified section; retain a broad range.",
+      "plausibleRange": [
+        5.2,
+        6.4
+      ],
+      "rangeMeaning": "working modelling range, not statistical confidence interval",
+      "scope": "source-scale derivation or early candidate; not an active runtime parameter"
+    },
+    {
+      "id": "centralAisleWidth",
+      "value": 6.8,
+      "unit": "m",
+      "evidence": "visual-working-estimate",
+      "confidence": "low",
+      "sources": [
+        "diliff2015"
+      ],
+      "method": "Working fit of aisle and transverse side cases inside 12.2 m. Perspective prevents direct pixel-to-metre conversion.",
+      "plausibleRange": [
+        6.2,
+        7.4
+      ],
+      "rangeMeaning": "working modelling range, not statistical confidence interval",
+      "scope": "source-scale derivation or early candidate; not an active runtime parameter"
+    },
+    {
+      "id": "sideCaseProjection",
+      "value": 2.7,
+      "unit": "m",
+      "evidence": "derived-estimate",
+      "confidence": "low",
+      "sources": [
+        "diliff2015",
+        "tcd2012"
+      ],
+      "method": "(12.2 - 6.8) / 2; coupled to aisle-width estimate, before wall/joinery deductions.",
+      "plausibleRange": [
+        2.4,
+        3.0
+      ],
+      "rangeMeaning": "working modelling range, not statistical confidence interval",
+      "scope": "source-scale derivation or early candidate; not an active runtime parameter"
+    },
+    {
+      "id": "galleryGuardHeight",
+      "value": 1.0,
+      "unit": "m",
+      "evidence": "design-prior",
+      "confidence": "low",
+      "sources": [
+        "murray"
+      ],
+      "method": "Human-scale starting value consistent with visible turned rail; no published measurement.",
+      "plausibleRange": [
+        0.85,
+        1.15
+      ],
+      "rangeMeaning": "working modelling range, not statistical confidence interval",
+      "scope": "source-scale derivation or early candidate; not an active runtime parameter"
+    },
+    {
+      "id": "spiralOuterDiameter",
+      "value": 1.8,
+      "unit": "m",
+      "evidence": "design-prior",
+      "confidence": "low",
+      "sources": [
+        "skyden"
+      ],
+      "method": "Narrow alcove stair silhouette; human-scale starting value only. Photo lacks a reliable metric scale.",
+      "plausibleRange": [
+        1.5,
+        2.2
+      ],
+      "rangeMeaning": "working modelling range, not statistical confidence interval",
+      "scope": "source-scale derivation or early candidate; not an active runtime parameter"
+    },
+    {
+      "id": "spiralDiameterToWindowImageWidth",
+      "value": 1.35,
+      "unit": "ratio",
+      "evidence": "image-space-observation",
+      "confidence": "low",
+      "sources": [
+        "skyden"
+      ],
+      "method": "At the 500px view, roughly 217px stair span / 161px window span. Different depths mean this is NOT a metric ratio.",
+      "plausibleRange": [
+        1.2,
+        1.5
+      ],
+      "rangeMeaning": "working modelling range, not statistical confidence interval",
+      "scope": "source-scale derivation or early candidate; not an active runtime parameter"
+    },
+    {
+      "id": "woodenBustPlinthHeight",
+      "value": 1.35,
+      "unit": "m",
+      "evidence": "design-prior",
+      "confidence": "low",
+      "sources": [
+        "diliff2015"
+      ],
+      "method": "Human-scale display support starting value; photograph is perspective and contains no certified scale.",
+      "plausibleRange": [
+        1.15,
+        1.55
+      ],
+      "rangeMeaning": "working modelling range, not statistical confidence interval",
+      "scope": "source-scale derivation or early candidate; not an active runtime parameter"
+    },
+    {
+      "id": "harpStringCount",
+      "value": 29,
+      "unit": "count",
+      "evidence": "published",
+      "confidence": "high",
+      "sources": [
+        "tcdRegister"
+      ],
+      "method": "Published count of brass strings.",
+      "scope": "published physical room"
+    }
+  ],
+  "circulation": [
+    {
+      "id": "eastEntrance",
+      "location": "east pavilion",
+      "form": "concrete entrance stair; Fagel caged area above entrance",
+      "sources": [
+        "casey2018",
+        "tcd2012",
+        "social2025"
+      ],
+      "confidence": "high for topology; dimensions unknown"
+    },
+    {
+      "id": "centralExit",
+      "location": "towards middle of Long Room",
+      "form": "rectangular floor opening with timber balustrades and descending straight stair",
+      "sources": [
+        "casey2018",
+        "social2025"
+      ],
+      "confidence": "high for existence; exact bay and opening dimensions unknown"
+    },
+    {
+      "id": "westHistoricStair",
+      "location": "west pavilion",
+      "form": "broad oak stair with landing and return flight, rusticated stairhall walls",
+      "sources": [
+        "casey2018"
+      ],
+      "confidence": "high for form and side; dimensions unknown"
+    },
+    {
+      "id": "gallerySpiral",
+      "location": "window-lit book alcove; side and bay not established",
+      "form": "central post, pierced steps, scrollwork railing",
+      "sources": [
+        "skyden"
+      ],
+      "confidence": "high for visible form; low for metric size and placement"
+    }
+  ],
+  "bustRegister": {
+    "sources": [
+      "tcdRegister"
+    ],
+    "asOf": "before January 2023",
+    "count": 38,
+    "positions": [
+      {
+        "stall": "B",
+        "side": "north",
+        "sitter": "Homer"
+      },
+      {
+        "stall": "C",
+        "side": "north",
+        "sitter": "Socrates"
+      },
+      {
+        "stall": "D",
+        "side": "north",
+        "sitter": "Plato"
+      },
+      {
+        "stall": "E",
+        "side": "north",
+        "sitter": "Aristotle"
+      },
+      {
+        "stall": "F",
+        "side": "north",
+        "sitter": "Cicero"
+      },
+      {
+        "stall": "G",
+        "side": "north",
+        "sitter": "Demosthenes"
+      },
+      {
+        "stall": "H",
+        "side": "north",
+        "sitter": "James Ussher"
+      },
+      {
+        "stall": "I",
+        "side": "north",
+        "sitter": "Jonathan Swift"
+      },
+      {
+        "stall": "K",
+        "side": "north",
+        "sitter": "Robert Clayton"
+      },
+      {
+        "stall": "L",
+        "side": "north",
+        "sitter": "Patrick Delany"
+      },
+      {
+        "stall": "M",
+        "side": "north",
+        "sitter": "Thomas Parnell"
+      },
+      {
+        "stall": "N",
+        "side": "north",
+        "sitter": "Edmund Burke"
+      },
+      {
+        "stall": "O",
+        "side": "north",
+        "sitter": "Charles Richard Elrington"
+      },
+      {
+        "stall": "P",
+        "side": "north",
+        "sitter": "William Conyngham Plunket"
+      },
+      {
+        "stall": "Q",
+        "side": "north",
+        "sitter": "William Magee"
+      },
+      {
+        "stall": "R",
+        "side": "north",
+        "sitter": "Charles William Wall"
+      },
+      {
+        "stall": "S",
+        "side": "north",
+        "sitter": "William Rowan Hamilton"
+      },
+      {
+        "stall": "T",
+        "side": "north",
+        "sitter": "Samuel Kyle"
+      },
+      {
+        "stall": "V",
+        "side": "north",
+        "sitter": "Arthur Wellesley"
+      },
+      {
+        "stall": "BB",
+        "side": "south",
+        "sitter": "William Shakespeare"
+      },
+      {
+        "stall": "CC",
+        "side": "south",
+        "sitter": "Francis Bacon"
+      },
+      {
+        "stall": "DD",
+        "side": "south",
+        "sitter": "John Milton"
+      },
+      {
+        "stall": "EE",
+        "side": "south",
+        "sitter": "Isaac Newton"
+      },
+      {
+        "stall": "FF",
+        "side": "south",
+        "sitter": "John Locke"
+      },
+      {
+        "stall": "GG",
+        "side": "south",
+        "sitter": "Robert Boyle"
+      },
+      {
+        "stall": "HH",
+        "side": "south",
+        "sitter": "Thomas Herbert"
+      },
+      {
+        "stall": "II",
+        "side": "south",
+        "sitter": "Claudius Gilbert"
+      },
+      {
+        "stall": "KK",
+        "side": "south",
+        "sitter": "Richard Baldwin"
+      },
+      {
+        "stall": "LL",
+        "side": "south",
+        "sitter": "William Clement"
+      },
+      {
+        "stall": "MM",
+        "side": "south",
+        "sitter": "John Lawson"
+      },
+      {
+        "stall": "NN",
+        "side": "south",
+        "sitter": "Oliver Goldsmith"
+      },
+      {
+        "stall": "OO",
+        "side": "south",
+        "sitter": "George Miller"
+      },
+      {
+        "stall": "PP",
+        "side": "south",
+        "sitter": "Thomas Langlois Lefroy"
+      },
+      {
+        "stall": "QQ",
+        "side": "south",
+        "sitter": "Bartholomew Lloyd"
+      },
+      {
+        "stall": "RR",
+        "side": "south",
+        "sitter": "Humphrey Lloyd"
+      },
+      {
+        "stall": "SS",
+        "side": "south",
+        "sitter": "James Whiteside"
+      },
+      {
+        "stall": "TT",
+        "side": "south",
+        "sitter": "Rudolf Thomas Siegfried"
+      },
+      {
+        "stall": "VV",
+        "side": "south",
+        "sitter": "Wolfe Tone"
+      }
+    ],
+    "coordinateCaution": "Stall labels are verified; their east-west order and exact XYZ anchors have not been established. Do not invent coordinates from list order. End-wall and pavilion sculptures are separate."
+  },
+  "enlargedExperience": {
+    "length": 90.0,
+    "width": 22.3,
+    "height": 18.45,
+    "unit": "m",
+    "source": "user request and current longRoomLayout.ts",
+    "axisScale": {
+      "length": 1.41287284144427,
+      "width": 1.8278688524590165,
+      "height": 1.2992957746478873
+    },
+    "floorArea": 2007.0,
+    "floorAreaFactor": 2.582546259361248,
+    "furnishingScale": 1,
+    "warning": "Nonuniform architectural enlargement; keep books, busts and fittings human-sized."
+  },
+  "implementationStatus": "Adapted hall with stairs, galleries, detailed windows, timber vaults, lighting, collision and real catalog focus. Guided ascent uses a separate adapted stair. Historical benefactor-name plaques, live busts, central tables and the harp cabinet remain removed per user feedback. Measured geometry, portrait likeness and original pavilion reconstruction remain incomplete.",
+  "shelfOrganization": {
+    "sources": [
+      "collections2012"
+    ],
+    "rule": "size-based shelving on both levels",
+    "northLabelRange": [
+      "A",
+      "W"
+    ],
+    "southLabelRange": [
+      "AA",
+      "WW"
+    ],
+    "sequenceCaution": "Published endpoints are W/WW, not V/VV. The complete sequence and end-case treatment are not established by the 38-bust register. Do not assume one bust per case or generate labels from that register.",
+    "runtime": "Decorative books now share row-level format heights with small binding variation; real catalog models unchanged."
+  },
+  "windowConstruction": {
+    "status": "physical apertures implemented; dimensions remain working estimates",
+    "count": 80,
+    "widthM": 1.5,
+    "lower": {
+      "sillM": 1.25,
+      "heightM": 3.85
+    },
+    "upper": {
+      "sillM": 6.65,
+      "heightM": 4.25
+    },
+    "wallThicknessM": 0.2,
+    "details": [
+      "solid shadow-casting piers and spandrels",
+      "recessed glazing",
+      "oak reveals",
+      "projecting sill",
+      "sash rails and glazing bars",
+      "lower fabric blinds with direct-light occlusion",
+      "rounded architrave beads and sash catches",
+      "photo-estimated recessed paneled lower returns with splayed frames and head lining"
+    ],
+    "limitations": [
+      "glazing is a luminous opaque exterior approximation",
+      "dimensions and sash pattern are not measured",
+      "daylight direction is an artistic working setting, not a surveyed solar orientation"
+    ],
+    "runtimeAuthority": "scene/longRoom.ts longRoomWindowLevels; 2026-09-09 rechecked"
+  },
+  "swiftPortraitStudy": {
+    "sources": [
+      "swiftOfficial2017",
+      "swiftCommons2015",
+      "tcdRegister"
+    ],
+    "documentedLocation": "north Stall I",
+    "runtimePlacement": {
+      "side": 1,
+      "bay": 8,
+      "x": 4.74,
+      "z": 8.67,
+      "status": "Superseded proposed placement; component study is isolated and live hall has no busts."
+    },
+    "observedFeatures": [
+      "folded soft cap and rolled edge",
+      "short hair",
+      "paired clerical bands",
+      "carved robe borders",
+      "flared rectangular socle"
+    ],
+    "status": "Component-only procedural study; no busts in live hall after user rejection.",
+    "remaining": [
+      "facial likeness and carved detail remain inadequate",
+      "exact dimensions unmeasured",
+      "back surfaces estimated",
+      "bay and orientation need photo mapping",
+      "socle inscription not reproduced"
+    ]
+  },
+  "upperShelfSupportStudy": {
+    "reference": "https://www.visittrinity.ie/wp-content/uploads/2023/01/SM_1561_0395_web_PhotoBySteMurray.jpg?w=720",
+    "status": "photo-derived structural detail; joinery dimensions estimated",
+    "thicknessM": 0.032,
+    "projectionM": 0.212,
+    "dropM": 0.14,
+    "supportOffsetsAsShelfWidth": [
+      0.16,
+      0.5,
+      0.84
+    ],
+    "runtime": "one instanced geometry; anonymous scenery books reserve support clearance; catalog unchanged"
+  },
+  "historicSpiralIntegration": {
+    "source": "https://www.visittrinity.ie/venue/the-long-room/",
+    "tour": "https://my.matterport.com/show/?m=zfHhe3XdzCn",
+    "fidelity": "Public-tour-derived form with estimated dimensions and anchor; component reviewed earlier; not surveyed or directly climbable.",
+    "position": {
+      "x": -9.25,
+      "z": 41.1825
+    },
+    "height": 5.95,
+    "diameter": 1.8,
+    "galleryOpening": 2.2,
+    "implementation": "Integrated into south entry alcove with genuine gallery aperture, perimeter guards and upper landing. Adapted guided walk remains on separate wide stair.",
+    "reviewPaths": [
+      "/model-review.html?component=stair-in-hall",
+      "/model-review.html?component=stair-opening"
+    ]
+  },
+  "westEndStudy": {
+    "source": "https://www.visittrinity.ie/wp-content/uploads/2025/09/Social-Story-Bokex.pdf",
+    "page": 15,
+    "observed": "Closed central paneled door flanked by two round-arched recesses, fluted pilasters and layered cornice.",
+    "orientation": "West end inferred from closed far-end composition versus open east-entry tour observation; pending independent visual confirmation.",
+    "dimensions": "Enlarged-experience estimates shared with east-end architectural module; not measured.",
+    "remaining": "Niche portraits, ornamental capitals, upper gallery termination and pavilion spaces incomplete.",
+    "reviewPath": "/model-review.html?component=west"
+  },
+  "pilasterCapitalStudy": {
+    "source": "https://arranqhenderson.com/2013/09/19/the-pantheon-in-the-library-the-sculpture-busts-of-long-room-trinity-college-dublin/",
+    "image": "https://arranqhenderson.com/wp-content/uploads/2013/09/sculpture-busts-of-long-room-trinity-college-dublin-cpywritearran-henderson.jpg",
+    "observed": "Leaf ornament and layered projections visible on repeating aisle pilaster capitals.",
+    "implementation": "Replaced torus rings with tapering volutes, two rows of closed scalloped relief shells, shallow veins, neck mouldings and layered abacus. All carving dimensions remain estimates.",
+    "rights": "Reference viewed only; no photograph copied into product assets.",
+    "reviewPath": "/model-review.html?component=capital",
+    "limitation": "Photographic silhouette study; exact leaf count, carving profile and capital order are not verified."
+  },
+  "shelfLetteringStudy": {
+    "sources": [
+      "https://onprem.tcd.ie/library/exhibitions/choicebooks/collections.php",
+      "https://arranqhenderson.com/2013/09/19/the-pantheon-in-the-library-the-sculpture-busts-of-long-room-trinity-college-dublin/",
+      "https://www.visittrinity.ie/wp-content/uploads/2025/09/Social-Story-Bokex.pdf"
+    ],
+    "documented": "Official exhibit identifies north stacks A-W and south AA-WW. Inspected photographs show lower-case shelf sequences. These are distinct from stall labels.",
+    "implemented": "Lower-level a-i on north and aa-ii on south, on both faces of case stiles; repeated placement and Georgia typeface remain approximations.",
+    "omitted": "Upper rows, upper storey and large stall identifiers pending verified ordering. No private-catalog shelf address is assigned by these scenery marks.",
+    "rendering": "One 1024x384 atlas and one indexed mesh for all letters; alpha-tested lit material."
+  },
+  "shakespearePortraitStudy": {
+    "source": "https://arranqhenderson.com/wp-content/uploads/2013/09/shakespeare.jpg",
+    "documentedStall": "BB, south side",
+    "placement": "entry-adjacent south bust at estimated x=-4.74,z=43.35",
+    "observed": "Receding hairline, side hair, moustache, short beard, pointed falling collar, doublet buttons, asymmetric sweeping mantle and flared rectangular socle.",
+    "implementation": "Independent costume/head configuration replacing one generic bust. Continuous mantle replaced disconnected tube folds after browser inspection.",
+    "limitations": "Facial likeness, shoulder silhouette, hair curls, socle inscription and back view remain inadequate or unverified. Explicit study, not a facsimile.",
+    "rights": "Photograph viewed as reference only; no image bundled."
+  },
+  "proportionAndFinishRevision": {
+    "trigger": "User rejected tall cabinets, narrow hall, absent category navigation/lamps, crude windows/vault/sculptures and central tables.",
+    "activeDimensions": {
+      "length": 90,
+      "width": 22.3,
+      "height": 18.45,
+      "lowerCaseHeight": 5.4,
+      "galleryY": 5.95,
+      "centralAisleWidth": 14.2
+    },
+    "vaultSource": "https://dominikgehl.com/ireland/dublin/library-trinity-college",
+    "observedForm": "Central longitudinal barrel with separate shallow upper alcove vaults, visually inspected photographer image 01.",
+    "geometry": "Central radius 7.25, spring 11.2, side-vault rise 0.48; all enlarged-experience estimates, not surveyed dimensions.",
+    "removed": "Central display tables and harp cabinet; all live bust studies withdrawn pending distinct acceptable sculpture models. Component source retained.",
+    "added": "Eight curved brass/glass wall lamps with four local lights; rounded window moulding beads and sash catches. Lamps are user-requested adaptations, not attributed to original historic fixtures.",
+    "catalog": "Category groups reserve separate lower bookcases; category buttons focus their first occupied case. Complete-case perspective fit; occupied reservations begin beyond entry spiral."
+  },
+  "lowerWindowBlindStudy": {
+    "source": "https://dominikgehl.com/ireland/dublin/library-trinity-college",
+    "image": "https://images.dominikgehl.com/images/ireland/dublin/library-trinity-college/library-trinity-college-02.webp",
+    "verified": "Photographer image visually inspected in browser: tall translucent blind, blurred sash grid, central meeting rail, top roller and soft lower folds.",
+    "implementation": "40 lower-window blinds, shared 96x256 procedural woven/transmitted-shadow map, gently draped 24x40 mesh and separate roller. Six-row sash grid and thicker overlapping meeting rail. No external photograph used as a texture.",
+    "fidelity": "Estimated form and dimensions adapted to the latest room envelope. Opaque lit cloth approximation with baked transmitted shadows; not a physically simulated fabric/transmission scan.",
+    "inspection": "Full window and close view checked. Initial meeting-rail/catch penetration corrected by moving blind and roller inward as one assembly."
+  },
+  "shelfLadderStudy": {
+    "source": "https://dominikgehl.com/ireland/dublin/library-trinity-college",
+    "image": "https://images.dominikgehl.com/images/ireland/dublin/library-trinity-college/library-trinity-college-02.webp",
+    "form": "Paired narrow ladders against the bookcase faces at the window end of the alcove.",
+    "implementation": "Leaning timber stiles, round rungs, rounded metal feet, curved top hooks and a bracketed hanging rail. Shared rail/rung geometry before static batching.",
+    "dimensions": "Width 0.42 m, height lowerCaseHeight - 0.15 m, spread 0.48 m; all estimates under enlarged-room adaptation.",
+    "placement": "Paired across lower alcoves; south entry alcove excluded for historic spiral clearance. Repetition is inferred from bay typology rather than independently verified at every alcove.",
+    "interaction": "Static scenery with collision; not a separate climbing interaction. Gallery stair remains the walkable circulation route."
+  },
+  "galleryCorniceStudy": {
+    "sources": [
+      "https://www.visittrinity.ie/wp-content/uploads/2023/01/SM_1561_0395_web_PhotoBySteMurray.jpg?w=720",
+      "https://images.dominikgehl.com/images/ireland/dublin/library-trinity-college/library-trinity-college-01.webp"
+    ],
+    "verified": "Both photographs viewed in browser; repeating under-gallery corbels, layered fascia and fine lower ornament are visible.",
+    "implementation": "Beveled curved modillion profile, fine dentil band, continuous rounded mouldings and recessed backing. Corbels and teeth use two shared instanced meshes. Turned balusters increased from 10 to 20 radial segments.",
+    "fidelity": "Profiles and spacing remain photo-derived estimates. Fine foliage and benefactor inscriptions are unresolved; no text or unseen emblem is invented."
+  },
+  "endJoineryProportionRevision": {
+    "source": "https://images.dominikgehl.com/images/ireland/dublin/library-trinity-college/library-trinity-college-01.webp",
+    "observed": "Far-end central doorway has a triangular pediment between round-arched recesses. West assignment remains an orientation inference.",
+    "implementation": "Lower joinery now follows gallery-height scaling while preserving circular niche crowns via inverse local arc scaling. Wall apertures follow the same adjusted paths. West pediment, raised-panel perimeter mouldings and curved door pulls added.",
+    "fidelity": "Dimensions, moulding profile and hardware remain estimates. East retains rectangular overpanel from previous entry-tour observation; sculptures in niches remain absent.",
+    "verification": "Both-end browser close views; niche rise versus half-width regression; upper joinery bounds below gallery; rays confirm solid wall strips between apertures. Existing route/collision tests pass."
+  },
+  "timberSurfaceRevision": {
+    "date": "2026-09-09",
+    "changes": [
+      "Dedicated procedural ceiling-board albedo and bump; no floor staggered joints",
+      "Metric vault UVs follow the central barrel and transverse side bays",
+      "Box wood UVs follow longest board axis, with non-degenerate mappings on all six faces"
+    ],
+    "dimensionsStatus": "Board widths and grain scale are visual estimates, not surveyed data",
+    "validation": {
+      "lint": "passed",
+      "typecheck": "passed",
+      "longRoomTests": "4 passed",
+      "build": "passed",
+      "browser": "Full hall and whole-case category focus inspected; all 4 real books visible, cabinet corners inside viewport, collision clear; existing Drawer.width warning only"
+    }
+  },
+  "historicalBindingStudy": {
+    "date": "2026-09-09",
+    "source": "https://dominikgehl.com/ireland/dublin/library-trinity-college",
+    "image": "library-trinity-college-02.webp",
+    "observed": "Predominantly aged tan bindings with horizontal spine divisions in the photographed bay",
+    "implementation": [
+      "Shared curved binding cross-section with smooth spine normals",
+      "Shared procedural leather albedo and bump with bands, tooling, label panel and wear",
+      "Tan-biased deterministic instance colors",
+      "Removed separate box-shaped spine-band instances"
+    ],
+    "limits": [
+      "Anonymous scenery only; no individual historic title or binding identification",
+      "Representative estimated surface, not scanned source material",
+      "Fine lettering and per-volume variation remain incomplete"
+    ],
+    "verification": "Near-case screenshots inspected; final checks recorded in reference.md"
+  },
+  "pilasterFlutingStudy": {
+    "date": "2026-09-09",
+    "source": "https://images.dominikgehl.com/images/ireland/dublin/library-trinity-college/library-trinity-college-03.webp",
+    "observed": "Recessed curved longitudinal grooves on the aisle-facing pier",
+    "changes": [
+      "Replaced applied dark rectangular strips with five modeled concave grooves",
+      "Rounded groove stops within original shaft envelope",
+      "Removed underlying front plane to prevent covering recesses"
+    ],
+    "estimates": {
+      "grooveHalfWidth": 0.018,
+      "grooveDepth": 0.014,
+      "grooveSpacing": 0.057,
+      "endTransition": 0.12
+    },
+    "validation": "Close shaft and upper junction screenshots inspected; lint/typecheck, 4 structural/collision tests and build passed",
+    "remaining": "Capital leaf carving and scroll details remain estimated and need further reference refinement"
+  },
+  "capitalReliefRevision": {
+    "date": "2026-09-09",
+    "source": "https://images.dominikgehl.com/images/ireland/dublin/library-trinity-college/library-trinity-college-01.webp",
+    "sourceLimit": "Axial photograph supports overall foliate silhouette; exact carving dimensions remain unmeasured",
+    "changes": [
+      "Closed leaf shells now curl downward at pointed tips",
+      "Side-return leaves extend the relief onto exposed core sides",
+      "Volute cross-sections taper to 27 percent at their inner ends with rounded closures",
+      "Twelve-sided scroll sections replace six-sided tubes"
+    ],
+    "verification": "Frontal and oblique close screenshots inspected; lint/typecheck, four Long Room tests and build passed",
+    "remaining": "Still an estimated carving study, not a scan-matched capital"
+  },
+  "swiftMultiAngleStudy": {
+    "date": "2026-09-09",
+    "source": "https://bathartandarchitecture.blogspot.com/2016/11/jonathan-swift-by-roubiliac-trinity.html",
+    "photographer": "David Bridgwater",
+    "photographed": "2016-10-04",
+    "inspectedImages": [
+      "DSC_6289-lo-res.jpg",
+      "DSC_6294-lo-res.jpg"
+    ],
+    "sourceEvidence": "Author identifies the marble bust as Roubiliac, Trinity College Library; image sequence provides different views of the same work",
+    "implementation": "Separate normalized head-section geometry with continuous Hermite interpolation and integrated brow, sockets, nose, mouth and chin relief",
+    "limits": [
+      "No verified downloadable scan obtained",
+      "Section coordinates are visual estimates",
+      "Current facial expression, cap, ears and drapery still fail a faithful likeness comparison",
+      "Study remains excluded from the live hall"
+    ],
+    "validation": "Lint/typecheck/build passed; model-review screenshot compared to source views; no full-suite rerun for this review-only change"
+  },
+  "swiftCapAndCollarRevision": {
+    "date": "2026-09-09",
+    "reference": "https://bathartandarchitecture.blogspot.com/2016/11/jonathan-swift-by-roubiliac-trinity.html",
+    "basis": "Previously inspected DSC_6289 profile and DSC_6294 three-quarter photographs",
+    "changes": [
+      "Cap crown raised and made asymmetric; lower edge descends behind ears",
+      "Rigid tube rim replaced by folded-band surface",
+      "Hair rear edge extended and scalloped",
+      "Collar upper ends curve backward to meet neck rather than floating vertically ahead of it"
+    ],
+    "validation": "Profile and three-quarter model-review screenshots checked; lint/typecheck/build passed",
+    "limits": "Estimated cap folds and simplified hair/face remain visibly unlike the original; not promoted into hall"
+  },
+  "swiftEyelidStudy": {
+    "date": "2026-09-09",
+    "reference": "https://bathartandarchitecture.blogspot.com/2016/11/jonathan-swift-by-roubiliac-trinity.html",
+    "basis": "Previously inspected profile and three-quarter images",
+    "implementation": [
+      "Separate upper/lower eyelid annulus with outer margins sampled against the current head surface",
+      "Recessed eye surface and reduced brow/socket relief",
+      "Reduced rim projection after close-view inspection showed excessive ring-like relief"
+    ],
+    "limits": "Geometry conforms to the current estimated head, not a scan of the original. Expression and likeness remain unresolved; isolated review route only."
+  },
+  "floorSurfaceRevision": {
+    "date": "2026-09-09",
+    "reference": "https://www.flickr.com/photos/134152424@N02/19054337425/",
+    "photographer": "Marion QUESNE",
+    "photographed": "2015-05-28",
+    "sourceLimit": "Monochrome close-up supports worn joints and grain relief, not absolute board dimensions or color; only a partially loaded image area was visible",
+    "changes": [
+      "Separate procedural albedo, relief and roughness maps",
+      "Board-local grain and color reset at staggered ends",
+      "Independent column phase prevents cross-hall tile-boundary lines",
+      "Removed albedo-as-height override"
+    ],
+    "dimensionsStatus": "Existing 0.24 m board width and 2.88 × 4.8 m texture cell remain estimates",
+    "runtimeAssets": "No source photograph copied into the application",
+    "validation": "Final close floor view inspected; final checks recorded in reference.md"
+  },
+  "windowLecternStudy": {
+    "date": "2026-09-09",
+    "sources": [
+      "https://irishwishingwell.com/blog/library",
+      "https://www.tcd.ie/library/old-library/long-room/"
+    ],
+    "inspectedPhotos": [
+      "Double R: QQ / RR on paired window-end lectern",
+      "Gold Lettering: actually cc / dd on a shelf upright"
+    ],
+    "changes": [
+      "Double sloping book supports with retaining lips",
+      "Curved paired supports, circular lower scrolls, shaped lettering cartouches and floor base",
+      "QQ / RR transcribed only on south bay 15; no guessed donor inscription",
+      "39 stands repeated at window ends, excluding entry spiral alcove",
+      "Positive-determinant mirrored support placement to preserve face orientation during batching"
+    ],
+    "estimates": [
+      "Dimensions, repetition across unphotographed bays and precise QQ/RR position in adapted hall",
+      "No measured furniture survey obtained"
+    ],
+    "collision": "Per-stand box descriptors; gallery-route regression rerun",
+    "limits": "Benefactor names confirmed by official text, but complete Latin inscription and its placement not yet transcribed"
+  },
+  "shelfJoineryEdgeRevision": {
+    "date": "2026-09-09",
+    "references": [
+      "https://www.visittrinity.ie/wp-content/uploads/2023/01/SM_1561_0395_web_PhotoBySteMurray.jpg?w=720",
+      "https://images.dominikgehl.com/images/ireland/dublin/library-trinity-college/library-trinity-college-03.webp"
+    ],
+    "changes": [
+      "Rounded continuous shelf-front timber beads in one instanced mesh",
+      "Three-millimetre beveled upper shelf supports with preserved overall thickness",
+      "Metric support-face wood UVs"
+    ],
+    "estimates": {
+      "beadRadiusMetres": 0.014,
+      "supportBevelMetres": 0.003
+    },
+    "validation": "Close shelf view inspected; lint/typecheck, four Long Room structural/collision tests and build passed",
+    "limits": "Joinery dimensions remain photo-derived estimates"
+  },
+  "bindingArrangementRevision": {
+    "source": "https://dominikgehl.com/ireland/dublin/library-trinity-college",
+    "image": "https://images.dominikgehl.com/images/ireland/dublin/library-trinity-college/library-trinity-college-03.webp",
+    "observation": "Short matching runs alternate with different heights, thicknesses, leather tones and spine tooling.",
+    "implementation": "Four instanced binding styles share one geometry; sequential width-aware placement, estimated 24–72 mm thickness, 3 mm gaps, up to 35 mm height variation around the row format, and 0–12 mm setbacks. Upper supports retain width-aware clearance.",
+    "limits": "Anonymous scenery only; titles, exact binding identities, item dimensions and placement are not surveyed. No source photo textures bundled."
+  },
+  "historicalPageEdgeRevision": {
+    "basis": "Visible solid book tops in the local near-shelf review; continued anonymous binding study, not measured individual volumes.",
+    "implementation": "Inset upper paper quad beneath a cover rim, with the original closed bottom retained; shared 128 x 32 procedural leaf-edge map, one instanced paper batch across four binding styles. Hidden through-walls and lower paper quads were removed after measuring geometry cost.",
+    "dimensions": "Normalized opening 0.84 x 0.76, recess 0.015 of book height; estimated rather than surveyed.",
+    "limitations": "No individual leaf geometry, unique titles, scanned bindings, or exact per-volume damage."
+  },
+  "historicalBindingLod": {
+    "implementation": "Two-bay spatial clusters on each side, with detailed bindings/paper heads within 18 m and shared 12-triangle bindings beyond, 12% hysteresis. Near/far variants share instance matrices and colors.",
+    "validation": "Post-batching LOD selection, instance counts and transforms checked in structural tests; browser near-detail review, 18 m forward walking and category focus.",
+    "entranceMetrics": {
+      "trianglesBefore": 8277396,
+      "trianglesAfter": 5122744,
+      "drawCallsBefore": 42,
+      "drawCallsAfter": 119
+    },
+    "limits": "Geometry workload reduction only; not a controlled GPU frame-time or load-time speedup claim. Architectural meshes remain high-detail."
+  },
+  "vaultRibProfileRevision": {
+    "source": "https://dominikgehl.com/ireland/dublin/library-trinity-college",
+    "image": "https://images.dominikgehl.com/images/ireland/dublin/library-trinity-college/library-trinity-college-01.webp",
+    "observation": "Broad timber arch members with paired moulded edges and a recessed central face, rather than circular rods.",
+    "implementation": "Replaced three tube members per rib with a continuous swept timber profile, capped at both spring ends and shared across 21 ribs. Arc remains concentric with the barrel lining.",
+    "estimates": {
+      "axialWidthMetres": 0.4,
+      "maximumInwardDepthMetres": 0.185,
+      "arcSegments": 96
+    },
+    "limits": "Section dimensions and exact profile are photo-based estimates, not surveyed joinery."
+  },
+  "documentedDonorPanels2021": {
+    "officialEvent": "https://www.tcd.ie/news_events/articles/trinity-welcomes-prince-albert-ii-of-monaco/",
+    "eventDate": "2021-09-03",
+    "photograph": "https://monacolife.net/wp-content/uploads/2021/09/241342485_4798560456823122_4910044183740686943_n.jpg",
+    "photographCredit": "Palais Princier de Monaco (visible image credit), reproduced by Monaco Life",
+    "transcribedText": [
+      "HSH ALBERT II OF MONACO",
+      "FRANCES & DENIS DALY"
+    ],
+    "observedPlacement": "Albert panel between O and P markers; Daly panel immediately alongside on the other side of P.",
+    "runtimePlacement": "North side, adjacent adapted bay centers 13 and 14; absolute bay mapping is inferred, not surveyed, and complete historic letter sequence remains unresolved.",
+    "construction": "Green inset panels, timber fascia and rounded beads, one shared gold text atlas; text original, font and dimensions approximate.",
+    "temporalScope": "2021 pre-book-removal reference, not a claim of the current conservation-state interior.",
+    "unresolved": "Full Latin founding-donor inscriptions and exact surveyed panel coordinates."
+  },
+  "galleryPanelledPosts": {
+    "reference": "https://monacolife.net/wp-content/uploads/2021/09/241342485_4798560456823122_4910044183740686943_n.jpg",
+    "observed": "Solid panelled piers divide the turned gallery balustrade, with moulded rectangular surrounds and projecting bases/caps.",
+    "implementation": "Repeated on adapted bay boundaries, recessed dark faces and bevelled timber frames on both sides, with nearby slender balusters removed. Stair and cross-gallery openings excluded.",
+    "estimates": "480 mm body width, 200 mm body depth; frame, cap dimensions, rear face and repetition are estimated.",
+    "collision": "Existing gallery guards widened from 240 to 260 mm to cover frame relief.",
+    "limits": "Not a measured joinery profile or exact historic bay survey."
+  },
+  "galleryBalusterCurveRevision": {
+    "reference": "https://monacolife.net/wp-content/uploads/2021/09/241342485_4798560456823122_4910044183740686943_n.jpg",
+    "change": "Replaced the straight-segment turning silhouette with a monotone cubic radius profile, sampled at three subdivisions per former span, retaining 20 radial segments and instanced rendering.",
+    "preserved": "Existing 0.78 m height, 0.07 m maximum radius and all positions/opening exclusions.",
+    "material": "Metric UVs along the turned member, using existing timber material.",
+    "limits": "Estimated turning profile, not a measured reproduction of an individual historic baluster."
+  },
+  "runtimeSnapshot": {
+    "checkedAt": "2026-09-09",
+    "authority": "longRoomLayout.ts and scene/longRoom.ts",
+    "layout": {
+      "length": 90.0,
+      "width": 22.3,
+      "height": 18.45,
+      "alcovesPerSide": 20.0,
+      "endMargin": 1.65,
+      "galleryY": 5.95,
+      "aisleHalfWidth": 7.1,
+      "galleryInnerX": 5.8,
+      "lowerCaseHeight": 5.4,
+      "upperCaseHeight": 4.95,
+      "caseThickness": 0.48,
+      "shelfRows": 10.0,
+      "vaultSpring": 11.2,
+      "vaultRadius": 7.25
+    },
+    "derived": {
+      "bayPitch": 4.335,
+      "centralAisleWidth": 14.2,
+      "upperCaseBase": 6.03,
+      "upperCaseHeight": 4.949999999999999,
+      "catalogBooksPerCase": 120,
+      "catalogBooksPerRow": 12,
+      "shelfBoardBase": 0.4,
+      "shelfPitch": 0.49
+    },
+    "scope": "Current adapted model only. Original published values and source-scale candidate estimates remain in parameters."
+  },
+  "upperGalleryCollectionStudy": {
+    "officialGuardArticle": "https://www.visittrinity.ie/blog/5-surprising-facts-about-the-book-of-kells-and-old-library/",
+    "publicationDate": "2024-09-19",
+    "photo": "https://www.visittrinity.ie/wp-content/uploads/2024/09/Long-Room-Shelves-1.jpg?w=960",
+    "photoCredit": "Barry McCall",
+    "observed": "Leaning shelf ladders visible on upper transverse cases. Article explicitly describes largest books on lower shelves and smallest on top.",
+    "implementation": "39 estimated upper shelf-ladder placements, omitting the south entry stair aperture, with collision; row-average historical binding height decreases upwards. Real catalog slots unchanged.",
+    "limits": "Ladder dimensions, number and positions remain estimates; no climbing interaction."
+  },
+  "hingedWindowCasesEvidence": {
+    "sources": [
+      "https://www.tcd.ie/library/exhibitions/choicebooks/newlibrary.php",
+      "https://www.tcd.ie/library/exhibitions/directors-choice/old-library-catalogue/",
+      "https://www.visittrinity.ie/blog/5-surprising-facts-about-the-book-of-kells-and-old-library/"
+    ],
+    "established": "Fixed window-wall shelving with wheeled hinged double-sided cases in front, installed in the 1840s/1850s. Some deeper locations held two parallel moving cases.",
+    "unresolved": "Exact surviving count, location, dimensions, hinge/track geometry and photographic opening sequence. Official accounts differ in qualitative remaining count (few versus most).",
+    "status": "Not added to runtime; generic repeated low cabinets would not prove the documented mechanism."
+  },
+  "accessStairJoineryStudy": {
+    "sourceIds": [
+      "craftvalueStair2021",
+      "craftvalueStairConstruction"
+    ],
+    "observed": "Fluted slender columns above square lower blocks, turned collars, broad moulded handrail, rounded projecting tread edges.",
+    "implemented": "142 instanced estimated balusters, two per tread plus rest-landing supports; bases on tread/landing surfaces; profiled handrails; rectangular timber stringers; rounded tread nosings.",
+    "dimensions": "Estimated for current adapted route: 1.4 m flight width, 32 risers over 5.95 m; baluster maximum radius 0.046 m; handrail width 0.132 m. Not surveyed original dimensions.",
+    "boundary": "The original photographed oak stair is in the west pavilion. The live north-side gallery access remains the user-requested circulation adaptation, not a relocated claim of original architecture.",
+    "remaining": "Original west-pavilion stair layout, carved newel heads, exact profiles and original dimensions remain incomplete."
+  },
+  "westPavilionEvidence": {
+    "sourceIds": [
+      "casey2018",
+      "craftvalueStair2021",
+      "tierney2023Stair",
+      "hayes2015WestPavilion",
+      "abbott1892Library",
+      "craftvalueStairVideo"
+    ],
+    "existingGeometryEvidence": {
+      "location": "west pavilion, separate from the enlarged-hall north-side access adaptation",
+      "connections": [
+        "entrance immediately meets the stair",
+        "upper landing immediately meets the Long Room doorway"
+      ],
+      "handrail": "existing swan-neck ramp and gentle outward lower sweep; no terminal scroll/volute in the cited photograph and text",
+      "wallTreatment": "lower-storey plaster rustication; inter-storey Vitruvian scroll frieze; upper-storey lugged panels with acanthus framing",
+      "stairCharacter": "open string, fluted slender balusters and shaped tread-end brackets"
+    },
+    "excludedProposalFeatures": [
+      "Figure 11.9 concave handrail ramp was proposed but not executed; do not use as existing-condition geometry.",
+      "Proposed handrail twist/volute was not executed; do not invent a terminal spiral from the estimate.",
+      "The statement usually three balusters per step describes a staircase type, not a surveyed count for every TCD tread."
+    ],
+    "unresolved": [
+      "complete plan and orientation of all flights",
+      "stairwell width and floor heights",
+      "measured wall/panel/handrail profiles",
+      "exact connection through the currently closed west doorway"
+    ],
+    "runtimeDecision": "Keep current adapted access route explicit. No west-pavilion spatial geometry changed from this unmeasured and partly unexecuted drawing.",
+    "historicalIllustrations1892": {
+      "entrance": {
+        "printedPage": 180,
+        "url": "https://readingroo.ms/6/1/0/0/61000/61000-h/images/i_192.jpg",
+        "caption": "Library Staircase and Entrance to Reading Room",
+        "observed": "Broad lower flight with outward handrail sweep, raised turning landing, further ascending flights, rusticated walls and a doorway below the upper flight."
+      },
+      "inner": {
+        "printedPage": 177,
+        "url": "https://readingroo.ms/6/1/0/0/61000/61000-h/images/i_189.jpg",
+        "caption": "Inner Staircase in Library",
+        "observed": "Successive timber flights and landings, paneled soffits and doors at differing levels. This is not an illustration of the circular iron stair."
+      },
+      "limits": "Historical perspective illustrations establish forms and relationships, not north orientation, exact riser count or a scaled current plan. Correlate with modern photographs before positioning all pavilion geometry."
+    },
+    "videoScope": "CRAFTVALUE video shows a short wooden tread/baluster/handrail section and its curved termination; do not treat it as a downloadable complete pavilion survey.",
+    "sourceExclusions": [
+      "The Portland-stone staircase and Moorish arches described later in the 1892 book refer to the Engineering/Museum building, not the Old Library.",
+      "Richview Mapping is a 2013 movement study; a textual floor-plan caption alone does not establish measured pavilion geometry."
+    ]
+  },
+  "endJoineryConstructionStudy": {
+    "sourceIds": [
+      "social2025",
+      "tcd2012"
+    ],
+    "basis": "Continues the existing photographic end-wall composition and Long Room classical joinery study; no newly measured end-wall profile obtained.",
+    "implemented": "Eight shafts now have actual rounded recessed flutes, with foliate capitals shared from the existing casework study; rails, stiles and door panels use dimension-based grain direction.",
+    "estimatedDimensions": "Shaft width 0.32 m and depth 0.30 m, capital width 0.55 m and local height 0.45 m before the existing lower-joinery vertical adaptation. Counts and exact carving remain photographic estimates.",
+    "renderingCorrection": "East vestibule ceiling and north-wall front caps are 0.08 m behind the timber end plane. Previously coplanar painted caps exposed bright stripes outside the real opening.",
+    "unchangedBoundary": "No new pavilion footprint or unverified staircase layout added; removed sculptures remain absent.",
+    "remaining": "Original end-wall elevations, carving motifs, measured dimensions and complete pavilion geometry remain unresolved."
+  },
+  "lowerWindowReturnStudy": {
+    "source": "https://dominikgehl.com/ireland/dublin/library-trinity-college",
+    "image": "https://images.dominikgehl.com/images/ireland/dublin/library-trinity-college/library-trinity-college-02.webp",
+    "observed": "Browser-inspected lower alcove photograph shows pale paneled window returns behind the ladders, recessed rectangular fields and a lined head.",
+    "implementation": "Shared three-field beveled frame and inset panels, cloned to both returns of 40 lower windows; pale head lining and rear closing stiles. No photograph used as a texture.",
+    "estimates": {
+      "returnWidthM": 0.52,
+      "fieldsPerReturn": 3,
+      "splayRadians": 0.35,
+      "surfaceFinish": "pale appearance interpreted from the photograph, not a sampled historic paint specification"
+    },
+    "limitations": [
+      "No surveyed joinery dimensions.",
+      "Repetition across all lower windows is a working assumption from one photographed alcove.",
+      "No operable shutter mechanism is inferred or implemented.",
+      "Upper window returns are not inferred from this lower-window photograph."
+    ]
+  },
+  "historicalBindingPaletteRevision": {
+    "source": "https://dominikgehl.com/ireland/dublin/library-trinity-college",
+    "image": "https://images.dominikgehl.com/images/ireland/dublin/library-trinity-college/library-trinity-college-02.webp",
+    "problem": "Previous blanket parchment mixing made most bindings appear pale gray-yellow in the existing lighting.",
+    "implementation": "Deterministic seed hash selects deep brown, oxblood, tan and occasional pale binding families. Matching sets keep the same seed. The majority no longer mix parchment into their leather color.",
+    "scope": "Anonymous historical scenery only; geometry, lighting, texture maps, LOD and real catalog covers unchanged.",
+    "fidelity": "Photographic appearance estimate. Family weights are artistic reconstruction parameters, not a surveyed distribution or item-by-item historic binding inventory."
+  },
+  "westPavilionStairTopologyStudy": {
+    "sourceIds": [
+      "abbott1892Library",
+      "craftvalueStair2021",
+      "tierney2023Stair",
+      "irishAesthete2019WestStair"
+    ],
+    "status": "estimated reconstruction integrated in live main hall; component views retained for refinement",
+    "reviewRoute": "/model-review.html?component=west-stair",
+    "implemented": [
+      "three timber flights with two turning landings and an arrival platform",
+      "closed risers and continuous sloping undersides",
+      "64 instanced fluted balusters supported on actual treads",
+      "lower rustication fragment",
+      "outward curved starting handrail with a smooth level-to-raking transition",
+      "expanded lower treads and corresponding baluster positions/heights",
+      "rounded front tread corners",
+      "arrival-platform well-side guard and short end returns around a provisional exit",
+      "supported turning newel studies with beveled rail-joining caps",
+      "continuous enclosure with real lower and upper doorway apertures",
+      "shallow lower plaster rustication on solid wall backing",
+      "upper threshold bridge",
+      "cutaway and enclosed interior review variants",
+      "profiled interstorey plaster band with instanced curved scroll studies and plain ceiling cornice",
+      "narrow plain upper plaster frames and wider lugged double-molded panels with scalloped foliate crest studies"
+    ],
+    "estimates": {
+      "totalRiseM": 5.4,
+      "flightRisers": [
+        12,
+        8,
+        12
+      ],
+      "treadGoingM": 0.32,
+      "clearNominalWidthM": 1.6,
+      "landingDepthM": 1.6,
+      "plan": "two quarter turns around an open well; a working interpretation of perspective views, not a measured plan",
+      "orientation": "local coordinates without compass claim"
+    },
+    "unresolved": [
+      "door adjacency and final connection to Long Room",
+      "paneled soffits and source-matched frieze/upper-wall carving",
+      "collider and navigation integration",
+      "source-matched sweep dimensions, landing handrail transitions and lower termination/newel detail",
+      "outer enclosure/guards and historically accurate newel and platform details",
+      "source-matched enclosure and structural landing supports",
+      "windows and refinement of wall frieze/framed panels against source"
+    ],
+    "validationScope": "Ray checks for tread/baluster support and continuous monotonic walking-surface height on a candidate centerline. These are not building-code, load-bearing, original-topology or interactive-navigation validation.",
+    "startSweepEstimate": {
+      "maximumOutwardM": 0.26,
+      "transitionLengthM": 1.28,
+      "rampLiftM": 0.225,
+      "frontCornerRadiusM": 0.035,
+      "status": "shape-based estimate; no measured source dimensions"
+    },
+    "arrivalGuardEstimate": {
+      "nominalOpeningBetweenRailEndsM": 1.04,
+      "scope": "well-side arrival edge only; outside edge awaits enclosure design",
+      "fidelity": "candidate circulation layout, not a surveyed historic door width"
+    },
+    "enclosureEstimate": {
+      "wallCenterWidthM": 6.8,
+      "rearWallZ": -2.05,
+      "frontWallZ": 5.6,
+      "ceilingUndersideY": 8.5,
+      "wallThicknessM": 0.24,
+      "lowerDoor": {
+        "centerX": 0,
+        "widthM": 1.25,
+        "heightM": 2.2,
+        "baseY": 0
+      },
+      "upperDoor": {
+        "centerX": 2.08,
+        "widthM": 1.04,
+        "heightM": 2.35,
+        "baseY": 5.4
+      },
+      "fidelity": "local working dimensions and provisional door adjacency; not a surveyed pavilion plan"
+    },
+    "friezeEstimate": {
+      "centerHeightM": 3.25,
+      "bandHeightM": 0.42,
+      "moduleTargetM": 0.62,
+      "reliefRadiusM": 0.014,
+      "status": "simplified character study from textual Vitruvian-scroll identification; not traced or measured ornament",
+      "ceilingCorniceCenterHeightM": 8.28
+    },
+    "upperPanelEstimate": {
+      "source": "Casey 2018, Architectural Trinity, printed page 26 / PDF page 28",
+      "decoratedWidthM": 2.3,
+      "panelHeightM": 2.7,
+      "narrowWidthM": 1.1,
+      "centerHeightM": 5.85,
+      "wallFaceOffsetM": 0.126,
+      "moldingWidthM": 0.065,
+      "innerBeadWidthM": 0.018,
+      "reviewRoute": "/model-review.html?component=west-stair-panels",
+      "status": "photo-character study; contour dimensions, repetition, mirrored arrangement and leaf anatomy are estimated",
+      "limits": [
+        "Photograph supports juxtaposed plain and lugged decorated fields, not this complete wall layout",
+        "No claim of traced carving or original door adjacency",
+        "Rococo ceiling ornament remains absent"
+      ]
+    }
+  },
+  "irishAesthete2019WestStair": {
+    "url": "https://theirishaesthete.com/2019/11/02/tcd-library/",
+    "title": "A Hidden Gem",
+    "published": "2019-11-02",
+    "observations": [
+      "Text describes stairs ascending around three sides of a double-height space. This supports the general study topology but not exact riser counts or door positions.",
+      "Both browser-inspected photographs show rococo ceiling plasterwork. The first includes the surrounding timber balustrade; the second is a closer ceiling view. Neither supplies a measured plan."
+    ],
+    "images": [
+      "https://i0.wp.com/theirishaesthete.com/wp-content/uploads/2019/10/20190910_155926-2.jpg?resize=640%2C520&ssl=1",
+      "https://i0.wp.com/theirishaesthete.com/wp-content/uploads/2019/10/20190910_155831-2.jpg?resize=640%2C487&ssl=1"
+    ],
+    "limits": [
+      "Do not identify an upper door in a cropped Casey photograph as the Long Room entrance without further evidence.",
+      "Article approximate dating does not supersede detailed staircase/finishing chronology in Tierney.",
+      "Ceiling ornament remains unmodeled; the new band is an interstorey wall-frieze study, not the rococo ceiling design."
+    ]
+  },
+  "bindingAndLadderLoadingRevision": {
+    "changes": [
+      "Binding color and bump maps generated in 16-row slices with band distance computed once per row",
+      "Ladder hooks and feet reuse geometry; placements are assembled per bay",
+      "Cheap construction steps share an 8 ms scheduling budget"
+    ],
+    "fidelity": "All four color and relief map pairs preserve their pre-edit SHA-256 hashes; no geometry detail reduction or placement changes",
+    "verificationArtifact": "binding-loading-samples.json",
+    "remaining": "Other synchronous construction stages still exceed 50 ms; no global loading-performance completion claim"
+  },
+  "westPavilionConnectionStudy": {
+    "reviewRoute": "/model-review.html?component=west-connection",
+    "lowerReviewRoute": "/model-review.html?component=west-connection&view=lower",
+    "status": "integrated in live main hall with guided bidirectional walking and a return-to-hall action; original layout remains an estimate",
+    "stairTranslationM": {
+      "x": -2.08,
+      "y": -5.4,
+      "z": -51.92
+    },
+    "landingLevel": "Long Room ground reference y=0; lower stair starts at y=-5.4, rather than ending at the bookcase gallery",
+    "passageEstimateM": {
+      "width": 1.04,
+      "height": 2.35,
+      "length": 1.3
+    },
+    "doorTreatment": "Main west portal leaves open into the hall for the estimated stair connection; the closed-door reference remains a historical state rather than the current navigable state",
+    "collisionScope": "Enclosure wall piers/heads and timber door surrounds, standing-body barriers along flight well edges and arrival guards, open west door leaves, and joining passage linings",
+    "unresolved": [
+      "Original compass placement and exact door adjacency",
+      "The passage length and narrow transition are a working estimate, not established historical geometry",
+      "Off-path walking constraints, complete fall-protection audit and source-matched pavilion layout",
+      "Source-matched windows, ceiling and landing structure"
+    ],
+    "walkingStudy": {
+      "route": "From Long Room y=0 through the provisional west connection, down three flights with landing approach/departure legs, ending at stair foot y=-5.4",
+      "eyeHeightM": 1.65,
+      "reviewSpeedMPerSecond": 2.4,
+      "controls": [
+        "沿西楼梯下楼",
+        "沿西楼梯上楼"
+      ],
+      "supportToleranceM": 0.18,
+      "limit": "Guided centerline only; does not establish unrestricted off-path walking, complete fall protection or original measured circulation"
+    },
+    "mainRouteIntegration": {
+      "route": "/virtual-library",
+      "entryControl": "前往西楼梯",
+      "exitControl": "返回长厅",
+      "navigation": "Forward descends and backward ascends on the sampled route; exit returns to the supported hall side of the west portal",
+      "coexistence": "Category focus and gallery access exit west walking; all stair entry controls are disabled while the scene is loading",
+      "floorJoin": "Live connection omits its standalone hall floor and ends the threshold at the existing hall floor boundary to avoid coincident floor faces",
+      "observedColliderCount": 478
+    }
+  },
+  "westCeilingReliefRevision": {
+    "source": "https://theirishaesthete.com/2019/11/02/tcd-library/",
+    "status": "photographic-layout-estimate-integrated",
+    "observed": [
+      "four outward cartouche and shell groups",
+      "diagonal trailing foliage",
+      "four small inner floral groups",
+      "open centre"
+    ],
+    "estimated": [
+      "all dimensions",
+      "leaf and scroll contours",
+      "orientation within estimated room"
+    ],
+    "lighting": "local reflected-light approximation with one cached 1024 shadow map",
+    "remaining": "precise carving and perimeter profiles, calibrated light",
+    "perimeter": "continuous cornice with instanced curved relief units; profiles and spacing estimated; browser-checked corners"
+  },
+  "westHighWindowHypothesis": {
+    "source": "https://theirishaesthete.com/2019/11/02/tcd-library/",
+    "observed": "partial high sash window in ceiling photograph",
+    "status": "integrated estimated opening",
+    "estimatedPlacement": "rear wall above lower doorway; not established by photograph",
+    "dimensionsMetres": {
+      "width": 1.55,
+      "height": 3.25,
+      "base": 4.5
+    },
+    "unverified": [
+      "exact wall/location",
+      "pane count",
+      "joinery section",
+      "exterior view",
+      "calibrated daylight"
+    ],
+    "verification": "real aperture and glazing collision tests; main browser view at west walk 6.00 m"
+  },
+  "westPavilionPlanEvidence": {
+    "status": "partial topology and archival provenance; not a measured pavilion",
+    "sourceKeys": [
+      "twg2021Plans",
+      "luttmann2024",
+      "diaWestStair",
+      "casey2018"
+    ],
+    "known": [
+      "The existing model already has lateral stair offset X=-2.08; the plan does not prove that numeric offset wrong.",
+      "The presentation depicts an adjacent room numbered 9, absent from the current enclosure model.",
+      "Fagel collection evidence belongs to the east end, not automatically to room 9.",
+      "MUN/MC/26 is a developed stair interior linked to a finishing estimate, not a whole-building current survey."
+    ],
+    "unresolved": [
+      "Identity and represented date of room 9",
+      "Plan compass and readable scale",
+      "Door connection between stair and adjacent room",
+      "Current window position and sill dimensions",
+      "Which parts of the historic finish design were executed"
+    ],
+    "geometryDecision": "Do not move the current window or assign a room identity from these records alone. Retain current dimensions as estimates pending readable plan and photographic correlation.",
+    "drawingReferences": {
+      "developedInterior": "TCD MUN/MC/26",
+      "finishingEstimate": "TCD MUN/P/2/28",
+      "archivePhotograph": "IAA 86/6.2/1"
+    }
+  },
+  "westStartingNewel": {
+    "source": "Andrew Tierney, Enriching Architecture (2023), fig.11.8, printed p.325 / PDF p.360; photograph of existing staircase",
+    "observed": "Substantial column at lower starting end, distinct from adjacent slender balusters; square foot and turned shaft with moulded collars.",
+    "implementation": "Replaced the first thin baluster with a dedicated starting newel. Estimated rounded section uses a 48-segment lathe, tapered shaft, layered collars, softened square plinth and abacus. Height follows the existing outward-swept rail at the supporting tread.",
+    "dimensions": "Estimated plinth width 0.15 m, plinth height 0.17 m, maximum collar radius 0.082 m. Not measured joinery.",
+    "boundary": "No terminal volute added. Turning newels and full landing ramp joinery remain unresolved."
+  },
+  "westOakFinish": {
+    "basis": "Photo-estimated polished oak appearance from Casey 2018 and Tierney fig.11.8; not calibrated reflectance data.",
+    "change": "West stair oak uses shared low-contrast albedo, relief and roughness maps independent of hall texture loading. Grain follows vertical stiles, raking rails and curved handrail; risers use their long board axis.",
+    "bumpScaleMetres": 0.0006,
+    "textureDimensions": [
+      128,
+      256
+    ],
+    "texturesSharedBy": [
+      "panel finish",
+      "polished joinery",
+      "shaded soffit"
+    ],
+    "rendering": "sRGB albedo with mipmaps and anisotropy 4; separate linear relief and roughness maps. Existing tread wear remains separate.",
+    "remaining": "Exact species appearance, varnish and measured reflectance are not established. Historic profile and room-layout gaps remain."
+  },
+  "westLandingRamps": {
+    "basis": "Tierney existing-stair photo fig.11.8 and discussion pp.325-326: swan-neck ramps survive; proposed concave ramp/terminal volute were not executed.",
+    "implementation": "All three flight rails are swept along curved paths. The first two arrivals rise into raised landing junctions; subsequent starts leave with horizontal tangents. The final arrival flattens into the existing level guard. Baluster heights follow each rail.",
+    "estimatedTransitionMetres": 0.8,
+    "estimatedLandingLiftMetres": 0.28,
+    "junction": "Replaced square beveled turning caps with rounded lathed junctions; turning supports raised to meet them. Exact carved turn profile and historic newel dimensions remain unresolved.",
+    "verification": "Four targeted tests passed: physical tread support, all-column head containment in rail geometry, door/threshold clearance, monotone ramps with level landing tangents. Component start and landing-turn views inspected."
+  },
+  "westConstructionScheduling": {
+    "change": "Live builder delegates to yielding west connection, stair and enclosure generators. Offline/component entry points synchronously drain the same generators. No geometry simplification.",
+    "stages": [
+      "materials",
+      "each flight",
+      "each landing wainscot",
+      "landing guards",
+      "each enclosure wall",
+      "ceiling relief",
+      "hall portal"
+    ],
+    "baselineObservation": {
+      "worldBuildMs": 3047.3,
+      "longestBuildSliceMs": 138.0,
+      "longestBuildStage": "construction-west-pavilion",
+      "shaderCompileMs": 152.0
+    },
+    "afterObservationUnderConcurrentTests": {
+      "worldBuildMs": 7641.7,
+      "westBuildMaxSliceMs": 31.4,
+      "westBuildCpuMs": 120.8,
+      "longestBuildSliceMs": 1251.4,
+      "longestBuildStage": "static-batching"
+    },
+    "afterReenterObservation": {
+      "worldBuildMs": 5658.2,
+      "westBuildMaxSliceMs": 23.5,
+      "westBuildCpuMs": 83.4,
+      "longestBuildSliceMs": 602.7,
+      "longestBuildStage": "construction-30",
+      "worldFinalizeMs": 779.8,
+      "shaderCompileMs": 179.9
+    },
+    "interpretation": "Observed west-stage interruptions became shorter. Total initialization did not improve in these samples; long pauses moved to other stages. These are individual browser observations, not controlled averages or a completed performance benchmark.",
+    "retainedColliders": 504,
+    "tests": "West stair/connection four tests passed. Full model file initially timed out during concurrent execution; isolated maxWorkers=1 rerun passed all four without changing timeout. Lint/typecheck/build passed."
+  },
+  "staticBatchWorkingSet": {
+    "problem": "The prior grouping pass cloned all eligible scene geometry before any batch merged or released copies; the per-batch vertex limit did not bound simultaneous temporary copies.",
+    "change": "Group source meshes first, transform copies for one bounded batch at a time, release copies in finally, clear processed source references, reuse each container inverse within a batch. Geometry remains unchanged.",
+    "verification": "A clone/dispose regression test verifies live temporary-copy vertices never exceed 65536 and return to zero. Existing tests verify triangles, positions, collision metadata and full stair/gallery travel. Seven tests passed in optimizer/full model files; lint/typecheck/build passed.",
+    "browserReenter": {
+      "worldBuildMs": 5831.3,
+      "worldFinalizeMs": 25.7,
+      "longestBuildSliceMs": 893.0,
+      "longestBuildStage": "static-batching",
+      "shaderCompileMs": 207.9,
+      "drawCalls": 209,
+      "triangles": 7209714,
+      "cameraColliderCount": 504
+    },
+    "limit": "Total browser heap was not measured. The test bounds transformed temporary geometry copies, not all resident geometry. Overall startup is not proven faster; long batching pauses remain. Single browser samples are not controlled averages."
+  },
+  "staticBatchPhaseScheduling": {
+    "change": "Named matrix-update, traversal, grouping, copy-transform and merge-attach phases. Copy-transform yields inside try/finally before merging. Cheap phases share an 8 ms task budget with an abort check at each boundary. Within copy-transform, check elapsed time every 16 meshes and yield when 8 ms has elapsed; a single operation can exceed the budget.",
+    "diagnostics": "canvas.dataset.batchPhaseTimings reports count, totalMs and maxMs for each phase.",
+    "cancellation": "Regression test aborts after copy-transform, verifies both temporary copies disposed, no merge-attach phase occurred, and original scene meshes/geometries remained untouched.",
+    "validation": "Optimizer tests passed. Full model tests timed out under a heavily loaded renderer, then passed all four in 7.61 seconds after exiting the scene; no timeout changes. Typecheck, lint and build passed. After adding within-copy yields, optimizer tests passed 4/4 and final lint, typecheck and build passed.",
+    "limit": "Initial concurrent measurements were incomplete and contaminated by high renderer load; no overall speedup established from those observations.",
+    "loadedObservationBeforeInnerCopyYield": {
+      "worldBuildMs": 65264.0,
+      "copyTransformTotalMs": 28564.5,
+      "copyTransformMaxMs": 969.5,
+      "mergeAttachTotalMs": 4250.9,
+      "mergeAttachMaxMs": 864.5,
+      "drawCalls": 209,
+      "triangles": 7209714,
+      "cameraColliders": 504,
+      "qualification": "High renderer load; diagnostic observation, not a controlled benchmark."
+    },
+    "afterInnerCopyYieldObservation": {
+      "worldBuildMs": 101050.1,
+      "copyTransformSlices": 603,
+      "copyTransformTotalMs": 36810,
+      "copyTransformMaxMs": 1103.5,
+      "mergeAttachMaxMs": 821.5,
+      "drawCalls": 209,
+      "triangles": 7209714,
+      "cameraColliders": 504,
+      "conclusion": "No speedup established; long individual slices remain. Geometry and category navigation preserved."
+    }
+  },
+  "staticBufferCopy": {
+    "change": "Use plain BufferGeometry.copy rather than invoking concrete procedural constructors through clone. Clear temporary bounds before baking matrices; compute final merged bounds only.",
+    "validation": "Five optimizer tests passed, including exact transformed positions/normals/UVs and procedural constructor count. Combined model test timed out under renderer load; isolated model tests passed 4/4 in 4.70 seconds. Lint, typecheck and build passed.",
+    "limit": "No controlled browser speedup established. Geometry fidelity is retained; this does not resolve outstanding architectural reconstruction gaps.",
+    "browserObservation": {
+      "worldBuildMs": 69180.9,
+      "copyTransformTotalMs": 13607,
+      "copyTransformMaxMs": 1365.6,
+      "mergeAttachTotalMs": 7644.1,
+      "drawCalls": 209,
+      "triangles": 7209714,
+      "cameraColliders": 504,
+      "categoryBookCount": 4,
+      "categoryFrameWithinViewport": true,
+      "cameraCollision": "clear",
+      "qualification": "Single loaded-host sample. Lower than prior 101050.1 ms observation, but not a controlled speed comparison; long slices remain."
+    }
+  },
+  "windowReturnRebates": {
+    "reference": "https://images.dominikgehl.com/images/ireland/dublin/library-trinity-college/library-trinity-college-02.webp",
+    "observation": "Public photograph re-opened in browser; narrow inset moulding surrounds the pale window-return panels.",
+    "implementation": "Three recessed fields now have narrow rounded double-sided rebate profiles, 16 mm planar band with 5 mm rounded bevel. Existing sash, blind and wall aperture retained.",
+    "authority": "Independent photographic estimate. These profile dimensions are not surveyed historic joinery measurements.",
+    "visualCheck": "Isolated window-return component viewed in browser; stepped inset borders and grazing-light shadow lines visible.",
+    "validation": "Window return test passed; full model 4/4 passed in 27.94 seconds. Lint, typecheck and build passed. Component browser visual check completed; main route reopened, no new whole-hall visual claim."
+  },
+  "staggeredWindowSashes": {
+    "reference": "https://dominikgehl.com/ireland/dublin/library-trinity-college",
+    "basis": "Image 02 shows six pane rows through the blind and a stronger middle meeting rail. Double-hung depth and joinery dimensions remain reconstruction estimates.",
+    "implementation": "Replaced coplanar continuous grid and full-window backing pane with two physically staggered nine-light sashes. Lower sash is 75 mm inward; each frame is 60 mm thick and panes are individually inset. Rails overlap vertically at the meeting line. Two height templates are reused across all 80 openings.",
+    "verification": "Ray checks hit all eighteen panes at expected distinct depths and timber at the meeting seam; sash frame depth bounds remain disjoint. Angled component view inspected.",
+    "limits": "Glazing remains an opaque daylight appearance approximation. No sash opening controls or measured historic section claimed.",
+    "validation": "One sash test and four full-model tests passed; full model file 9.70 seconds. Lint, typecheck and build passed. Component console returned no errors. Main route reopened; not a new complete matched-camera hall inspection."
+  },
+  "westRoomIdentityFollowup": {
+    "sources": [
+      {
+        "url": "https://www.tara.tcd.ie/bitstreams/be6da7f9-b862-46a0-9fe5-93e8dda7ce5b/download",
+        "author": "Melanie Hayes",
+        "year": 2015,
+        "pagePrinted": 145,
+        "pagePdf": 153,
+        "evidence": "Stair entrance and upper arrival adjacency; suggested original intended reversal is interpretive, not present geometry."
+      },
+      {
+        "url": "https://www.patrickcomerford.com/2012/10/memories-of-old-bishop-and-old-book-in.html",
+        "date": "2012-10-19",
+        "evidence": "Firsthand Henry Jones Room account and photographs; DSCN9262 inspected in browser shows framed memorial on pale wall."
+      }
+    ],
+    "room9Identity": "unresolved",
+    "doorPosition": "unresolved",
+    "geometryChanged": false,
+    "nextEvidenceNeeded": "Legible plan legend or room doorway photograph linked to the west stair landing.",
+    "excludedInference": "Do not assign room 9 to Henry Jones Room or derive compass bearings solely from the account."
+  },
+  "workerStaticBatching": {
+    "implementation": "Progressive static batching dispatches one bounded batch at a time to a module worker. Source buffers are structured-cloned, never transferred. Per-instance copies inside the worker prevent shared-template transforms from accumulating. Returned merged buffers are transferred back with computed bounds.",
+    "compatibility": "Synchronous path retained for unavailable/failed workers and morph/interleaved/instanced/half-float/non-default GPU attributes. Interactive owner coordinates and collision-anchor attachment remain on the main thread.",
+    "lifecycle": "Abort rejects the pending job and terminates worker; source geometry is removed only after a successful result. Worker created immediately before request listener registration.",
+    "tests": "12 targeted optimizer/worker/full-model tests passed. Covers shared geometry buffers, non-uniform transforms, normalized color, index, bounds, worker failure and cancellation.",
+    "browserObservation": {
+      "worldBuildMs": 90919.4,
+      "workerBatches": 83,
+      "fallbackObserved": false,
+      "dispatchTotalMs": 933.8,
+      "dispatchMaxMs": 87.8,
+      "postMessageTotalMs": 130.7,
+      "postMessageMaxMs": 12.8,
+      "mergeAttachTotalMs": 194.8,
+      "mergeAttachMaxMs": 25.6
+    },
+    "limit": "Single observation under changing host/test load. Worker CPU/wait is not included in zero-duration completion counters. Startup remains slow; this does not establish overall speedup or finish architectural reconstruction.",
+    "finalValidation": "Lint, typecheck, 12 targeted tests and production build passed. Full suite finished: 251 passed, 6 failed across 4 non-model files.",
+    "interactionVerification": {
+      "category": "literature",
+      "section": 0,
+      "colliders": 504,
+      "collision": "clear",
+      "wholeCabinetFits": true,
+      "focusedDrawCalls": 247,
+      "focusedTriangles": 7372508,
+      "afterBuildTokenReloadMs": 96760.7,
+      "console": "Only existing Drawer width deprecation warnings in inspected error sample."
+    },
+    "fullSuiteResult": {
+      "passed": 251,
+      "failed": 6,
+      "passedFiles": 73,
+      "failedFiles": 4,
+      "durationSeconds": 596.05,
+      "failureFiles": [
+        "src/auth/password-policy.test.tsx",
+        "src/pages/AiSettingsPage.test.tsx",
+        "src/pages/BooklistsPage.test.tsx",
+        "src/App.test.tsx"
+      ],
+      "qualification": "No virtual-library test failures in this run. Failure causes outside the changed model files have not all been isolated; full-suite success is not claimed."
+    }
+  },
+  "pilasterTemplates": {
+    "scope": "Per hall build and material set; no cross-navigation geometry cache.",
+    "change": "80 hall capitals share one procedural template; 80 fluted shafts share two geometries keyed by actual height. Each object retains independent placement and side rotation.",
+    "validation": "7 model/worker tests passed. Assertions target hall pilasters, excluding the eight separately modeled end-wall capitals. Full before/after collision and circulation checks retained.",
+    "limit": "No geometry reduction; no overall speedup yet established.",
+    "checks": "7 model/worker tests, lint, typecheck and build passed.",
+    "browser": {
+      "worldBuildMs": 54008.1,
+      "entranceDrawCalls": 214,
+      "entranceTriangles": 7323954,
+      "colliders": 504,
+      "categoryBookCount": 4,
+      "fullShelfFrameFits": true,
+      "cameraCollision": "clear",
+      "console": "Existing Drawer width deprecation only in inspected sample.",
+      "limit": "Single loaded-host sample, not controlled speed comparison. Startup remains slow."
+    }
+  },
+  "caseStructureTemplates": {
+    "change": "Four per-build side/level templates share backboard, stile, shelf-board and upper curved-beam geometry across 80 transverse cases. Case objects translate along Z; collision descriptors use the same local frame and retain unique IDs.",
+    "preserved": "Per-bay historical binding seed/layout, real catalog reservations, bracket placement, pilaster placement, materials, geometry resolution and case names.",
+    "lifetime": "Templates are scoped to one build; never reused after disposal across navigation.",
+    "validation": "Seven model/worker tests passed; final four full-model tests with all 80 per-case position, geometry-sharing and unique collision assertions passed in 5.09 seconds. Lint, typecheck and build passed.",
+    "limit": "Startup remains about 56 seconds. Compared with the preceding 54-second observation under changing host load, no overall speedup is established. This does not establish completed architectural fidelity.",
+    "browserObservation": {
+      "buildMs": 56056.7,
+      "entranceDrawCalls": 214,
+      "entranceTriangles": 7323954,
+      "colliders": 504,
+      "visual": "Literature category selected on main route. Screenshot shows complete cabinet frame, aligned shelves and four actual catalog books on the bottom shelf. No visible case placement shift."
+    }
+  },
+  "historicalInstanceBounds": {
+    "change": "Compute one affine-transformed bounding box per binding batch from the union of near, far and page-head source bounds. Reuse derived spheres for both LOD meshes and union batch bounds for paper heads; remove three repeated per-instance sphere traversals. Yield between the four variants, with partial clusters attached for cancellation cleanup.",
+    "preserved": "Geometry, instance matrices and colors, texture maps, LOD thresholds, book count and placement.",
+    "validation": "Final five tests passed in 7.15 seconds: transformed bounds match an independent Box3 corner-transform baseline, all near/far/page vertices lie inside the sphere under rotations, negative/nonuniform scales and shear, unused capacity is ignored, and full-model LOD/collision/circulation checks pass. Lint, typecheck and build passed.",
+    "limit": "Bounds are conservative and can submit some extra edge-of-frustum geometry. No overall startup speedup or architectural completion is claimed.",
+    "browserObservation": {
+      "worldBuildMs": 84954.0,
+      "longestSliceMs": 1770.2,
+      "longestStage": "construction-binding-batch-1:10-0",
+      "focusedDrawCalls": 242,
+      "focusedTriangles": 7255116,
+      "colliders": 504,
+      "focusedBooks": 4,
+      "cameraCollision": "clear",
+      "visual": "Main entrance and literature focus screenshots inspected. No obvious missing binding clusters; complete focused frame and four real books visible. Console sample showed only existing Drawer width deprecation warnings.",
+      "limit": "This single startup is slower than the prior 56-second observation. Host load was not controlled, so no overall speed improvement or regression attribution is established."
+    }
+  },
+  "circularAlcoveVaults": {
+    "reference": "https://images.dominikgehl.com/images/ireland/dublin/library-trinity-college/library-trinity-college-01.webp",
+    "observation": "Full axial photo inspected in browser; timber-lined side-bay soffits have curved junction outlines adjacent to the main barrel. Photo is not a measured section.",
+    "change": "Replace the sine-wave side-bay profile with a circular segment of the same adapted span and 0.48 m estimated rise. Lining and spandrel derive from identical 32-step arc samples; texture distance uses arc length. Add a shared 35 mm radius rounded inner-edge bead to all 40 side bays.",
+    "authority": "Circular segment, rise and bead section are working reconstruction estimates, not surveyed dimensions. No photograph is packaged as an app texture.",
+    "validation": "Five arc/full-model tests passed in 9.60 seconds; lint, typecheck and build passed. Component alcove-vault screenshot inspected: continuous side curves and rounded inner edges; its console returned no errors. Main route loaded and entrance screenshot was inspected after the build. This is a local visual integration check, not measured section validation."
+  },
+  "ceilingSurfaceCoherence": {
+    "reference": "https://images.dominikgehl.com/images/ireland/dublin/library-trinity-college/library-trinity-college-01.webp",
+    "problem": "Main barrel combined an eight-board/1.44 m texture with 83 raised longitudinal strips distributed on an unrelated 84-division pitch. This created two inconsistent sets of board seams.",
+    "change": "Remove the secondary raised strips. Retain flush narrow joints in a 512x256 procedural lining map with eight boards across 1.44 m, periodic along-board variation, a less yellow estimated oak palette and an RGBA roughness map. Geometry of the barrel, structural ribs and side arcs remains unchanged.",
+    "authority": "Board width, colors, grain and roughness remain photographic working estimates, not measured or color-calibrated reconstruction. No source photo is bundled.",
+    "validation": "Four full-model tests passed in 19.77 seconds; lint, typecheck and build passed. Alcove-vault component screenshot inspected: no secondary thick longitudinal lines; subtle board variation remains. Component console returned no errors.",
+    "mainRouteObservation": {
+      "worldBuildMs": 44241.9,
+      "state": "idle",
+      "visual": "Entrance screenshot inspected after build. Heavy secondary longitudinal lines are absent; subtle wood variation follows the continuous barrel between structural ribs. No obvious glare or texture break was visible from this view.",
+      "limit": "Single startup observation under uncontrolled host load; not evidence of a performance speedup or complete material fidelity."
+    }
+  },
+  "dccExistingPlans": {
+    "application": "2949/20",
+    "url": "https://planning.agileapplications.ie/dublincity/application-details/139567",
+    "received": "2020-06-30",
+    "finalGrant": "2020-10-06",
+    "manifest": "dcc-existing-plan-manifest.json",
+    "sourceType": "Scanned official planning submission drawings; title Existing Condition, sheets Y1.001/Y1.002/Y1.003 visually reviewed. Not new survey measurements.",
+    "firstFloorEvidence": {
+      "sheet": "Y1.002",
+      "north": "North arrow points toward top of page. Berkeley podium to south-east independently supports orientation.",
+      "westSouth": "HENRY JONES ROOM, 49 m²; doorway into axial landing/circulation area on north edge of room.",
+      "westNorth": "Grand stair around central void; separate service stair/lift strip to its north.",
+      "westCirculation": "CIRC. 29 m²; joins Long Room on east side at approximately hall axis.",
+      "eastSouth": "FAGEL, 55 m²; connected to axial east circulation.",
+      "eastNorth": "Stair/lift circulation shown.",
+      "longRoom": "LONG ROOM 784 m²; +4580 level annotation at end circulation; central non-historic stair present in existing drawing.",
+      "dimensionCaution": "A 63880 chain between pavilion boundary lines and 9500 pavilion-depth chains are visible. Do not equate them with net internal published 63.7 m length or use scanned pixels as exact dimensions."
+    },
+    "supersedes": "The previous uncertainty over west adjacent room identity and north/south placement is resolved for this 2019/2020 existing-condition state. It does not prove every feature in the 2021 historical slide is from the same date.",
+    "nextWork": "Use detailed crops/sections to derive door widths and pavilion partitions before mapping the source pavilion to the user-enlarged hall. Do not import proposed redevelopment alterations.",
+    "runtimeChange": "None during this evidence pass."
+  },
+  "henryJonesRuntime": {
+    "source": "DCC 2949/20, existing-condition Y1.002; Henry Jones Room 49 m² south of west circulation.",
+    "implementation": "Room shell attached south of adapted stair; opening in shared stair wall, interrupted landing wainscot, supported doorway threshold, four modeled sash windows and a dedicated guided route from Long Room with return action.",
+    "adaptedDimensions": {
+      "internalWidthM": 6.6,
+      "internalDepthM": 7.41,
+      "internalAreaM2": 48.906,
+      "workingClearHeightM": 5.8,
+      "workingDoorWidthM": 1.04,
+      "workingWindowHeightM": 3.1
+    },
+    "authority": "Room identity/side and labelled source area from plan. Shape, clear height, door/window dimensions, material finish and lighting are adaptation estimates. Window arrangement is plan-informed; exact joinery not measured.",
+    "missing": "Portrait/memorial plaques and furniture, source-calibrated finish, precise pavilion sections, upper service spaces and east pavilion.",
+    "validation": "Five model/connection tests passed in 10.43 seconds; updated connection test with doorway rays passed in 4.58 seconds. Lint, typecheck and build passed. Both directions have continuous floor support and clear collision.",
+    "browserObservation": {
+      "worldBuildMs": 57695.9,
+      "colliders": 535,
+      "route": "henry",
+      "lengthM": 11.37,
+      "checkedDistancesM": [
+        0,
+        4,
+        8,
+        11.36,
+        3.37
+      ],
+      "collision": "clear at recorded forward/end/reverse checkpoints",
+      "return": "Return to Long Room cleared route and restored eye (0,1.65,-43.5), collision clear.",
+      "visual": "Doorway component inspected after moving plaster ornament; main route walked into room, screenshot inspected. Room remains an unfurnished enclosure with approximate daylight glazing.",
+      "console": "Only existing Ant Design Drawer width deprecation warning in sample."
+    }
+  },
+  "westSurveyWindowGrid": {
+    "source": "https://webapps.dublincity.ie/PublicAccess_Live/Document/ViewDocument?id=4EF2FBE2C67911EA80E2005056B85853",
+    "page": 15,
+    "sheet": "MSL33004_OldLibrary_G_E-1",
+    "surveyDate": "2019-12-19",
+    "observed": {
+      "columns": 3,
+      "rows": 5,
+      "tallWindowCountOnElevation": 2
+    },
+    "implemented": {
+      "columns": 3,
+      "rows": 5,
+      "tallWindows": 2,
+      "wall": "first-flight side wall",
+      "alternatingNarrowPanels": 2,
+      "lowerDoor": "below left sash; estimated dimensions",
+      "lowerWindow": {
+        "columns": 4,
+        "rows": 2,
+        "center": 0.85,
+        "base": 3.25,
+        "width": 1.55,
+        "height": 1.05
+      },
+      "friezeCenterHeight": 5.15,
+      "highSashBase": 6.3
+    },
+    "remaining": "Opening sizes, offsets, wall height and stair proportions remain adapted, not surveyed. Historic door ornament and exact plaster relief remain unfinished.",
+    "validation": {
+      "focusedTests": "Window apertures/collision and complete west/Henry route: 2 passed",
+      "browser": "Paired high windows, lower 4-by-2 window and clear pane openings visually reviewed in component=west-stair-panels",
+      "lint": "passed",
+      "typecheck": "passed after widening opening parameter type",
+      "build": "passed",
+      "interactiveRoute": "Attempted; browser tab became unavailable before endpoint capture. No new end-to-end browser claim."
+    }
+  },
+  "westLevelCalibration": {
+    "source": "https://webapps.dublincity.ie/PublicAccess_Live/Document/ViewDocument?id=4EF2FC06C67911EA80E2005056B85853",
+    "sheet": "Y2.001, central section, page 1",
+    "readFromRenderedLevelLegend": {
+      "westGroundFFL": -0.8,
+      "firstFFL": 4.58,
+      "secondFFL": 10.07,
+      "thirdFFL": 13.47,
+      "atticFFL": 17,
+      "roof": 21.75
+    },
+    "units": "metres relative to GF/podium datum",
+    "sourceGroundToFirst": 5.38,
+    "sourceGroundToSecond": 10.87,
+    "runtime": {
+      "landing": 5.4,
+      "secondFloorReference": 10.89,
+      "ceiling": 10.45,
+      "estimatedFloorBuildUp": 0.44,
+      "henryJonesClearHeight": 5.05,
+      "friezeCenter": 5.15,
+      "highSashBase": 6.3,
+      "lowerSashBase": 3.25
+    },
+    "limits": "FFL annotations are survey evidence; soffit height, floor build-up and ornament offsets are estimates. Existing 0.02 m stair adaptation retained. No claim of calibrated floor thickness."
+  },
+  "fagelRuntime": {
+    "sourceSheet": "Y1.002 first-floor plan",
+    "sourceAreaM2": 55,
+    "sourceDocument": "https://webapps.dublincity.ie/PublicAccess_Live/Document/ViewDocument?id=1B693322C67911EA80E2005056B85853",
+    "implemented": "Independent south-side room beyond east portal; two transverse screened bookcase rows with central gaps; south three windows and east two; separate circulation floor and ceiling",
+    "dimensions": "7.33 by 8 m wall-center rectangle, about 55 m² net; 5.05 m ceiling; adapted, not surveyed",
+    "historicalVolumes": 1000,
+    "volumeRendering": "One InstancedMesh; anonymous and non-interactive; estimated binding colors",
+    "navigation": "Main hall Fagel button starts a 14.4 m guided floor route through the east portal and both partition gaps; reverse and return actions implemented.",
+    "limits": "Exact case joinery, wire spacing, door leaves, historical labels, stairs north of circulation and calibrated window dimensions remain incomplete",
+    "validation": {
+      "modelTests": "5 passed in final isolated rerun; earlier two runs timed out during heavy local activity",
+      "lint": "passed",
+      "typecheck": "passed",
+      "browserForward": "route fagel at 0, 8 and 14.4 m, collision clear; endpoint x8.399 z49.5",
+      "browserReturn": "After reload: travelled to 8 m, reversed to 0 m, then returned to hall; clear collision throughout sampled points, route cleared, eye (0,1.65,43.5).",
+      "controls": "Two-column destination grid visually verified; no document horizontal overflow",
+      "build": "passed including final CSS"
+    }
+  },
+  "eastStairStudy": {
+    "sources": [
+      "Y1.002 ground and first floor",
+      "Y1.003 second floor",
+      "2019 survey XS-3A and XS-3B, report pages 25 and 26"
+    ],
+    "sourceUrl": "https://webapps.dublincity.ie/PublicAccess_Live/Document/ViewDocument?id=1B69332CC67911EA80E2005056B85853",
+    "observations": [
+      "Large curved-return stair connects ground exhibition to first-floor circulation",
+      "Smaller adjacent service stair is separate",
+      "Solid parapets rather than west-stair timber balusters"
+    ],
+    "sourceRise": 4.58,
+    "estimatedGeometry": {
+      "stepsPerFlight": 14,
+      "runPerFlight": 3.9,
+      "width": 1.3,
+      "centerlineRadius": 1.8,
+      "parapetHeight": 1.05,
+      "parapetThickness": 0.12
+    },
+    "implementation": "Live east enclosure plus 前往东楼梯 guided route, forward/back and return-to-hall action",
+    "verification": "Six focused model tests passed before expanded enclosure-route assertions; expanded forward/reverse enclosure-route test also passed. Entry screenshot reviewed.",
+    "remaining": "Ground exhibition fit-out, service core, exact surveyed dimensions and handrail details remain incomplete. Browser descent reached 27.40 m; reverse reached the upper level at 8.96 m. Final zero-distance and exit confirmation remain pending after repeated browser-control timeouts."
+  },
+  "eastEnclosureRuntime": {
+    "northWallX": -9.33,
+    "sharedWallX": -2.12,
+    "westZ": 0.5,
+    "eastZ": 8.5,
+    "groundY": -4.58,
+    "ceilingY": 5.05,
+    "upperOpening": {
+      "centerZ": 7.4,
+      "width": 1.7,
+      "height": 2.35
+    },
+    "lowerOpening": {
+      "centerZ": 3.8,
+      "width": 1.7,
+      "height": 2.35
+    },
+    "fidelity": "Source topology with estimated window and enclosure dimensions"
+  },
+  "eastStairNavigation": {
+    "entry": [
+      0,
+      0,
+      43.5
+    ],
+    "upperDoor": [
+      0,
+      0,
+      52.4
+    ],
+    "bottomArrival": [
+      -1.2,
+      -4.58,
+      48.8
+    ],
+    "path": "Distance-parametrized two flights with 64-segment curved landing, runtime movement capped to 0.12 m per frame",
+    "verification": "Two focused tests passed, including actual runtime path through full portal and enclosure in both directions",
+    "browserVerification": {
+      "route": "east",
+      "descentEndDistance": 27.4,
+      "descentEndEye": [
+        -1.202,
+        -2.93,
+        48.8
+      ],
+      "reverseCheckpointDistance": 8.96,
+      "reverseCheckpointEye": [
+        -0.061,
+        1.65,
+        52.4
+      ],
+      "checkpointCollision": "clear",
+      "returnToZeroAndExit": "pending; repeated browser control timeouts, attempted input is not arrival evidence",
+      "performance": "Observed worldBuildMs 252435 under uncontrolled host load; not an acceptable completed performance result."
+    }
+  },
+  "pavilionSashRefinement": {
+    "source": "2019 survey pane grids; western internal elevation G_E-1 and eastern Level 1 internal elevations",
+    "implementation": "Separate lower/front and upper/rear leaves; meeting rail at floor(rows/2); bevelled sash rails and glazing bars.",
+    "estimated": "Profile dimensions, bevels and sliding-leaf depth separation are not survey measurements.",
+    "verification": "Oblique pavilion-sash browser review inspected, no error console logs; 3 window/stair tests passed.",
+    "remaining": "Glass appearance and exact moulding profiles require further source calibration."
+  },
+  "eastServiceCoreEvidence": {
+    "source": "old-library-survey-report.pdf pages 27 and 28, XS-4A and XS-4B, Murphy Surveys 20 December 2019",
+    "observed": "Narrow multi-level stair with closely spaced landings and vertical guards beside the main pavilion rooms. Distinct from the solid-parapet ground-to-first stair.",
+    "implementation": "Independent east-service-stair review component now models four rises and five floor landings. Not yet attached to the live pavilion; room boundaries, upper floor openings and entrance connections remain to be implemented."
+  },
+  "eastServiceStairStudy": {
+    "source": "Y1.002/003 topology and XS-4A/4B; Y2.001 floor levels",
+    "floorLevelsRelativeToLongRoom": [
+      -4.58,
+      0,
+      5.49,
+      8.89,
+      12.42
+    ],
+    "estimatedDimensions": {
+      "startX": -6.4,
+      "turnX": -3.7,
+      "centerZ": 1.8,
+      "walkingRadius": 0.7,
+      "width": 0.86,
+      "windersPerRise": 8,
+      "maximumRiser": 0.18
+    },
+    "construction": "Two straight flights and eight curved winding treads per rise, closed risers, continuous timber stringers and round rails, instanced slender metal balusters.",
+    "verification": "Focused route test passes floor support, standing headroom, both travel directions and lateral guard blocking. Component overview visually inspected.",
+    "remaining": "Review only. Plan offsets, exact step count and finishes are estimated; core enclosure, lift, upper pavilion floors and live route are absent."
+  },
+  "latestCirculationCorrection": {
+    "reason": "User distinguished the original iron spiral from the added long wooden stair; user subsequently requested removing the basement.",
+    "removed": [
+      "Freestanding long wooden gallery access stair and landing",
+      "Central descending visitor stair, lower landing, light and blocking volume"
+    ],
+    "floor": "Continuous timber hall floor closes the former central aperture.",
+    "gallery": "Guided path now ascends the photo-derived iron alcove spiral and uses its upper landing. Obsolete east gallery rail gap closed.",
+    "estimated": "Spiral dimensions and entry/exit guard adjustments remain adapted, not surveyed. End crosswalk remains an adaptation.",
+    "browser": "Final-version forward distance 12.00 m reached floor 2, eye Y7.600, collision clear. Reverse returned to distance 0.00, floor 1, eye Y1.650, clear; exit button left walking mode.",
+    "tests": "2 focused files, 5 tests passed with 60000 ms timeout due host load; includes full route collision after batching and support along path."
+  },
+  "spiralOpeningGuardCorrection": {
+    "problem": "Visible upper floor-aperture guards previously had no collision descriptors.",
+    "implementation": "Five box collision segments follow the existing perimeter; 0.9 m outlet/landing width; shared round 0.024 m diameter uprights and lower rail.",
+    "estimated": "Opening, outlet and rail dimensions remain adapted estimates, not measured Trinity joinery.",
+    "verification": "4 Long Room tests pass, including five blocked side crossings, a clear outlet, full guided route in both directions and floor support.",
+    "remaining": "Overall architectural fidelity and exact dimensions remain unfinished.",
+    "browserVerification": "After final build: distance 12.00, floor 2, eye Y7.600, clear; reverse distance 0.00, floor 1, eye Y1.650, clear; exited walking mode. stair-opening close view visually inspected."
+  },
+  "eastUpperRoom": {
+    "source": "Y1.003 Early Printed Books room, 112 m², FFL +10070; Y2.001 first FFL +4580",
+    "implementation": "East upper Early Printed Books room attached above the existing Fagel/circulation root.",
+    "sourceAreaM2": 112,
+    "relativeFloorLevel": 5.49,
+    "estimatedCeilingLevel": 8.54,
+    "adaptedEnvelope": {
+      "north": -9.33,
+      "south": 9.33,
+      "west": 0.5,
+      "east": 8.5,
+      "slabAreaExcludingCoreM2": 133.638
+    },
+    "coreOpening": {
+      "north": -9.1,
+      "south": -2.5,
+      "west": 0.68,
+      "east": 3.05
+    },
+    "windows": "Three north and three south; five east. Opening sizes and pane subdivision remain estimates.",
+    "verification": "Upper room, Fagel and east stair suites: 3 files / 4 tests passed. Upper-room browser view visually inspected.",
+    "remaining": "Lift implementation, upper service storeys, door leaves, shelving, exact inventory, joinery and lighting remain incomplete.",
+    "mainHallDoorway": {
+      "sourceTopology": "West-facing doorway in Y1.003 east upper plan",
+      "estimatedWidth": 1.6,
+      "estimatedHeight": 2.35,
+      "implementation": "Matching main end-wall aperture, split wall colliders, interrupted cornice, timber reveals and soffit",
+      "verification": "Upper-room and east-stair suites: 2 files / 4 tests passed; visual rays through both walls at four heights; bidirectional collision sweep; solid jambs; isolated browser view inspected",
+      "remaining": "Exact doorway and end-joinery dimensions remain estimates; transition now modeled."
+    },
+    "galleryConnection": {
+      "bridgeZ": [
+        42.5,
+        43.9
+      ],
+      "width": 1.6,
+      "steps": 3,
+      "going": 0.35,
+      "riseTotal": 0.46,
+      "fidelity": "Estimated circulation adapted to enlarged hall; upper floor datum source-derived",
+      "guidedRoute": "Existing gallery route extended to x0,y5.49,z49",
+      "browserVerification": "Live /virtual-library: followed gallery route to d208.39, x0,y7.140,z48.998, floor2, collision clear; reversed 16 m to d192.40,x6.55,y7.600,z39.648, floor2, collision clear; exited walking mode with position preserved. Current error log query returned []. This verifies the new doorway/transition both directions; full reverse down the spiral was not repeated in this run.",
+      "tests": "Full Long Room 4 tests pass (rerun with CLI timeout 120000 after host-load timeout; completed in 14.22 s); transition support/headroom/edge guard test passes. lint/typecheck/build pass.",
+      "relatedTests": "East stair/Fagel/upper-room: 3 files, 5 tests pass."
+    },
+    "readingFurniture": {
+      "sourceArticle": "https://universitytimes.ie/2017/04/explore-a-different-side-of-trinity-with-early-printed-books/",
+      "sourcePhoto": "https://universitytimes.ie/wp-content/uploads/2017/04/EarlyPrintedBooksSmall.jpg",
+      "sourceDate": "2017-04-19",
+      "photoObservations": [
+        "Timber reading tables",
+        "Grey protective desk mats",
+        "Dark green seats",
+        "Paired wedge-shaped book cradles"
+      ],
+      "estimatedTableRows": [
+        1.6,
+        3.8,
+        6,
+        8.2
+      ],
+      "estimatedPlaces": 8,
+      "estimatedTableDimensions": [
+        0.9,
+        3.4,
+        0.76
+      ],
+      "boundary": "Furniture in separate east upper reading room only; main hall remains clear",
+      "fidelity": "Appearance photo-derived; count and dimensions estimated; exact inventory unverified",
+      "verification": "Reading furniture/upper room/east gallery/full Long Room: 4 files, 8 tests passed with CLI testTimeout=120000. lint/typecheck/build passed after preserving concrete geometry types in the mesh helper. Browser reading-furniture view visually checked; current error logs empty. Vite large-chunk warning remains. Full main-route browser traversal was not repeated for this furniture-only addition."
+    }
+  },
+  "eastLiveServiceCore": {
+    "source": "Y1.002 side doorway next to lift and narrow stair; Y1.003 upper core; XS4A/B topology",
+    "liveLevels": [
+      0,
+      5.49
+    ],
+    "sourceAbsoluteFFL": [
+      4580,
+      10070
+    ],
+    "implementation": "One rise of existing curved-winder stair; main hall independent side doorway, matching enclosure aperture, lower ceiling opening and upper landing threshold. Other source storeys remain review-only.",
+    "estimatedAccess": {
+      "x": -6.9,
+      "width": 1.05,
+      "height": 2.35
+    },
+    "route": "Uses stair builder tread samples; service shortcut starts at the independent east side door and ends inside Early Printed Books.",
+    "boundaries": "No basement or other lower-storey service flight is attached. Lift footprint stays a solid reservation, not an operational lift.",
+    "verification": "Service core and standalone stair: 2 tests pass; east/core/upper/gallery/full Long Room: 10 tests pass; full Long Room rerun with service samples read after batching: 4 tests pass. lint/typecheck/build pass.",
+    "browserVerification": "Browser service route: length17.04; ascent d17.03,x-6.900,y7.140,z49.498,floor2,collision clear. Reverse d0.00,x-6.900,y1.650,z44.202,floor1,collision clear. Exited service walking with route dataset cleared and position preserved. Stair interior and upper room were visually inspected. Error log shows the existing Ant Design Drawer width deprecation; no zero-console-error claim."
+  },
+  "sharedHallOakFinish": {
+    "implementation": "Historic-oak factory now shares the existing fine-oak albedo, bump and roughness maps across wood variants; main hall no longer loads walnut image; component review uses same factory",
+    "mapResolution": [
+      128,
+      256
+    ],
+    "metricGrainTile": [
+      0.6,
+      2.8
+    ],
+    "roughness": {
+      "wood": 0.94,
+      "trim": 0.88,
+      "dark": 0.96
+    },
+    "fidelity": "Procedural photo-estimated oak; not calibrated material sampling",
+    "verification": "8 focused tests passed; complete hall and east portal previews inspected; complete-hall error log empty",
+    "runtimeBoundary": "Frontend component review restarted after no listener at 4175; authenticated main route not retested this pass"
+  },
+  "sideVaultSurveyCorrection": {
+    "sourceSheets": [
+      "Y2.001 central longitudinal section",
+      "Murphy Surveys XS-6A",
+      "Murphy Surveys XS-7A"
+    ],
+    "sourceFile": "dcc-2949-20/existing-sections-01.pdf",
+    "observedProfile": "near-semicircular upper side arches, crown above central barrel spring",
+    "adaptedSpanM": 4.335,
+    "adaptedRiseM": 2.1675,
+    "measuredDimensions": false,
+    "junction": "shared cylinder intersection seam; interior caps removed",
+    "validation": "4 full-hall tests, lint/typecheck/build, isolated and full-hall browser inspection",
+    "reviewSnapshot": {
+      "drawCalls": 186,
+      "triangles": 6407682,
+      "realCatalogBooks": 0
+    }
+  },
+  "upperEndSurveyJoinery": {
+    "source": "Murphy Surveys XS-6A/6B, old-library-cross-sections.pdf pages 1/2",
+    "features": [
+      "paired upper recessed arched niches",
+      "four central upper panel fields",
+      "arch-shaped side overpanels",
+      "west upper closed paneled door and pediment"
+    ],
+    "pedimentCorrection": "removed from west lower doorway; installed on upper floor",
+    "nicheRecessM": 0.32,
+    "dimensionsMeasured": false,
+    "statues": "omitted per user request",
+    "westUpperRoom": "Y1.003 room volume reconstructed separately; access and contents remain adapted",
+    "verified": "6 tests; lint/typecheck/build; both upper-end browser views"
+  },
+  "westUpperRooms": {
+    "source": "dcc-2949-20/existing-03.pdf, Y1.003 second and third floor plan",
+    "observed": [
+      "STORAGE 21 m²",
+      "STORAGE 78 m²",
+      "CIRC. 4 m² north of the rooms",
+      "upper floor datum +10070 relative to the survey datum"
+    ],
+    "relativeFloorLevelM": 5.49,
+    "estimatedCeilingLevelM": 8.54,
+    "adaptedEnvelopeM": {
+      "northSouth": 18.66,
+      "eastWest": 8,
+      "sourceNetAreasPreserved": false
+    },
+    "implementation": "West upper storage room shell with two transverse partitions, a short longitudinal subdivision, real window apertures, low perimeter storage benches and a three-tread gallery-to-room transition.",
+    "access": "Main west upper portal is open in the live connection study; the guided west-upper route crosses the end bridge and descends 0.46 m to the source-relative room floor.",
+    "estimatedTransition": {
+      "steps": 3,
+      "goingM": 0.35,
+      "widthM": 1.8,
+      "riseTotalM": 0.46
+    },
+    "fidelity": "Plan labels and partition topology follow the drawing; room envelope, door, window and storage-bench dimensions are adaptations to the enlarged hall.",
+    "verification": "West upper room and full route tests: 3 files / 7 tests passed; lint, typecheck and build passed. Live /virtual-library west-upper route reached the room at eye y=7.14 m with collision clear; console retains only the existing Ant Design Drawer width deprecation warning.",
+    "remaining": "Northern stair/core is reserved but not reconstructed, and the room has no complete historic inventory or measured fit-out."
+  },
+  "henryJonesPairedPlaques": {
+    "sources": [
+      "https://www.patrickcomerford.com/2012/10/memories-of-old-bishop-and-old-book-in.html",
+      "https://api.pageplace.de/preview/DT0400.9781139950114_A23869416/preview-9781139950114_A23869416.pdf"
+    ],
+    "observed": "Public account describes two plaques in the Henry Jones Room; the modern lower plaque is transcribed, and the brass memorial is recorded above the original-building door.",
+    "implementation": "Paired thin brass plaques with timber surrounds, corner fasteners and short readable inscription excerpt above the adapted west doorway in the live Henry Jones Room.",
+    "placement": "Adapted wall coordinates above the west doorway; not a surveyed room elevation.",
+    "inscriptionBoundary": "Modern text is a short public transcription excerpt. Older monument wording and heraldry are not invented.",
+    "verification": "Dedicated henry-memorial-room browser close view includes the shared north wall and clear doorway; Henry Jones route/connection tests pass.",
+    "remaining": "Exact plaque dimensions, full older inscription, heraldry and surveyed wall coordinates remain unresolved."
+  },
+  "benefactorFrieze": {
+    "source": "https://onprem.tcd.ie/library/old-library/long-room/",
+    "publishedNames": [
+      "James Ussher, Archbishop of Armagh",
+      "King Charles II",
+      "William Palliser, Archbishop of Cashel",
+      "Claudius Gilbert",
+      "Theophilius Butler"
+    ],
+    "implementation": "Removed from both sides of the live Long Room at the user's explicit request on 2026-09-15; names remain evidence only.",
+    "adaptation": "Font, panel spacing, repeated side placement and absolute bays are estimated for the enlarged 90 m hall.",
+    "verification": "Runtime import, construction call, panel geometry and lettering atlas removed; current validation is recorded separately.",
+    "remaining": "Exact historic letterforms, spacing and conservation-state changes are not measured; the live omission is intentional."
+  },
+  "latestFrontendValidation": {
+    "date": "2026-09-10",
+    "command": "pnpm --filter @bookkin/web test",
+    "result": {
+      "filesPassed": 91,
+      "testsPassed": 275,
+      "filesFailed": 0,
+      "testsFailed": 0
+    },
+    "additionalChecks": [
+      "pnpm --filter @bookkin/web lint",
+      "pnpm --filter @bookkin/web typecheck",
+      "pnpm --filter @bookkin/web build"
+    ],
+    "notes": "jsdom CSS, pseudo-element and Canvas 2D warnings remain test-environment output; the live browser retains the existing Ant Design Drawer width deprecation. This is frontend regression evidence, not measured 1:1 architecture, mobile or controlled GPU/FPS evidence."
+  }
+}

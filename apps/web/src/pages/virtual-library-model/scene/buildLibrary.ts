@@ -42,6 +42,8 @@ export interface BuiltLibrary {
 }
 
 export interface ExpandableShelfSection {
+  centerX?: number;
+  centerZ?: number;
   id: number;
   angle: number;
   radius: number;
@@ -110,7 +112,8 @@ interface LightingRig {
 
 const ENTRANCE_LEFT_SIDE_ANGLE = Math.PI;
 const ENTRANCE_RIGHT_SIDE_ANGLE = 0;
-const STAIR_CENTER = new THREE.Vector3(6.25, 0, 5.45);
+const STAIR_CENTER = new THREE.Vector3(6.25, 0, 5.45)
+  .setLength(LIBRARY.tower.innerRadius - LIBRARY.tower.galleryDepth - 1.76);
 
 export const SPIRAL_STAIR_GALLERY_CONNECTION = {
   stepCenterRadius: 0.78,
@@ -561,24 +564,22 @@ function addTangentialBookcase(
     }
   }
 
-  const isLowBookcase = height < 3;
+  // Classical oak pilasters give each bookcase a strong, repeated architectural bay.
   for (const x of outerPostPositions) {
     group.add(makeBox(0.2, height, depth + 0.12, materials.woodWarm, x, baseY + height / 2, 0));
-    const finialBase = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.046, 0.066, 0.12, 10),
-      materials.woodWarm,
-    );
-    finialBase.position.set(x, baseY + height + 0.3, 0);
-    finialBase.castShadow = true;
-    group.add(finialBase);
-
-    const finialCap = new THREE.Mesh(
-      new THREE.ConeGeometry(0.038, 0.095, 8),
-      isLowBookcase ? materials.woodDark : materials.brass,
-    );
-    finialCap.position.set(x, baseY + height + 0.395, 0);
-    finialCap.castShadow = true;
-    group.add(finialCap);
+    for (const face of faces) {
+      const frontZ = face * (depth / 2 + 0.075);
+      for (const flute of [-1, 0, 1]) {
+        group.add(makeBox(0.022, height - 0.8, 0.028, materials.woodDark,
+          x + flute * 0.052, baseY + height / 2, frontZ));
+      }
+      for (const [y, capitalWidth, capitalHeight] of [
+        [0.32, 0.28, 0.18], [height - 0.32, 0.26, 0.1], [height - 0.15, 0.34, 0.16],
+      ]) {
+        group.add(makeBox(capitalWidth, capitalHeight, 0.12, materials.woodWarm,
+          x, baseY + y, frontZ));
+      }
+    }
   }
   group.add(
     makeBox(width + 0.34, 0.085, depth + 0.25, materials.woodDark, 0, baseY + height + 0.22, 0),
@@ -599,7 +600,7 @@ function addTangentialBookcase(
           0.035,
           height - 0.72,
           0.032,
-          materials.brass,
+          materials.woodDark,
           x,
           baseY + height / 2,
           frontZ + face * 0.008,
@@ -791,25 +792,26 @@ function addOuterBookWalls(
       });
     }
 
-    if (shouldPlaceUpperBookcase(sector, hiddenIndex, windowIndices)) {
+    for (let level = 1; level < LIBRARY.tower.floorCount; level += 1) {
+      if (!shouldPlaceUpperBookcase(sector, hiddenIndex, windowIndices)) continue;
       addTangentialBookcase(root, materials, books, {
         radius: caseRadius,
         angle,
         width: caseWidth,
         height: upperHeight,
-        baseY: galleryY + 0.18,
+        baseY: galleryY * level + 0.18,
         depth,
         shelfCount: shelfCount - 1,
-        seed: 100 + sector,
+        seed: 100 * level + sector,
         faces: [-1],
       });
       shelfSections.push({
-        id: 100 + sector,
+        id: 100 * level + sector,
         angle,
         radius: caseRadius,
         width: caseWidth,
         height: upperHeight,
-        baseY: galleryY + 0.18,
+        baseY: galleryY * level + 0.18,
         depth,
         shelfCount: shelfCount - 1,
       });
@@ -1662,8 +1664,8 @@ function addLighting(root: THREE.Group): LightingRig {
   }
   for (const x of [-7, 7]) {
     const vaultLight = new THREE.SpotLight(PALETTE.parchment, 240, 25, Math.PI / 2.8, 0.9, 1.3);
-    vaultLight.position.set(x, 8.5, 2);
-    vaultLight.target.position.set(0, 17.5, -2);
+    vaultLight.position.set(x, SCHOLASTIC_LAYOUT.vaultSpring - 1.8, 2);
+    vaultLight.target.position.set(0, SCHOLASTIC_LAYOUT.vaultSpring + SCHOLASTIC_LAYOUT.vaultRise, -2);
     vaultLight.name = 'Indirect warm vault bounce';
     root.add(vaultLight, vaultLight.target);
   }
@@ -1715,13 +1717,19 @@ export function buildLibraryScene(): BuiltLibrary {
       texture.needsUpdate = true;
     });
   });
-  addGallery(root, materials, interactiveObjects);
+  for (let level = 1; level < LIBRARY.tower.floorCount; level += 1) {
+    const storey = new THREE.Group();
+    storey.name = `Circular gallery level ${level + 1}`;
+    storey.position.y = (level - 1) * LIBRARY.tower.galleryY;
+    addGallery(storey, materials, interactiveObjects);
+    addSpiralStair(storey, materials, interactiveObjects);
+    root.add(storey);
+  }
   addReceptionAndChandelier(root, materials);
   const catalogTerminal = createCatalogTerminal(materials);
   root.add(catalogTerminal);
   interactiveObjects.push(catalogTerminal);
   const fireplace = addOppositeFireplace(root, materials);
-  addSpiralStair(root, materials, interactiveObjects);
   const restrictedGlow = addRestrictedEntrance(root, materials, books, interactiveObjects);
   addDirectorOfficeEntrance(root, materials, books, interactiveObjects);
   root.add(createScholasticVault(materials));

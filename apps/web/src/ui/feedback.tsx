@@ -9,7 +9,7 @@ import type { ReactElement, ReactNode } from "react";
 import { cssVarPath, mergeClassNames, sxClassName, useTheme, type BoxProps, type SxProps } from "./primitives";
 
 export function Alert({ severity = "info", action, children, onClose }: BoxProps & { severity?: "error" | "info" | "success" | "warning"; action?: ReactNode; icon?: ReactNode }) {
-  return <FeedbackBubble severity={severity} action={action} duration={severity === "success" ? 4 : 0} onClose={onClose as (() => void) | undefined}>{children}</FeedbackBubble>;
+  return <FeedbackBubble severity={severity} action={action} onClose={onClose as (() => void) | undefined}>{children}</FeedbackBubble>;
 }
 
 export function CircularProgress({ size = 32, color, ...props }: { size?: number | string; color?: string; sx?: SxProps } & Record<string, unknown>) {

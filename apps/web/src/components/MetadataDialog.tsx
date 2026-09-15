@@ -252,7 +252,6 @@ export function MetadataDialog({ book, onClose, onCompleted, onSavedImmediately,
               <TextField label="标签" value={form.tags} onChange={(event: any) => update("tags", event.target.value)} helperText="用逗号分隔" />
             </Box>
             <TextField label="简介" multiline minRows={4} value={form.description} onChange={(event: any) => update("description", event.target.value)} />
-            <Divider />
             <FormControlLabel control={<Checkbox checked={form.writeBack} onChange={(event: any) => update("writeBack", event.target.checked)} />} label={`同时写回 ${book?.format ?? ""} 原文件`} />
           </Stack>
         ) : (

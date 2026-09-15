@@ -82,8 +82,8 @@ export function ReaderFontsPage() {
     <PageContainer>
       {fonts.filter((font) => font.source === "CUSTOM" && font.contentUrl).map((font) => <style key={font.id}>{`@font-face { font-family: "${font.familyName}"; src: url("${font.contentUrl}") format("${font.format?.toLowerCase() ?? "woff2"}"); font-display: swap; }`}</style>)}
 
-      <Card variant="outlined" sx={{ mb: 4, borderRadius: `${tokens.radius.xl}px`, bgcolor: "background.paper" }}>
-        <CardContent sx={{ p: { xs: 2.5, sm: 4 } }}>
+      <Stack className="bk-form-section" sx={{ mb: 4 }}>
+        <Stack spacing={2}>
           <Stack direction={{ xs: "column", md: "row" }} spacing={3} sx={{ alignItems: { md: "flex-end" } }}>
             <Stack spacing={2} sx={{ flex: 1, width: "100%" }}>
               <Typography variant="h5">上传自定义字体</Typography>
@@ -106,8 +106,8 @@ export function ReaderFontsPage() {
             </Stack>
           </Stack>
           <Typography component="p" variant="caption" color="text.secondary" sx={{ mt: `${tokens.spacing[2]}px`, ml: "auto", width: { xs: "100%", md: uploadActionWidth }, textAlign: "center" }}>WOFF2 / WOFF / TTF / OTF · ≤ 25 MB</Typography>
-        </CardContent>
-      </Card>
+        </Stack>
+      </Stack>
 
       {fontsQuery.isError && <Alert severity="error" sx={{ mb: 3 }}>无法读取字体列表，请刷新后重试。</Alert>}
       <Stack spacing={2}>

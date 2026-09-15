@@ -31,8 +31,8 @@
   --color-primitive-white: #FFFFFF;
   --color-primitive-black: #000000;
   --color-canvas: #FAF9F5;
-  --color-surface: #EFE9DE;
-  --color-surface-card: #EFE9DE;
+  --color-surface: #FFFDF8;
+  --color-surface-card: #FFFDF8;
   --color-surface-soft: #F5F0E8;
   --color-surface-strong: #E8E0D2;
   --color-surface-cream-strong: #E8E0D2;
@@ -60,6 +60,7 @@
   --color-success: #5DB872;
   --color-warning: #D4A017;
   --color-error: #C64545;
+  --color-surface-input: #F5F0E8;
   --spacing-0: 0px;
   --spacing-1: 4px;
   --spacing-2: 8px;

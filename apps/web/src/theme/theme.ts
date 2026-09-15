@@ -24,7 +24,7 @@ export const bookKinThemeOptions: Record<ReaderTheme, BookKinThemeOption> = {
   PAPER: {
     label: "纸张",
     reader: { background: semantic.canvas, foreground: semantic.textPrimary, muted: semantic.textMuted },
-    colors: semantic,
+    colors: { ...semantic, surfaceInput: tokens.color.primitive.white },
   },
   WHITE: {
     label: "明亮",
@@ -34,6 +34,7 @@ export const bookKinThemeOptions: Record<ReaderTheme, BookKinThemeOption> = {
       canvas: tokens.color.primitive.white,
       surface: tokens.color.primitive.white,
       surfaceCard: tokens.color.primitive.white,
+      surfaceInput: tokens.color.primitive.white,
       surfaceSoft: semantic.canvas,
       surfaceStrong: semantic.surfaceSoft,
       surfaceCreamStrong: semantic.surfaceSoft,
@@ -47,6 +48,7 @@ export const bookKinThemeOptions: Record<ReaderTheme, BookKinThemeOption> = {
       canvas: semantic.surfaceDark,
       surface: semantic.surfaceDarkRaised,
       surfaceCard: semantic.surfaceDarkRaised,
+      surfaceInput: semantic.surfaceDarkSoft,
       surfaceSoft: semantic.surfaceDarkSoft,
       surfaceStrong: tokens.color.primitive.ink700,
       surfaceCreamStrong: semantic.surfaceDarkRaised,
@@ -97,6 +99,11 @@ export function createAntdTheme(mode: ReaderTheme) {
   return {
     algorithm: mode === "NIGHT" ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
     components: {
+      Notification: {
+        fontSize: tokens.typography.fontSize.bodySm,
+        fontSizeLG: tokens.typography.fontSize.bodySm,
+        lineHeightLG: tokens.typography.lineHeight.body,
+      },
       Button: {
         controlHeight: tokens.layout.controlHeight,
         controlHeightSM: 32,
@@ -128,7 +135,8 @@ export function createAntdTheme(mode: ReaderTheme) {
         activeBorderColor: colors.primary,
         hoverBorderColor: colors.primary,
         activeShadow: tokens.shadow.focus,
-        colorBgContainer: colors.canvas,
+        colorBgContainer: colors.surfaceInput,
+        colorBorder: colors.borderStrong,
         controlHeight: tokens.layout.controlHeight,
         borderRadius: tokens.radius.md,
         paddingInline: tokens.layout.inputPaddingInline,
@@ -151,6 +159,8 @@ export function createAntdTheme(mode: ReaderTheme) {
         itemSelectedColor: colors.textPrimary,
       },
       Select: {
+        colorBgContainer: colors.surfaceInput,
+        colorBorder: colors.borderStrong,
         optionSelectedBg: colors.surfaceStrong,
         optionSelectedColor: colors.textPrimary,
         optionActiveBg: colors.surfaceSoft,

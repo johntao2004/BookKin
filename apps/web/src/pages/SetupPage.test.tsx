@@ -42,7 +42,7 @@ describe("SetupPage", () => {
     fireEvent.change(screen.getByLabelText("密码", { exact: true }), { target: { value: "short" } });
     fireEvent.change(screen.getByLabelText("确认密码", { exact: true }), { target: { value: "different" } });
     fireEvent.click(submit);
-    expect(await screen.findByText("密码至少需要 12 个字符")).toBeInTheDocument();
+    expect(await screen.findByText("未满足：长度为 12–200 个字符")).toBeInTheDocument();
     expect(await screen.findByText("两次输入的密码不一致")).toBeInTheDocument();
     expect(setup).not.toHaveBeenCalled();
   });

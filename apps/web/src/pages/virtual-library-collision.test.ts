@@ -53,6 +53,17 @@ function withMockCanvas<T>(run: () => T) {
 }
 
 describe("virtual library camera collision", () => {
+  it("allows moving away or along a wall from exact contact", () => {
+    const start = { x: 0.8, y: 1, z: 0 };
+    const away = resolveCameraCollision(start, { ...start, x: 2 }, [hallBox]);
+    expect(away.x).toBe(2);
+    const tangent = resolveCameraCollision(start, { ...start, z: 2 }, [hallBox]);
+    expect(tangent.z).toBe(2);
+    const inward = resolveCameraCollision(start, { ...start, x: -2, z: 0.2 }, [hallBox]);
+    expect(inward.x).toBeGreaterThanOrEqual(0.8);
+    expect(inward.z).toBeCloseTo(0.2, 2);
+  });
+
   it("sweeps the complete movement segment so a fast jump cannot tunnel through a solid", () => {
     const column: CylinderCameraCollider = {
       id: "fast-column",

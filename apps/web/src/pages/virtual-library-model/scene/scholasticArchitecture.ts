@@ -6,7 +6,7 @@ import { makeBox } from './parts';
 
 /** Original collegiate Gothic construction. All dimensions are in scene metres. */
 export const SCHOLASTIC_LAYOUT = {
-  vaultSpring: 11.85,
+  vaultSpring: LIBRARY.tower.mainHeight - 0.95,
   vaultRise: 6.65,
   ribCount: 16,
 } as const;
@@ -30,7 +30,7 @@ function rib(points: THREE.Vector3[], material: THREE.Material, radius = 0.09) {
 
 export function createScholasticVault(materials: LibraryMaterials) {
   const group = new THREE.Group();
-  group.name = 'Collegiate Gothic lierne vault';
+  group.name = 'Long Room inspired coffered oak vault';
   const { vaultSpring: spring, vaultRise: rise, ribCount } = SCHOLASTIC_LAYOUT;
   const radius = LIBRARY.tower.innerRadius + 0.3;
   const heightAt = (r: number) => spring + rise * (1 - Math.pow(r / radius, 1.65));
@@ -45,45 +45,34 @@ export function createScholasticVault(materials: LibraryMaterials) {
   shell.name = 'Continuous curved oak vault lining';
   shell.receiveShadow = true;
   group.add(shell);
-  for (let i = 0; i < ribCount; i++) {
-    const a = Math.PI / 2 + i * Math.PI * 2 / ribCount;
-    const radial = Array.from({ length: 13 }, (_, j) => {
-      const r = radius * (1 - j / 12);
-      return polar(r, heightAt(r) - 0.1, a);
+  // Long Room-inspired transverse timber bays, adapted to the circular envelope.
+  // Keep the same roof surface and mounting height so the galleries and chain stay attached.
+  const heightAtPoint = (x: number, z: number) => heightAt(Math.hypot(x, z));
+  for (let bay = 1; bay < ribCount; bay++) {
+    const z = radius * (2 * bay / ribCount - 1);
+    const halfWidth = Math.sqrt(radius * radius - z * z);
+    const points = Array.from({ length: 49 }, (_, j) => {
+      const x = halfWidth * (2 * j / 48 - 1);
+      return v(x, heightAtPoint(x, z) - 0.1, z);
     });
-    const main = rib(radial, materials.woodWarm, 0.145);
-    main.name = `Moulded principal vault rib ${i}`;
-    group.add(main);
-    // Paired tiercerons meet the neighbouring radial rib at a carved boss.
-    for (const direction of [-1, 1]) {
-      const points = Array.from({ length: 13 }, (_, j) => {
-        const t = j / 12;
-        const r = radius * (1 - t * 0.62);
-        const angle = a + direction * Math.PI / ribCount * Math.sin(t * Math.PI / 2);
-        return polar(r, heightAt(r) - 0.18, angle);
-      });
-      const secondary = rib(points, materials.woodWarm, 0.062);
-      secondary.name = `Fan tierceron ${i}:${direction}`;
-      group.add(secondary);
-    }
-    for (const fraction of [0.38, 0.66, 0.86]) {
-      const r = radius * fraction;
-      const cross = Array.from({ length: 13 }, (_, j) => {
-        const angle = a + j / 12 * Math.PI * 2 / ribCount;
-        return polar(r, heightAt(r) - 0.12, angle);
-      });
-      group.add(rib(cross, materials.woodDark, 0.07));
-      const boss = new THREE.Group();
-      boss.position.copy(polar(r, heightAt(r) - 0.23, a));
-      for (let petal = 0; petal < 6; petal++) {
-        const leaf = new THREE.Mesh(new THREE.SphereGeometry(0.11, 12, 8), materials.woodWarm);
-        const angle = petal * Math.PI / 3;
-        leaf.position.set(Math.cos(angle) * 0.11, 0, Math.sin(angle) * 0.11);
-        leaf.scale.set(1, 0.4, 1);
-        boss.add(leaf);
-      }
-      group.add(boss);
-    }
+    const arch = rib(points, materials.woodWarm, 0.145);
+    arch.name = `Long Room transverse oak arch ${bay}`;
+    group.add(arch);
+  }
+  // Fine longitudinal battens make the oak lining read as fitted boards, not a flat dome.
+  for (let board = 1; board < 40; board++) {
+    const x = radius * (2 * board / 40 - 1);
+    const halfLength = Math.sqrt(radius * radius - x * x);
+    const points = Array.from({ length: 49 }, (_, j) => {
+      const z = halfLength * (2 * j / 48 - 1);
+      return v(x, heightAtPoint(x, z) - 0.035, z);
+    });
+    const batten = new THREE.Mesh(new THREE.TubeGeometry(
+      new THREE.CatmullRomCurve3(points), 48, board === 20 ? 0.09 : 0.028, 6, false,
+    ), materials.woodDark);
+    batten.name = `Longitudinal oak lining batten ${board}`;
+    batten.receiveShadow = true;
+    group.add(batten);
   }
   const cornice = new THREE.Mesh(new THREE.TorusGeometry(radius - 0.2, 0.2, 12, 128), materials.woodWarm);
   cornice.rotation.x = Math.PI / 2;

@@ -94,7 +94,7 @@ WORKER_PID=$!
 echo "$WORKER_PID" > "$RUN_DIR/worker.pid"
 
 API_READY=false
-for _ in {1..60}; do
+for _ in {1..240}; do
   if curl --silent --fail --max-time 1 "$API_HEALTH_URL" >/dev/null; then
     API_READY=true
     break

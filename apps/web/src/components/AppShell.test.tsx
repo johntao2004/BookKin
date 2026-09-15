@@ -99,7 +99,6 @@ describe("AppShell", () => {
     expect(within(drawer).getAllByRole("button").map((button) => button.textContent)).toEqual([
       "首页",
       "藏书库",
-      "展示书目",
       "分类",
       "书单",
       "阅读笔记",
@@ -120,8 +119,8 @@ describe("AppShell", () => {
     fireEvent.mouseEnter(screen.getByRole("link", { name: "虚拟书库" }));
 
     await waitFor(() => expect(listBooks).toHaveBeenCalledWith(expect.objectContaining({
-      limit: 60,
-      sort: "recent",
+      limit: 100,
+      sort: "title",
     })));
   });
 

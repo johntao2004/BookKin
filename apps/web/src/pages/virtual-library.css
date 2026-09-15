@@ -103,6 +103,19 @@
   gap: var(--spacing-1);
 }
 
+.virtual-library-view-controls > .virtual-library-space-shortcuts:first-child {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.virtual-library-walk-help {
+  margin: 0;
+  padding: var(--spacing-1) var(--spacing-2);
+  color: var(--color-text-on-dark);
+  font-size: var(--typography-font-size-caption);
+  line-height: var(--typography-line-height-body);
+}
+
 .virtual-library-space-shortcuts .bk-button {
   flex: 1 1 0;
   min-width: 0;

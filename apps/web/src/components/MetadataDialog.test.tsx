@@ -8,7 +8,7 @@ import { MetadataDialog } from "./MetadataDialog";
 describe("MetadataDialog", () => {
   afterEach(() => vi.restoreAllMocks());
 
-  it("keeps the edit form concise without explanatory copy or a save icon", async () => {
+  it("keeps the edit form concise with one content separator and one padding layer", async () => {
     render(
       <TestProviders>
         <MetadataDialog book={demoBooks[0]} onClose={vi.fn()} onCompleted={vi.fn()} onSavedImmediately={vi.fn()} onSaveFailed={vi.fn()} />
@@ -19,6 +19,8 @@ describe("MetadataDialog", () => {
     expect(screen.getByRole("heading", { name: "编辑元信息" })).toBeInTheDocument();
     expect(screen.queryByText("不勾选时只修改BookKin的展示信息。写回会先生成安全预览，确认后直接覆盖当前原文件，不保留历史版本。")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "保存" }).querySelector("svg")).toBeNull();
+    expect(document.querySelectorAll(".bk-dialog-content .bk-divider")).toHaveLength(1);
+    expect(document.querySelector(".ant-modal-body")).toHaveStyle({ padding: "0px" });
   });
 
   it("closes and reports an ordinary metadata edit before persistence resolves", async () => {

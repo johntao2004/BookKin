@@ -10,6 +10,17 @@ describe("LoginPage", () => {
   beforeEach(() => sessionStorage.clear());
   afterEach(() => vi.restoreAllMocks());
 
+  it.each([false, true])("redirects an existing session on /login/ (temporary=%s)", async (temporary) => {
+    sessionStorage.setItem("bookkin-demo-session", JSON.stringify({id:"entry-test",username:"owner",displayName:"Owner",role:"OWNER",mustChangePassword:temporary}));
+    render(<TestProviders initialPath="/login/"><Routes>
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/library" element={<div>已进入首页</div>} />
+      <Route path="/change-password" element={<div>需要首次改密</div>} />
+    </Routes></TestProviders>);
+    expect(await screen.findByText(temporary ? "需要首次改密" : "已进入首页")).toBeInTheDocument();
+    expect(screen.queryByRole("button",{name:/^登录$/})).not.toBeInTheDocument();
+  });
+
   it("uses a playful greeting for each part of the day", () => {
     expect(getLoginGreeting(5)).toBe("早安，书房已经替你开灯啦。");
     expect(getLoginGreeting(10)).toBe("早安，书房已经替你开灯啦。");

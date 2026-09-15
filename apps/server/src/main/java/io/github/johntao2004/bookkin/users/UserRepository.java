@@ -18,6 +18,20 @@ public class UserRepository {
         this.dsl = dsl;
     }
 
+    public BookKinUser updateProfile(UUID id, String username, String displayName) {
+        try {
+            dsl.execute("update app_users set username = ?, display_name = ?, updated_at = now() where id = ?", username, displayName, id);
+        } catch (org.jooq.exception.DataAccessException error) {
+            if ("23505".equals(error.sqlState())) throw io.github.johntao2004.bookkin.common.ApiException.conflict("USERNAME_EXISTS", "用户名已被使用。");
+            throw error;
+        }
+        return findById(id).orElseThrow();
+    }
+
+    public void revokeSessionsByUsername(String username) {
+        dsl.execute("delete from spring_session where principal_name = ?", username);
+    }
+
     public long count() {
         return dsl.fetchCount(dsl.selectFrom("app_users"));
     }

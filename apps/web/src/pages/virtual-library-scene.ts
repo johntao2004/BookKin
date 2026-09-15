@@ -1,22 +1,22 @@
 import * as THREE from "three";
 import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
+import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import type { Book } from "../domain/types";
 import { tokens } from "../theme/generated-tokens";
 import {
   classifyCatalogBook,
   defaultCategoryForShelf,
   sortCatalogBooksByClassification,
+  longRoomCatalogSectionCounts,
   type CatalogClassification,
   type LibraryCategory,
 } from "./virtual-library-catalog";
 import {
   collectCameraColliders,
-  HALL_COLUMN_COLLIDERS,
   type CameraCollider,
 } from "./virtual-library-collision";
 import { LIBRARY } from "./virtual-library-model/config";
 import {
-  buildLibraryScene,
   getShelfFrontPlacement,
   type ExpandableShelfSection,
 } from "./virtual-library-model/scene/buildLibrary";
@@ -27,9 +27,12 @@ import {
   type LibraryRoomId,
 } from "./virtual-library-rooms";
 
-export const ROTUNDA_CENTER = new THREE.Vector3(0, 5.4, 0);
-export const ROTUNDA_CAMERA_RADIUS = 11.7;
-export const VIRTUAL_LIBRARY_SCENE_MODEL_VERSION = "collegiate-gothic-vault-reading-hall-2026-09-06";
+import { buildLongRoom, type LongRoomBuilt } from "./virtual-library-model/scene/longRoom";
+import { LONG_ROOM } from "./virtual-library-model/longRoomLayout";
+
+export const ROTUNDA_CENTER = new THREE.Vector3(0, LONG_ROOM.camera.targetY, LONG_ROOM.camera.targetZ);
+export const ROTUNDA_CAMERA_RADIUS = LONG_ROOM.camera.radius;
+export const VIRTUAL_LIBRARY_SCENE_MODEL_VERSION = "trinity-long-room-catalog-binding-detail-2026-09-15";
 
 export const SHELF_PLAQUE_MOUNT = {
   gap: 0.012,
@@ -90,23 +93,60 @@ export function getShelfPlaqueRows(
 const ROTUNDA_BAY_COUNT = 12;
 const ROTUNDA_PRIMARY_BAY_ORDER = [0, 3, 9, 6, 1, 11, 4, 8, 2, 10, 5, 7] as const;
 const BOOKS_PER_SHELF_ROW = 5;
-const BOOK_HEIGHT_BASE = 1.18;
-const BOOK_HEIGHT_STEP = 0.027;
 const OUTER_SHELF_MIN_RADIUS = LIBRARY.tower.innerRadius - 2;
 const LOWER_SHELF_MAX_Y = LIBRARY.tower.galleryY - 0.05;
 
 export const BOOK_INSPECTION_LAYOUT = {
   mobileBreakpoint: 720,
-  desktopHeight: 2.15,
-  mobileHeight: 1.55,
-  forwardOffset: 1.25,
-  desktopSideOffset: 1.25,
-  mobileVerticalOffset: 1.7,
+  desktopForwardOffset: 1.02,
+  desktopSideOffset: 0.98,
+  desktopPreviewScale: 1.8,
+  mobileForwardOffset: 0.82,
+  mobileSideOffset: 0.4,
+  mobileVerticalOffset: 0.72,
+  mobilePreviewScale: 1.15,
   minimumZoom: 0.78,
   maximumZoom: 1.38,
 } as const;
 
-export const SHELF_BOOK_CLUSTER_GAP = 0.035;
+export const VIRTUAL_LIBRARY_WORLD_LAYER = 0;
+export const VIRTUAL_LIBRARY_BOOK_PREVIEW_LAYER = 1;
+
+export const SHELF_BOOK_CLUSTER_GAP = 0.004;
+export const SHELF_BOOK_MIN_HIT_WIDTH = 0.16;
+export const BOOK_SPINE_TEXTURE_SIZE = { width: 256, height: 1024 } as const;
+export const CATALOG_BOOK_MODEL_SIZE = { width: 0.66, height: 1, depth: 0.1 } as const;
+export const CATALOG_BOOK_DETAIL_LAYOUT = {
+  pageBlockInset: { width: 0.038, height: 0.044, depth: 0.02 },
+  pageBlockOffsetX: 0.006,
+  coverBoardThickness: 0.008,
+  coverArtInset: { width: 0.018, height: 0.018 },
+  spineBodyWidth: 0.026,
+  spineBodyOffsetX: 0.006,
+  spineLabelWidthRatio: 0.84,
+  spineLabelHeightRatio: 0.88,
+  spineLabelSurfaceGap: 0.0008,
+  spineEdgeWidth: 0.008,
+  spineEdgeHeightInset: 0.04,
+  spineCapHeight: 0.016,
+  spineCapWidth: 0.012,
+  hingeWidth: 0.008,
+  hingeHeightInset: 0.034,
+  surfaceGap: 0.0006,
+  foreEdgeCurve: 0.0025,
+  headbandWidth: 0.03,
+  headbandHeight: 0.012,
+  headbandDepthInset: 0.024,
+} as const;
+
+export function getShelfBookInteractionWidth(renderedSpineWidth: number) {
+  return Math.max(renderedSpineWidth, SHELF_BOOK_MIN_HIT_WIDTH);
+}
+
+export function getSpineTitleGlyphs(title: string) {
+  const glyphs = Array.from(title);
+  return glyphs.length > 5 ? [...glyphs.slice(0, 4), "…"] : glyphs;
+}
 
 export function getCenteredShelfBookOffsets(
   widths: number[],
@@ -124,9 +164,9 @@ export function getCenteredShelfBookOffsets(
 
 const BOOK_COLORS = [
   tokens.color.primitive.coral600,
-  tokens.color.primitive.teal500,
-  tokens.color.primitive.amber600,
-  tokens.color.primitive.green600,
+  tokens.color.primitive.ink700,
+  tokens.color.primitive.ink500,
+  tokens.color.primitive.ink900,
   tokens.color.primitive.coral700,
   tokens.color.primitive.ink500,
 ];
@@ -135,6 +175,7 @@ export interface SceneBook {
   book: Book;
   classification: CatalogClassification;
   group: THREE.Group;
+  hitTarget: THREE.Mesh;
   shelfPosition: THREE.Vector3;
   shelfRotation: THREE.Euler;
   shelfScale: THREE.Vector3;
@@ -150,11 +191,15 @@ export interface ShelfBookModelSize {
 }
 
 export interface ShelfCategoryInfo {
+  centerX?: number;
+  centerZ?: number;
   sectionId: number;
   angle: number;
   radius: number;
   depth: number;
   targetY: number;
+  height: number;
+  width: number;
   category: LibraryCategory;
   bookCount: number;
 }
@@ -189,9 +234,14 @@ interface ShelfSectionController {
 
 interface BookMaterials {
   pages: THREE.MeshStandardMaterial;
-  gold: THREE.MeshStandardMaterial;
   spines: THREE.MeshStandardMaterial[];
+  spineTrims: THREE.MeshStandardMaterial[];
+  headband: THREE.MeshStandardMaterial;
+  foreEdgeGeometry: THREE.PlaneGeometry;
+  pageHeadGeometry: THREE.PlaneGeometry;
   covers: Map<string, THREE.MeshStandardMaterial>;
+  hitTargetGeometry: THREE.BoxGeometry;
+  hitTargetMaterial: THREE.MeshBasicMaterial;
 }
 
 interface AssignedBook<T> {
@@ -393,12 +443,99 @@ function roundedBox(
   return mesh;
 }
 
-function createBookMaterials(): BookMaterials {
+export function createCatalogBookForeEdgeGeometry(
+  width: number,
+  height: number,
+  curveDepth: number,
+) {
+  const geometry = new THREE.PlaneGeometry(width, height, 6, 1);
+  const position = geometry.getAttribute("position");
+  for (let index = 0; index < position.count; index += 1) {
+    const normalizedX = position.getX(index) / (width / 2);
+    position.setZ(index, curveDepth * (1 - normalizedX * normalizedX));
+  }
+  position.needsUpdate = true;
+  geometry.computeVertexNormals();
+  return geometry;
+}
+
+function mergeBookMeshesForMaterial(
+  parent: THREE.Group,
+  meshMaterial: THREE.Material,
+  name: string,
+) {
+  const meshes = parent.children.filter((child): child is THREE.Mesh => (
+    child instanceof THREE.Mesh && child.material === meshMaterial
+  ));
+  if (meshes.length < 2) return;
+  const geometries = meshes.map((mesh) => {
+    mesh.updateMatrix();
+    return mesh.geometry.clone().applyMatrix4(mesh.matrix);
+  });
+  const geometry = mergeGeometries(geometries, false);
+  geometries.forEach(item => item.dispose());
+  if (!geometry) return;
+  const mergedMesh = new THREE.Mesh(geometry, meshMaterial);
+  mergedMesh.name = name;
+  mergedMesh.castShadow = meshes.some(mesh => mesh.castShadow);
+  mergedMesh.receiveShadow = meshes.some(mesh => mesh.receiveShadow);
+  parent.remove(...meshes);
+  parent.add(mergedMesh);
+}
+
+function createBookMaterials(anisotropy: number): BookMaterials {
+  const canvas = document.createElement("canvas");
+  canvas.width = 128; canvas.height = 512;
+  const context = canvas.getContext("2d");
+  let paperTexture: THREE.CanvasTexture | undefined;
+  if (context) {
+    const paperGradient = context.createLinearGradient(0, 0, canvas.width, 0);
+    paperGradient.addColorStop(0, tokens.color.primitive.cream300);
+    paperGradient.addColorStop(0.18, tokens.color.primitive.cream200);
+    paperGradient.addColorStop(0.5, tokens.color.primitive.cream100);
+    paperGradient.addColorStop(0.82, tokens.color.primitive.cream200);
+    paperGradient.addColorStop(1, tokens.color.primitive.cream300);
+    context.fillStyle = paperGradient;
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.fillStyle = tokens.color.primitive.cream200;
+    context.globalAlpha = 0.7;
+    for (let y = 4; y < canvas.height; y += 8) context.fillRect(0, y, canvas.width, 1);
+    context.fillStyle = tokens.color.primitive.ink400;
+    context.globalAlpha = 0.18;
+    for (let y = 17; y < canvas.height; y += 32) context.fillRect(0, y, canvas.width, 1);
+    context.globalAlpha = 1;
+    paperTexture = new THREE.CanvasTexture(canvas);
+    paperTexture.colorSpace = THREE.SRGBColorSpace;
+    paperTexture.anisotropy = anisotropy;
+    paperTexture.minFilter = THREE.LinearMipmapLinearFilter;
+    paperTexture.magFilter = THREE.LinearFilter;
+  }
+  const spines = BOOK_COLORS.map((color) => material(color, { roughness: 0.8, metalness: 0.01 }));
+  const spineTrims = BOOK_COLORS.map((color) => material(
+    new THREE.Color(color)
+      .lerp(new THREE.Color(tokens.color.primitive.ink900), 0.34)
+      .getStyle(),
+    { roughness: 0.76, metalness: 0.02 },
+  ));
   return {
-    pages: material(tokens.color.primitive.cream100, { roughness: 0.94 }),
-    gold: material(tokens.color.primitive.amber600, { roughness: 0.38, metalness: 0.72 }),
-    spines: BOOK_COLORS.map((color) => material(color, { roughness: 0.78, metalness: 0.02 })),
+    pages: material(tokens.color.primitive.cream100, { map: paperTexture, roughness: 0.98 }),
+    spines,
+    spineTrims,
+    headband: material(tokens.color.primitive.cream300, { roughness: 0.9, metalness: 0 }),
+    foreEdgeGeometry: createCatalogBookForeEdgeGeometry(
+      CATALOG_BOOK_MODEL_SIZE.depth - CATALOG_BOOK_DETAIL_LAYOUT.pageBlockInset.depth,
+      CATALOG_BOOK_MODEL_SIZE.height - CATALOG_BOOK_DETAIL_LAYOUT.pageBlockInset.height,
+      CATALOG_BOOK_DETAIL_LAYOUT.foreEdgeCurve,
+    ),
+    pageHeadGeometry: new THREE.PlaneGeometry(
+      CATALOG_BOOK_MODEL_SIZE.width - CATALOG_BOOK_DETAIL_LAYOUT.pageBlockInset.width,
+      CATALOG_BOOK_MODEL_SIZE.depth - CATALOG_BOOK_DETAIL_LAYOUT.pageBlockInset.depth,
+    ),
     covers: new Map<string, THREE.MeshStandardMaterial>(),
+    hitTargetGeometry: new THREE.BoxGeometry(1, 1, 1),
+    // Three.js still raycasts a mesh whose material is hidden, so this adds no
+    // rendered geometry or draw call while giving thin shelf spines a humane target.
+    hitTargetMaterial: new THREE.MeshBasicMaterial({ visible: false, side: THREE.DoubleSide }),
   };
 }
 
@@ -413,7 +550,7 @@ function getCoverMaterial(
   const texture = loader.load(book.coverUrl, undefined, undefined, () => undefined);
   texture.colorSpace = THREE.SRGBColorSpace;
   texture.anisotropy = anisotropy;
-  const cover = material(tokens.color.primitive.ink300, {
+  const cover = material(tokens.color.primitive.white, {
     map: texture,
     roughness: 0.82,
     metalness: 0.01,
@@ -455,6 +592,13 @@ export function placeSceneBookOnShelf(
   sceneBook.group.scale.copy(sceneBook.shelfScale);
 }
 
+export function setSceneBookRenderLayer(
+  sceneBook: Pick<SceneBook, "group">,
+  layer: number,
+) {
+  sceneBook.group.traverse((object) => object.layers.set(layer));
+}
+
 export interface BookInspectionTransform {
   position: THREE.Vector3;
   quaternion: THREE.Quaternion;
@@ -462,7 +606,7 @@ export interface BookInspectionTransform {
 }
 
 export function getBookInspectionTransform(
-  modelSize: ShelfBookModelSize,
+  shelfScale: THREE.Vector3,
   cameraPosition: THREE.Vector3,
   cameraTarget: THREE.Vector3,
   viewportWidth: number,
@@ -475,19 +619,19 @@ export function getBookInspectionTransform(
     scale: new THREE.Vector3(),
   },
 ) {
+  const isMobile = viewportWidth <= BOOK_INSPECTION_LAYOUT.mobileBreakpoint;
   const cameraDirection = cameraPosition.clone().sub(cameraTarget).normalize();
-  target.position.copy(cameraTarget).addScaledVector(
-    cameraDirection,
-    BOOK_INSPECTION_LAYOUT.forwardOffset,
-  );
-  if (viewportWidth <= BOOK_INSPECTION_LAYOUT.mobileBreakpoint) {
-    target.position.y += BOOK_INSPECTION_LAYOUT.mobileVerticalOffset;
-  } else {
-    const cameraRight = new THREE.Vector3(0, 1, 0)
-      .cross(cameraDirection)
-      .normalize();
-    target.position.addScaledVector(cameraRight, -BOOK_INSPECTION_LAYOUT.desktopSideOffset);
-  }
+  const cameraRight = new THREE.Vector3(0, 1, 0).cross(cameraDirection).normalize();
+  target.position.copy(cameraTarget)
+    .addScaledVector(
+      cameraDirection,
+      isMobile ? BOOK_INSPECTION_LAYOUT.mobileForwardOffset : BOOK_INSPECTION_LAYOUT.desktopForwardOffset,
+    )
+    .addScaledVector(
+      cameraRight,
+      -(isMobile ? BOOK_INSPECTION_LAYOUT.mobileSideOffset : BOOK_INSPECTION_LAYOUT.desktopSideOffset),
+    );
+  if (isMobile) target.position.y += BOOK_INSPECTION_LAYOUT.mobileVerticalOffset;
   const lookAtMatrix = new THREE.Matrix4().lookAt(
     cameraPosition,
     target.position,
@@ -502,10 +646,10 @@ export function getBookInspectionTransform(
     BOOK_INSPECTION_LAYOUT.minimumZoom,
     BOOK_INSPECTION_LAYOUT.maximumZoom,
   );
-  const displayHeight = viewportWidth <= BOOK_INSPECTION_LAYOUT.mobileBreakpoint
-    ? BOOK_INSPECTION_LAYOUT.mobileHeight
-    : BOOK_INSPECTION_LAYOUT.desktopHeight;
-  target.scale.setScalar((displayHeight / modelSize.height) * clampedZoom);
+  target.scale.copy(shelfScale).multiplyScalar(
+    (isMobile ? BOOK_INSPECTION_LAYOUT.mobilePreviewScale : BOOK_INSPECTION_LAYOUT.desktopPreviewScale)
+      * clampedZoom,
+  );
   return target;
 }
 
@@ -532,40 +676,231 @@ function createBook(
   bookMaterials: BookMaterials,
   shelfSections: ExpandableShelfSection[],
 ) {
-  const { book, index, slot } = assignment;
-  const width = 0.82 + (index % 5) * 0.055;
-  const height = BOOK_HEIGHT_BASE + (index % 7) * BOOK_HEIGHT_STEP;
-  const depth = 0.27 + (index % 4) * 0.025;
+  const { book, slot } = assignment;
+  // Binding dimensions and color stay with the book when its shelf order changes.
+  const index = Array.from(book.id).reduce((hash, char) => (Math.imul(hash, 31) + char.charCodeAt(0)) >>> 0, 0);
+  const { width, height, depth } = CATALOG_BOOK_MODEL_SIZE;
+  const details = CATALOG_BOOK_DETAIL_LAYOUT;
+  const bindingColor = BOOK_COLORS[index % BOOK_COLORS.length];
   const spineMaterial = bookMaterials.spines[index % bookMaterials.spines.length];
+  const spineTrimMaterial = bookMaterials.spineTrims[index % bookMaterials.spineTrims.length];
   const coverMaterial = getCoverMaterial(book, loader, anisotropy, bookMaterials);
   const group = new THREE.Group();
 
-  roundedBox(group, [width * 0.93, height * 0.93, depth * 0.78], [0.025, 0, 0], bookMaterials.pages, {
-    radius: 0.035,
-    segments: 4,
-  });
-  roundedBox(group, [width, height, 0.035], [0, 0, depth / 2], coverMaterial, { radius: 0.025, segments: 4 });
-  roundedBox(group, [width, height, 0.035], [0, 0, -depth / 2], spineMaterial, { radius: 0.025, segments: 4 });
-  roundedBox(group, [0.052, height, depth], [-width / 2, 0, 0], spineMaterial, { radius: 0.018, segments: 3 });
-
-  for (const y of [-height * 0.34, height * 0.34]) {
-    roundedBox(group, [0.026, 0.026, depth * 0.86], [-width / 2 - 0.024, y, 0], bookMaterials.gold, {
-      radius: 0.008,
-      segments: 2,
-      castShadow: false,
+  // Keep the paper block inset on all exposed edges so the cover reads as a
+  // thin binding rather than a single slab.
+  const pageBlockWidth = width - details.pageBlockInset.width;
+  const pageBlockHeight = height - details.pageBlockInset.height;
+  const pageBlockDepth = depth - details.pageBlockInset.depth;
+  const pageBlock = roundedBox(group, [pageBlockWidth, pageBlockHeight, pageBlockDepth],
+    [details.pageBlockOffsetX, 0, 0], bookMaterials.pages, {
+      radius: 0.006, segments: 2,
     });
+  pageBlock.name = `Catalog page block: ${book.title}`;
+
+  const foreEdge = new THREE.Mesh(
+    bookMaterials.foreEdgeGeometry,
+    bookMaterials.pages,
+  );
+  foreEdge.name = `Catalog fore edge: ${book.title}`;
+  foreEdge.position.set(
+    details.pageBlockOffsetX + pageBlockWidth / 2 + details.surfaceGap,
+    0,
+    0,
+  );
+  foreEdge.rotation.y = Math.PI / 2;
+  group.add(foreEdge);
+
+  const pageHead = new THREE.Mesh(
+    bookMaterials.pageHeadGeometry,
+    bookMaterials.pages,
+  );
+  pageHead.name = `Catalog page head: ${book.title}`;
+  pageHead.position.set(
+    details.pageBlockOffsetX,
+    pageBlockHeight / 2 + details.surfaceGap,
+    0,
+  );
+  pageHead.rotation.x = -Math.PI / 2;
+  group.add(pageHead);
+
+  // Separate front and back boards leave a restrained binding lip around the
+  // real catalog cover. Fine hinge grooves remain visible when the book turns.
+  for (const side of [-1, 1] as const) {
+    const board = roundedBox(group, [width, height, details.coverBoardThickness], [
+      0,
+      0,
+      side * (depth / 2 - details.coverBoardThickness / 2),
+    ], spineMaterial, { radius: 0.003, segments: 2 });
+    board.name = `${side === 1 ? "Front" : "Back"} catalog cover board: ${book.title}`;
+
+    const hinge = new THREE.Mesh(
+      new THREE.PlaneGeometry(details.hingeWidth, height - details.hingeHeightInset * 2),
+      spineTrimMaterial,
+    );
+    hinge.name = `${side === 1 ? "Front" : "Back"} catalog cover hinge: ${book.title}`;
+    hinge.position.set(
+      -width / 2 + details.spineBodyWidth + details.hingeWidth,
+      0,
+      side * (depth / 2 + details.surfaceGap * (side === 1 ? 2 : 1)),
+    );
+    if (side === -1) hinge.rotation.y = Math.PI;
+    group.add(hinge);
   }
-  roundedBox(group, [0.028, height * 0.18, depth * 0.78], [-width / 2 - 0.026, 0.02, 0], bookMaterials.gold, {
-    radius: 0.008,
-    segments: 2,
-    castShadow: false,
-  });
+
+  const coverFace = new THREE.Mesh(
+    new THREE.PlaneGeometry(
+      width - details.coverArtInset.width,
+      height - details.coverArtInset.height,
+    ),
+    coverMaterial,
+  );
+  coverFace.name = `Catalog cover: ${book.title}`;
+  coverFace.position.z = depth / 2 + details.surfaceGap;
+  group.add(coverFace);
+
+  const spineBody = roundedBox(group, [details.spineBodyWidth, height, depth], [
+    -width / 2 + details.spineBodyOffsetX,
+    0,
+    0,
+  ], spineMaterial, { radius: 0.011, segments: 3 });
+  spineBody.name = `Catalog rounded spine: ${book.title}`;
+  const spineSurfaceX = -width / 2 + details.spineBodyOffsetX - details.spineBodyWidth / 2;
+
+  for (const side of [-1, 1] as const) {
+    const edge = roundedBox(group, [
+      details.spineEdgeWidth,
+      height - details.spineEdgeHeightInset * 2,
+      details.spineEdgeWidth,
+    ], [
+      spineSurfaceX + details.spineEdgeWidth / 2,
+      0,
+      side * (depth / 2 - details.spineEdgeWidth / 2),
+    ], spineTrimMaterial, { radius: 0.003, segments: 2 });
+    edge.name = `Catalog spine shoulder: ${book.title}`;
+  }
+
+  for (const side of [-1, 1] as const) {
+    const cap = roundedBox(group, [
+      details.spineCapWidth,
+      details.spineCapHeight,
+      depth - details.spineEdgeWidth,
+    ], [
+      spineSurfaceX + details.spineCapWidth / 2,
+      side * (height / 2 - details.spineCapHeight / 2),
+      0,
+    ], spineTrimMaterial, { radius: 0.004, segments: 2 });
+    cap.name = `Catalog spine cap: ${book.title}`;
+
+    const headband = roundedBox(group, [
+      details.headbandWidth,
+      details.headbandHeight,
+      depth - details.headbandDepthInset,
+    ], [
+      -width / 2 + details.spineBodyOffsetX + details.headbandWidth / 2,
+      side * (pageBlockHeight / 2 - details.headbandHeight / 2),
+      0,
+    ], bookMaterials.headband, { radius: 0.003, segments: 2 });
+    headband.name = `Catalog headband: ${book.title}`;
+  }
+
+  const spineCanvas = document.createElement("canvas");
+  spineCanvas.width = BOOK_SPINE_TEXTURE_SIZE.width;
+  spineCanvas.height = BOOK_SPINE_TEXTURE_SIZE.height;
+  const context = spineCanvas.getContext("2d");
+  if (context) {
+    const bindingEdgeColor = new THREE.Color(bindingColor)
+      .lerp(new THREE.Color(tokens.color.primitive.ink900), 0.3)
+      .getStyle();
+    const bindingHighlightColor = new THREE.Color(bindingColor)
+      .lerp(new THREE.Color(tokens.color.primitive.cream100), 0.1)
+      .getStyle();
+    const bindingGradient = context.createLinearGradient(0, 0, BOOK_SPINE_TEXTURE_SIZE.width, 0);
+    bindingGradient.addColorStop(0, bindingEdgeColor);
+    bindingGradient.addColorStop(0.18, bindingColor);
+    bindingGradient.addColorStop(0.5, bindingHighlightColor);
+    bindingGradient.addColorStop(0.82, bindingColor);
+    bindingGradient.addColorStop(1, bindingEdgeColor);
+    context.fillStyle = bindingGradient;
+    context.fillRect(0, 0, BOOK_SPINE_TEXTURE_SIZE.width, BOOK_SPINE_TEXTURE_SIZE.height);
+
+    context.save();
+    context.globalAlpha = 0.12;
+    context.strokeStyle = tokens.color.primitive.cream100;
+    context.lineWidth = 1;
+    for (let x = 8; x < BOOK_SPINE_TEXTURE_SIZE.width; x += 8) {
+      context.beginPath();
+      context.moveTo(x, 0);
+      context.lineTo(x, BOOK_SPINE_TEXTURE_SIZE.height);
+      context.stroke();
+    }
+    context.restore();
+
+    context.fillStyle = tokens.color.primitive.cream300;
+    context.globalAlpha = 0.78;
+    for (const y of [76, BOOK_SPINE_TEXTURE_SIZE.height - 80]) {
+      context.fillRect(18, y, BOOK_SPINE_TEXTURE_SIZE.width - 36, 4);
+      context.fillRect(28, y + 9, BOOK_SPINE_TEXTURE_SIZE.width - 56, 2);
+    }
+    context.globalAlpha = 1;
+    context.fillStyle = tokens.color.primitive.cream100;
+    context.imageSmoothingEnabled = true;
+    context.imageSmoothingQuality = "high";
+    context.textAlign = "center";
+    context.textBaseline = "middle";
+    context.font = `600 168px ${tokens.typography.fontFamily.readerSerif}`;
+    context.lineWidth = 7;
+    context.strokeStyle = tokens.color.primitive.ink900;
+    const visibleTitle = getSpineTitleGlyphs(book.title);
+    const lineHeight = 184;
+    const firstLineY = BOOK_SPINE_TEXTURE_SIZE.height / 2 - (visibleTitle.length - 1) * lineHeight / 2;
+    visibleTitle.forEach((character, line) => {
+      const y = firstLineY + line * lineHeight;
+      context.strokeText(character, BOOK_SPINE_TEXTURE_SIZE.width / 2, y, 218);
+      context.fillText(character, BOOK_SPINE_TEXTURE_SIZE.width / 2, y, 218);
+    });
+    const texture = new THREE.CanvasTexture(spineCanvas);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    texture.anisotropy = anisotropy;
+    texture.minFilter = THREE.LinearMipmapLinearFilter;
+    texture.magFilter = THREE.LinearFilter;
+    const label = new THREE.Mesh(new THREE.PlaneGeometry(
+      depth * details.spineLabelWidthRatio,
+      height * details.spineLabelHeightRatio,
+    ), material(tokens.color.primitive.white, {
+      map: texture,
+      emissive: tokens.color.primitive.white,
+      emissiveMap: texture,
+      emissiveIntensity: 0.06,
+      roughness: 0.72,
+      metalness: 0,
+    }));
+    label.name = `Catalog spine: ${book.title}`;
+    label.position.x = spineSurfaceX - details.spineLabelSurfaceGap;
+    label.rotation.y = -Math.PI / 2;
+    group.add(label);
+  }
+
+  mergeBookMeshesForMaterial(group, bookMaterials.pages, `Catalog page block detail: ${book.title}`);
+  mergeBookMeshesForMaterial(group, spineMaterial, `Catalog binding shell: ${book.title}`);
+  mergeBookMeshesForMaterial(group, spineTrimMaterial, `Catalog binding trim: ${book.title}`);
+  mergeBookMeshesForMaterial(group, bookMaterials.headband, `Catalog headbands: ${book.title}`);
 
   const shelfTransform = getShelvedBookTransform(slot, { width, height, depth });
   const shelfPosition = shelfTransform.position;
   const shelfRotation = shelfTransform.rotation;
   const shelfScale = shelfTransform.scale;
-  const shelfSectionId = nearestShelfSection(shelfPosition, shelfSections)?.id
+  const hitTarget = new THREE.Mesh(bookMaterials.hitTargetGeometry, bookMaterials.hitTargetMaterial);
+  hitTarget.name = `Catalog book hit target: ${book.title}`;
+  hitTarget.userData.isVirtualBookHitTarget = true;
+  hitTarget.scale.set(
+    width * 1.03,
+    height * 1.1,
+    getShelfBookInteractionWidth(depth * Math.abs(shelfScale.z)) / Math.max(Math.abs(shelfScale.z), 0.0001),
+  );
+  group.add(hitTarget);
+  const shelfSectionId = shelfSections.find(section => section.centerX !== undefined && section.id === assignment.bayIndex)?.id
+    ?? nearestShelfSection(shelfPosition, shelfSections)?.id
     ?? assignment.bayIndex;
   group.userData.bookId = book.id;
   group.userData.isVirtualBook = true;
@@ -577,6 +912,7 @@ function createBook(
     book,
     classification,
     group,
+    hitTarget,
     shelfPosition,
     shelfRotation,
     shelfScale,
@@ -611,12 +947,20 @@ function centerSceneBookClusters(
       shelfTangentOffset(left.shelfPosition, section.angle)
       - shelfTangentOffset(right.shelfPosition, section.angle)
     ));
-    const widths = cluster.map((sceneBook) => (
-      sceneBook.modelSize.depth * sceneBook.shelfScale.z
+    const widths = cluster.map((sceneBook) => getShelfBookInteractionWidth(
+      sceneBook.modelSize.depth * Math.abs(sceneBook.shelfScale.z),
     ));
     const offsets = getCenteredShelfBookOffsets(widths);
     cluster.forEach((sceneBook, index) => {
       const radius = Math.hypot(sceneBook.shelfPosition.x, sceneBook.shelfPosition.z);
+      if (section.centerX !== undefined && section.centerZ !== undefined) {
+        const normalX = Math.cos(section.angle);
+        const normalZ = Math.sin(section.angle);
+        sceneBook.shelfPosition.set(section.centerX - normalX * 0.15 + tangentX * (offsets[index] ?? 0),
+          sceneBook.shelfPosition.y, section.centerZ - normalZ * 0.15 + tangentZ * (offsets[index] ?? 0));
+        placeSceneBookOnShelf(sceneBook);
+        return;
+      }
       const offset = offsets[index] ?? 0;
       sceneBook.shelfPosition.set(
         Math.cos(section.angle) * radius + tangentX * offset,
@@ -644,10 +988,14 @@ function shelfCategoryInfo(
     ?? defaultCategoryForShelf(section.id);
   return {
     sectionId: section.id,
+    centerX: section.centerX,
+    centerZ: section.centerZ,
     angle: section.angle,
     radius: section.radius,
     depth: section.depth,
     targetY: section.baseY + section.height / 2,
+    height: section.height,
+    width: section.width,
     category,
     bookCount: sectionBooks.length,
   };
@@ -759,14 +1107,15 @@ function createShelfSectionControllers(
     root.name = `Expandable shelf section ${section.id}`;
     root.userData.shelfSectionId = section.id;
     const homePosition = new THREE.Vector3(
-      Math.cos(section.angle) * section.radius,
+      section.centerX ?? Math.cos(section.angle) * section.radius,
       section.baseY + section.height / 2,
-      Math.sin(section.angle) * section.radius,
+      section.centerZ ?? Math.sin(section.angle) * section.radius,
     );
     root.position.copy(homePosition);
     root.rotation.y = Math.PI / 2 - section.angle;
 
     const hitMaterial = new THREE.MeshBasicMaterial({
+      visible: false,
       transparent: true,
       opacity: 0,
       depthWrite: false,
@@ -783,6 +1132,7 @@ function createShelfSectionControllers(
     root.add(hitArea);
 
     const frameMaterial = new THREE.MeshBasicMaterial({
+      visible: false,
       color: tokens.color.primitive.amber600,
       transparent: true,
       opacity: 0,
@@ -809,6 +1159,7 @@ function createShelfSectionControllers(
     }
 
     const selectionFillMaterial = new THREE.MeshBasicMaterial({
+      visible: false,
       color: tokens.color.primitive.amber600,
       transparent: true,
       opacity: 0,
@@ -827,44 +1178,48 @@ function createShelfSectionControllers(
     root.add(selectionFill);
 
     const labelMaterials: THREE.MeshBasicMaterial[] = [];
-    const plaqueRows = getShelfPlaqueRows(section, info.category.subcategories.length);
-    const primaryPlacement = getShelfPlaquePlacement(section, plaqueRows.primary);
-    const primaryLabel = createShelfLabel(
-      labelTextureCache,
-      plaqueBackingMaterial,
-      info.category.label,
-      "",
-      Math.min(1.16, section.width * 0.26),
-      0.15,
-      true,
-    );
-    primaryLabel.plaque.position.set(
-      0,
-      primaryPlacement.centerY,
-      primaryPlacement.backingCenterZ,
-    );
-    root.add(primaryLabel.plaque);
-    labelMaterials.push(primaryLabel.material);
-
-    info.category.subcategories.forEach((subcategory, index) => {
-      const placement = getShelfPlaquePlacement(section, plaqueRows.secondary[index] ?? 1);
-      const secondaryLabel = createShelfLabel(
+    // Long Room casework has no floating product taxonomy plaques. Keep the
+    // historical interior clear; catalog classification remains in the UI.
+    if (section.centerX === undefined || section.centerZ === undefined) {
+      const plaqueRows = getShelfPlaqueRows(section, info.category.subcategories.length);
+      const primaryPlacement = getShelfPlaquePlacement(section, plaqueRows.primary);
+      const primaryLabel = createShelfLabel(
         labelTextureCache,
         plaqueBackingMaterial,
-        subcategory.label,
+        info.category.label,
         "",
-        Math.min(0.92, section.width * 0.2),
-        0.12,
+        Math.min(1.16, section.width * 0.26),
+        0.15,
         true,
       );
-      secondaryLabel.plaque.position.set(
+      primaryLabel.plaque.position.set(
         0,
-        placement.centerY,
-        placement.backingCenterZ,
+        primaryPlacement.centerY,
+        primaryPlacement.backingCenterZ,
       );
-      root.add(secondaryLabel.plaque);
-      labelMaterials.push(secondaryLabel.material);
-    });
+      root.add(primaryLabel.plaque);
+      labelMaterials.push(primaryLabel.material);
+
+      info.category.subcategories.forEach((subcategory, index) => {
+        const placement = getShelfPlaquePlacement(section, plaqueRows.secondary[index] ?? 1);
+        const secondaryLabel = createShelfLabel(
+          labelTextureCache,
+          plaqueBackingMaterial,
+          subcategory.label,
+          "",
+          Math.min(0.92, section.width * 0.2),
+          0.12,
+          true,
+        );
+        secondaryLabel.plaque.position.set(
+          0,
+          placement.centerY,
+          placement.backingCenterZ,
+        );
+        root.add(secondaryLabel.plaque);
+        labelMaterials.push(secondaryLabel.material);
+      });
+    }
     scene.add(root);
     return {
       sectionId: section.id,
@@ -879,55 +1234,33 @@ function createShelfSectionControllers(
   });
 }
 
-function createPortalHitMeshes(scene: THREE.Scene) {
-  const material = new THREE.MeshBasicMaterial({
-    transparent: true,
-    opacity: 0,
-    depthWrite: false,
-    colorWrite: false,
-    side: THREE.DoubleSide,
-  });
-  return ([
-    { room: "restricted", angle: Math.PI, name: "Restricted archive doorway hit area" },
-    { room: "director", angle: 0, name: "Director office doorway hit area" },
-  ] as const).map(({ room, angle, name }) => {
-    const hitArea = new THREE.Mesh(new THREE.BoxGeometry(3.8, 5.15, 0.92), material);
-    const radius = LIBRARY.tower.innerRadius - 1.1;
-    hitArea.position.set(Math.cos(angle) * radius, 2.62, Math.sin(angle) * radius);
-    hitArea.rotation.y = Math.PI / 2 - angle;
-    hitArea.name = name;
-    hitArea.userData.portalRoom = room;
-    scene.add(hitArea);
-    return hitArea;
-  });
-}
-
 export function createVirtualLibraryWorld(
   scene: THREE.Scene,
   books: Book[],
   loader: THREE.TextureLoader,
   anisotropy: number,
+  preparedHall?: LongRoomBuilt,
 ): LibraryWorld {
-  const built = buildLibraryScene();
-  optimizeStaticMeshes(built.root, built.interactiveObjects);
+  const built = preparedHall ?? buildLongRoom(longRoomCatalogSectionCounts(books), loader);
+  if (!built.root.userData.staticOptimization) optimizeStaticMeshes(built.root, built.interactiveObjects);
   built.root.userData.modelVersion = VIRTUAL_LIBRARY_SCENE_MODEL_VERSION;
   const hallCameraColliders = [
     ...collectCameraColliders(built.root, "hall"),
-    ...HALL_COLUMN_COLLIDERS,
   ];
   scene.add(built.root);
 
-  const bookMaterials = createBookMaterials();
+  const bookMaterials = createBookMaterials(anisotropy);
   const sceneBooks: SceneBook[] = [];
   const interactiveMeshes: THREE.Object3D[] = [];
   const sortedBooks = sortCatalogBooksByClassification(books);
   const classifications = new Map(
     sortedBooks.map(({ book, classification }) => [book.id, classification]),
   );
-  const assignments = assignBooksToShelfSlots(
-    sortedBooks.map(({ book }) => book),
-    built.bookSlots,
-  );
+  const assignments: AssignedShelfBook<Book>[] = sortedBooks.map(({ book }, index) => {
+    const slot = built.bookSlots[index];
+    if (!slot) throw new Error("Long Room catalog capacity exceeded");
+    return { book, index, slot, bayIndex: slot.sectionId, shelfRowIndex: slot.rowIndex };
+  });
   assignments.forEach((assignment) => {
     const sceneBook = createBook(
       assignment,
@@ -940,9 +1273,7 @@ export function createVirtualLibraryWorld(
     );
     scene.add(sceneBook.group);
     sceneBooks.push(sceneBook);
-    sceneBook.group.traverse((object) => {
-      if (object instanceof THREE.Mesh) interactiveMeshes.push(object);
-    });
+    interactiveMeshes.push(sceneBook.hitTarget);
   });
   centerSceneBookClusters(sceneBooks, built.shelfSections);
   const shelfControllers = createShelfSectionControllers(
@@ -951,7 +1282,7 @@ export function createVirtualLibraryWorld(
     sceneBooks,
     built.materials.woodDark,
   );
-  const portalHitMeshes = createPortalHitMeshes(scene);
+  const portalHitMeshes: THREE.Object3D[] = [];
   let rooms: ReturnType<typeof createVirtualLibraryRooms> | null = null;
   const ensureRooms = () => {
     rooms ??= createVirtualLibraryRooms(scene, loader, built.materials);
@@ -1030,7 +1361,7 @@ export function createVirtualLibraryWorld(
         controller.root.position.copy(controller.homePosition);
         controller.frameMaterial.opacity = THREE.MathUtils.lerp(
           controller.frameMaterial.opacity,
-          isSelected ? 0.92 : isHovered ? 0.42 : 0.055,
+          isSelected ? 0.92 : isHovered ? 0.42 : 0,
           0.18,
         );
         controller.selectionFillMaterial.opacity = THREE.MathUtils.lerp(
@@ -1038,11 +1369,13 @@ export function createVirtualLibraryWorld(
           isSelected ? 0.075 : isHovered ? 0.025 : 0,
           0.18,
         );
+        controller.frameMaterial.visible = controller.frameMaterial.opacity > 0.002;
+        controller.selectionFillMaterial.visible = controller.selectionFillMaterial.opacity > 0.002;
         controller.labelMaterials.forEach((labelMaterial, index) => {
           const baseOpacity = index === 0 ? 0.96 : 0.92;
           labelMaterial.opacity = THREE.MathUtils.lerp(
             labelMaterial.opacity,
-            isSelected ? 1 : isHovered ? 0.98 : baseOpacity,
+            isSelected ? baseOpacity : isHovered ? 0.98 : 0,
             0.16,
           );
         });
@@ -1087,6 +1420,8 @@ export function disposeScene(scene: THREE.Scene) {
   const materials = new Set<THREE.Material>();
   const textures = new Set<THREE.Texture>();
   scene.traverse((object) => {
+    if (object instanceof THREE.SpotLight || object instanceof THREE.DirectionalLight || object instanceof THREE.PointLight)
+      object.shadow.dispose();
     if (
       !(object instanceof THREE.Mesh)
       && !(object instanceof THREE.Points)
@@ -1100,6 +1435,7 @@ export function disposeScene(scene: THREE.Scene) {
     const textured = entry as THREE.Material & {
       map?: THREE.Texture | null;
       normalMap?: THREE.Texture | null;
+      bumpMap?: THREE.Texture | null;
       roughnessMap?: THREE.Texture | null;
       metalnessMap?: THREE.Texture | null;
       alphaMap?: THREE.Texture | null;
@@ -1109,6 +1445,7 @@ export function disposeScene(scene: THREE.Scene) {
     for (const texture of [
       textured.map,
       textured.normalMap,
+      textured.bumpMap,
       textured.roughnessMap,
       textured.metalnessMap,
       textured.alphaMap,

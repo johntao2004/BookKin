@@ -11,6 +11,7 @@ import { Typography } from "@/ui/primitives";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useCallback, useDeferredValue, useMemo } from "react";
 import { Link, useSearchParams } from "react-router-dom";
+import { useAuth } from "../auth/AuthContext";
 import { api } from "../api/client";
 import { flattenUniquePaginatedItems, PaginatedItemReveal } from "../components/PaginatedItemReveal";
 import { useInfiniteScrollTrigger } from "../hooks/useInfiniteScrollTrigger";
@@ -19,6 +20,7 @@ import type { DisplayBook } from "../domain/types";
 import { tokens } from "../theme/generated-tokens";
 
 export function PublicLibraryPage() {
+  const { user } = useAuth();
   const [params, setParams] = useSearchParams();
   const query = params.get("q")?.trim() ?? "";
   const deferredQuery = useDeferredValue(query);
@@ -45,6 +47,7 @@ export function PublicLibraryPage() {
       <PageHeader
         eyebrow="HOME"
         title="首页"
+        action={user ? <Button component={Link} to="/display-books" variant="outlined">管理首页书目</Button> : undefined}
       />
       {displayQuery.isPending ? (
         <Stack spacing={2} sx={{ alignItems: "center", py: 12 }}><CircularProgress /><Typography color="text.secondary">正在打开首页…</Typography></Stack>
@@ -54,7 +57,7 @@ export function PublicLibraryPage() {
         <Stack spacing={2} sx={{ alignItems: "center", textAlign: "center", py: 12 }}>
           <AutoStoriesOutlined color="primary" sx={{ fontSize: 42 }} />
           <Typography variant="h4">还没有公开书目</Typography>
-          <Typography color="text.secondary">登录后可以在“展示书目设置”中添加书籍。</Typography>
+          <Typography color="text.secondary">{user ? "通过“管理首页书目”添加书籍。" : "登录后可通过“管理首页书目”添加书籍。"}</Typography>
         </Stack>
       ) : (
         <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2, minmax(0, 1fr))", sm: "repeat(3, minmax(0, 1fr))", md: "repeat(4, minmax(0, 1fr))", lg: "repeat(6, minmax(0, 1fr))" }, gap: { xs: 2, sm: 3, md: 4 } }}>

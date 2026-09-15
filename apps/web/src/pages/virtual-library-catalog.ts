@@ -1,4 +1,5 @@
 import type { Book } from "../domain/types";
+import { LONG_ROOM_LIVE_SHELF_SECTION_COUNT } from "./virtual-library-model/longRoomLayout";
 
 export interface LibrarySubcategory {
   id: string;
@@ -134,4 +135,17 @@ export function sortCatalogBooksByClassification(books: Book[]) {
 
 export function defaultCategoryForShelf(sectionId: number) {
   return LIBRARY_CATEGORIES[Math.abs(sectionId) % LIBRARY_CATEGORIES.length];
+}
+
+/** Reserve separate bookcases per category; the scene consumes the same sorted order. */
+export function longRoomCatalogSectionCounts(books: Book[]) {
+  const counts: number[] = [];
+  let previousCategory = '';
+  for (const {classification} of sortCatalogBooksByClassification(books)) {
+    if (classification.category.id !== previousCategory || counts[counts.length - 1] === 120) counts.push(0);
+    counts[counts.length - 1]++;
+    previousCategory = classification.category.id;
+  }
+  if (counts.length > LONG_ROOM_LIVE_SHELF_SECTION_COUNT) throw new Error('Long Room catalog category capacity exceeded');
+  return counts;
 }

@@ -12,6 +12,7 @@ import { SearchRounded } from "@/ui/icons";
 import { SettingsOutlined } from "@/ui/icons";
 import { ThreeDRotationOutlined } from "@/ui/icons";
 import { AppBar } from "@/ui/primitives";
+import { Alert } from "@/ui/feedback";
 import { Avatar } from "@/ui/feedback";
 import { Box } from "@/ui/primitives";
 import { Button } from "@/ui/buttons";
@@ -44,7 +45,6 @@ import { bookKinThemeOptions } from "../theme/theme";
 const navigation = [
   { label: "首页", path: "/library", icon: <HomeOutlined /> },
   { label: "藏书库", path: "/library/all", icon: <LibraryBooksOutlined /> },
-  { label: "展示书目", path: "/display-books", icon: <LibraryBooksOutlined /> },
   { label: "分类", path: "/categories", icon: <CategoryOutlined /> },
   { label: "书单", path: "/booklists", icon: <CollectionsBookmarkOutlined /> },
   { label: "阅读笔记", path: "/annotations", icon: <NotesOutlined /> },
@@ -53,6 +53,7 @@ const navigation = [
 
 export function AppShell({ children }: PropsWithChildren) {
   const { user, logout } = useAuth();
+  const [logoutError, setLogoutError] = useState("");
   const queryClient = useQueryClient();
   const { mode: bookKinTheme, setMode: setBookKinTheme } = useBookKinTheme();
   const location = useLocation();
@@ -145,6 +146,7 @@ export function AppShell({ children }: PropsWithChildren) {
 
   return (
     <Box sx={{ minHeight: "100vh" }}>
+      {logoutError && <Alert severity="error" onClose={() => setLogoutError("")}>{logoutError}</Alert>}
       {!readerRoute && <>
         <AppBar
           className="bk-top-nav"
@@ -251,13 +253,18 @@ export function AppShell({ children }: PropsWithChildren) {
                     { key: "account", label: user.displayName, disabled: true },
                     { type: "divider" },
                     ...(["OWNER", "ADMIN"].includes(user.role) ? [{ key: "/admin/users", label: "用户管理", icon: <AdminPanelSettingsOutlined /> }] : []),
-                    { key: "/settings", label: "设置", icon: <SettingsOutlined /> },
+                    { key: "/profile", label: "个人信息", icon: <SettingsOutlined /> },
+                    ...(["OWNER", "ADMIN"].includes(user.role) ? [{ key: "/settings", label: "设置", icon: <SettingsOutlined /> }] : []),
                     { type: "divider" },
                     { key: "logout", label: "退出登录", icon: <LogoutOutlined /> },
                   ],
                   onClick: async ({ key }) => {
                     setAccountMenuOpen(false);
-                    if (key === "logout") { await logout(); navigate("/login"); }
+                    if (key === "logout") {
+                      setLogoutError("");
+                      try { await logout(); navigate("/login"); }
+                      catch (reason) { setLogoutError(reason instanceof Error ? reason.message : "退出失败，请重试。"); }
+                    }
                     else navigate(key);
                   },
                 }}

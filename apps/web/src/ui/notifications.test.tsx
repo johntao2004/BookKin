@@ -1,5 +1,7 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import ConfigProvider from "antd/es/config-provider";
 import { vi } from "vitest";
+import { Alert } from "./feedback";
 import { FeedbackBubble, FeedbackProvider } from "./notifications";
 
 describe("bubble feedback", () => {
@@ -24,5 +26,16 @@ describe("bubble feedback", () => {
     await screen.findByText("第二条");
     expect(screen.queryByText("第一条")).toBeNull();
     expect(screen.getAllByRole("status")).toHaveLength(1);
+  });
+});
+
+describe("automatic dismissal", () => {
+  it.each(["success", "info", "warning", "error"] as const)("dismisses %s alerts after four seconds", async (severity) => {
+    const onClose = vi.fn();
+    // jsdom does not emit the CSS animation-end event used to remove notices.
+    render(<ConfigProvider theme={{ token: { motion: false } }}><FeedbackProvider><Alert severity={severity} onClose={onClose}>操作提示</Alert></FeedbackProvider></ConfigProvider>);
+    expect(await screen.findByText("操作提示")).toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByText("操作提示")).toBeNull(), { timeout: 6500 });
+    expect(onClose).toHaveBeenCalledOnce();
   });
 });

@@ -9,7 +9,7 @@ export function FeedbackProvider({ children }: PropsWithChildren) {
   return <NoticeContext.Provider value={api}>{holder}{children}</NoticeContext.Provider>;
 }
 
-export function FeedbackBubble({ children, severity = "info", action, duration = 0, onClose }: {
+export function FeedbackBubble({ children, severity = "info", action, duration = 4, onClose }: {
   children: ReactNode;
   severity?: "error" | "info" | "success" | "warning";
   action?: ReactNode;

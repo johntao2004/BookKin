@@ -19,7 +19,7 @@ export default defineConfig({
   },
   server: {
     host: "0.0.0.0",
-    port: 4173,
+    port: Number(process.env.BOOKKIN_WEB_PORT || 4173),
     strictPort: true,
     allowedHosts: ["terminal.local", "localhost", "127.0.0.1", "johns-MacBook-Air.local"],
     proxy: {

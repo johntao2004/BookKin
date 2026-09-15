@@ -330,7 +330,7 @@ export default function EpubDocumentReader({ bookId, annotations, theme, fontSiz
   return (
     <Box className="reader-viewport" sx={{ position: "relative", height: READER_CONTENT_HEIGHT, minHeight: 0, overflow: "hidden", bgcolor: theme.background }}>
       {loading && <Stack spacing={1.5} sx={{ position: "absolute", inset: 0, zIndex: 2, alignItems: "center", justifyContent: "center", bgcolor: theme.background }}><CircularProgress size={30} /><Typography sx={{ color: theme.muted }}>正在排版 EPUB…</Typography></Stack>}
-      <Box ref={pageSurfaceRef} className="reader-page-turn-surface" sx={{ position: "relative", width: "100%", maxWidth: tokens.layout.contentMax, mx: "auto", height: "100%", overflow: "hidden", bgcolor: theme.background, backfaceVisibility: "hidden", transformStyle: "preserve-3d", willChange: turning ? "transform, opacity, filter, clip-path" : "auto" }}>
+      <Box ref={pageSurfaceRef} className="reader-page-turn-surface" sx={{ position: "relative", width: "100%", maxWidth: wideSpread ? tokens.layout.contentMax : tokens.layout.readingMax, mx: "auto", height: "100%", overflow: "hidden", bgcolor: theme.background, backfaceVisibility: "hidden", transformStyle: "preserve-3d", willChange: turning ? "transform, opacity, filter, clip-path" : "auto" }}>
         <Box ref={hostRef} sx={{ width: "100%", height: "100%", overflow: "hidden", "& iframe": { border: 0 } }} />
         <PageTurnShade />
       </Box>

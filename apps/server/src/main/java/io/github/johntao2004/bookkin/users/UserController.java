@@ -8,9 +8,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import java.security.Principal;
-import java.security.SecureRandom;
 import java.time.OffsetDateTime;
-import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.context.annotation.Profile;
@@ -32,12 +30,12 @@ public class UserController {
     private final UserRepository users;
     private final PasswordEncoder passwords;
     private final AuditService audit;
-    private final SecureRandom random = new SecureRandom();
+    private final io.github.johntao2004.bookkin.auth.PasswordPolicyService passwordPolicy;
 
-    public UserController(UserRepository users, PasswordEncoder passwords, AuditService audit) {
+    public UserController(UserRepository users, PasswordEncoder passwords, AuditService audit, io.github.johntao2004.bookkin.auth.PasswordPolicyService passwordPolicy) {
         this.users = users;
         this.passwords = passwords;
-        this.audit = audit;
+        this.audit = audit; this.passwordPolicy=passwordPolicy;
     }
 
     @GetMapping
@@ -107,9 +105,7 @@ public class UserController {
     }
 
     private String temporaryPassword() {
-        byte[] bytes = new byte[12];
-        random.nextBytes(bytes);
-        return "BookKin-" + Base64.getUrlEncoder().withoutPadding().encodeToString(bytes) + "!7";
+        return passwordPolicy.temporaryPassword();
     }
 
     public record CreateUser(

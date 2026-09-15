@@ -1,3 +1,4 @@
+import { PasswordPolicySettings } from "./PasswordPolicySettings";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../api/client";
@@ -22,6 +23,7 @@ export function SecuritySettingsPage() {
     finally {setBusy(false);}
    }} />
   </Stack>
+  <PasswordPolicySettings />
   {user?.role!=="OWNER" && <Typography color="text.secondary">仅主人可修改此设置。</Typography>}
   {error && <Alert severity="error">{error}</Alert>}
  </Stack>;

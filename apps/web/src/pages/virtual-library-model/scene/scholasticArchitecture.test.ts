@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { LIBRARY } from '../config';
 import { collectCameraColliders } from '../../virtual-library-collision';
 import { createChandelier } from './parts';
 import { optimizeStaticMeshes } from './optimizeScene';
@@ -36,7 +37,10 @@ describe('collegiate architecture', () => {
   it('keeps the complete hall roof above every upper bookcase crown', () => {
     const root = createScholasticVault(materials());
     const bounds = new THREE.Box3().setFromObject(root);
-    expect(bounds.min.y).toBeGreaterThan(11.4);
+    const topShelfCrown = (LIBRARY.tower.floorCount - 1) * LIBRARY.tower.galleryY
+      + 0.18 + LIBRARY.bookcase.upperHeight;
+    expect(LIBRARY.tower.floorCount).toBeGreaterThanOrEqual(4);
+    expect(bounds.min.y).toBeGreaterThan(topShelfCrown);
     expect(root.getObjectByName('Pointed hammerbeam truss 0')).toBeUndefined();
   });
 
