@@ -12,10 +12,12 @@ export const LONG_ROOM = {
   endMargin: 1.65,
   galleryY: 5.95,
   aisleHalfWidth: 7.1,
-  galleryInnerX: 5.8,
+  // Pull the void-side rail inward so the upper cases retain a genuinely
+  // walkable strip after camera-body clearance around their pilasters.
+  galleryInnerX: 5,
   lowerCaseHeight: 5.4,
   upperCaseHeight: 4.95,
-  caseThickness: 0.48,
+  caseThickness: 1.08,
   shelfRows: 6,
   vaultSpring: 11.2,
   vaultRadius: 7.25,
@@ -86,13 +88,15 @@ export function longRoomLiveCatalogSectionIndex(sectionId: number) {
 export const LONG_ROOM_LIVE_SHELF_SECTION_COUNT = LONG_ROOM.alcovesPerSide * 2
   - LONG_ROOM_OMITTED_LIVE_CASES.length;
 
-/** South entry alcove observed in the public tour; all dimensions/anchors estimated.
+/** South-entry spiral observed in the public tour; all dimensions/anchors estimated.
  * World axes: +z east, +x north. Keep the clear gallery walking strip outside this opening.
  * The stair's aisle-side edge aligns with the lower-case line instead of sitting against the rear wall. */
 const HISTORIC_SPIRAL_DIAMETER = 1.8;
 export const HISTORIC_SPIRAL = {
   x: -LONG_ROOM.aisleHalfWidth - HISTORIC_SPIRAL_DIAMETER / 2,
-  z: longRoomBayZ(LONG_ROOM_STAIR_ALCOVE.bay),
+  // Keep the visitor body-clearance zone outside the newly deepened case at
+  // the next bay boundary while retaining the stair inside its window alcove.
+  z: longRoomBayZ(LONG_ROOM_STAIR_ALCOVE.bay) + 0.36,
   diameter: HISTORIC_SPIRAL_DIAMETER,
   opening: 2.2,
   landingWidth: 0.9,
@@ -102,9 +106,10 @@ export const HISTORIC_SPIRAL = {
 const spiralSteps=Math.ceil(LONG_ROOM.galleryY/0.185),spiralTurn=Math.PI*2/14;
 export const HISTORIC_SPIRAL_ENTRY=-(spiralSteps-0.5)*spiralTurn;
 const entryCenter=HISTORIC_SPIRAL_ENTRY+spiralTurn/2;
-// The landing guard ends at x=-6.75. Keep the route far enough toward the
-// gallery rail to preserve the camera's 0.3 m body clearance around that end.
-const WEST_GALLERY_ROUTE_X = -6.35;
+// Keep the guided line near the middle of the widened upper-gallery strip,
+// clear of both the void-side rail and the projecting case pilasters.
+const GALLERY_ROUTE_X = 6;
+const WEST_GALLERY_ROUTE_X = -GALLERY_ROUTE_X;
 const spiralPoint=(radius:number,angle:number,y:number)=>({x:HISTORIC_SPIRAL.x+radius*Math.cos(angle),y,z:HISTORIC_SPIRAL.z+radius*Math.sin(angle)});
 export const GALLERY_WALK = [
   spiralPoint(1.35,entryCenter,0),
@@ -116,8 +121,8 @@ export const GALLERY_WALK = [
   {x:HISTORIC_SPIRAL.x+1.3,y:LONG_ROOM.galleryY,z:HISTORIC_SPIRAL.z},
   {x:WEST_GALLERY_ROUTE_X,y:LONG_ROOM.galleryY,z:HISTORIC_SPIRAL.z},
   {x:WEST_GALLERY_ROUTE_X,y:LONG_ROOM.galleryY,z:-43},
-  {x:6.55,y:LONG_ROOM.galleryY,z:-43},
-  {x:6.55,y:LONG_ROOM.galleryY,z:EAST_GALLERY_CONNECTION.center},
+  {x:GALLERY_ROUTE_X,y:LONG_ROOM.galleryY,z:-43},
+  {x:GALLERY_ROUTE_X,y:LONG_ROOM.galleryY,z:EAST_GALLERY_CONNECTION.center},
   {x:0,y:LONG_ROOM.galleryY,z:EAST_GALLERY_CONNECTION.center},
   {x:0,y:LONG_ROOM.galleryY,z:EAST_GALLERY_CONNECTION.back},
   ...Array.from({length:EAST_GALLERY_CONNECTION.steps},(_,i)=>({x:0,
@@ -147,7 +152,7 @@ export function galleryWalkPoint(distance: number) {
 /** Guided route into the west Y1.003 storage rooms. The gallery prefix is
  * shared with the normal second-floor route; the final section crosses the
  * adapted end opening and descends the three estimated transition treads. */
-const westCrosswalkEnd=GALLERY_WALK.findIndex(point=>point.x===6.55&&point.z===-43);
+const westCrosswalkEnd=GALLERY_WALK.findIndex(point=>point.x===GALLERY_ROUTE_X&&point.z===-43);
 const westUpperTail=[
   {x:0,y:LONG_ROOM.galleryY,z:-43},
   {x:0,y:LONG_ROOM.galleryY,z:-44.02},

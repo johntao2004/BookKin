@@ -1,5 +1,6 @@
 import {
   BOOK_POINTER_CLICK_TOLERANCE,
+  isFocusedShelfTarget,
   shouldOpenInspectedBook,
 } from "./virtual-library-interaction";
 
@@ -29,6 +30,13 @@ describe("virtual library inspected-book pointer action", () => {
       releasedBookId: null,
       moved: 1,
     })).toBe(false);
+  });
+
+  it("treats other shelves as blank space while one shelf is focused", () => {
+    expect(isFocusedShelfTarget(null, 38)).toBe(true);
+    expect(isFocusedShelfTarget(0, 0)).toBe(true);
+    expect(isFocusedShelfTarget(0, 38)).toBe(false);
+    expect(isFocusedShelfTarget(0, null)).toBe(false);
   });
 
   it("does not mistake another shelf book for the active inspection target", () => {

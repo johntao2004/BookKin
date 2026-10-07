@@ -3,21 +3,25 @@ import { KeyboardReturnRounded } from "@/ui/icons";
 import { RefreshRounded } from "@/ui/icons";
 import { Button } from "@/ui/buttons";
 import { CircularProgress } from "@/ui/feedback";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import * as THREE from "three";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { tokens } from "../theme/generated-tokens";
-import { classifyCatalogBook, longRoomCatalogSectionCounts, LIBRARY_CATEGORIES } from "./virtual-library-catalog";
+import type { Book } from "../domain/types";
+import { classifyCatalogBook, SHELF_CATEGORIES } from "./virtual-library-catalog";
 import { resolveCameraCollision } from "./virtual-library-collision";
 import {
   cameraRelativeWalkDelta,
+  clampVirtualLibraryFlightHeight,
   isShelfMovementLocked,
   virtualLibraryMovementKey,
+  virtualLibraryVerticalFlightDelta,
+  VIRTUAL_LIBRARY_KEYBOARD_FLIGHT_SPEED,
   VIRTUAL_LIBRARY_KEYBOARD_WALK_SPEED,
   type VirtualLibraryMovementKey,
 } from "./virtual-library-navigation";
-import { shouldOpenInspectedBook } from "./virtual-library-interaction";
+import { isFocusedShelfTarget, shouldOpenInspectedBook } from "./virtual-library-interaction";
 import {
   BOOK_INSPECTION_LAYOUT,
   createVirtualLibraryWorld,
@@ -37,10 +41,10 @@ import {
   type ShelfCategoryInfo,
 } from "./virtual-library-scene";
 import { LONG_ROOM, HISTORIC_SPIRAL, EAST_GALLERY_CONNECTION } from "./virtual-library-model/longRoomLayout";
-import { buildLongRoomProgressively } from "./virtual-library-model/scene/longRoom";
+import { buildLongRoomProgressively, longRoomRoofY } from "./virtual-library-model/scene/longRoom";
 import { LIBRARY } from "./virtual-library-model/config";
 import {
-  fetchVirtualLibraryBooks,
+  refreshVirtualLibraryBooks,
   VIRTUAL_LIBRARY_BOOKS_QUERY_KEY,
   VIRTUAL_LIBRARY_BOOKS_STALE_TIME,
   VIRTUAL_LIBRARY_BOOKS_REFRESH_INTERVAL,
@@ -63,8 +67,17 @@ const MAX_SCENE_ZOOM = 1.55;
 const SCENE_ZOOM_STEP = 0.12;
 const BOOK_INSPECTION_ZOOM_STEP = 0.1;
 const WALKING_EYE_HEIGHT = 1.78;
+const HALL_FLIGHT_CEILING_CLEARANCE = 0.4;
 const MOBILE_ROTUNDA_CENTER_Y = ROTUNDA_CENTER.y * 0.64;
 const TABLET_ROTUNDA_CENTER_Y = ROTUNDA_CENTER.y * 0.87;
+
+function clampHallFlightHeight(x: number, desiredHeight: number) {
+  return clampVirtualLibraryFlightHeight(
+    desiredHeight,
+    WALKING_EYE_HEIGHT,
+    longRoomRoofY(x) - HALL_FLIGHT_CEILING_CLEARANCE,
+  );
+}
 
 interface PointerState {
   startX: number;
@@ -93,6 +106,7 @@ const ROOM_DETAILS: Record<Exclude<LibraryRoomId, "hall">, { title: string; labe
 
 export function VirtualLibraryExperience() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const sceneHostRef = useRef<HTMLDivElement | null>(null);
   const selectedBookTitleRef = useRef<HTMLDivElement | null>(null);
@@ -122,15 +136,20 @@ export function VirtualLibraryExperience() {
   const searchOpenRef = useRef(false);
   searchOpenRef.current = searchOpen;
   const [sceneError, setSceneError] = useState(false);
+  const [catalogSyncError, setCatalogSyncError] = useState<string | null>(null);
   const [sceneLoading, setSceneLoading] = useState(true);
+  const staticSceneBuildCountRef = useRef(0);
+  const catalogBooksRef = useRef<readonly Book[]>([]);
+  const catalogSyncRef = useRef<(books: readonly Book[]) => void>(() => undefined);
   const booksQuery = useQuery({
     queryKey: VIRTUAL_LIBRARY_BOOKS_QUERY_KEY,
-    queryFn: ({ signal }) => fetchVirtualLibraryBooks(signal),
+    queryFn: ({ signal }) => refreshVirtualLibraryBooks(queryClient, signal),
     staleTime: VIRTUAL_LIBRARY_BOOKS_STALE_TIME,
     refetchInterval: VIRTUAL_LIBRARY_BOOKS_REFRESH_INTERVAL,
     refetchOnMount: "always",
   });
   const books = useMemo(() => booksQuery.data?.pages.flatMap(page => page.items) ?? [], [booksQuery.data]);
+  catalogBooksRef.current = books;
   const categoryCounts = useMemo(() => {
     const counts = new Map<string, number>();
     books.forEach(book => {const id = classifyCatalogBook(book).category.id; counts.set(id, (counts.get(id) ?? 0) + 1);});
@@ -152,9 +171,10 @@ export function VirtualLibraryExperience() {
   useEffect(() => {
     const canvas = canvasRef.current;
     const host = sceneHostRef.current;
-    if (!canvas || !host || books.length === 0) return undefined;
+    if (!canvas || !host) return undefined;
     let cleanupScene: (() => void) | undefined;
     const construction = new AbortController();
+    catalogSyncRef.current = () => undefined;
 
     const initializeScene = async (): Promise<(() => void) | undefined> => {
       if (typeof WebGLRenderingContext === "undefined" && typeof WebGL2RenderingContext === "undefined") {
@@ -213,7 +233,7 @@ export function VirtualLibraryExperience() {
       const batchPhases: Record<string, {count: number; totalMs: number; maxMs: number}> = {};
       let preparedHall;
       try {
-        preparedHall = await buildLongRoomProgressively(longRoomCatalogSectionCounts(books), textureLoader, construction.signal,
+        preparedHall = await buildLongRoomProgressively(textureLoader, construction.signal,
           (milliseconds, stage) => {
             if (stage.startsWith('static-')) {
               const phase = batchPhases[stage] ??= {count: 0, totalMs: 0, maxMs: 0};
@@ -234,20 +254,67 @@ export function VirtualLibraryExperience() {
         return undefined;
       }
       const finalizeStarted = performance.now();
-      const world = createVirtualLibraryWorld(
-        scene,
-        books,
-        textureLoader,
-        Math.min(12, renderer.capabilities.getMaxAnisotropy()),
-        preparedHall,
-      );
+      let world: ReturnType<typeof createVirtualLibraryWorld>;
+      try {
+        world = createVirtualLibraryWorld(
+          scene,
+          textureLoader,
+          Math.min(12, renderer.capabilities.getMaxAnisotropy()),
+          preparedHall,
+        );
+      } catch {
+        renderer.dispose();
+        if (!construction.signal.aborted) setSceneError(true);
+        return undefined;
+      }
+      let selectedSceneBook: SceneBook | null = null;
+      const updateCatalogDiagnostics = () => {
+        canvas.dataset.renderedBookModelCount = String(world.sceneBooks.length);
+        canvas.dataset.shelvedBookModelCount = String(
+          world.sceneBooks.length - (selectedSceneBook ? 1 : 0),
+        );
+        canvas.dataset.occupiedShelfBayCount = String(new Set(
+          world.sceneBooks.map((sceneBook) => sceneBook.group.userData.shelfBayIndex as number),
+        ).size);
+        canvas.dataset.catalogSyncRevision = String(preparedHall.root.userData.catalogSyncRevision ?? 0);
+        canvas.dataset.bookPresentation = selectedSceneBook ? "inspection" : "shelved";
+      };
+      const syncSceneCatalog = (nextBooks: readonly Book[]) => {
+        let result;
+        try {
+          result = world.syncCatalogBooks(nextBooks);
+        } catch (error) {
+          setCatalogSyncError(error instanceof Error ? error.message : "藏书同步失败，请重试。");
+          return;
+        }
+        setCatalogSyncError(null);
+        if (selectedSceneBook && result.removedBookIds.includes(selectedSceneBook.book.id)) {
+          selectedSceneBook = null;
+          selectedBookIdRef.current = null;
+          setSelectedBookId(null);
+          delete canvas.dataset.inspectedBookId;
+          delete canvas.dataset.inspectedBookYaw;
+          delete canvas.dataset.inspectedBookPitch;
+          delete canvas.dataset.inspectedBookZoom;
+        } else if (selectedSceneBook) {
+          selectedSceneBook = world.sceneBooks.find(
+            (sceneBook) => sceneBook.book.id === selectedSceneBook?.book.id,
+          ) ?? null;
+        }
+        updateCatalogDiagnostics();
+        invalidateScene();
+      };
+      syncSceneCatalog(catalogBooksRef.current);
+      catalogSyncRef.current = syncSceneCatalog;
+      staticSceneBuildCountRef.current += 1;
+      canvas.dataset.staticSceneBuildCount = String(staticSceneBuildCountRef.current);
       canvas.dataset.worldFinalizeMs = (performance.now() - finalizeStarted).toFixed(1);
       canvas.dataset.longestBuildSliceMs = longestBuildSlice.toFixed(1);
       canvas.dataset.westBuildMaxSliceMs = westBuildMaxSlice.toFixed(1);
       canvas.dataset.westBuildCpuMs = westBuildCpuMs.toFixed(1);
       canvas.dataset.batchPhaseTimings = JSON.stringify(batchPhases);
       canvas.dataset.worldBuildMs = (performance.now() - worldBuildStarted).toFixed(1);
-      let selectedSceneBook = world.sceneBooks.find(
+      selectedSceneBook = world.sceneBooks.find(
         (sceneBook) => sceneBook.book.id === selectedBookIdRef.current,
       ) ?? null;
       if (selectedSceneBook) {
@@ -274,15 +341,10 @@ export function VirtualLibraryExperience() {
       const hallColumnCount = world.getCameraColliders("hall")
         .filter(({ id }) => id.startsWith("gallery-column") || id.startsWith("wall-column"))
         .length / 2;
-      canvas.dataset.renderedBookModelCount = String(world.sceneBooks.length);
-      canvas.dataset.shelvedBookModelCount = String(world.sceneBooks.length - (selectedSceneBook ? 1 : 0));
       canvas.dataset.sceneModel = VIRTUAL_LIBRARY_SCENE_MODEL_VERSION;
-      canvas.dataset.occupiedShelfBayCount = String(new Set(
-        world.sceneBooks.map((sceneBook) => sceneBook.group.userData.shelfBayIndex as number),
-      ).size);
       canvas.dataset.expandableShelfSectionCount = String(world.shelfHitMeshes.length);
       canvas.dataset.activeRoom = activeRoomRef.current;
-      canvas.dataset.bookPresentation = selectedSceneBook ? "inspection" : "shelved";
+      updateCatalogDiagnostics();
 
       const raycaster = new THREE.Raycaster();
       raycaster.layers.enable(VIRTUAL_LIBRARY_BOOK_PREVIEW_LAYER);
@@ -358,9 +420,10 @@ export function VirtualLibraryExperience() {
         const desiredZ = freeEye?.z ?? cameraTarget.z + Math.cos(cameraYawCurrent) * planarRadius;
         const activeCameraRoom = activeRoomRef.current;
         const colliders = world.getCameraColliders(activeCameraRoom);
+        const hallX = THREE.MathUtils.clamp(desiredX, -LONG_ROOM.width / 2 + 0.38, LONG_ROOM.width / 2 - 0.38);
         const desiredPosition = activeCameraRoom === "hall" ? {
-          x: THREE.MathUtils.clamp(desiredX, -LONG_ROOM.width / 2 + 0.38, LONG_ROOM.width / 2 - 0.38),
-          y: THREE.MathUtils.clamp(desiredY, WALKING_EYE_HEIGHT, LONG_ROOM.height - 0.4),
+          x: hallX,
+          y: clampHallFlightHeight(hallX, desiredY),
           z: THREE.MathUtils.clamp(desiredZ, -LONG_ROOM.length / 2 + 0.38, LONG_ROOM.length / 2 - 0.38),
         } : { x: desiredX, y: desiredY, z: desiredZ };
         let collision = resolveCameraCollision(
@@ -457,6 +520,7 @@ export function VirtualLibraryExperience() {
         if (activeRoomRef.current !== "hall") {
           return { book: null, shelfSectionId: null, portalRoom: null, terminal: false };
         }
+        const focusedShelfSectionId = world.getExpandedShelfSectionId();
         const terminalHit = raycaster.intersectObject(world.catalogTerminal, true)[0];
         if (terminalHit && world.catalogTerminal.parent) {
           const surface = raycaster.intersectObject(world.catalogTerminal.parent, true)[0];
@@ -467,15 +531,21 @@ export function VirtualLibraryExperience() {
         const bookHit = raycaster.intersectObjects(world.interactiveMeshes, false)[0];
         const book = bookHit ? findSceneBook(bookHit.object) : null;
         if (book) {
-          if (world.getExpandedShelfSectionId() === book.shelfSectionId) {
+          if (isFocusedShelfTarget(focusedShelfSectionId, book.shelfSectionId)) {
             return { book, shelfSectionId: null, portalRoom: null, terminal: false };
+          }
+          if (focusedShelfSectionId !== null) {
+            return { book: null, shelfSectionId: null, portalRoom: null, terminal: false };
           }
           return { book: null, shelfSectionId: book.shelfSectionId, portalRoom: null, terminal: false };
         }
         const portalHit = raycaster.intersectObjects(world.portalHitMeshes, false)[0];
         const portalRoom = portalHit ? findPortalRoom(portalHit.object) : null;
         if (portalRoom) return { book: null, shelfSectionId: null, portalRoom, terminal: false };
-        const shelfHit = raycaster.intersectObjects(world.shelfHitMeshes, false)[0];
+        const shelfHits = raycaster.intersectObjects(world.shelfHitMeshes, false);
+        const shelfHit = focusedShelfSectionId === null
+          ? shelfHits[0]
+          : shelfHits.find((hit) => findShelfSectionId(hit.object) === focusedShelfSectionId);
         return {
           terminal: false,
           book: null,
@@ -489,9 +559,17 @@ export function VirtualLibraryExperience() {
         cameraPitchTargetRef.current = LONG_ROOM.camera.pitch;
         sceneZoomRef.current = 1;
         setSceneZoom(1);
-        setSelectedShelfInfo(null);
         updateCameraSettings();
+        cameraTargetXCurrent = cameraTargetXZRef.current.x;
+        cameraTargetZCurrent = cameraTargetXZRef.current.z;
         cameraTargetYRef.current = cameraTargetYBase;
+        cameraTargetYCurrent = cameraTargetYRef.current;
+        cameraPitchCurrent = cameraPitchTargetRef.current;
+        cameraRadiusCurrent = cameraBaseRadius / sceneZoomRef.current;
+        // Restore the hall pose as a fresh placement. Sweeping from the
+        // close-up shelf position would collide with the shelf we just closed.
+        hasPositionedCamera = false;
+        setSelectedShelfInfo(null);
       };
       const collapseFocusedShelf = () => {
         world.collapseShelfSections();
@@ -806,15 +884,24 @@ export function VirtualLibraryExperience() {
         if (pressedMovementKeys.size === 0 || !canMoveContinuously()) return false;
         camera.getWorldDirection(movementLook);
         movementLook.y = 0;
-        if (movementLook.lengthSq() < 0.0001) return false;
-        movementLook.normalize();
-        const movementYaw = Math.atan2(-movementLook.x, -movementLook.z);
-        const delta = cameraRelativeWalkDelta(
+        let movementYaw = cameraYawCurrent;
+        if (movementLook.lengthSq() >= 0.0001) {
+          movementLook.normalize();
+          movementYaw = Math.atan2(-movementLook.x, -movementLook.z);
+        }
+        const frameSeconds = Math.min(deltaSeconds, 0.05);
+        const planarDelta = cameraRelativeWalkDelta(
           movementYaw,
           pressedMovementKeys,
-          VIRTUAL_LIBRARY_KEYBOARD_WALK_SPEED * Math.min(deltaSeconds, 0.05),
+          VIRTUAL_LIBRARY_KEYBOARD_WALK_SPEED * frameSeconds,
         );
-        if (!delta) return false;
+        const verticalDelta = galleryDistance === null
+          ? virtualLibraryVerticalFlightDelta(
+            pressedMovementKeys,
+            VIRTUAL_LIBRARY_KEYBOARD_FLIGHT_SPEED * frameSeconds,
+          )
+          : 0;
+        if (!planarDelta && verticalDelta === 0) return false;
 
         const colliders = world.getCameraColliders("hall");
         if (galleryDistance !== null) {
@@ -825,19 +912,20 @@ export function VirtualLibraryExperience() {
             z: point.z + galleryWalkOffset.z,
           };
           const safe = resolveCameraCollision(previous, {
-            x: previous.x + delta.x,
+            x: previous.x + (planarDelta?.x ?? 0),
             y: previous.y,
-            z: previous.z + delta.z,
+            z: previous.z + (planarDelta?.z ?? 0),
           }, colliders);
           galleryWalkOffset.x += safe.x - previous.x;
           galleryWalkOffset.z += safe.z - previous.z;
           galleryPreviousEye = {x: safe.x, y: safe.y, z: safe.z};
         } else {
           freeEye ??= camera.position.clone();
+          const desiredX = freeEye.x + (planarDelta?.x ?? 0);
           const safe = resolveCameraCollision(freeEye, {
-            x: freeEye.x + delta.x,
-            y: freeEye.y,
-            z: freeEye.z + delta.z,
+            x: desiredX,
+            y: clampHallFlightHeight(desiredX, freeEye.y + verticalDelta),
+            z: freeEye.z + (planarDelta?.z ?? 0),
           }, colliders);
           freeEye.set(safe.x, safe.y, safe.z);
         }
@@ -1137,6 +1225,8 @@ export function VirtualLibraryExperience() {
         delete canvas.dataset.renderedBookModelCount;
         delete canvas.dataset.shelvedBookModelCount;
         delete canvas.dataset.occupiedShelfBayCount;
+        delete canvas.dataset.catalogSyncRevision;
+        delete canvas.dataset.staticSceneBuildCount;
         delete canvas.dataset.expandableShelfSectionCount;
         delete canvas.dataset.sceneModel;
         delete canvas.dataset.cameraYaw;
@@ -1170,6 +1260,7 @@ export function VirtualLibraryExperience() {
         henryAccessRef.current = () => undefined;
         walkRef.current = () => undefined;
         catalogShelfRef.current = () => undefined;
+        catalogSyncRef.current = () => undefined;
         disposeScene(scene);
 
         renderer.dispose();
@@ -1196,7 +1287,12 @@ export function VirtualLibraryExperience() {
       categoryNavigation.detach();
       cleanupScene?.();
     };
-  }, [books, categoryNavigation]);
+  }, [categoryNavigation]);
+
+  useEffect(() => {
+    catalogBooksRef.current = books;
+    catalogSyncRef.current(books);
+  }, [books]);
 
   const requestRoom = (room: LibraryRoomId) => {
     activeRoomRef.current = room;
@@ -1216,6 +1312,7 @@ export function VirtualLibraryExperience() {
           role="img"
           aria-label={activeRoomDetails ? `${activeRoomDetails.title} 3D 场景` : "可 360 度环视的虚拟图书馆 3D 场景"}
           data-book-model-count={books.length}
+          data-static-scene-build-count={staticSceneBuildCountRef.current}
           data-view-preset={viewPreset}
           data-expanded-shelf-section={expandedShelfSectionId ?? ""}
           data-scene-model={VIRTUAL_LIBRARY_SCENE_MODEL_VERSION}
@@ -1245,18 +1342,30 @@ export function VirtualLibraryExperience() {
               <Button onClick={() => catalogShelfRef.current()}>我的藏书</Button>
               <Button onClick={() => setSearchOpen(true)} aria-label="搜索私人藏书">搜索藏书</Button>
             </div>
-            <div className="virtual-library-space-shortcuts" aria-label="藏书分区">
-              {LIBRARY_CATEGORIES.filter(category => categoryCounts.has(category.id)).map(category => (
+            <div className="virtual-library-space-shortcuts virtual-library-category-shortcuts" aria-label="藏书分区">
+              {SHELF_CATEGORIES.filter(category => categoryCounts.has(category.id)).map(category => (
                 <Button key={category.id} aria-pressed={selectedShelfInfo?.category.id === category.id}
-                  onClick={() => categoryNavigation.request(category.id)}>{category.label} · {categoryCounts.get(category.id)}</Button>
+                  aria-label={`${category.label}，${categoryCounts.get(category.id)} 本`}
+                  onClick={() => categoryNavigation.request(category.id)}>
+                  <span className="virtual-library-category-button-label">
+                    <span>{category.label}</span>
+                    <span className="virtual-library-category-button-meta">
+                      <span className="virtual-library-category-button-standard">
+                        <small>{category.subtitle.split(" · ")[0]}</small>
+                        {category.code && <small>· {category.code}</small>}
+                      </span>
+                      <small>{categoryCounts.get(category.id)} 本</small>
+                    </span>
+                  </span>
+                </Button>
               ))}
             </div>
             <p id="gallery-walk-help" className="virtual-library-walk-help">
               {shelfMovementLocked
-                ? "当前面向书架，前行与后退已锁定；可拖动环顾、选择书籍，按 Esc 退出书架。"
+                ? "当前面向书架，移动与升降已锁定；可拖动环顾、选择书籍，按 Esc 退出书架。"
                 : henryWalking
                 ? "已切换至 Henry Jones 室；按住 W/A/S/D 可连续前后与左右平移，拖动环顾，点击返回长厅。"
-                : "按住 W/A/S/D 可沿视角连续前后与左右平移，滚轮也可前后移动，拖动环顾。"}
+                : "按住 W/A/S/D 可沿视角连续前后与左右平移，Shift 上升、Ctrl 下降，滚轮也可前后移动，拖动环顾。"}
             </p>
           </nav>
         )}
@@ -1284,7 +1393,7 @@ export function VirtualLibraryExperience() {
             </Link>
           </div>
         )}
-        {(booksQuery.isPending || (sceneLoading && books.length > 0 && !sceneError)) && (
+        {(booksQuery.isPending || (sceneLoading && !sceneError)) && (
           <div className="virtual-library-status" role="status">
             <CircularProgress size={24} sx={{ color: tokens.color.semantic.textOnDark }} />
             <span>正在点亮藏阁…</span>
@@ -1300,6 +1409,19 @@ export function VirtualLibraryExperience() {
               onClick={() => void booksQuery.refetch()}
             >
               重新加载藏书
+            </Button>
+          </div>
+        )}
+        {catalogSyncError && (
+          <div className="virtual-library-status" role="alert">
+            <span>{catalogSyncError}</span>
+            <Button
+              className="virtual-library-status-action"
+              size="small"
+              startIcon={<RefreshRounded />}
+              onClick={() => catalogSyncRef.current(catalogBooksRef.current)}
+            >
+              重新同步藏书
             </Button>
           </div>
         )}

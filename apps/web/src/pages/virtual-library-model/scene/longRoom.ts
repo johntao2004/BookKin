@@ -20,27 +20,37 @@ import { addLongRoomGalleryPosts } from './longRoomGalleryPosts';
 import { addLongRoomGalleryCornice } from './longRoomCornice';
 import { addLongRoomShelfLaddersSteps } from './longRoomLadders';
 import { addLongRoomLamps } from './longRoomLamps';
+import { addLongRoomCrystalChandeliers } from './longRoomChandeliers';
 import { addLongRoomShelfMarks } from './longRoomShelfMarks';
 import { createHistoricalBindingGeometry, createHistoricalBindingMaterialSteps, createHistoricalPageEdges, createDistantHistoricalBindingGeometry } from './longRoomBindings';
 import { createLongRoomPilasterShaft } from './longRoomPilaster';
 import { createLongRoomVaultRib } from './longRoomVaultRib';
-import { createLongRoomCapital } from './longRoomCapital';
+import { createLongRoomCapital, LONG_ROOM_CAPITAL_MAX_WIDTH } from './longRoomCapital';
 import { createLongRoomSpiralStair } from './longRoomStair';
 import { optimizeStaticMeshesProgressively } from './optimizeScene';
 import { instanceBounds } from './instanceBounds';
-import { LongRoomAlcoveArc } from './longRoomAlcoveArc';
 
-export interface LongRoomSlot extends BookShelfSlot { sectionId: number; rowIndex: number }
+export interface LongRoomSlot extends BookShelfSlot {
+  sectionId: number;
+  catalogSectionIndex: number;
+  rowIndex: number;
+}
 export interface LongRoomBuilt {
   root: THREE.Group;
   materials: LibraryMaterials;
   shelfSections: ExpandableShelfSection[];
-  bookSlots: LongRoomSlot[];
+  /** Empty placement anchors only; real catalog books are attached elsewhere. */
+  catalogSlots: LongRoomSlot[];
   interactiveObjects: THREE.Object3D[];
   catalogTerminal: THREE.Group;
   animateEnvironment: (elapsed: number) => void;
 }
+export interface LongRoomBuildOptions {
+  includeRetiredRooms?: boolean;
+}
 const V = (x: number, y: number, z: number) => new THREE.Vector3(x, y, z);
+export const WEST_GALLERY_CROSSWALK = { outer: -44.2, inner: -41.8, center: -43 } as const;
+export const LIVE_GALLERY_CORNER_RADIUS = 0.62;
 export const LONG_ROOM_CATALOG_SECTION_CAPACITY = 120;
 export const LONG_ROOM_CATALOG_BOOKS_PER_ROW = LONG_ROOM_CATALOG_SECTION_CAPACITY / L.shelfRows;
 export const LONG_ROOM_SHELF_BASE_Y = 0.36;
@@ -50,6 +60,15 @@ export const LONG_ROOM_CATALOG_BOOK_SIZE = {
   height: 0.68,
   coverWidth: 0.42,
 } as const;
+export const LONG_ROOM_SHELF_FRONT_OFFSET = (L.caseThickness + 0.06) / 2;
+export const LONG_ROOM_CATALOG_SPINE_RECESS = 0.035;
+export const LONG_ROOM_CATALOG_BOOK_RENDERED_DEPTH = LONG_ROOM_CATALOG_BOOK_SIZE.coverWidth * 0.96;
+export const LONG_ROOM_BOOK_CENTER_OFFSET = LONG_ROOM_SHELF_FRONT_OFFSET
+  - LONG_ROOM_CATALOG_BOOK_RENDERED_DEPTH / 2
+  - LONG_ROOM_CATALOG_SPINE_RECESS;
+export const LONG_ROOM_HISTORICAL_BOOK_CENTER_OFFSET = LONG_ROOM_SHELF_FRONT_OFFSET - 0.11 - 0.03;
+export const LONG_ROOM_BOOKCASE_PILASTER_WIDTH = L.caseThickness - 0.12;
+export const LONG_ROOM_BOOKCASE_CAPITAL_WIDTH = L.caseThickness + 0.08;
 type LongRoomShelfFace = -1 | 1;
 const LONG_ROOM_SHELF_FACES: readonly LongRoomShelfFace[] = [-1, 1];
 
@@ -75,6 +94,69 @@ function namedBox(root: THREE.Group, name: string, size: number[], position: num
   return mesh;
 }
 
+function extrudePlanShape(points: THREE.Vector2[], height: number) {
+  const shape = new THREE.Shape(points);
+  shape.closePath();
+  const geometry = new THREE.ExtrudeGeometry(shape, {
+    depth: height,
+    steps: 1,
+    bevelEnabled: false,
+  });
+  // ExtrudeGeometry grows along local +Z. Rotate that depth onto world Y and
+  // centre it so every curved member uses the same position convention as a box.
+  geometry.rotateX(Math.PI / 2);
+  geometry.translate(0, height / 2, 0);
+  geometry.computeVertexNormals();
+  geometry.computeBoundingBox();
+  geometry.computeBoundingSphere();
+  return geometry;
+}
+
+function createGalleryArcPrismGeometry(
+  radius: number,
+  radialDepth: number,
+  height: number,
+  startAngle: number,
+  endAngle: number,
+  segments = 18,
+) {
+  const innerRadius = radius - radialDepth / 2;
+  const outerRadius = radius + radialDepth / 2;
+  const points: THREE.Vector2[] = [];
+  for (let index = 0; index <= segments; index++) {
+    const angle = startAngle + (endAngle - startAngle) * index / segments;
+    points.push(new THREE.Vector2(Math.cos(angle) * outerRadius, Math.sin(angle) * outerRadius));
+  }
+  for (let index = segments; index >= 0; index--) {
+    const angle = startAngle + (endAngle - startAngle) * index / segments;
+    points.push(new THREE.Vector2(Math.cos(angle) * innerRadius, Math.sin(angle) * innerRadius));
+  }
+  return extrudePlanShape(points, height);
+}
+
+/** Adds floor into the previously square void corner up to the curved rail.
+ * This is a positive solid infill, not a subtractive aperture in the gallery. */
+function createGalleryCornerFloorInfillGeometry(
+  side: number,
+  inwardZ: number,
+  radius: number,
+  height: number,
+  segments = 18,
+) {
+  const sideAngle = side === 1 ? 0 : Math.PI;
+  const crossAngle = sideAngle - side * inwardZ * Math.PI / 2;
+  const points = [
+    new THREE.Vector2(side * radius, 0),
+    new THREE.Vector2(side * radius, -inwardZ * radius),
+    new THREE.Vector2(0, -inwardZ * radius),
+  ];
+  for (let index = 1; index <= segments; index++) {
+    const angle = crossAngle + (sideAngle - crossAngle) * index / segments;
+    points.push(new THREE.Vector2(Math.cos(angle) * radius, Math.sin(angle) * radius));
+  }
+  return extrudePlanShape(points, height);
+}
+
 function alignFloorGrain(mesh: THREE.Mesh) {
   const position = mesh.geometry.getAttribute('position'), normal = mesh.geometry.getAttribute('normal');
   const uv = mesh.geometry.getAttribute('uv');
@@ -87,18 +169,13 @@ function alignFloorGrain(mesh: THREE.Mesh) {
 /** A genuine constant-section barrel, not a radial dome or a tapering rotunda. */
 function* createLongRoomVaultSteps(materials: LibraryMaterials): Generator<void, THREE.Group> {
   const root = new THREE.Group(); root.name = 'Long Room continuous barrel vault';
-  // Y2.001 shows near-semicircular side arches. Their crowns intersect the
-  // central barrel; terminate both surfaces on the same three-dimensional seam.
-  const alcoveArc = new LongRoomAlcoveArc(P, P / 2);
-  const alcoveProfile = alcoveArc.getPoints(32);
-  const sections = [{z:-L.length/2,rise:0}];
-  for(let bay=L.alcovesPerSide-1;bay>=0;bay--) {
-    for(const [i,point] of alcoveProfile.entries()) {
-      if(i===0 && bay<L.alcovesPerSide-1) continue;
-      sections.push({z:longRoomBayZ(bay)+point.z,rise:Math.max(0,point.y)});
-    }
-  }
-  sections.push({z:L.length/2,rise:0});
+  // Keep the main barrel and the side-gallery ceilings as complete surfaces.
+  // The previous per-bay intersecting lunettes read as holes and produced
+  // dangling seam pieces where they met the transverse ribs.
+  const ribZ = Array.from({length: L.alcovesPerSide + 1}, (_, bay) =>
+    L.length / 2 - L.endMargin - bay * P);
+  const sections = [-L.length / 2, ...ribZ.reverse(), L.length / 2]
+    .map(z => ({z, rise: 0}));
   const positions: number[] = [], uvs: number[] = [], indices: number[] = [];
   for(const section of sections) {
     const edge=Math.asin(section.rise/L.vaultRadius);
@@ -125,43 +202,13 @@ function* createLongRoomVaultSteps(materials: LibraryMaterials): Generator<void,
     rib.name = `Transverse barrel rib ${bay}`; root.add(rib);
     yield;
   }
-  // Flush board joints come from the same metric texture as the lining.
-  // A second set of raised strips had a different pitch and doubled the seams.
-  const intersection = (rise:number) => Math.sqrt(Math.max(0,L.vaultRadius**2-rise**2));
-  const seam = new THREE.CatmullRomCurve3(alcoveProfile.map(point => V(intersection(point.y),point.y,point.z)));
-  const alcoveBead = new THREE.TubeGeometry(seam, 64, 0.035, 12, false);
+  const sideCeilingWidth = L.width / 2 - L.vaultRadius;
   for (const side of [-1, 1]) {
-    for (let bay = 0; bay < L.alcovesPerSide; bay++) {
-      const z = longRoomBayZ(bay), vertices: number[] = [], uv: number[] = [], faces: number[] = [];
-      for (const outer of [false,true]) for (let i = 0; i <= 32; i++) {
-        const point = alcoveProfile[i];
-        const x=side*(outer?L.width/2:intersection(point.y));
-        vertices.push(x, L.vaultSpring + point.y, z + point.z);
-        uv.push(i / 32 * 2 * alcoveArc.halfAngle * alcoveArc.radius / 1.44, Math.abs(x) / 3.2);
-      }
-      for (let i = 0; i < 32; i++) faces.push(i, i + 1, i + 33, i + 1, i + 34, i + 33);
-      const geometry = new THREE.BufferGeometry();
-      geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
-      geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); geometry.setIndex(faces); geometry.computeVertexNormals();
-      const ceiling = new THREE.Mesh(geometry, lining); ceiling.name = 'Upper alcove intersecting barrel vault';
-      ceiling.castShadow = ceiling.receiveShadow = true; root.add(ceiling);
-      const bead = new THREE.Mesh(alcoveBead, materials.woodDark);
-      bead.name = 'Rounded upper alcove arch bead';
-      bead.position.set(0, L.vaultSpring, z); bead.scale.x=side;
-      bead.castShadow = bead.receiveShadow = true; root.add(bead);
-      for (const x of [side * L.width / 2]) {
-        const edge = new THREE.Shape(); edge.moveTo(-P / 2, L.vaultSpring);
-        for (const point of alcoveProfile) edge.lineTo(point.z, L.vaultSpring + point.y);
-        edge.closePath();
-        const closure = new THREE.Mesh(new THREE.ShapeGeometry(edge), lining);
-        closure.name = 'Segmental vault sealed spandrel'; closure.rotation.y = Math.PI / 2; closure.position.set(x, 0, z);
-        closure.castShadow = closure.receiveShadow = true; root.add(closure);
-      }
-      yield;
-    }
-    for (const z of [-L.length / 2 + L.endMargin / 2, L.length / 2 - L.endMargin / 2])
-      namedBox(root, 'Side ceiling end closure', [L.width / 2 - L.vaultRadius, 0.12, L.endMargin],
-        [side * (L.width / 2 + L.vaultRadius) / 2, L.vaultSpring, z], lining);
+    const ceiling = namedBox(root, 'Continuous side gallery ceiling',
+      [sideCeilingWidth, 0.12, L.length],
+      [side * (L.width / 2 + L.vaultRadius) / 2, L.vaultSpring + 0.06, 0], lining);
+    ceiling.castShadow = ceiling.receiveShadow = true;
+    yield;
   }
   return root;
 }
@@ -173,7 +220,29 @@ export function createLongRoomVault(materials: LibraryMaterials) {
   return step.value;
 }
 
-/** Instanced anonymous historical volumes: never catalog models, labels or covers. */
+interface SceneryVolumeStyle {
+  density: number;
+  clusterName: string;
+  volumeName: string;
+  pageName: string;
+  marker: 'isHistoricalScenery';
+}
+
+const HISTORICAL_VOLUME_STYLE: SceneryVolumeStyle = {
+  density: 1,
+  clusterName: 'Historical binding detail cluster',
+  volumeName: 'Historical collection scenery volumes',
+  pageName: 'Historical volume inset paper heads',
+  marker: 'isHistoricalScenery',
+};
+
+function sceneryVolumeHash(seed: number) {
+  let hash = Math.imul(seed ^ (seed >>> 16), 0x45d9f3b);
+  hash = Math.imul(hash ^ (hash >>> 16), 0x45d9f3b);
+  return (hash ^ (hash >>> 16)) >>> 0;
+}
+
+/** Reference-only anonymous scenery volumes; the live hall never constructs them. */
 class HistoricalVolumes {
   private clusters = new Map<string, {center: THREE.Vector3; batches: {
     count: number; matrices: Float32Array; colors: Float32Array;
@@ -181,7 +250,10 @@ class HistoricalVolumes {
   private color = new THREE.Color();
   private paleLeather = new THREE.Color(PALETTE.parchment);
   private tanLeather = new THREE.Color(PALETTE.brass);
+  constructor(private readonly style: SceneryVolumeStyle = HISTORICAL_VOLUME_STYLE) {}
   add(x: number, y: number, z: number, width: number, height: number, depth: number, rotation: number, seed: number) {
+    const hash = sceneryVolumeHash(seed);
+    if (hash / 0x1_0000_0000 >= this.style.density) return;
     const segmentLength = P * 2;
     const segment = Math.floor((z + L.length / 2) / segmentLength), side = Math.sign(x);
     const key = `${side}:${segment}`;
@@ -207,9 +279,6 @@ class HistoricalVolumes {
     batch.matrices[offset + 15] = 1;
     // Matching sets retain a shared seed. Hash adjacent seeds to avoid a
     // repeating light/dark stripe; this palette is a photographic estimate.
-    let hash = Math.imul(seed ^ (seed >>> 16), 0x45d9f3b);
-    hash = Math.imul(hash ^ (hash >>> 16), 0x45d9f3b);
-    hash = (hash ^ (hash >>> 16)) >>> 0;
     const family = hash % 20, variation = (hash >>> 8) / 0xffffff;
     if (family < 2) this.color.setHex(PALETTE.oakEdge);
     else if (family === 2) this.color.setHex(PALETTE.oxblood);
@@ -239,7 +308,7 @@ class HistoricalVolumes {
     }
     yield 'construction-binding-page-edges';
     for (const [key, cluster] of this.clusters) {
-      const lod = new THREE.LOD(); lod.name = `Historical binding detail cluster ${key}`;
+      const lod = new THREE.LOD(); lod.name = `${this.style.clusterName} ${key}`;
       lod.position.copy(cluster.center);
       const near = new THREE.Group(), far = new THREE.Group();
       near.position.copy(cluster.center).negate(); far.position.copy(near.position);
@@ -259,7 +328,9 @@ class HistoricalVolumes {
         for (const [parent, model] of [[near, geometry], [far, distantGeometry]] as const) {
           const mesh = new THREE.InstancedMesh(model, materials[variant], 0);
           mesh.count = batch.count;
-          mesh.name = 'Historical collection scenery volumes'; mesh.userData.isHistoricalScenery = true;
+          mesh.name = this.style.volumeName;
+          mesh.userData[this.style.marker] = true;
+          mesh.userData.isAnonymousShelfScenery = true;
           mesh.instanceMatrix = matrices; mesh.instanceColor = colors; mesh.receiveShadow = true;
           mesh.boundingBox = bounds.clone(); mesh.boundingSphere = sphere.clone(); parent.add(mesh);
         }
@@ -267,7 +338,9 @@ class HistoricalVolumes {
       }
       const pageMesh = new THREE.InstancedMesh(pages.geometry, pages.material, 0);
       pageMesh.count = pageMatrices.length / 16;
-      pageMesh.name = 'Historical volume inset paper heads'; pageMesh.userData.isHistoricalScenery = true;
+      pageMesh.name = this.style.pageName;
+      pageMesh.userData[this.style.marker] = true;
+      pageMesh.userData.isAnonymousShelfScenery = true;
       pageMesh.instanceMatrix = new THREE.InstancedBufferAttribute(pageMatrices, 16);
       pageMesh.receiveShadow = true;
       pageMesh.boundingBox = pageBounds;
@@ -286,21 +359,33 @@ function addPilaster(root: THREE.Group, materials: LibraryMaterials, side: numbe
   const x = side * L.aisleHalfWidth;
   let shaftTemplate = templates.shafts.get(height);
   if (!shaftTemplate) {
-    shaftTemplate = createLongRoomPilasterShaft(height - 0.55, materials.woodWarm);
+    shaftTemplate = createLongRoomPilasterShaft(height - 0.55, materials.woodWarm, {
+      width: LONG_ROOM_BOOKCASE_PILASTER_WIDTH,
+      fluteCount: 9,
+    });
     templates.shafts.set(height, shaftTemplate);
   }
   const shaft = shaftTemplate.clone();
   shaft.position.set(x, base + height / 2, z);
   shaft.rotation.y = -side * Math.PI / 2; root.add(shaft);
-  for (const [y, width, depth, h] of [[0.12, 0.48, 0.55, 0.24], [0.35, 0.37, 0.46, 0.12]]) {
+  for (const [y, width, depth, h] of [[0.12, 0.48, L.caseThickness + 0.12, 0.24], [0.35, 0.37, L.caseThickness, 0.12]]) {
     namedBox(root, 'Pilaster moulded base and capital', [width, h, depth], [x, base + y, z], materials.woodWarm);
   }
   const capital = templates.capital.clone();
+  capital.scale.x = LONG_ROOM_BOOKCASE_CAPITAL_WIDTH / LONG_ROOM_CAPITAL_MAX_WIDTH;
   capital.position.set(x, base + height - 0.52, z);
   capital.rotation.y = -side * Math.PI / 2; root.add(capital);
+  if (base > 0) {
+    const connectorHeight = Math.max(0, L.vaultSpring - (base + height));
+    if (connectorHeight > 0.01) {
+      namedBox(root, 'Vault rib springing connector',
+        [0.5, connectorHeight, L.caseThickness + 0.08],
+        [x, base + height + connectorHeight / 2, z], materials.woodWarm);
+    }
+  }
   // The projecting aisle pilaster is outside the fitted case's backboard box.
   markCameraCollider(root, { id: `long-room-pilaster-${side}-${z}-${base}`, shape: 'box',
-    center: { x, y: base + height / 2, z }, size: { x: 0.48, y: height, z: 0.55 } });
+    center: { x, y: base + height / 2, z }, size: { x: 0.48, y: height, z: L.caseThickness + 0.12 } });
 }
 
 const LONG_ROOM_WINDOW_WIDTH = 1.5;
@@ -389,12 +474,12 @@ function addWindow(root: THREE.Group, materials: LibraryMaterials, sashTemplates
   }
 }
 
-function addGallery(root: THREE.Group, materials: LibraryMaterials, side: number, includeEastConnection: boolean) {
+function addGallery(root: THREE.Group, materials: LibraryMaterials, side: number, includeRetiredRooms: boolean) {
   const width = L.width / 2 - L.galleryInnerX;
   const gallery = new THREE.Group(); gallery.name = 'Continuous straight upper gallery'; root.add(gallery);
-  const slab = (x0: number, x1: number, z0: number, z1: number, index: number) => {
+  const slab = (x0: number, x1: number, z0: number, z1: number, index: number, name = 'Continuous upper gallery floor') => {
     const size: [number, number, number] = [x1 - x0, 0.24, z1 - z0];
-    const floor = namedBox(gallery, 'Gallery floor around stair aperture', size,
+    const floor = namedBox(gallery, name, size,
       [(x0 + x1) / 2, L.galleryY - 0.12, (z0 + z1) / 2], materials.floor);
     alignFloorGrain(floor);
     markCameraCollider(floor, { id: `long-room-gallery-${side}-${index}`, shape: 'box', center: {x: 0, y: 0, z: 0}, size: {x: size[0], y: size[1], z: size[2]} });
@@ -402,16 +487,18 @@ function addGallery(root: THREE.Group, materials: LibraryMaterials, side: number
   if (side === 1) slab(L.galleryInnerX, L.galleryInnerX + width, -L.length / 2, L.length / 2, 0);
   else {
     const half = S.opening / 2, outer = -L.width / 2, inner = -L.galleryInnerX;
-    slab(outer, inner, -L.length / 2, S.z - half, 0);
-    slab(outer, inner, S.z + half, L.length / 2, 1);
-    slab(outer, S.x - half, S.z - half, S.z + half, 2);
-    slab(S.x + half, inner, S.z - half, S.z + half, 3);
+    const apertureFloor = 'Gallery floor around historic stair aperture';
+    slab(outer, inner, -L.length / 2, S.z - half, 0, apertureFloor);
+    slab(outer, inner, S.z + half, L.length / 2, 1, apertureFloor);
+    slab(outer, S.x - half, S.z - half, S.z + half, 2, apertureFloor);
+    slab(S.x + half, inner, S.z - half, S.z + half, 3, apertureFloor);
   }
-  const guardSpans = includeEastConnection
-    ? [[-45, -44.2], [-41.8, E.front], [E.back, 45]]
-    : [[-45, -44.2], [-41.8, 45]];
+  const guardSpans = includeRetiredRooms
+    ? [[-45, WEST_GALLERY_CROSSWALK.outer], [WEST_GALLERY_CROSSWALK.inner, E.front], [E.back, 45]]
+    : [[WEST_GALLERY_CROSSWALK.inner + LIVE_GALLERY_CORNER_RADIUS,
+      E.front - LIVE_GALLERY_CORNER_RADIUS]];
   for (const [height, thickness, depth] of [[-0.36, 0.12, 0.31], [-0.16, 0.12, 0.44], [0.1, 0.14, 0.2], [1.05, 0.13, 0.24]]) {
-    const spans = height <= 0 ? [[-45, 45]] : guardSpans;
+    const spans = includeRetiredRooms && height <= 0 ? [[-45, 45]] : guardSpans;
     for (const [start, end] of spans) namedBox(root, 'Gallery continuous entablature and rail', [depth, thickness, end - start],
       [side * L.galleryInnerX, L.galleryY + height, (start + end) / 2], materials.woodWarm);
   }
@@ -428,7 +515,11 @@ function addGallery(root: THREE.Group, materials: LibraryMaterials, side: number
   let written = 0;
   for (let i = 0; i < count; i++) {
     const z = -L.length / 2 + (i + 0.5) * L.length / count;
-    if ((z > -44.2 && z < -41.8) || (includeEastConnection && z > E.front && z < E.back)) continue;
+    if (includeRetiredRooms) {
+      if ((z > WEST_GALLERY_CROSSWALK.outer && z < WEST_GALLERY_CROSSWALK.inner)
+        || (z > E.front && z < E.back)) continue;
+    } else if (z < WEST_GALLERY_CROSSWALK.inner + LIVE_GALLERY_CORNER_RADIUS
+      || z > E.front - LIVE_GALLERY_CORNER_RADIUS) continue;
     if (newelPositions.some(position => Math.abs(position - z) < 0.32)) continue;
     balusters.setMatrixAt(written++, galleryBalusterPlacement(side * L.galleryInnerX,L.galleryY,z));
   }
@@ -479,22 +570,30 @@ function addHistoricAlcoveStair(root: THREE.Group, materials: LibraryMaterials) 
   }
 }
 
-/** Retained upper crosswalk; the freestanding access stair has been removed. */
-function addGalleryAccess(root: THREE.Group, materials: LibraryMaterials) {
+/** Retained west upper crosswalk; the freestanding access stair has been removed. */
+function addGalleryAccess(root: THREE.Group, materials: LibraryMaterials, includeRetiredRooms: boolean) {
   const stair=new THREE.Group();stair.name='Gallery end crossing';
   stair.userData.fidelity='XS-6B turned end balustrade; adapted bridge dimensions';
   const length=L.galleryInnerX*2;
-  const floor=namedBox(stair, 'Gallery end crosswalk', [length, 0.24, 2.4], [0, L.galleryY - 0.12, -43], materials.floor);
-  markCameraCollider(floor,{id:'west-gallery-crosswalk-floor',shape:'box',center:{x:0,y:0,z:0},size:{x:length,y:.24,z:2.4}});
+  const outerZ = includeRetiredRooms ? WEST_GALLERY_CROSSWALK.outer : -L.length / 2;
+  const floorDepth = WEST_GALLERY_CROSSWALK.inner - outerZ;
+  const floor=namedBox(stair, 'Gallery end crosswalk', [length, 0.24, floorDepth],
+    [0, L.galleryY - 0.12, (outerZ + WEST_GALLERY_CROSSWALK.inner) / 2], materials.floor);
+  markCameraCollider(floor,{id:'west-gallery-crosswalk-floor',shape:'box',center:{x:0,y:0,z:0},size:{x:length,y:.24,z:floorDepth}});
   const count=Math.ceil(length/.18),balusters=new THREE.InstancedMesh(createLongRoomBaluster(),materials.woodWarm,count*2);
   balusters.name='West crosswalk turned balusters';balusters.castShadow=balusters.receiveShadow=true;
   let instanceIndex=0;
-  for (const [row,z] of [-44.2, -41.8].entries()) {
+  const guardRows = includeRetiredRooms
+    ? [WEST_GALLERY_CROSSWALK.outer, WEST_GALLERY_CROSSWALK.inner]
+    : [WEST_GALLERY_CROSSWALK.inner];
+  for (const z of guardRows) {
     // The front run has a centered 1.8 m opening aligned with the west upper
-    // doorway. The rear run remains continuous as the fall guard.
-    const segments: readonly [number,number][] = row===0
+    // doorway in the historical study. The sealed live hall has a solid wall,
+    // so it does not need a redundant railing pressed against that wall.
+    const segments: readonly [number,number][] = z === WEST_GALLERY_CROSSWALK.outer
       ? [[-L.galleryInnerX,-.9],[.9,L.galleryInnerX]]
-      : [[-L.galleryInnerX,L.galleryInnerX]];
+      : [[-L.galleryInnerX + (includeRetiredRooms ? 0 : LIVE_GALLERY_CORNER_RADIUS),
+        L.galleryInnerX - (includeRetiredRooms ? 0 : LIVE_GALLERY_CORNER_RADIUS)]];
     for (const [x0,x1] of segments) {
       const segmentWidth=x1-x0;
       markCameraCollider(stair, {id: `crosswalk-guard-${z}-${x0}`, shape: 'box', center: {x: (x0+x1)/2, y: L.galleryY + 1.1, z}, size: {x: segmentWidth, y: 2.2, z: 0.24}});
@@ -515,6 +614,147 @@ function addGalleryAccess(root: THREE.Group, materials: LibraryMaterials) {
 
   stair.traverse(object => { if (object instanceof THREE.Mesh && object.material === materials.floor) alignFloorGrain(object); });
   root.add(stair);
+}
+
+/** The live hall is sealed at the east wall, but its upper circulation still
+ * needs the fourth side of the gallery ring. This bridge does not reuse the
+ * retired doorway transition or its off-level treads. */
+function addLiveEastGalleryCrosswalk(root: THREE.Group, materials: LibraryMaterials) {
+  const crossing = new THREE.Group();
+  crossing.name = 'Live east gallery ring crossing';
+  crossing.userData.fidelity = 'user-directed full gallery loop; adapted bridge dimensions';
+  const length = L.galleryInnerX * 2;
+  const depth = L.length / 2 - E.front;
+  const floor = namedBox(crossing, 'Live east gallery crosswalk floor', [length, 0.24, depth],
+    [0, L.galleryY - 0.12, (E.front + L.length / 2) / 2], materials.floor);
+  alignFloorGrain(floor);
+  markCameraCollider(floor, { id: 'live-east-gallery-crosswalk-floor', shape: 'box', center: {x: 0, y: 0, z: 0},
+    size: {x: length, y: 0.24, z: depth} });
+
+  const balusterGeometry = createLongRoomBaluster();
+  const maxCount = Math.ceil(length / 0.18);
+  const balusters = new THREE.InstancedMesh(balusterGeometry, materials.woodWarm, maxCount);
+  balusters.name = 'Live east crosswalk turned balusters';
+  balusters.castShadow = balusters.receiveShadow = true;
+  let instanceIndex = 0;
+  // Only the central-void edge needs fall protection. The opposite edge meets
+  // the solid east wall, where a second balustrade created a false slot.
+  for (const z of [E.front]) {
+    const x0 = -L.galleryInnerX + LIVE_GALLERY_CORNER_RADIUS;
+    const x1 = L.galleryInnerX - LIVE_GALLERY_CORNER_RADIUS;
+    const segmentWidth = x1 - x0;
+    markCameraCollider(crossing, { id: `live-east-crosswalk-guard-${z}`, shape: 'box',
+      center: {x: 0, y: L.galleryY + 1.1, z}, size: {x: segmentWidth, y: 2.2, z: 0.24} });
+    namedBox(crossing, 'Live east crosswalk handrail', [segmentWidth, 0.13, 0.24],
+      [0, L.galleryY + 1.05, z], materials.woodWarm);
+    namedBox(crossing, 'Live east crosswalk supporting lower rail', [segmentWidth, 0.14, 0.2],
+      [0, L.galleryY + 0.1, z], materials.woodWarm);
+    for (const [offset, height, railDepth] of [[-0.36, 0.12, 0.31], [-0.16, 0.12, 0.44]]) {
+      namedBox(crossing, 'Live east crosswalk layered entablature', [segmentWidth, height, railDepth],
+        [0, L.galleryY + offset, z], materials.woodWarm);
+    }
+    const count = Math.ceil(segmentWidth / 0.18);
+    for (let index = 0; index < count; index++) {
+      balusters.setMatrixAt(instanceIndex++, galleryBalusterPlacement(
+        x0 + (index + 0.5) * segmentWidth / count, L.galleryY, z,
+      ));
+    }
+  }
+  balusters.count = instanceIndex;
+  crossing.add(balusters);
+  root.add(crossing);
+}
+
+/** Four supported quarter-circle turns join the live crosswalk rails to the
+ * longitudinal rails. Each turn adds floor into the former square void corner;
+ * it never subtracts an aperture from either walkable slab. */
+function addLiveGalleryRoundedCorners(root: THREE.Group, materials: LibraryMaterials) {
+  const corners = new THREE.Group();
+  corners.name = 'Supported curved live gallery corners';
+  corners.userData.fidelity = 'user-directed rounded gallery circulation; joinery dimensions estimated';
+  const radius = LIVE_GALLERY_CORNER_RADIUS;
+  const balustersPerCorner = Math.ceil(Math.PI * radius / 2 / 0.18);
+  const balusters = new THREE.InstancedMesh(
+    createLongRoomBaluster(),
+    materials.woodWarm,
+    balustersPerCorner * 4,
+  );
+  balusters.name = 'Curved gallery corner turned balusters';
+  balusters.castShadow = balusters.receiveShadow = true;
+  let balusterIndex = 0;
+
+  for (const [end, edgeZ, inwardZ] of [
+    ['west', WEST_GALLERY_CROSSWALK.inner, 1],
+    ['east', E.front, -1],
+  ] as const) {
+    for (const side of [-1, 1]) {
+      const centerX = side * (L.galleryInnerX - radius);
+      const centerZ = edgeZ + inwardZ * radius;
+      const startAngle = side === 1 ? 0 : Math.PI;
+      const endAngle = startAngle - side * inwardZ * Math.PI / 2;
+      const floor = new THREE.Mesh(
+        createGalleryCornerFloorInfillGeometry(side, inwardZ, radius, 0.24),
+        materials.floor,
+      );
+      floor.name = 'Solid curved gallery corner floor infill';
+      floor.position.set(centerX, L.galleryY - 0.12, centerZ);
+      floor.castShadow = floor.receiveShadow = true;
+      floor.userData.isPositiveFloorInfill = true;
+      alignFloorGrain(floor);
+      const floorBandDepth = radius * (Math.SQRT2 - 1);
+      markCameraCollider(floor, {
+        id: `live-gallery-corner-floor-${end}-${side}`,
+        shape: 'arc',
+        center: {x: 0, y: 0, z: 0},
+        radius: radius + floorBandDepth / 2,
+        radialDepth: floorBandDepth,
+        height: 0.24,
+        startAngle,
+        endAngle,
+        segments: 8,
+      });
+      corners.add(floor);
+
+      for (const [name, y, height, radialDepth] of [
+        ['Curved gallery corner handrail', L.galleryY + 1.05, 0.13, 0.24],
+        ['Curved gallery corner supporting lower rail', L.galleryY + 0.1, 0.14, 0.2],
+        ['Curved gallery corner upper entablature', L.galleryY - 0.16, 0.12, 0.44],
+        ['Curved gallery corner lower entablature', L.galleryY - 0.36, 0.12, 0.31],
+      ] as const) {
+        const member = new THREE.Mesh(
+          createGalleryArcPrismGeometry(radius, radialDepth, height, startAngle, endAngle),
+          materials.woodWarm,
+        );
+        member.name = name;
+        member.position.set(centerX, y, centerZ);
+        member.castShadow = member.receiveShadow = true;
+        corners.add(member);
+      }
+
+      markCameraCollider(corners, {
+        id: `live-gallery-corner-rail-${end}-${side}`,
+        shape: 'arc',
+        center: {x: centerX, y: L.galleryY + 1.1, z: centerZ},
+        radius,
+        radialDepth: 0.26,
+        height: 2.2,
+        startAngle,
+        endAngle,
+        segments: 8,
+      });
+      for (let index = 0; index < balustersPerCorner; index++) {
+        const angle = startAngle + (endAngle - startAngle) * (index + 0.5) / balustersPerCorner;
+        balusters.setMatrixAt(balusterIndex++, galleryBalusterPlacement(
+          centerX + Math.cos(angle) * radius,
+          L.galleryY,
+          centerZ + Math.sin(angle) * radius,
+        ));
+      }
+    }
+  }
+  balusters.count = balusterIndex;
+  corners.add(balusters);
+  root.add(corners);
 }
 
 /** Photo-derived upper-shelf supports; dimensions remain joinery estimates. */
@@ -556,7 +796,7 @@ class UpperShelfBrackets {
 const upperShelfSupportOffsets = (width: number) => width > 0.65 ? [width * 0.16, width * 0.5, width * 0.84] : [];
 
 function addTransverseCase(root: THREE.Group, materials: LibraryMaterials, volumes: HistoricalVolumes | null, brackets: UpperShelfBrackets,
-  side: number, z: number, bay: number, level: number, section: ExpandableShelfSection | null, reserved: number,
+  side: number, z: number, bay: number, level: number,
   pilasters: PilasterTemplates, caseTemplates: Map<string, THREE.Group>, shelfFaces = LONG_ROOM_SHELF_FACES) {
   const base = level === 0 ? 0 : L.galleryY + 0.08;
   const inner = L.aisleHalfWidth + 0.15, outer = L.width / 2 - 0.14;
@@ -614,8 +854,6 @@ function addTransverseCase(root: THREE.Group, materials: LibraryMaterials, volum
     for (const face of shelfFaces) {
       if (level === 1) for (const offset of upperShelfSupportOffsets(width)) brackets.add(side * (inner + offset), base + y, z, face);
       if (!volumes) continue;
-      // First catalog rows on lower entry-facing cases are exclusively reserved for real books.
-      if (section && face === 1 && row < Math.ceil(reserved / LONG_ROOM_CATALOG_BOOKS_PER_ROW)) continue;
       // Size-sorted rows contain short matching sets and individual bindings.
       // These dimensions are photographic estimates, not item-level catalog data.
       // Official collection guidance: largest formats on lower shelves.
@@ -639,7 +877,7 @@ function addTransverseCase(root: THREE.Group, materials: LibraryMaterials, volum
         // Slightly recessed spines remain on the shelf, behind its rounded edge.
         const setback = (bindingSeed % 5) * 0.003;
         volumes.add(side * (inner + offset), base + y + 0.04 + h / 2,
-          z + face * (0.15 - setback), thickness, h, 0.22, 0, bindingSeed);
+          z + face * (LONG_ROOM_HISTORICAL_BOOK_CENTER_OFFSET - setback), thickness, h, 0.22, 0, bindingSeed);
       }
     }
   }
@@ -659,7 +897,8 @@ function addHallFloor(root: THREE.Group, materials: LibraryMaterials) {
   markCameraCollider(floor,{id:'long-room-floor',shape:'box',center:{x:0,y:0,z:0},size:{x:L.width,y:0.18,z:L.length}});
 }
 
-function* buildLongRoomSteps(catalogCount: number | readonly number[], includeRetiredRooms = false): Generator<string | void, LongRoomBuilt> {
+function* buildLongRoomSteps(options: LongRoomBuildOptions = {}): Generator<string | void, LongRoomBuilt> {
+  const includeRetiredRooms = options.includeRetiredRooms ?? false;
   const root = new THREE.Group(); root.name = 'Trinity College Dublin Long Room';
   root.userData.metresPerUnit = 1; root.userData.dimensions = { length: L.length, width: L.width, height: L.height };
   // Shared fine-oak PBR finish also used by the component review views.
@@ -667,6 +906,8 @@ function* buildLongRoomSteps(catalogCount: number | readonly number[], includeRe
   yield;
   addHallFloor(root, materials);
   const sections: ExpandableShelfSection[] = [], slots: LongRoomSlot[] = [];
+  // Historical volumes are isolated reference scenery only. The live hall
+  // deliberately leaves every unoccupied shelf empty.
   const volumes = includeRetiredRooms ? new HistoricalVolumes() : null;
   const brackets = new UpperShelfBrackets();
   const shadeMaterial = createWindowShadeMaterial();
@@ -708,24 +949,20 @@ function* buildLongRoomSteps(catalogCount: number | readonly number[], includeRe
       const section: ExpandableShelfSection = { id, angle: -catalogFace * Math.PI / 2, radius: Math.hypot(centerX, z),
         centerX, centerZ: z, width: L.width / 2 - L.aisleHalfWidth - 0.29, height: L.lowerCaseHeight, baseY: 0, depth: L.caseThickness, shelfCount: L.shelfRows };
       sections.push(section);
-      const reserved = typeof catalogCount === 'number'
-        ? Math.max(0, Math.min(LONG_ROOM_CATALOG_SECTION_CAPACITY,
-          catalogCount - catalogSectionIndex * LONG_ROOM_CATALOG_SECTION_CAPACITY))
-        : catalogCount[catalogSectionIndex] ?? 0;
-      for (let book = 0; book < reserved; book++) {
+      for (let book = 0; book < LONG_ROOM_CATALOG_SECTION_CAPACITY; book++) {
         const row = Math.floor(book / LONG_ROOM_CATALOG_BOOKS_PER_ROW);
         const shelfY = longRoomShelfBoardY(row, L.lowerCaseHeight);
-        slots.push({ sectionId: id, rowIndex: row, position: V(centerX,
+        slots.push({ sectionId: id, catalogSectionIndex, rowIndex: row, position: V(centerX,
           shelfY + LONG_ROOM_SHELF_BOARD_THICKNESS / 2 + LONG_ROOM_CATALOG_BOOK_SIZE.height / 2,
-          z + catalogFace * 0.15), scale: V(
+          z + catalogFace * LONG_ROOM_BOOK_CENTER_OFFSET), scale: V(
           LONG_ROOM_CATALOG_BOOK_SIZE.spineWidth,
           LONG_ROOM_CATALOG_BOOK_SIZE.height,
           LONG_ROOM_CATALOG_BOOK_SIZE.coverWidth,
         ), rotationY: 0, lean: 0, spineFace: catalogFace });
       }
-      addTransverseCase(root, materials, volumes, brackets, side, z, bay, 0, section, reserved,
+      addTransverseCase(root, materials, volumes, brackets, side, z, bay, 0,
         pilasters, caseTemplates, shelfFaces);
-      addTransverseCase(root, materials, volumes, brackets, side, z, bay, 1, null, 0,
+      addTransverseCase(root, materials, volumes, brackets, side, z, bay, 1,
         pilasters, caseTemplates, shelfFaces);
       yield `construction-case-${side}-${bay}`;
     }
@@ -741,11 +978,17 @@ function* buildLongRoomSteps(catalogCount: number | readonly number[], includeRe
   yield;
   addLongRoomLamps(root, materials, includeRetiredRooms);
   yield;
-  yield* addLongRoomShelfLaddersSteps(root, materials, includeRetiredRooms);
+  addLongRoomCrystalChandeliers(root, materials);
+  yield;
+  if (includeRetiredRooms) yield* addLongRoomShelfLaddersSteps(root, materials, true);
   addLongRoomGalleryCornice(root, materials);
   yield;
-  addGalleryAccess(root, materials);
+  addGalleryAccess(root, materials, includeRetiredRooms);
   if (includeRetiredRooms) addEastGalleryConnection(root, materials);
+  else {
+    addLiveEastGalleryCrosswalk(root, materials);
+    addLiveGalleryRoundedCorners(root, materials);
+  }
   yield;
   addHistoricAlcoveStair(root, materials);
   yield;
@@ -778,22 +1021,23 @@ function* buildLongRoomSteps(catalogCount: number | readonly number[], includeRe
     root.add(sunlight, sunlight.target);
   }
   const catalogTerminal = new THREE.Group(); // Catalog search is product UI, no fictional furniture in the reconstruction.
-  return { root, materials, shelfSections: sections, bookSlots: slots.sort((a, b) => a.sectionId - b.sectionId || a.rowIndex - b.rowIndex),
+  return { root, materials, shelfSections: sections, catalogSlots: slots.sort((a, b) => a.catalogSectionIndex - b.catalogSectionIndex || a.rowIndex - b.rowIndex),
     interactiveObjects: [], catalogTerminal, animateEnvironment: () => undefined };
 }
 
-/** Synchronous entry retained for tests and offline model generation. */
-export function buildLongRoom(catalogCount: number | readonly number[] = 0, _loader = new THREE.TextureLoader(), includeRetiredRooms = false): LongRoomBuilt {
-  const steps=buildLongRoomSteps(catalogCount, includeRetiredRooms);
+/** Synchronous entry retained for tests and isolated model review. */
+export function buildLongRoom(options: LongRoomBuildOptions = {}, _loader = new THREE.TextureLoader()): LongRoomBuilt {
+  const steps=buildLongRoomSteps(options);
   let step=steps.next();
   while(!step.done) step=steps.next();
   return step.value;
 }
 
 /** Group cheap stages within an 8 ms task budget; expensive stages still yield immediately. */
-export async function buildLongRoomProgressively(catalogCount: number | readonly number[], _loader: THREE.TextureLoader,
-  signal: AbortSignal, onSlice: (milliseconds: number, stage: string) => void = () => undefined): Promise<LongRoomBuilt> {
-  const steps=buildLongRoomSteps(catalogCount);
+export async function buildLongRoomProgressively(_loader: THREE.TextureLoader,
+  signal: AbortSignal, onSlice: (milliseconds: number, stage: string) => void = () => undefined,
+  options: LongRoomBuildOptions = {}): Promise<LongRoomBuilt> {
+  const steps=buildLongRoomSteps(options);
   let stage = 0;
   let taskStart=performance.now();
   try {

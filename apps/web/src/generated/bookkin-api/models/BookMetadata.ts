@@ -106,6 +106,12 @@ export interface BookMetadata {
      */
     tags: Array<string>;
     /**
+     * Thema 1.6 subject codes.
+     * @type {Array<string>}
+     * @memberof BookMetadata
+     */
+    subjectCodes: Array<string>;
+    /**
      *
      * @type {string}
      * @memberof BookMetadata
@@ -134,6 +140,7 @@ export function instanceOfBookMetadata(value: object): value is BookMetadata {
     if (!('authors' in value) || value['authors'] === undefined) return false;
     if (!('translators' in value) || value['translators'] === undefined) return false;
     if (!('tags' in value) || value['tags'] === undefined) return false;
+    if (!('subjectCodes' in value) || value['subjectCodes'] === undefined) return false;
     if (!('sources' in value) || value['sources'] === undefined) return false;
     return true;
 }
@@ -161,6 +168,7 @@ export function BookMetadataFromJSONTyped(json: any, ignoreDiscriminator: boolea
         'series': json['series'] === undefined ? undefined : json['series'] === null ? null : json['series'],
         'seriesIndex': json['seriesIndex'] === undefined ? undefined : json['seriesIndex'] === null ? null : json['seriesIndex'],
         'tags': json['tags'],
+        'subjectCodes': json['subjectCodes'],
         'coverCacheKey': json['coverCacheKey'] === undefined ? undefined : json['coverCacheKey'] === null ? null : json['coverCacheKey'],
         'coverUrl': json['coverUrl'] === undefined ? undefined : json['coverUrl'] === null ? null : json['coverUrl'],
         'sources': (mapValues(json['sources'], MetadataSourceFromJSON)),
@@ -191,6 +199,7 @@ export function BookMetadataToJSONTyped(value?: BookMetadata | null, ignoreDiscr
         'series': value['series'],
         'seriesIndex': value['seriesIndex'],
         'tags': value['tags'],
+        'subjectCodes': value['subjectCodes'],
         'coverCacheKey': value['coverCacheKey'],
         'coverUrl': value['coverUrl'],
         'sources': (mapValues(value['sources'], MetadataSourceToJSON)),

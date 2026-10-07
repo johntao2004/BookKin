@@ -19,6 +19,7 @@ Name | Type
 `series` | string
 `seriesIndex` | number
 `tags` | Array&lt;string&gt;
+`subjectCodes` | Array&lt;string&gt;
 `coverCacheKey` | string
 `coverUrl` | string
 `sources` | [{ [key: string]: MetadataSource; }](MetadataSource.md)
@@ -43,6 +44,7 @@ const example = {
   "series": null,
   "seriesIndex": null,
   "tags": null,
+  "subjectCodes": null,
   "coverCacheKey": null,
   "coverUrl": null,
   "sources": null,

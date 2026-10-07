@@ -1,6 +1,8 @@
 import * as THREE from 'three';
 import { makeBox } from './parts';
 
+export const LONG_ROOM_CAPITAL_MAX_WIDTH = 0.62;
+
 /** Leaf-and-scroll silhouette observed in public Long Room photographs.
  * Local +Z faces the aisle. Dimensions and carving details are estimates. */
 export function createLongRoomCapital(material: THREE.Material) {
@@ -10,7 +12,7 @@ export function createLongRoomCapital(material: THREE.Material) {
     mesh.name = name; mesh.castShadow = mesh.receiveShadow = true; root.add(mesh); return mesh;
   };
   for (const [y, width, depth, height] of [[0.025, 0.39, 0.31, 0.05], [0.09, 0.42, 0.34, 0.045],
-    [0.43, 0.54, 0.39, 0.065], [0.49, 0.62, 0.44, 0.055]]) {
+    [0.43, 0.54, 0.39, 0.065], [0.49, LONG_ROOM_CAPITAL_MAX_WIDTH, 0.44, 0.055]]) {
     add(makeBox(width, height, depth, material, 0, y, 0), 'Capital neck and layered abacus');
   }
   add(makeBox(0.36, 0.32, 0.25, material, 0, 0.25, 0), 'Capital carving core');

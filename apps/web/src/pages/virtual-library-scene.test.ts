@@ -40,6 +40,8 @@ import {
   assignBooksToRotundaBays,
   assignBooksToShelfSlots,
   createCatalogBookForeEdgeGeometry,
+  createVirtualLibraryWorld,
+  disposeScene,
   findPortalRoom,
   findShelfSectionId,
   getBookInspectionTransform,
@@ -48,6 +50,7 @@ import {
   getSpineTitleGlyphs,
   getShelfPlaquePlacement,
   getShelfPlaqueRows,
+  getLongRoomAisleCategoryPlaqueLayout,
   getShelvedBookTransform,
   placeSceneBookOnShelf,
   setSceneBookRenderLayer,
@@ -57,6 +60,8 @@ import {
   VIRTUAL_LIBRARY_BOOK_PREVIEW_LAYER,
   VIRTUAL_LIBRARY_WORLD_LAYER,
 } from "./virtual-library-scene";
+import { LONG_ROOM } from "./virtual-library-model/longRoomLayout";
+import { buildLongRoom } from "./virtual-library-model/scene/longRoom";
 import {
   createRoomShellCameraDescriptors,
   createDirectorOfficeStainedGlassWindow,
@@ -90,6 +95,25 @@ function withMockCanvas<T>(run: () => T) {
   } finally {
     contextSpy.mockRestore();
   }
+}
+
+function makeCatalogBook(id: string, overrides: Partial<Book> = {}): Book {
+  return {
+    id,
+    title: "雾港信使",
+    author: "林岸",
+    description: "一部长篇幻想小说",
+    format: "EPUB",
+    coverUrl: `/${id}.jpg`,
+    progress: 0,
+    addedAt: "2026-09-16T00:00:00Z",
+    libraryRoot: "主书库",
+    relativePath: `${id}.epub`,
+    fingerprint: `sha256:${id}`,
+    status: "AVAILABLE",
+    tags: ["文学"],
+    ...overrides,
+  };
 }
 
 describe("virtual library shelf layout", () => {
@@ -561,6 +585,183 @@ describe("virtual library shelf layout", () => {
     expect(1 + rows.secondary.length).toBe(4);
   });
 
+  it("mounts broad Long Room category plaques on both aisle-facing levels", () => {
+    for (const side of [-1, 1]) {
+      const section = {
+        id: side,
+        centerX: side * 9.13,
+        centerZ: 12.4,
+        angle: -Math.PI / 2,
+        radius: 15.4,
+        width: 3.76,
+        height: LONG_ROOM.lowerCaseHeight,
+        baseY: 0,
+        depth: LONG_ROOM.caseThickness,
+        shelfCount: LONG_ROOM.shelfRows,
+      };
+      for (const level of [0, 1] as const) {
+        const layout = getLongRoomAisleCategoryPlaqueLayout(section, level)!;
+
+        expect(layout.width).toBeGreaterThan(0.8);
+        expect(layout.height).toBeGreaterThan(0.24);
+        expect(Math.abs(layout.worldPosition.x)).toBeLessThan(LONG_ROOM.aisleHalfWidth);
+        expect(layout.worldPosition.y).toBeCloseTo(level === 0
+          ? LONG_ROOM.lowerCaseHeight / 2
+          : LONG_ROOM.galleryY + 0.08 + LONG_ROOM.upperCaseHeight / 2);
+        expect(layout.worldPosition.z).toBe(section.centerZ);
+        expect(layout.worldRotationY).toBe(side * Math.PI / 2);
+      }
+    }
+  });
+
+  it("labels both levels of every Long Room case at their midpoint even when the catalog is empty", () => {
+    const textureLoaderSpy = vi.spyOn(THREE.TextureLoader.prototype, "load")
+      .mockReturnValue(new THREE.Texture());
+    try {
+      withMockCanvas(() => {
+        const scene = new THREE.Scene();
+        const loader = new THREE.TextureLoader();
+        const preparedHall = buildLongRoom({}, loader);
+        preparedHall.root.userData.staticOptimization = "test-fixture";
+        createVirtualLibraryWorld(scene, loader, 1, preparedHall);
+        scene.updateMatrixWorld(true);
+        const plaques: THREE.Object3D[] = [];
+        scene.traverse((object) => {
+          if (object.userData.isShelfCategoryPlaque) plaques.push(object);
+        });
+
+        expect(plaques).toHaveLength(preparedHall.shelfSections.length * 2);
+        expect(new Set(plaques.map((plaque) => plaque.userData.sectionId)).size)
+          .toBe(preparedHall.shelfSections.length);
+        expect(new Set(plaques.map((plaque) => plaque.userData.level))).toEqual(new Set([0, 1]));
+        for (const plaque of plaques) {
+          const position = plaque.getWorldPosition(new THREE.Vector3());
+          expect(position.y).toBeCloseTo(plaque.userData.level === 0
+            ? LONG_ROOM.lowerCaseHeight / 2
+            : LONG_ROOM.galleryY + 0.08 + LONG_ROOM.upperCaseHeight / 2);
+          expect(Math.abs(position.x)).toBeLessThan(LONG_ROOM.aisleHalfWidth);
+          expect(plaque.userData.categoryId).toEqual(expect.any(String));
+        }
+        disposeScene(scene);
+      });
+    } finally {
+      textureLoaderSpy.mockRestore();
+    }
+  });
+
+  it("synchronizes real catalog models transactionally without rebuilding the Long Room", () => {
+    const textures = new Map<string, THREE.Texture>();
+    const textureLoaderSpy = vi.spyOn(THREE.TextureLoader.prototype, "load")
+      .mockImplementation((url: string) => {
+        const texture = new THREE.Texture<HTMLImageElement>();
+        vi.spyOn(texture, "dispose");
+        textures.set(url, texture);
+        return texture;
+      });
+    try {
+      withMockCanvas(() => {
+        const scene = new THREE.Scene();
+        const loader = new THREE.TextureLoader();
+        const preparedHall = buildLongRoom({}, loader);
+        preparedHall.root.userData.staticOptimization = "test-fixture";
+        const world = createVirtualLibraryWorld(scene, loader, 1, preparedHall);
+        const staticRoot = preparedHall.root;
+        const bookA = makeCatalogBook("book-a", { coverUrl: "/cover-a.jpg" });
+        const bookB = makeCatalogBook("book-b", {
+          title: "纸上群山",
+          description: "从旧地图与家书拼出历史",
+          tags: ["历史", "传记"],
+          coverUrl: "/cover-b.jpg",
+        });
+
+        expect(world.sceneBooks).toHaveLength(0);
+        expect(world.interactiveMeshes).toHaveLength(0);
+        const initial = world.syncCatalogBooks([bookA, bookB]);
+        expect(new Set(initial.addedBookIds)).toEqual(new Set(["book-a", "book-b"]));
+        expect(initial.removedBookIds).toEqual([]);
+        expect(initial.replacedBookIds).toEqual([]);
+        expect(world.sceneBooks).toHaveLength(2);
+        expect(world.interactiveMeshes).toEqual(world.sceneBooks.map((book) => book.hitTarget));
+        expect(preparedHall.root).toBe(staticRoot);
+        expect(preparedHall.root.userData.catalogSyncRevision).toBe(1);
+
+        const firstSceneBook = world.sceneBooks.find((sceneBook) => sceneBook.book.id === "book-a")!;
+        const secondSceneBook = world.sceneBooks.find((sceneBook) => sceneBook.book.id === "book-b")!;
+        const firstGroup = firstSceneBook.group;
+        const secondGroup = secondSceneBook.group;
+        const secondResources = [
+          ...secondSceneBook.resources.geometries,
+          ...secondSceneBook.resources.materials,
+        ].map((resource) => vi.spyOn(resource, "dispose"));
+        const firstSectionId = firstSceneBook.shelfSectionId;
+        const secondSectionId = secondSceneBook.shelfSectionId;
+        expect(secondSectionId).not.toBe(firstSectionId);
+        expect(world.getShelfInfo(firstSectionId)?.bookCount).toBe(1);
+        expect(world.getShelfInfo(secondSectionId)?.bookCount).toBe(1);
+
+        expect(() => world.syncCatalogBooks(
+          Array.from({ length: 4561 }, (_, index) => makeCatalogBook(`overflow-${index}`)),
+        )).toThrow("Long Room catalog category capacity exceeded");
+        expect(world.sceneBooks).toHaveLength(2);
+        expect(world.sceneBooks.find((sceneBook) => sceneBook.book.id === "book-a")?.group).toBe(firstGroup);
+        expect(preparedHall.root.userData.catalogSyncRevision).toBe(1);
+
+        const editedTitle = { ...bookA, title: "雾港信使（修订版）" };
+        const titleResult = world.syncCatalogBooks([editedTitle, bookB]);
+        expect(titleResult.replacedBookIds).toEqual(["book-a"]);
+        const editedTitleSceneBook = world.sceneBooks.find((sceneBook) => sceneBook.book.id === "book-a")!;
+        expect(editedTitleSceneBook).toBe(firstSceneBook);
+        expect(editedTitleSceneBook.group).not.toBe(firstGroup);
+        expect(editedTitleSceneBook.group.getObjectByName("Catalog spine: 雾港信使（修订版）")).toBeDefined();
+        expect(world.sceneBooks.find((sceneBook) => sceneBook.book.id === "book-b")?.group).toBe(secondGroup);
+
+        const editedCover = { ...editedTitle, coverUrl: "/cover-a-replaced.jpg" };
+        const coverResult = world.syncCatalogBooks([editedCover, bookB]);
+        expect(coverResult.replacedBookIds).toEqual(["book-a"]);
+        expect((textures.get("/cover-a.jpg")?.dispose as ReturnType<typeof vi.fn>)).toHaveBeenCalled();
+
+        const editedCategory = {
+          ...editedCover,
+          description: "叶片与自然观察",
+          tags: ["自然", "科学"],
+        };
+        const categoryResult = world.syncCatalogBooks([editedCategory, bookB]);
+        expect(categoryResult.replacedBookIds).toEqual(["book-a"]);
+        const categorySceneBook = world.sceneBooks.find((sceneBook) => sceneBook.book.id === "book-a")!;
+        expect(categorySceneBook.classification.category.id).toBe("nature");
+        expect(world.getShelfInfo(categorySceneBook.shelfSectionId)?.bookCount).toBe(1);
+        expect(preparedHall.root).toBe(staticRoot);
+
+        const removed = world.syncCatalogBooks([editedCategory]);
+        expect(removed.removedBookIds).toEqual(["book-b"]);
+        expect(world.sceneBooks).toHaveLength(1);
+        expect(world.interactiveMeshes).toEqual([categorySceneBook.hitTarget]);
+        expect(world.getShelfInfo(firstSectionId)?.bookCount).toBe(1);
+        const categoryPlaques = [] as THREE.Object3D[];
+        scene.traverse((object) => {
+          if (object.userData.isShelfCategoryPlaque && object.userData.sectionId === firstSectionId) {
+            categoryPlaques.push(object);
+          }
+        });
+        expect(categoryPlaques).not.toHaveLength(0);
+        expect(new Set(categoryPlaques.map((plaque) => plaque.userData.categoryId))).toEqual(new Set(["nature"]));
+        secondResources.forEach((dispose) => expect(dispose).toHaveBeenCalled());
+        expect((textures.get("/cover-b.jpg")?.dispose as ReturnType<typeof vi.fn>)).toHaveBeenCalled();
+
+        const emptied = world.syncCatalogBooks([]);
+        expect(emptied.removedBookIds).toEqual(["book-a"]);
+        expect(world.sceneBooks).toEqual([]);
+        expect(world.interactiveMeshes).toEqual([]);
+        expect(world.getShelfInfo(firstSectionId)?.bookCount).toBe(0);
+        expect((textures.get("/cover-a-replaced.jpg")?.dispose as ReturnType<typeof vi.fn>)).toHaveBeenCalled();
+        expect(preparedHall.root).toBe(staticRoot);
+        disposeScene(scene);
+      });
+    } finally {
+      textureLoaderSpy.mockRestore();
+    }
+  });
+
   it("uses the approved fully-interior camera framing for both independent rooms", () => {
     expect(LIBRARY_ROOM_CAMERA_VIEW.targetZ).toBe(-0.5);
     expect(LIBRARY_ROOM_CAMERA_VIEW.desktop).toMatchObject({ radius: 5.3, fov: 72 });
@@ -881,6 +1082,16 @@ describe("virtual library shelf layout", () => {
     expect(classifyCatalogBook(naturalBook)).toMatchObject({
       category: { id: "nature" },
       subcategory: { id: "life" },
+    });
+    expect(classifyCatalogBook(book({ id: "coded", title: "无关标题", subjectCodes: ["FF"] }))).toMatchObject({
+      category: { id: "literature", code: "F" },
+      subcategory: { id: "poetry", code: "FF" },
+    });
+    expect(classifyCatalogBook(book({ id: "unknown-epub", title: "QX 204", format: "EPUB" }))).toMatchObject({
+      category: { id: "unclassified", label: "待分类" },
+    });
+    expect(classifyCatalogBook(book({ id: "unknown-pdf", title: "QX 204", format: "PDF" }))).toMatchObject({
+      category: { id: "unclassified", label: "待分类" },
     });
     expect(sortCatalogBooksByClassification([naturalBook, historyBook, fictionBook]).map(({ book: item }) => item.id)).toEqual([
       "fiction",

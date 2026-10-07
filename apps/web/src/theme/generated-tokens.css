@@ -134,7 +134,7 @@
   --shadow-focus: 0 0 0 3px rgba(204, 120, 92, 0.18);
   --shadow-cover: 0 1px 3px rgba(20, 20, 19, 0.08);
   --shadow-popover: 0 8px 24px rgba(20, 20, 19, 0.12);
-  --layout-content-max: 1200px;
+  --layout-content-max: 1024px;
   --layout-reading-max: 760px;
   --layout-nav-height: 64px;
   --layout-touch-target: 44px;

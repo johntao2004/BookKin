@@ -25,7 +25,7 @@ describe("MetadataDialog", () => {
 
   it("closes and reports an ordinary metadata edit before persistence resolves", async () => {
     let resolveUpdate: ((value: Awaited<ReturnType<typeof api.updateBookMetadata>>) => void) | undefined;
-    vi.spyOn(api, "updateBookMetadata").mockImplementationOnce(() => new Promise((resolve) => {
+    const updateMetadata = vi.spyOn(api, "updateBookMetadata").mockImplementationOnce(() => new Promise((resolve) => {
       resolveUpdate = resolve;
     }));
     const savedImmediately = vi.fn();
@@ -47,6 +47,7 @@ describe("MetadataDialog", () => {
     fireEvent.change(titleInput, { target: { value: "即时标题" } });
     fireEvent.click(screen.getByRole("button", { name: "保存" }));
 
+    expect(updateMetadata).toHaveBeenCalledWith(demoBooks[0], expect.objectContaining({ manualFields: ["title"] }));
     expect(savedImmediately).toHaveBeenCalledWith("书籍展示信息已保存");
     expect(closed).toHaveBeenCalledTimes(1);
     expect(failed).not.toHaveBeenCalled();

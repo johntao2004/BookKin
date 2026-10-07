@@ -18,6 +18,7 @@ Name | Type
 `series` | string
 `seriesIndex` | number
 `tags` | Array&lt;string&gt;
+`subjectCodes` | Array&lt;string&gt;
 `manualFields` | Array&lt;string&gt;
 `writeBack` | boolean
 `bookFileId` | string
@@ -42,6 +43,7 @@ const example = {
   "series": null,
   "seriesIndex": null,
   "tags": null,
+  "subjectCodes": null,
   "manualFields": null,
   "writeBack": null,
   "bookFileId": null,

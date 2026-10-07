@@ -22,6 +22,7 @@ Name | Type
 `fingerprint` | string
 `status` | [BookFileStatus](BookFileStatus.md)
 `tags` | Array&lt;string&gt;
+`subjectCodes` | Array&lt;string&gt;
 
 ## Example
 
@@ -46,6 +47,7 @@ const example = {
   "fingerprint": null,
   "status": null,
   "tags": null,
+  "subjectCodes": null,
 } satisfies Book
 
 console.log(example)

@@ -14,6 +14,18 @@ export const pageWidthSx = {
   px: { xs: 2, sm: 3, lg: 0 },
 };
 
+// Reader chrome and document surfaces share the exact page frame at every
+// viewport width. A narrower intermediate reader frame makes the two stacked
+// navigation bars visibly drift apart on tablets and small laptops.
+export const readerWidthSx = pageWidthSx;
+
+export const topNavigationSurfaceSx = {
+  bgcolor: "background.default",
+  color: "text.primary",
+  borderBottom: 0,
+  boxShadow: "none",
+};
+
 export function PageContainer({ children, sx }: { children: ReactNode; sx?: SxProps<Theme> }) {
   const embedded = useContext(EmbeddedSettingsContext);
   if (embedded) return <Box sx={sx}>{children}</Box>;

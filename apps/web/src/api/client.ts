@@ -440,6 +440,14 @@ export const api = {
     return { ...current, mustChangePassword: false };
   },
 
+  async catalogRevision(signal?: AbortSignal): Promise<{ userId: string; revision: number; readingUpdatedAt?: string | null }> {
+    if (!demoMode) return request("/books/revision", { signal });
+    const snapshot = JSON.stringify(books);
+    let revision = 2166136261;
+    for (let index = 0; index < snapshot.length; index++) revision = Math.imul(revision ^ snapshot.charCodeAt(index), 16777619);
+    return { userId: users[0]?.id ?? "demo", revision: revision >>> 0, readingUpdatedAt: null };
+  },
+
   async listBooks(input: { q?: string; format?: "EPUB" | "PDF"; sort?: "recent" | "title" | "author"; cursor?: string; limit?: number; signal?: AbortSignal } = {}): Promise<BookPage> {
     if (!demoMode) {
       const params = new URLSearchParams({ limit: String(input.limit ?? 36) });
@@ -850,6 +858,7 @@ export const api = {
       isbn: "",
       series: "灯火集",
       tags: book.tags,
+      subjectCodes: book.subjectCodes ?? [],
       sources: {},
     };
   },
@@ -866,6 +875,7 @@ export const api = {
       author: input.authors.join(" / "),
       description: input.description ?? "",
       tags: input.tags,
+      subjectCodes: input.subjectCodes ?? [],
     } : candidate);
     const metadata: BookMetadata = { id: book.id, ...input };
     return {

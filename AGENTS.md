@@ -23,7 +23,7 @@
 
 ## Java 模块边界
 
-- 模块位于 `io.github.johntao2004.bookkin.<module>`：`auth`、`users`、`catalog`、`ingestion`、`filemanagement`、`reading`、`annotations`、`audit`。
+- 模块位于 `com.elexvx.bookkin.<module>`：`auth`、`users`、`catalog`、`ingestion`、`filemanagement`、`reading`、`annotations`、`audit`。
 - 模块之间只能通过公开 application service、事件或明确标记为模块网关的 public Repository 协作；不得访问其他模块的 Controller、包私有类型或绕过网关自行改写其表。
 - 现有 `BookRepository`、`UserRepository`、`LibraryRootRepository` 是模块间查询/命令网关。新增跨模块依赖优先增加窄接口，禁止把 jOOQ `Record` 暴露到模块外。
 - Controller 只做协议转换和权限入口；事务规则位于 application service；文件系统访问位于 file-management infrastructure。

@@ -61,6 +61,8 @@ export interface Book {
   fingerprint: string;
   status: BookFileStatus;
   tags: string[];
+  /** Persisted international subject codes (Thema 1.6). */
+  subjectCodes?: string[];
 }
 
 export interface BookPage {
@@ -153,6 +155,8 @@ export interface BookMetadata {
   series?: string;
   seriesIndex?: number;
   tags: string[];
+  /** Specific Thema child codes; the first one is the primary subject. */
+  subjectCodes?: string[];
   coverCacheKey?: string;
   coverUrl?: string;
   sources: Record<string, MetadataSource>;

@@ -1,10 +1,19 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 
-/** Five modeled recessed flutes with rounded stops, estimated from the public
- * pier photograph. Local +Z is the aisle-facing carved surface. */
-export function createLongRoomPilasterShaft(height: number, material: THREE.Material) {
-  const width = 0.38, depth = 0.26, columns = 80;
+export const LONG_ROOM_PILASTER_SHAFT_DEPTH = 0.26;
+
+/** Modeled recessed flutes with rounded stops, estimated from the public pier
+ * photograph. Local +Z is the aisle-facing carved surface. */
+export function createLongRoomPilasterShaft(height: number, material: THREE.Material, options: {
+  width?: number;
+  fluteCount?: number;
+} = {}) {
+  const width = options.width ?? 0.38;
+  const fluteCount = options.fluteCount ?? 5;
+  const depth = LONG_ROOM_PILASTER_SHAFT_DEPTH;
+  const columns = Math.max(80, Math.round(80 * width / 0.38));
+  const fluteSpacing = width * 0.6 / Math.max(1, fluteCount - 1);
   const stops = [0, 0.025, 0.06, 0.12, height - 0.12, height - 0.06, height - 0.025, height];
   const positions: number[] = [], uv: number[] = [], indices: number[] = [];
   for (const y of stops) {
@@ -13,8 +22,9 @@ export function createLongRoomPilasterShaft(height: number, material: THREE.Mate
     for (let column = 0; column <= columns; column++) {
       const x = (column / columns - 0.5) * width;
       let hollow = 0;
-      for (let flute = -2; flute <= 2; flute++) {
-        const u = (x - flute * 0.057) / 0.018;
+      for (let flute = 0; flute < fluteCount; flute++) {
+        const fluteX = (flute - (fluteCount - 1) / 2) * fluteSpacing;
+        const u = (x - fluteX) / 0.018;
         if (Math.abs(u) < 1) hollow = 0.014 * Math.sqrt(1 - u * u) * taper;
       }
       positions.push(x, y - height / 2, depth / 2 - hollow);

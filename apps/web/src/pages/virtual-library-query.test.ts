@@ -1,7 +1,7 @@
 import { QueryClient, QueryObserver } from "@tanstack/react-query";
 import { api } from "../api/client";
 import type { Book } from "../domain/types";
-import { fetchVirtualLibraryBooks, VIRTUAL_LIBRARY_BOOKS_QUERY_KEY } from "./virtual-library-query";
+import { fetchVirtualLibraryBooks, refreshVirtualLibraryBooks, VIRTUAL_LIBRARY_BOOKS_QUERY_KEY } from "./virtual-library-query";
 
 const book = (id: string, title = id): Book => ({
   id, title, author: "作者", description: "", format: "EPUB", coverUrl: `/covers/${id}.jpg`,
@@ -10,6 +10,38 @@ const book = (id: string, title = id): Book => ({
 });
 
 afterEach(() => vi.restoreAllMocks());
+
+it("checks the revision without refetching pages until the catalog changes", async () => {
+  const client = new QueryClient();
+  let revision = 1;
+  const version = vi.spyOn(api, "catalogRevision").mockImplementation(async () => ({ userId: "reader", revision }));
+  const list = vi.spyOn(api, "listBooks").mockResolvedValueOnce({ items: [book("a")] })
+    .mockResolvedValueOnce({ items: [book("a"), book("b")] });
+
+  const first = await refreshVirtualLibraryBooks(client);
+  client.setQueryData(VIRTUAL_LIBRARY_BOOKS_QUERY_KEY, first);
+  expect(await refreshVirtualLibraryBooks(client)).toBe(first);
+  expect(list).toHaveBeenCalledTimes(1);
+  revision = 2;
+  const second = await refreshVirtualLibraryBooks(client);
+  expect(second.pages[0].items.map((item) => item.id)).toEqual(["a", "b"]);
+  expect(list).toHaveBeenCalledTimes(2);
+  expect(version).toHaveBeenCalledTimes(5);
+  client.clear();
+});
+
+it("keeps the prior snapshot if the revision changes during pagination", async () => {
+  const client = new QueryClient();
+  let revision = 1;
+  vi.spyOn(api, "catalogRevision").mockImplementation(async () => ({ userId: "reader", revision }));
+  vi.spyOn(api, "listBooks").mockImplementation(async () => {
+    revision = 2;
+    return { items: [book("new")] };
+  });
+  await expect(refreshVirtualLibraryBooks(client)).rejects.toThrow("藏书在同步期间发生变化");
+  expect(client.getQueryData(VIRTUAL_LIBRARY_BOOKS_QUERY_KEY)).toBeUndefined();
+  client.clear();
+});
 
 it("loads every cursor page beyond the former 60-book limit and deduplicates IDs", async () => {
   const first = Array.from({length: 100}, (_, i) => book(String(i)));

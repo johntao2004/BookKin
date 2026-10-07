@@ -85,6 +85,21 @@ chmod 0444 "$RUNTIME_JAR"
 stop_managed_process api
 stop_managed_process worker
 
+if python3 - "$API_PORT" <<'PY'
+import socket
+import sys
+
+try:
+    with socket.create_connection(("127.0.0.1", int(sys.argv[1])), timeout=0.5):
+        sys.exit(0)
+except OSError:
+    sys.exit(1)
+PY
+then
+  echo "Port $API_PORT is already in use; refusing to treat another service as the new API." >&2
+  exit 1
+fi
+
 nohup java -jar "$RUNTIME_JAR" --spring.profiles.active=api > "$LOG_DIR/api.log" 2>&1 < /dev/null &
 API_PID=$!
 echo "$API_PID" > "$RUN_DIR/api.pid"
@@ -95,11 +110,11 @@ echo "$WORKER_PID" > "$RUN_DIR/worker.pid"
 
 API_READY=false
 for _ in {1..240}; do
-  if curl --silent --fail --max-time 1 "$API_HEALTH_URL" >/dev/null; then
-    API_READY=true
+  if ! kill -0 "$API_PID" 2>/dev/null || ! kill -0 "$WORKER_PID" 2>/dev/null; then
     break
   fi
-  if ! kill -0 "$API_PID" 2>/dev/null || ! kill -0 "$WORKER_PID" 2>/dev/null; then
+  if curl --silent --fail --max-time 1 "$API_HEALTH_URL" >/dev/null; then
+    API_READY=true
     break
   fi
   sleep 0.5

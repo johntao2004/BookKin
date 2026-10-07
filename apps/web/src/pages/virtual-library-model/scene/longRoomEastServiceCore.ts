@@ -21,7 +21,9 @@ export function createEastServiceCore(materials:LibraryMaterials) {
  // The northern portion remains reserved for the lift; close access to its void.
  box('Service core lift reservation',1.38,U.ceiling,C.east-C.west,-8.35,U.ceiling/2,(C.east+C.west)/2);
  const route=stair.userData.walkingSamples as {x:number;y:number;z:number}[];
- root.userData.walkingSamples=[{x:A.x,y:0,z:-0.8},{x:A.x,y:0,z:1.1},...route,
+ // Start beyond the aisle-end pilaster's camera clearance after the cases
+ // were deepened, while remaining on the hall side of the service doorway.
+ root.userData.walkingSamples=[{x:A.x,y:0,z:-0.6},{x:A.x,y:0,z:1.1},...route,
   {x:A.x,y:U.floor,z:2.5},{x:A.x,y:U.floor,z:3.5},{x:A.x,y:U.floor,z:4.5}];
  return root;
 }

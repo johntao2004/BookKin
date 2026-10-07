@@ -4,7 +4,6 @@ import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js
 import type { Book } from "../domain/types";
 import { tokens } from "../theme/generated-tokens";
 import {
-  classifyCatalogBook,
   defaultCategoryForShelf,
   sortCatalogBooksByClassification,
   longRoomCatalogSectionCounts,
@@ -27,18 +26,57 @@ import {
   type LibraryRoomId,
 } from "./virtual-library-rooms";
 
-import { buildLongRoom, type LongRoomBuilt } from "./virtual-library-model/scene/longRoom";
+import {
+  buildLongRoom,
+  LONG_ROOM_BOOK_CENTER_OFFSET,
+  LONG_ROOM_CATALOG_SECTION_CAPACITY,
+  LONG_ROOM_SHELF_FRONT_OFFSET,
+  type LongRoomBuilt,
+} from "./virtual-library-model/scene/longRoom";
+import { LONG_ROOM_PILASTER_SHAFT_DEPTH } from "./virtual-library-model/scene/longRoomPilaster";
 import { LONG_ROOM } from "./virtual-library-model/longRoomLayout";
 
 export const ROTUNDA_CENTER = new THREE.Vector3(0, LONG_ROOM.camera.targetY, LONG_ROOM.camera.targetZ);
 export const ROTUNDA_CAMERA_RADIUS = LONG_ROOM.camera.radius;
-export const VIRTUAL_LIBRARY_SCENE_MODEL_VERSION = "trinity-long-room-catalog-binding-detail-2026-09-15";
+export const VIRTUAL_LIBRARY_SCENE_MODEL_VERSION = "trinity-long-room-real-catalog-sync-2026-09-16";
 
 export const SHELF_PLAQUE_MOUNT = {
   gap: 0.012,
   backingDepth: 0.026,
   textureFaceOffset: 0.002,
 } as const;
+
+const SHELF_SELECTION_FRAME_GAP = 0.04;
+
+export const LONG_ROOM_AISLE_CATEGORY_PLAQUE = {
+  lowerCenterY: LONG_ROOM.lowerCaseHeight / 2,
+  upperCenterY: LONG_ROOM.galleryY + 0.08 + LONG_ROOM.upperCaseHeight / 2,
+  height: 0.26,
+  maxWidth: 0.82,
+  widthInset: 0.22,
+} as const;
+
+export function getLongRoomAisleCategoryPlaqueLayout(
+  section: ExpandableShelfSection,
+  level: 0 | 1 = 0,
+) {
+  if (section.centerX === undefined || section.centerZ === undefined) return null;
+  const side = Math.sign(section.centerX) || 1;
+  return {
+    width: Math.min(LONG_ROOM_AISLE_CATEGORY_PLAQUE.maxWidth,
+      section.depth - LONG_ROOM_AISLE_CATEGORY_PLAQUE.widthInset),
+    height: LONG_ROOM_AISLE_CATEGORY_PLAQUE.height,
+    worldPosition: new THREE.Vector3(
+      side * (LONG_ROOM.aisleHalfWidth - LONG_ROOM_PILASTER_SHAFT_DEPTH / 2
+        - SHELF_PLAQUE_MOUNT.gap - SHELF_PLAQUE_MOUNT.backingDepth / 2),
+      level === 0
+        ? LONG_ROOM_AISLE_CATEGORY_PLAQUE.lowerCenterY
+        : LONG_ROOM_AISLE_CATEGORY_PLAQUE.upperCenterY,
+      section.centerZ,
+    ),
+    worldRotationY: side * Math.PI / 2,
+  };
+}
 
 export interface ShelfPlaquePlacement {
   shelfIndex: number;
@@ -182,6 +220,22 @@ export interface SceneBook {
   modelSize: ShelfBookModelSize;
   shelfSectionId: number;
   shelfRowIndex: number;
+  renderSignature: string;
+  resources: SceneBookResources;
+}
+
+interface SceneBookResources {
+  geometries: Set<THREE.BufferGeometry>;
+  materials: Set<THREE.Material>;
+  textures: Set<THREE.Texture>;
+  coverMaterial: THREE.MeshStandardMaterial;
+  coverTexture: THREE.Texture;
+  coverUrl: string;
+}
+
+interface DisposableCatalogResources {
+  geometries: readonly THREE.BufferGeometry[];
+  materials: readonly THREE.Material[];
 }
 
 export interface ShelfBookModelSize {
@@ -210,6 +264,7 @@ export interface LibraryWorld {
   interactiveMeshes: THREE.Object3D[];
   shelfHitMeshes: THREE.Object3D[];
   portalHitMeshes: THREE.Object3D[];
+  syncCatalogBooks: (books: readonly Book[]) => CatalogSyncResult;
   toggleShelfSection: (sectionId: number) => number | null;
   collapseShelfSections: () => void;
   setHoveredShelfSection: (sectionId: number | null) => void;
@@ -221,6 +276,12 @@ export interface LibraryWorld {
   animateEnvironment: (elapsed: number) => void;
 }
 
+export interface CatalogSyncResult {
+  addedBookIds: string[];
+  removedBookIds: string[];
+  replacedBookIds: string[];
+}
+
 interface ShelfSectionController {
   sectionId: number;
   root: THREE.Group;
@@ -228,6 +289,9 @@ interface ShelfSectionController {
   frameMaterial: THREE.MeshBasicMaterial;
   selectionFillMaterial: THREE.MeshBasicMaterial;
   labelMaterials: THREE.MeshBasicMaterial[];
+  labelPlates: THREE.Object3D[];
+  labelTextureCache: Map<string, THREE.CanvasTexture>;
+  plaqueBackingMaterial: THREE.Material;
   info: ShelfCategoryInfo;
   homePosition: THREE.Vector3;
 }
@@ -240,8 +304,12 @@ interface BookMaterials {
   foreEdgeGeometry: THREE.PlaneGeometry;
   pageHeadGeometry: THREE.PlaneGeometry;
   covers: Map<string, THREE.MeshStandardMaterial>;
+  coverTextures: Map<string, THREE.Texture>;
+  coverReferences: Map<string, number>;
   hitTargetGeometry: THREE.BoxGeometry;
   hitTargetMaterial: THREE.MeshBasicMaterial;
+  sharedGeometries: Set<THREE.BufferGeometry>;
+  sharedMaterials: Set<THREE.Material>;
 }
 
 interface AssignedBook<T> {
@@ -463,6 +531,8 @@ function mergeBookMeshesForMaterial(
   parent: THREE.Group,
   meshMaterial: THREE.Material,
   name: string,
+  ownedGeometries: Set<THREE.BufferGeometry>,
+  sharedGeometries: Set<THREE.BufferGeometry>,
 ) {
   const meshes = parent.children.filter((child): child is THREE.Mesh => (
     child instanceof THREE.Mesh && child.material === meshMaterial
@@ -470,11 +540,19 @@ function mergeBookMeshesForMaterial(
   if (meshes.length < 2) return;
   const geometries = meshes.map((mesh) => {
     mesh.updateMatrix();
-    return mesh.geometry.clone().applyMatrix4(mesh.matrix);
+    if (!sharedGeometries.has(mesh.geometry)) ownedGeometries.add(mesh.geometry);
+    // RoundedBoxGeometry and PlaneGeometry do not consistently share index
+    // topology. Normalize the small per-book detail batch before merging so
+    // the refined binding never emits BufferGeometryUtils errors at runtime.
+    const geometry = mesh.geometry.index
+      ? mesh.geometry.toNonIndexed()
+      : mesh.geometry.clone();
+    return geometry.applyMatrix4(mesh.matrix);
   });
   const geometry = mergeGeometries(geometries, false);
   geometries.forEach(item => item.dispose());
   if (!geometry) return;
+  ownedGeometries.add(geometry);
   const mergedMesh = new THREE.Mesh(geometry, meshMaterial);
   mergedMesh.name = name;
   mergedMesh.castShadow = meshes.some(mesh => mesh.castShadow);
@@ -517,25 +595,35 @@ function createBookMaterials(anisotropy: number): BookMaterials {
       .getStyle(),
     { roughness: 0.76, metalness: 0.02 },
   ));
+  const pages = material(tokens.color.primitive.cream100, { map: paperTexture, roughness: 0.98 });
+  const headband = material(tokens.color.primitive.cream300, { roughness: 0.9, metalness: 0 });
+  const foreEdgeGeometry = createCatalogBookForeEdgeGeometry(
+    CATALOG_BOOK_MODEL_SIZE.depth - CATALOG_BOOK_DETAIL_LAYOUT.pageBlockInset.depth,
+    CATALOG_BOOK_MODEL_SIZE.height - CATALOG_BOOK_DETAIL_LAYOUT.pageBlockInset.height,
+    CATALOG_BOOK_DETAIL_LAYOUT.foreEdgeCurve,
+  );
+  const pageHeadGeometry = new THREE.PlaneGeometry(
+    CATALOG_BOOK_MODEL_SIZE.width - CATALOG_BOOK_DETAIL_LAYOUT.pageBlockInset.width,
+    CATALOG_BOOK_MODEL_SIZE.depth - CATALOG_BOOK_DETAIL_LAYOUT.pageBlockInset.depth,
+  );
+  const hitTargetGeometry = new THREE.BoxGeometry(1, 1, 1);
+  const hitTargetMaterial = new THREE.MeshBasicMaterial({ visible: false, side: THREE.DoubleSide });
   return {
-    pages: material(tokens.color.primitive.cream100, { map: paperTexture, roughness: 0.98 }),
+    pages,
     spines,
     spineTrims,
-    headband: material(tokens.color.primitive.cream300, { roughness: 0.9, metalness: 0 }),
-    foreEdgeGeometry: createCatalogBookForeEdgeGeometry(
-      CATALOG_BOOK_MODEL_SIZE.depth - CATALOG_BOOK_DETAIL_LAYOUT.pageBlockInset.depth,
-      CATALOG_BOOK_MODEL_SIZE.height - CATALOG_BOOK_DETAIL_LAYOUT.pageBlockInset.height,
-      CATALOG_BOOK_DETAIL_LAYOUT.foreEdgeCurve,
-    ),
-    pageHeadGeometry: new THREE.PlaneGeometry(
-      CATALOG_BOOK_MODEL_SIZE.width - CATALOG_BOOK_DETAIL_LAYOUT.pageBlockInset.width,
-      CATALOG_BOOK_MODEL_SIZE.depth - CATALOG_BOOK_DETAIL_LAYOUT.pageBlockInset.depth,
-    ),
+    headband,
+    foreEdgeGeometry,
+    pageHeadGeometry,
     covers: new Map<string, THREE.MeshStandardMaterial>(),
-    hitTargetGeometry: new THREE.BoxGeometry(1, 1, 1),
+    coverTextures: new Map<string, THREE.Texture>(),
+    coverReferences: new Map<string, number>(),
+    hitTargetGeometry,
     // Three.js still raycasts a mesh whose material is hidden, so this adds no
     // rendered geometry or draw call while giving thin shelf spines a humane target.
-    hitTargetMaterial: new THREE.MeshBasicMaterial({ visible: false, side: THREE.DoubleSide }),
+    hitTargetMaterial,
+    sharedGeometries: new Set([foreEdgeGeometry, pageHeadGeometry, hitTargetGeometry]),
+    sharedMaterials: new Set([pages, ...spines, ...spineTrims, headband, hitTargetMaterial]),
   };
 }
 
@@ -546,7 +634,13 @@ function getCoverMaterial(
   bookMaterials: BookMaterials,
 ) {
   const existing = bookMaterials.covers.get(book.coverUrl);
-  if (existing) return existing;
+  if (existing) {
+    bookMaterials.coverReferences.set(
+      book.coverUrl,
+      (bookMaterials.coverReferences.get(book.coverUrl) ?? 0) + 1,
+    );
+    return existing;
+  }
   const texture = loader.load(book.coverUrl, undefined, undefined, () => undefined);
   texture.colorSpace = THREE.SRGBColorSpace;
   texture.anisotropy = anisotropy;
@@ -556,7 +650,24 @@ function getCoverMaterial(
     metalness: 0.01,
   });
   bookMaterials.covers.set(book.coverUrl, cover);
+  bookMaterials.coverTextures.set(book.coverUrl, texture);
+  bookMaterials.coverReferences.set(book.coverUrl, 1);
   return cover;
+}
+
+function releaseCoverMaterial(bookMaterials: BookMaterials, coverUrl: string) {
+  const references = (bookMaterials.coverReferences.get(coverUrl) ?? 0) - 1;
+  if (references > 0) {
+    bookMaterials.coverReferences.set(coverUrl, references);
+    return;
+  }
+  bookMaterials.coverReferences.delete(coverUrl);
+  const material = bookMaterials.covers.get(coverUrl);
+  const texture = bookMaterials.coverTextures.get(coverUrl);
+  material?.dispose();
+  texture?.dispose();
+  bookMaterials.covers.delete(coverUrl);
+  bookMaterials.coverTextures.delete(coverUrl);
 }
 
 function shelfRotationForSlot(slot: BookShelfSlot) {
@@ -668,6 +779,31 @@ function nearestShelfSection(
     .sort((left, right) => left.distance - right.distance)[0]?.section;
 }
 
+function catalogBookRenderSignature(book: Book, classification: CatalogClassification) {
+  return JSON.stringify([
+    book.title,
+    book.coverUrl,
+    classification.category.id,
+    classification.subcategory.id,
+  ]);
+}
+
+function trackBookResources(
+  group: THREE.Group,
+  bookMaterials: BookMaterials,
+  ownedGeometries: Set<THREE.BufferGeometry>,
+  ownedMaterials: Set<THREE.Material>,
+) {
+  group.traverse((object) => {
+    if (!(object instanceof THREE.Mesh)) return;
+    if (!bookMaterials.sharedGeometries.has(object.geometry)) ownedGeometries.add(object.geometry);
+    const objectMaterials = Array.isArray(object.material) ? object.material : [object.material];
+    objectMaterials.forEach((objectMaterial) => {
+      if (!bookMaterials.sharedMaterials.has(objectMaterial)) ownedMaterials.add(objectMaterial);
+    });
+  });
+}
+
 function createBook(
   assignment: AssignedShelfBook<Book>,
   classification: CatalogClassification,
@@ -685,6 +821,11 @@ function createBook(
   const spineMaterial = bookMaterials.spines[index % bookMaterials.spines.length];
   const spineTrimMaterial = bookMaterials.spineTrims[index % bookMaterials.spineTrims.length];
   const coverMaterial = getCoverMaterial(book, loader, anisotropy, bookMaterials);
+  const coverTexture = bookMaterials.coverTextures.get(book.coverUrl);
+  if (!coverTexture) throw new Error(`Cover texture was not created for ${book.id}`);
+  const ownedGeometries = new Set<THREE.BufferGeometry>();
+  const ownedMaterials = new Set<THREE.Material>();
+  const ownedTextures = new Set<THREE.Texture>();
   const group = new THREE.Group();
 
   // Keep the paper block inset on all exposed edges so the cover reads as a
@@ -864,27 +1005,35 @@ function createBook(
     texture.anisotropy = anisotropy;
     texture.minFilter = THREE.LinearMipmapLinearFilter;
     texture.magFilter = THREE.LinearFilter;
-    const label = new THREE.Mesh(new THREE.PlaneGeometry(
-      depth * details.spineLabelWidthRatio,
-      height * details.spineLabelHeightRatio,
-    ), material(tokens.color.primitive.white, {
+    const spineLabelMaterial = material(tokens.color.primitive.white, {
       map: texture,
       emissive: tokens.color.primitive.white,
       emissiveMap: texture,
       emissiveIntensity: 0.06,
       roughness: 0.72,
       metalness: 0,
-    }));
+    });
+    const label = new THREE.Mesh(new THREE.PlaneGeometry(
+      depth * details.spineLabelWidthRatio,
+      height * details.spineLabelHeightRatio,
+    ), spineLabelMaterial);
+    ownedMaterials.add(spineLabelMaterial);
+    ownedTextures.add(texture);
     label.name = `Catalog spine: ${book.title}`;
     label.position.x = spineSurfaceX - details.spineLabelSurfaceGap;
     label.rotation.y = -Math.PI / 2;
     group.add(label);
   }
 
-  mergeBookMeshesForMaterial(group, bookMaterials.pages, `Catalog page block detail: ${book.title}`);
-  mergeBookMeshesForMaterial(group, spineMaterial, `Catalog binding shell: ${book.title}`);
-  mergeBookMeshesForMaterial(group, spineTrimMaterial, `Catalog binding trim: ${book.title}`);
-  mergeBookMeshesForMaterial(group, bookMaterials.headband, `Catalog headbands: ${book.title}`);
+  mergeBookMeshesForMaterial(group, bookMaterials.pages, `Catalog page block detail: ${book.title}`,
+    ownedGeometries, bookMaterials.sharedGeometries);
+  mergeBookMeshesForMaterial(group, spineMaterial, `Catalog binding shell: ${book.title}`,
+    ownedGeometries, bookMaterials.sharedGeometries);
+  mergeBookMeshesForMaterial(group, spineTrimMaterial, `Catalog binding trim: ${book.title}`,
+    ownedGeometries, bookMaterials.sharedGeometries);
+  mergeBookMeshesForMaterial(group, bookMaterials.headband, `Catalog headbands: ${book.title}`,
+    ownedGeometries, bookMaterials.sharedGeometries);
+  trackBookResources(group, bookMaterials, ownedGeometries, ownedMaterials);
 
   const shelfTransform = getShelvedBookTransform(slot, { width, height, depth });
   const shelfPosition = shelfTransform.position;
@@ -919,10 +1068,64 @@ function createBook(
     modelSize: { width, height, depth },
     shelfSectionId,
     shelfRowIndex: assignment.shelfRowIndex,
+    renderSignature: catalogBookRenderSignature(book, classification),
+    resources: {
+      geometries: ownedGeometries,
+      materials: ownedMaterials,
+      textures: ownedTextures,
+      coverMaterial,
+      coverTexture,
+      coverUrl: book.coverUrl,
+    },
   };
   placeSceneBookOnShelf(sceneBook);
   group.userData.sceneBook = sceneBook;
   return sceneBook;
+}
+
+function updateSceneBookAssignment(
+  sceneBook: SceneBook,
+  assignment: AssignedShelfBook<Book>,
+  classification: CatalogClassification,
+  shelfSections: ExpandableShelfSection[],
+) {
+  const shelfTransform = getShelvedBookTransform(assignment.slot, sceneBook.modelSize);
+  const shelfSectionId = shelfSections.find(section => (
+    section.centerX !== undefined && section.id === assignment.bayIndex
+  ))?.id
+    ?? nearestShelfSection(shelfTransform.position, shelfSections)?.id
+    ?? assignment.bayIndex;
+
+  sceneBook.book = assignment.book;
+  sceneBook.classification = classification;
+  sceneBook.shelfPosition.copy(shelfTransform.position);
+  sceneBook.shelfRotation.copy(shelfTransform.rotation);
+  sceneBook.shelfScale.copy(shelfTransform.scale);
+  sceneBook.shelfSectionId = shelfSectionId;
+  sceneBook.shelfRowIndex = assignment.shelfRowIndex;
+  sceneBook.renderSignature = catalogBookRenderSignature(assignment.book, classification);
+  sceneBook.hitTarget.name = `Catalog book hit target: ${assignment.book.title}`;
+  sceneBook.hitTarget.scale.set(
+    sceneBook.modelSize.width * 1.03,
+    sceneBook.modelSize.height * 1.1,
+    getShelfBookInteractionWidth(sceneBook.modelSize.depth * Math.abs(sceneBook.shelfScale.z))
+      / Math.max(Math.abs(sceneBook.shelfScale.z), 0.0001),
+  );
+  sceneBook.group.userData.bookId = assignment.book.id;
+  sceneBook.group.userData.shelfBayIndex = assignment.bayIndex;
+  sceneBook.group.userData.shelfSectionId = shelfSectionId;
+  sceneBook.group.userData.shelfRowIndex = assignment.shelfRowIndex;
+  if (sceneBook.group.userData.bookPresentation !== "inspection") placeSceneBookOnShelf(sceneBook);
+}
+
+function releaseSceneBook(sceneBook: SceneBook, bookMaterials: BookMaterials) {
+  sceneBook.group.removeFromParent();
+  sceneBook.resources.geometries.forEach((geometry) => geometry.dispose());
+  sceneBook.resources.materials.forEach((bookMaterial) => {
+    if (bookMaterial !== sceneBook.resources.coverMaterial) bookMaterial.dispose();
+  });
+  sceneBook.resources.textures.forEach((texture) => texture.dispose());
+  releaseCoverMaterial(bookMaterials, sceneBook.resources.coverUrl);
 }
 
 function centerSceneBookClusters(
@@ -956,9 +1159,11 @@ function centerSceneBookClusters(
       if (section.centerX !== undefined && section.centerZ !== undefined) {
         const normalX = Math.cos(section.angle);
         const normalZ = Math.sin(section.angle);
-        sceneBook.shelfPosition.set(section.centerX - normalX * 0.15 + tangentX * (offsets[index] ?? 0),
-          sceneBook.shelfPosition.y, section.centerZ - normalZ * 0.15 + tangentZ * (offsets[index] ?? 0));
-        placeSceneBookOnShelf(sceneBook);
+        sceneBook.shelfPosition.set(section.centerX - normalX * LONG_ROOM_BOOK_CENTER_OFFSET + tangentX * (offsets[index] ?? 0),
+          sceneBook.shelfPosition.y, section.centerZ - normalZ * LONG_ROOM_BOOK_CENTER_OFFSET + tangentZ * (offsets[index] ?? 0));
+        if (sceneBook.group.userData.bookPresentation !== "inspection") {
+          placeSceneBookOnShelf(sceneBook);
+        }
         return;
       }
       const offset = offsets[index] ?? 0;
@@ -967,7 +1172,9 @@ function centerSceneBookClusters(
         sceneBook.shelfPosition.y,
         Math.sin(section.angle) * radius + tangentZ * offset,
       );
-      placeSceneBookOnShelf(sceneBook);
+      if (sceneBook.group.userData.bookPresentation !== "inspection") {
+        placeSceneBookOnShelf(sceneBook);
+      }
     });
   });
 }
@@ -1140,7 +1347,10 @@ function createShelfSectionControllers(
       blending: THREE.AdditiveBlending,
       toneMapped: false,
     });
-    const frameZ = -section.depth / 2 - 0.24;
+    // Keep the selection frame on the same front plane as the shelf boards.
+    // The old extra offset made the outline read as a floating acrylic frame
+    // in front of the case instead of an in-place shelf highlight.
+    const frameZ = -LONG_ROOM_SHELF_FRONT_OFFSET - SHELF_SELECTION_FRAME_GAP;
     const frameWidth = section.width * 0.92;
     const frameHeight = section.height * 0.9;
     const verticalGeometry = new THREE.BoxGeometry(0.055, frameHeight, 0.025);
@@ -1178,9 +1388,35 @@ function createShelfSectionControllers(
     root.add(selectionFill);
 
     const labelMaterials: THREE.MeshBasicMaterial[] = [];
-    // Long Room casework has no floating product taxonomy plaques. Keep the
-    // historical interior clear; catalog classification remains in the UI.
-    if (section.centerX === undefined || section.centerZ === undefined) {
+    const labelPlates: THREE.Object3D[] = [];
+    if (section.centerX !== undefined && section.centerZ !== undefined) {
+      for (const level of [0, 1] as const) {
+        const layout = getLongRoomAisleCategoryPlaqueLayout(section, level);
+        if (!layout) continue;
+        const categoryLabel = createShelfLabel(
+          labelTextureCache,
+          plaqueBackingMaterial,
+          info.category.label,
+          info.category.subtitle,
+          layout.width,
+          layout.height,
+          false,
+        );
+        root.updateMatrixWorld(true);
+        categoryLabel.plaque.position.copy(root.worldToLocal(layout.worldPosition.clone()));
+        categoryLabel.plaque.rotation.y = layout.worldRotationY - root.rotation.y;
+        categoryLabel.plaque.userData = {
+          isShelfCategoryPlaque: true,
+          categoryId: info.category.id,
+          sectionId: section.id,
+          level,
+          placement: "long-room-aisle-end",
+        };
+        root.add(categoryLabel.plaque);
+        labelMaterials.push(categoryLabel.material);
+        labelPlates.push(categoryLabel.plaque);
+      }
+    } else if (section.centerX === undefined || section.centerZ === undefined) {
       const plaqueRows = getShelfPlaqueRows(section, info.category.subcategories.length);
       const primaryPlacement = getShelfPlaquePlacement(section, plaqueRows.primary);
       const primaryLabel = createShelfLabel(
@@ -1199,6 +1435,7 @@ function createShelfSectionControllers(
       );
       root.add(primaryLabel.plaque);
       labelMaterials.push(primaryLabel.material);
+      labelPlates.push(primaryLabel.plaque);
 
       info.category.subcategories.forEach((subcategory, index) => {
         const placement = getShelfPlaquePlacement(section, plaqueRows.secondary[index] ?? 1);
@@ -1218,6 +1455,7 @@ function createShelfSectionControllers(
         );
         root.add(secondaryLabel.plaque);
         labelMaterials.push(secondaryLabel.material);
+        labelPlates.push(secondaryLabel.plaque);
       });
     }
     scene.add(root);
@@ -1228,20 +1466,67 @@ function createShelfSectionControllers(
       frameMaterial,
       selectionFillMaterial,
       labelMaterials,
+      labelPlates,
+      labelTextureCache,
+      plaqueBackingMaterial,
       info,
       homePosition,
     };
   });
 }
 
+function updateShelfSectionControllers(
+  shelfControllers: ShelfSectionController[],
+  shelfSections: ExpandableShelfSection[],
+  sceneBooks: SceneBook[],
+) {
+  const sectionsById = new Map(shelfSections.map((section) => [section.id, section]));
+  shelfControllers.forEach((controller) => {
+    const section = sectionsById.get(controller.sectionId);
+    if (!section) return;
+    const info = shelfCategoryInfo(section, sceneBooks);
+    controller.info = info;
+    const labels = section.centerX !== undefined && section.centerZ !== undefined
+      ? [
+        { title: info.category.label, subtitle: info.category.subtitle, compact: false },
+        { title: info.category.label, subtitle: info.category.subtitle, compact: false },
+      ]
+      : [
+        { title: info.category.label, subtitle: "", compact: true },
+        ...info.category.subcategories.map((subcategory) => ({
+          title: subcategory.label,
+          subtitle: "",
+          compact: true,
+        })),
+      ];
+    controller.labelMaterials.forEach((labelMaterial, index) => {
+      const label = labels[index];
+      if (!label) return;
+      labelMaterial.map = createShelfLabelTexture(
+        controller.labelTextureCache,
+        label.title,
+        label.subtitle,
+        label.compact,
+      );
+      labelMaterial.needsUpdate = true;
+    });
+    controller.labelPlates.forEach((plate, index) => {
+      plate.userData.categoryId = info.category.id;
+      plate.name = `${info.category.label} shelf plaque`;
+      const level = plate.userData.level as 0 | 1 | undefined;
+      if (level !== undefined) plate.userData.categoryId = info.category.id;
+      if (index >= labels.length) plate.visible = false;
+    });
+  });
+}
+
 export function createVirtualLibraryWorld(
   scene: THREE.Scene,
-  books: Book[],
   loader: THREE.TextureLoader,
   anisotropy: number,
   preparedHall?: LongRoomBuilt,
 ): LibraryWorld {
-  const built = preparedHall ?? buildLongRoom(longRoomCatalogSectionCounts(books), loader);
+  const built = preparedHall ?? buildLongRoom({}, loader);
   if (!built.root.userData.staticOptimization) optimizeStaticMeshes(built.root, built.interactiveObjects);
   built.root.userData.modelVersion = VIRTUAL_LIBRARY_SCENE_MODEL_VERSION;
   const hallCameraColliders = [
@@ -1250,32 +1535,19 @@ export function createVirtualLibraryWorld(
   scene.add(built.root);
 
   const bookMaterials = createBookMaterials(anisotropy);
+  const catalogRoot = new THREE.Group();
+  catalogRoot.name = "Live catalog book models";
+  catalogRoot.userData.isLiveCatalogRoot = true;
+  // Shared catalog resources are not necessarily referenced by a mesh when
+  // the authorized library is empty. Keep them discoverable by disposeScene
+  // without adding a rendered placeholder object to the live hall.
+  catalogRoot.userData.disposableCatalogResources = {
+    geometries: [...bookMaterials.sharedGeometries],
+    materials: [...bookMaterials.sharedMaterials],
+  } satisfies DisposableCatalogResources;
+  scene.add(catalogRoot);
   const sceneBooks: SceneBook[] = [];
   const interactiveMeshes: THREE.Object3D[] = [];
-  const sortedBooks = sortCatalogBooksByClassification(books);
-  const classifications = new Map(
-    sortedBooks.map(({ book, classification }) => [book.id, classification]),
-  );
-  const assignments: AssignedShelfBook<Book>[] = sortedBooks.map(({ book }, index) => {
-    const slot = built.bookSlots[index];
-    if (!slot) throw new Error("Long Room catalog capacity exceeded");
-    return { book, index, slot, bayIndex: slot.sectionId, shelfRowIndex: slot.rowIndex };
-  });
-  assignments.forEach((assignment) => {
-    const sceneBook = createBook(
-      assignment,
-      classifications.get(assignment.book.id)
-        ?? classifyCatalogBook(assignment.book),
-      loader,
-      anisotropy,
-      bookMaterials,
-      built.shelfSections,
-    );
-    scene.add(sceneBook.group);
-    sceneBooks.push(sceneBook);
-    interactiveMeshes.push(sceneBook.hitTarget);
-  });
-  centerSceneBookClusters(sceneBooks, built.shelfSections);
   const shelfControllers = createShelfSectionControllers(
     scene,
     built.shelfSections,
@@ -1301,6 +1573,132 @@ export function createVirtualLibraryWorld(
   let expandedShelfSectionId: number | null = null;
   let hoveredShelfSectionId: number | null = null;
   let activeRoom: LibraryRoomId = "hall";
+  const catalogBooksById = new Map<string, SceneBook>();
+  let catalogSyncRevision = 0;
+
+  const syncCatalogBooks = (books: readonly Book[]): CatalogSyncResult => {
+    const nextBooks = Array.from(books);
+    const seenBookIds = new Set<string>();
+    nextBooks.forEach((book) => {
+      if (seenBookIds.has(book.id)) throw new Error(`Duplicate catalog book id: ${book.id}`);
+      seenBookIds.add(book.id);
+    });
+    // Validate category capacity before creating or removing any GPU-backed
+    // catalog model. The authoritative query remains an all-pages snapshot.
+    longRoomCatalogSectionCounts(nextBooks);
+    const sortedBooks = sortCatalogBooksByClassification(nextBooks);
+    const staged: SceneBook[] = [];
+    const plans: Array<{
+      assignment: AssignedShelfBook<Book>;
+      classification: CatalogClassification;
+      existing: SceneBook | undefined;
+      replacement?: SceneBook;
+    }> = [];
+    let catalogSectionOffset = 0;
+    let booksInCatalogSection = 0;
+    let previousCategoryId = "";
+
+    try {
+      sortedBooks.forEach(({ book, classification }, index) => {
+        if (classification.category.id !== previousCategoryId
+          || booksInCatalogSection === LONG_ROOM_CATALOG_SECTION_CAPACITY) {
+          if (previousCategoryId) catalogSectionOffset += LONG_ROOM_CATALOG_SECTION_CAPACITY;
+          previousCategoryId = classification.category.id;
+          booksInCatalogSection = 0;
+        }
+        const slot = built.catalogSlots[catalogSectionOffset + booksInCatalogSection];
+        if (!slot) throw new Error("Long Room catalog capacity exceeded");
+        booksInCatalogSection += 1;
+        const assignment: AssignedShelfBook<Book> = {
+          book,
+          index,
+          slot,
+          bayIndex: slot.sectionId,
+          shelfRowIndex: slot.rowIndex,
+        };
+        const existing = catalogBooksById.get(book.id);
+        if (existing && existing.renderSignature === catalogBookRenderSignature(book, classification)) {
+          plans.push({ assignment, classification, existing });
+          return;
+        }
+        const replacement = createBook(
+          assignment,
+          classification,
+          loader,
+          anisotropy,
+          bookMaterials,
+          built.shelfSections,
+        );
+        staged.push(replacement);
+        plans.push({ assignment, classification, existing, replacement });
+      });
+    } catch (error) {
+      staged.forEach((sceneBook) => releaseSceneBook(sceneBook, bookMaterials));
+      throw error;
+    }
+
+    const nextSceneBooks: SceneBook[] = [];
+    const nextInteractiveMeshes: THREE.Object3D[] = [];
+    const nextIds = new Set(plans.map(({ assignment }) => assignment.book.id));
+    const removedBookIds: string[] = [];
+    catalogBooksById.forEach((sceneBook, id) => {
+      if (nextIds.has(id)) return;
+      releaseSceneBook(sceneBook, bookMaterials);
+      removedBookIds.push(id);
+    });
+
+    const addedBookIds: string[] = [];
+    const replacedBookIds: string[] = [];
+    plans.forEach(({ assignment, classification, existing, replacement }) => {
+      if (!replacement) {
+        if (!existing) throw new Error(`Missing live catalog model for ${assignment.book.id}`);
+        updateSceneBookAssignment(existing, assignment, classification, built.shelfSections);
+        nextSceneBooks.push(existing);
+        nextInteractiveMeshes.push(existing.hitTarget);
+        return;
+      }
+
+      if (!existing) {
+        catalogRoot.add(replacement.group);
+        replacement.group.visible = activeRoom === "hall";
+        nextSceneBooks.push(replacement);
+        nextInteractiveMeshes.push(replacement.hitTarget);
+        addedBookIds.push(assignment.book.id);
+        return;
+      }
+
+      const wasInspection = existing.group.userData.bookPresentation === "inspection";
+      const previousPosition = existing.group.position.clone();
+      const previousQuaternion = existing.group.quaternion.clone();
+      const previousScale = existing.group.scale.clone();
+      const previousLayerMask = existing.group.layers.mask;
+      releaseSceneBook(existing, bookMaterials);
+      Object.assign(existing, replacement);
+      existing.group.userData.sceneBook = existing;
+      existing.group.visible = activeRoom === "hall";
+      if (wasInspection) {
+        existing.group.userData.bookPresentation = "inspection";
+        existing.group.position.copy(previousPosition);
+        existing.group.quaternion.copy(previousQuaternion);
+        existing.group.scale.copy(previousScale);
+        existing.group.traverse((object) => { object.layers.mask = previousLayerMask; });
+      }
+      catalogRoot.add(existing.group);
+      nextSceneBooks.push(existing);
+      nextInteractiveMeshes.push(existing.hitTarget);
+      replacedBookIds.push(assignment.book.id);
+    });
+
+    sceneBooks.splice(0, sceneBooks.length, ...nextSceneBooks);
+    interactiveMeshes.splice(0, interactiveMeshes.length, ...nextInteractiveMeshes);
+    catalogBooksById.clear();
+    sceneBooks.forEach((sceneBook) => catalogBooksById.set(sceneBook.book.id, sceneBook));
+    centerSceneBookClusters(sceneBooks, built.shelfSections);
+    updateShelfSectionControllers(shelfControllers, built.shelfSections, sceneBooks);
+    catalogSyncRevision += 1;
+    built.root.userData.catalogSyncRevision = catalogSyncRevision;
+    return { addedBookIds, removedBookIds, replacedBookIds };
+  };
 
   return {
     sceneBooks,
@@ -1308,6 +1706,7 @@ export function createVirtualLibraryWorld(
     catalogTerminal: built.catalogTerminal,
     shelfHitMeshes: shelfControllers.map(({ hitArea }) => hitArea),
     portalHitMeshes,
+    syncCatalogBooks,
     toggleShelfSection: (sectionId) => {
       sceneBooks.forEach(placeSceneBookOnShelf);
       expandedShelfSectionId = expandedShelfSectionId === sectionId ? null : sectionId;
@@ -1329,6 +1728,7 @@ export function createVirtualLibraryWorld(
       activeRoom = room;
       const isHall = room === "hall";
       built.root.visible = isHall;
+      catalogRoot.visible = isHall;
       sceneBooks.forEach((sceneBook) => {
         sceneBook.group.visible = isHall;
       });
@@ -1420,6 +1820,9 @@ export function disposeScene(scene: THREE.Scene) {
   const materials = new Set<THREE.Material>();
   const textures = new Set<THREE.Texture>();
   scene.traverse((object) => {
+    const catalogResources = object.userData.disposableCatalogResources as DisposableCatalogResources | undefined;
+    catalogResources?.geometries.forEach((geometry) => geometries.add(geometry));
+    catalogResources?.materials.forEach((material) => materials.add(material));
     if (object instanceof THREE.SpotLight || object instanceof THREE.DirectionalLight || object instanceof THREE.PointLight)
       object.shadow.dispose();
     if (

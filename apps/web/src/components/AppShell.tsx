@@ -1,5 +1,5 @@
 import { AdminPanelSettingsOutlined } from "@/ui/icons";
-import { pageWidthSx } from "./PageHeader";
+import { pageWidthSx, topNavigationSurfaceSx } from "./PageHeader";
 import { CategoryOutlined } from "@/ui/icons";
 import { CollectionsBookmarkOutlined } from "@/ui/icons";
 import { HomeOutlined } from "@/ui/icons";
@@ -33,7 +33,7 @@ import { useCallback, useEffect, useRef, useState, type PropsWithChildren } from
 import { NavLink, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import {
-  fetchVirtualLibraryBooks,
+  refreshVirtualLibraryBooks,
   VIRTUAL_LIBRARY_BOOKS_QUERY_KEY,
   VIRTUAL_LIBRARY_BOOKS_STALE_TIME,
 } from "../pages/virtual-library-query";
@@ -87,7 +87,7 @@ export function AppShell({ children }: PropsWithChildren) {
     void import("../pages/VirtualLibraryExperience").catch(() => undefined);
     void queryClient.prefetchQuery({
       queryKey: VIRTUAL_LIBRARY_BOOKS_QUERY_KEY,
-      queryFn: ({ signal }) => fetchVirtualLibraryBooks(signal),
+      queryFn: ({ signal }) => refreshVirtualLibraryBooks(queryClient, signal),
       staleTime: VIRTUAL_LIBRARY_BOOKS_STALE_TIME,
     });
   }, [queryClient, user]);
@@ -145,21 +145,19 @@ export function AppShell({ children }: PropsWithChildren) {
   );
 
   return (
-    <Box sx={{ minHeight: "100vh" }}>
+    <Box sx={{ minHeight: "100vh", bgcolor: "background.default", color: "text.primary" }}>
       {logoutError && <Alert severity="error" onClose={() => setLogoutError("")}>{logoutError}</Alert>}
-      {!readerRoute && <>
+      <>
         <AppBar
           className="bk-top-nav"
           position="sticky"
           elevation={0}
           color="transparent"
-          sx={{
-            bgcolor: "background.default",
-            color: "text.primary",
-            borderBottom: 0,
-          }}
+          sx={topNavigationSurfaceSx}
         >
           <Toolbar
+            component="nav"
+            aria-label="全站导航"
             className="bk-top-nav-inner"
             sx={{
               minHeight: `${tokens.layout.navHeight}px !important`,
@@ -277,8 +275,8 @@ export function AppShell({ children }: PropsWithChildren) {
           </Toolbar>
         </AppBar>
 
-        <Drawer open={drawerOpen} onClose={() => setDrawerOpen(false)} width={tokens.spacing[24] * 3} title={<Typography variant="h5" sx={{ fontFamily: tokens.typography.fontFamily.display, fontWeight: tokens.typography.fontWeight.regular }}>BookKin</Typography>}>
-          <Box role="navigation" sx={{ width: "100%", p: 3 }}>
+        <Drawer open={drawerOpen} onClose={() => setDrawerOpen(false)} size={tokens.spacing[24] * 3} title={<Typography variant="h5" sx={{ fontFamily: tokens.typography.fontFamily.display, fontWeight: tokens.typography.fontWeight.regular }}>BookKin</Typography>}>
+          <Box role="navigation" aria-label="移动端导航" sx={{ width: "100%", p: 3 }}>
             <List>
               {libraryNavigation.map((item) => (
                 <ListItemButton
@@ -296,7 +294,7 @@ export function AppShell({ children }: PropsWithChildren) {
             </List>
           </Box>
         </Drawer>
-      </>}
+      </>
 
       <Box component="main">{children}</Box>
     </Box>

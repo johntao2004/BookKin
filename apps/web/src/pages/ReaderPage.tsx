@@ -38,12 +38,13 @@ import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } fro
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { api } from "../api/client";
 import { useAuth } from "../auth/AuthContext";
-import { READER_CONTENT_HEIGHT, READER_PAGE_HEIGHT } from "../components/readers/reader-layout";
+import { READER_CONTENT_HEIGHT, READER_PAGE_HEIGHT, READER_SHELL_HEIGHT } from "../components/readers/reader-layout";
 import { PageTurnShade } from "../components/readers/PageTurnShade";
 import { ReaderTopBar } from "../components/readers/ReaderTopBar";
 import { isEditableReaderTarget, isReaderSwipe } from "../components/readers/reader-navigation";
 import { readerSelectionFromRect, type ReaderSelection, type TocItem } from "../components/readers/types";
 import { usePageTurnTransition } from "../components/readers/use-page-turn-transition";
+import { readerWidthSx } from "../components/PageHeader";
 import { demoChapter } from "../data/demo";
 import { annotationColorBackground, annotationColorHex, highlightColorPresets } from "../domain/annotation-colors";
 import type { Annotation, AnnotationStyle, Book, DisplayBook, HighlightColor } from "../domain/types";
@@ -209,25 +210,21 @@ export function ReaderPage() {
     }
   };
 
-  if (bookQuery.isPending) return <Stack spacing={2} sx={{ minHeight: "100vh", alignItems: "center", justifyContent: "center" }}><CircularProgress /><Typography color="text.secondary">正在展开书页…</Typography></Stack>;
-  if (bookQuery.isError || !bookQuery.data) return <Stack spacing={2} sx={{ minHeight: "100vh", alignItems: "center", justifyContent: "center" }}><Alert severity="error">无法打开这本书</Alert><Button onClick={() => navigate("/library")}>返回书库</Button></Stack>;
+  if (bookQuery.isPending) return <Stack spacing={2} sx={{ minHeight: READER_SHELL_HEIGHT, alignItems: "center", justifyContent: "center" }}><CircularProgress /><Typography color="text.secondary">正在展开书页…</Typography></Stack>;
+  if (bookQuery.isError || !bookQuery.data) return <Stack spacing={2} sx={{ minHeight: READER_SHELL_HEIGHT, alignItems: "center", justifyContent: "center" }}><Alert severity="error">无法打开这本书</Alert><Button onClick={() => navigate("/library")}>返回书库</Button></Stack>;
   const book = bookQuery.data;
-  if (!book.format) return <Stack spacing={2} sx={{ minHeight: "100vh", alignItems: "center", justifyContent: "center" }}><Alert severity="info">这本展示书目暂时没有可用文件</Alert><Button onClick={() => navigate("/library")}>返回书架</Button></Stack>;
+  if (!book.format) return <Stack spacing={2} sx={{ minHeight: READER_SHELL_HEIGHT, alignItems: "center", justifyContent: "center" }}><Alert severity="info">这本展示书目暂时没有可用文件</Alert><Button onClick={() => navigate("/library")}>返回书架</Button></Stack>;
   const privateBook = isPrivateBook(book);
   const progressPercent = privateBook ? (api.isDemo ? book.progress : Math.round((readerProgress ?? book.progress / 100) * 100)) : 0;
   const readerSubtitle = `${book.author} · ${privateBook && api.isDemo ? "第七章" : `${book.format} · ${guest ? "只读阅读" : `已读 ${progressPercent}%`}`}`;
 
   return (
-    <Box sx={{ height: "100dvh", minHeight: 0, overflow: "hidden", bgcolor: currentTheme.background, color: currentTheme.foreground, transition: "background-color 180ms ease" }}>
+    <Box sx={{ height: READER_SHELL_HEIGHT, minHeight: 0, overflow: "hidden", bgcolor: "background.default", color: "text.primary", transition: "background-color 180ms ease" }}>
       <ReaderTopBar
         title={book.title}
         subtitle={readerSubtitle}
         format={book.format}
         progressPercent={progressPercent}
-        background={currentTheme.background}
-        foreground={currentTheme.foreground}
-        muted={currentTheme.muted}
-        night={readerTheme === "NIGHT"}
         tableOfContentsAvailable={!api.isDemo && book.format === "EPUB"}
         bookmarked={Boolean(bookmark)}
         bookmarkBusy={bookmarkBusy}
@@ -310,7 +307,7 @@ export function ReaderPage() {
             <Box sx={{ minWidth: 0 }}>
               <Typography sx={{ fontWeight: 700 }}>翻页效果</Typography>
               <Typography variant="caption" color="text.secondary">
-                {readerSettings.pageTurnEnabled ? "模拟纸张翻动" : "关闭后直接切换页面"}
+                {readerSettings.pageTurnEnabled ? "仅在移动端模拟纸张翻动" : "关闭后直接切换页面"}
               </Typography>
             </Box>
             <Switch
@@ -571,7 +568,7 @@ function DemoPagedSurface({ bookTitle, format, theme, night, fontFamily, fontSiz
         <Typography variant="body2" sx={{ minWidth: 100, textAlign: "center", color: theme.muted }}>第 {pageIndex + 1} / {pageCount} 页</Typography>
         <Button color="inherit" endIcon={<NavigateNextRounded />} disabled={turning || pageIndex >= pageCount - 1} onClick={goNext}>下一页</Button>
       </Stack>
-      <Box ref={pageSurfaceRef} className="reader-page-turn-surface" sx={{ position: "relative", height: READER_PAGE_HEIGHT, minHeight: 0, width: "100%", maxWidth: wideSpread ? tokens.layout.contentMax : tokens.layout.readingMax, mx: "auto", overflow: "hidden", px: { xs: 1, sm: 2, md: 3 }, py: 2, bgcolor: theme.background, backfaceVisibility: "hidden", transformStyle: "preserve-3d", willChange: turning ? "transform, opacity, filter, clip-path" : "auto" }}>
+      <Box ref={pageSurfaceRef} className="reader-page-turn-surface" sx={{ position: "relative", height: READER_PAGE_HEIGHT, minHeight: 0, ...readerWidthSx, overflow: "hidden", py: 2, bgcolor: theme.background, backfaceVisibility: "hidden", transformStyle: "preserve-3d", willChange: turning ? "transform, opacity, filter, clip-path" : "auto" }}>
         <Box ref={frameRef} component="article" className="reader-paged-text" aria-label={`${format} 演示阅读正文`} onMouseUp={onMouseUp} onTouchEnd={onMouseUp} sx={{ height: "100%", width: "100%", overflow: "visible", transform: columnWidth === null ? `translateX(-${pageIndex * 100}%)` : `translateX(-${pageIndex * pageStride}px)`, transition: "none", columnCount: "auto", columnWidth: columnWidth === null ? "auto" : `${columnWidth}px`, columnGap: `${columnGap}px`, columnFill: "auto", direction: "ltr", writingMode: "horizontal-tb", textOrientation: "mixed", unicodeBidi: "normal", px: { xs: 2, sm: 4, md: 6 }, pt: 3, pb: 3, fontFamily, fontSize, lineHeight: 1.95, color: theme.foreground, background: theme.background, "& > *": { breakInside: "auto" }, "& h1, & h2": { breakInside: "avoid" } }}>
           <Typography variant="overline" component="p" sx={{ color: theme.muted, letterSpacing: ".18em" }}>{format === "EPUB" ? "第七章" : bookTitle}</Typography>
           <Typography component="h1" variant="h2" color="inherit" sx={{ mt: 2, mb: 5, fontFamily: "inherit" }}>{format === "EPUB" ? "灯下" : "海岸与迁徙"}</Typography>

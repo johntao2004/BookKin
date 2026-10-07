@@ -29,7 +29,7 @@ describe("VirtualLibraryPage", () => {
     }
     expect(screen.queryByRole("button", { name: "Henry Jones 室" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "沿长厅前行" })).toBeInTheDocument();
-    expect(screen.getByText("按住 W/A/S/D 可沿视角连续前后与左右平移，滚轮也可前后移动，拖动环顾。")).toBeInTheDocument();
+    expect(screen.getByText("按住 W/A/S/D 可沿视角连续前后与左右平移，Shift 上升、Ctrl 下降，滚轮也可前后移动，拖动环顾。")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "馆长办公室" })).not.toBeInTheDocument();
     expect(screen.queryByText("360° 环视")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "向左" })).not.toBeInTheDocument();

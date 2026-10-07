@@ -9,13 +9,16 @@ import { DialogContent } from "@/ui/overlays";
 import { DialogTitle } from "@/ui/overlays";
 import { Divider } from "@/ui/feedback";
 import { FormControlLabel } from "@/ui/primitives";
+import { MenuItem } from "@/ui/primitives";
 import { Stack } from "@/ui/primitives";
+import { Select } from "@/ui/forms";
 import { TextField } from "@/ui/forms";
 import { Typography } from "@/ui/primitives";
 import { useQuery, useQueryClient, type InfiniteData, type QueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { api } from "../api/client";
 import type { Book, BookMetadata, BookPage, FileOperationPreview } from "../domain/types";
+import { LIBRARY_CATEGORIES } from "../pages/virtual-library-catalog";
 import { tokens } from "../theme/generated-tokens";
 import { cropCover } from "./BookUploadDialog";
 
@@ -32,6 +35,8 @@ interface EditableMetadata {
   series: string;
   seriesIndex: string;
   tags: string;
+  primaryCategoryCode: string;
+  subcategoryCode: string;
   writeBack: boolean;
 }
 
@@ -48,8 +53,20 @@ const empty: EditableMetadata = {
   series: "",
   seriesIndex: "",
   tags: "",
+  primaryCategoryCode: "",
+  subcategoryCode: "",
   writeBack: false,
 };
+
+function taxonomySelection(subjectCodes: readonly string[] | undefined) {
+  const codes = subjectCodes ?? [];
+  for (const category of LIBRARY_CATEGORIES) {
+    const subcategory = category.subcategories.find((candidate) => codes.includes(candidate.code));
+    if (subcategory) return { primaryCategoryCode: category.code, subcategoryCode: subcategory.code };
+  }
+  const category = LIBRARY_CATEGORIES.find((candidate) => codes.includes(candidate.code));
+  return { primaryCategoryCode: category?.code ?? "", subcategoryCode: "" };
+}
 
 function visibleBookFromMetadata(book: Book, metadata: BookMetadata): Book {
   return {
@@ -59,6 +76,7 @@ function visibleBookFromMetadata(book: Book, metadata: BookMetadata): Book {
     series: metadata.series,
     description: metadata.description ?? "",
     tags: metadata.tags,
+    subjectCodes: metadata.subjectCodes ?? [],
   };
 }
 
@@ -120,6 +138,7 @@ export function MetadataDialog({ book, onClose, onCompleted, onSavedImmediately,
       series: query.data.series ?? "",
       seriesIndex: query.data.seriesIndex?.toString() ?? "",
       tags: query.data.tags.join("，"),
+      ...taxonomySelection(query.data.subjectCodes),
       writeBack: false,
     });
   }, [book, query.data]);
@@ -129,8 +148,19 @@ export function MetadataDialog({ book, onClose, onCompleted, onSavedImmediately,
     setPreview(null);
   };
 
+  const subcategories = LIBRARY_CATEGORIES.find((category) => category.code === form.primaryCategoryCode)?.subcategories ?? [];
+
+  const updatePrimaryCategory = (value: string) => {
+    setForm((current) => ({ ...current, primaryCategoryCode: value, subcategoryCode: "" }));
+    setPreview(null);
+  };
+
   const save = () => {
-    if (!book) return;
+    if (!book || !query.data) return;
+    const original = query.data;
+    const originalTaxonomy = taxonomySelection(original.subjectCodes);
+    const subjectChanged = form.primaryCategoryCode !== originalTaxonomy.primaryCategoryCode
+      || form.subcategoryCode !== originalTaxonomy.subcategoryCode;
     const metadataInput = {
       title: form.title.trim(),
       subtitle: form.subtitle.trim() || undefined,
@@ -144,9 +174,32 @@ export function MetadataDialog({ book, onClose, onCompleted, onSavedImmediately,
       series: form.series.trim() || undefined,
       seriesIndex: form.seriesIndex ? Number(form.seriesIndex) : undefined,
       tags: form.tags.split(/[，,]/).map((tag) => tag.trim()).filter(Boolean),
-      sources: query.data?.sources ?? {},
+      subjectCodes: subjectChanged
+        ? form.subcategoryCode ? [form.subcategoryCode] : []
+        : original.subjectCodes ?? [],
+      sources: original.sources,
     };
-    const optimisticMetadata: BookMetadata = { id: book.id, ...metadataInput };
+    const sameList = (left: readonly string[], right: readonly string[]) => JSON.stringify(left) === JSON.stringify(right);
+    const manualFields = [
+      metadataInput.title !== original.title && "title",
+      metadataInput.subtitle !== (original.subtitle || undefined) && "subtitle",
+      !sameList(metadataInput.authors, original.authors) && "authors",
+      !sameList(metadataInput.translators, original.translators) && "translators",
+      metadataInput.language !== (original.language || undefined) && "language",
+      metadataInput.publisher !== (original.publisher || undefined) && "publisher",
+      metadataInput.publishedDate !== (original.publishedDate || undefined) && "publishedDate",
+      metadataInput.isbn !== (original.isbn || undefined) && "isbn",
+      metadataInput.description !== (original.description || undefined) && "description",
+      metadataInput.series !== (original.series || undefined) && "series",
+      metadataInput.seriesIndex !== (original.seriesIndex ?? undefined) && "seriesIndex",
+      !sameList(metadataInput.tags, original.tags) && "tags",
+      subjectChanged && "subjectCodes",
+    ].filter((field): field is string => Boolean(field));
+    const optimisticMetadata: BookMetadata = {
+      id: book.id,
+      ...metadataInput,
+      sources: { ...original.sources, ...Object.fromEntries(manualFields.map((field) => [field, "MANUAL" as const])) },
+    };
     const metadataQueryKey = ["book-metadata", book.id] as const;
     const previousMetadata = queryClient.getQueryData<BookMetadata>(metadataQueryKey);
     queryClient.setQueryData(metadataQueryKey, optimisticMetadata);
@@ -168,7 +221,7 @@ export function MetadataDialog({ book, onClose, onCompleted, onSavedImmediately,
 
     void api.updateBookMetadata(book, {
       ...metadataInput,
-      manualFields: ["title", "subtitle", "authors", "translators", "language", "publisher", "publishedDate", "isbn", "description", "series", "seriesIndex", "tags"],
+      manualFields,
       writeBack: shouldWriteBack,
     }).then((result) => {
       queryClient.setQueryData(["book-metadata", book.id], result.metadata);
@@ -250,6 +303,20 @@ export function MetadataDialog({ book, onClose, onCompleted, onSavedImmediately,
               <TextField label="系列" value={form.series} onChange={(event: any) => update("series", event.target.value)} />
               <TextField label="系列序号" type="number" value={form.seriesIndex} onChange={(event: any) => update("seriesIndex", event.target.value)} />
               <TextField label="标签" value={form.tags} onChange={(event: any) => update("tags", event.target.value)} helperText="用逗号分隔" />
+              <Stack sx={{ gridColumn: { xs: "auto", sm: "1 / -1" }, gap: `${tokens.spacing[2]}px`, minWidth: 0 }}>
+                <Typography variant="body2" color="text.secondary">书业主题分类</Typography>
+                <Stack direction={{ xs: "column", sm: "row" }} sx={{ gap: `${tokens.spacing[2]}px`, minWidth: 0 }}>
+                  <Select sx={{ width: "100%" }} label="Thema 主分类" value={form.primaryCategoryCode} onChange={(event: any) => updatePrimaryCategory(event.target.value)} placeholder="选择主分类">
+                    <MenuItem value="">未指定（按书名与标签自动归类）</MenuItem>
+                    {LIBRARY_CATEGORIES.map((category) => <MenuItem key={category.code} value={category.code}>{category.label} · {category.code} · {category.themaLabel}</MenuItem>)}
+                  </Select>
+                  <Select sx={{ width: "100%" }} label="Thema 子分类" value={form.subcategoryCode} disabled={!form.primaryCategoryCode} onChange={(event: any) => update("subcategoryCode", event.target.value)} placeholder={form.primaryCategoryCode ? "选择子分类" : "先选择主分类"}>
+                    <MenuItem value="">未指定（保留自动归类）</MenuItem>
+                    {subcategories.map((subcategory) => <MenuItem key={subcategory.code} value={subcategory.code}>{subcategory.label} · {subcategory.subtitle}</MenuItem>)}
+                  </Select>
+                </Stack>
+                <Typography variant="caption" color="text.secondary">采用国际书业 Thema 1.6 编码；保存具体子分类后，虚拟书库会按同一分类同步书架。</Typography>
+              </Stack>
             </Box>
             <TextField label="简介" multiline minRows={4} value={form.description} onChange={(event: any) => update("description", event.target.value)} />
             <FormControlLabel control={<Checkbox checked={form.writeBack} onChange={(event: any) => update("writeBack", event.target.checked)} />} label={`同时写回 ${book?.format ?? ""} 原文件`} />

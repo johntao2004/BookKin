@@ -6,7 +6,22 @@ import { fileURLToPath } from "node:url";
 
 const scriptDirectory = dirname(fileURLToPath(import.meta.url));
 const projectDirectory = resolve(scriptDirectory, "..");
-const targetRoot = resolve(process.argv[2] ?? join(projectDirectory, ".local/library"));
+const argumentsList = process.argv.slice(2);
+const stressCountOption = argumentsList.find((argument) => argument.startsWith("--stress-count="));
+const stressCountFromSeparateArgument = argumentsList
+  .find((argument, index) => argument === "--stress-count" && argumentsList[index + 1]);
+const stressCountValue = stressCountOption?.split("=", 2)[1]
+  ?? (stressCountFromSeparateArgument
+    ? argumentsList[argumentsList.indexOf(stressCountFromSeparateArgument) + 1]
+    : undefined);
+const stressCount = stressCountValue === undefined ? 0 : Number(stressCountValue);
+if (!Number.isInteger(stressCount) || stressCount < 0 || stressCount > 4560) {
+  throw new Error("--stress-count 必须是 0 到 4560 之间的整数");
+}
+const targetArgument = argumentsList.find((argument, index) => (
+  !argument.startsWith("--") && argumentsList[index - 1] !== "--stress-count"
+));
+const targetRoot = resolve(targetArgument ?? join(projectDirectory, ".local/library"));
 const coverDirectory = join(projectDirectory, "apps/web/public/covers");
 
 const chapter = [
@@ -19,7 +34,7 @@ const chapter = [
 
 // The default demo catalog only contains books with polished, embedded covers.
 // Text-only PDF fixtures render their first white page as a cover and must not be seeded here.
-const books = [
+const defaultBooks = [
   ["山川与灯火", "顾远", "EPUB", "一趟徒步，一盏孤灯，照见人心的来路与归途。", "文学,收藏", "mountains-autumn.jpg", "灯火集"],
   ["城与钟声", "言之", "EPUB", "钟楼敲响以前，每一条旧街都保存着自己的时间。", "城市,随笔", "bell-tower.jpg", "灯火集"],
   ["雾港信使", "北川", "EPUB", "穿过雾中的桥，把一封迟到了十年的信送到城里。", "文学,幻想", "fog-city.jpg"],
@@ -36,9 +51,41 @@ const books = [
   published: `202${index % 6}-0${(index % 8) + 1}-18`,
 }));
 
-if (books.length !== 4 || new Set(books.map((book) => book.cover)).size !== books.length) {
+if (defaultBooks.length !== 4 || new Set(defaultBooks.map((book) => book.cover)).size !== defaultBooks.length) {
   throw new Error("默认演示书必须保持 4 本，并分别使用不同的正式封面");
 }
+
+const stressThemes = [
+  { prefix: "潮汐档案", authorPrefix: "林澜", tags: ["文学", "小说"], series: "文学创作" },
+  { prefix: "旧城手记", authorPrefix: "周砚", tags: ["历史", "人文"], series: "人文社科" },
+  { prefix: "山海观测", authorPrefix: "叶疏", tags: ["自然", "科学"], series: "自然科学" },
+  { prefix: "光影练习", authorPrefix: "苏白", tags: ["艺术", "设计"], series: "艺术生活" },
+  { prefix: "藏书索引", authorPrefix: "陈默", tags: ["文献", "参考"], series: "专藏文献" },
+];
+const stressCovers = [
+  "mountains-autumn.jpg",
+  "bell-tower.jpg",
+  "fog-city.jpg",
+  "lighthouse-stars.jpg",
+  "botanical-window.jpg",
+  "whale-sky.jpg",
+];
+const stressBooks = Array.from({ length: stressCount }, (_, index) => {
+  const serial = String(index + 1).padStart(3, "0");
+  const theme = stressThemes[index % stressThemes.length];
+  return {
+    title: `${theme.prefix} ${serial}`,
+    author: `${theme.authorPrefix}${String(Math.floor(index / stressThemes.length) + 1).padStart(2, "0")}`,
+    format: "EPUB",
+    description: `BookKin 压力演示书 ${serial}，用于验证大量真实 EPUB 的扫描、分页、分类和虚拟书库同步。`,
+    tags: theme.tags,
+    cover: stressCovers[index % stressCovers.length],
+    series: `压力演示 · ${theme.series}`,
+    isbn: `978-7-0000-9${serial}-0`,
+    published: `202${index % 6}-0${(index % 8) + 1}-18`,
+  };
+});
+const books = [...defaultBooks, ...stressBooks];
 
 const xml = (value) => String(value)
   .replaceAll("&", "&amp;")

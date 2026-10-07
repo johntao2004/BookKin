@@ -130,6 +130,12 @@ export interface Book {
      * @memberof Book
      */
     tags: Array<string>;
+    /**
+     * Thema 1.6 subject codes.
+     * @type {Array<string>}
+     * @memberof Book
+     */
+    subjectCodes: Array<string>;
 }
 
 
@@ -151,6 +157,7 @@ export function instanceOfBook(value: object): value is Book {
     if (!('fingerprint' in value) || value['fingerprint'] === undefined) return false;
     if (!('status' in value) || value['status'] === undefined) return false;
     if (!('tags' in value) || value['tags'] === undefined) return false;
+    if (!('subjectCodes' in value) || value['subjectCodes'] === undefined) return false;
     return true;
 }
 
@@ -180,6 +187,7 @@ export function BookFromJSONTyped(json: any, ignoreDiscriminator: boolean): Book
         'fingerprint': json['fingerprint'],
         'status': BookFileStatusFromJSON(json['status']),
         'tags': json['tags'],
+        'subjectCodes': json['subjectCodes'],
     };
 }
 
@@ -210,5 +218,6 @@ export function BookToJSONTyped(value?: Book | null, ignoreDiscriminator: boolea
         'fingerprint': value['fingerprint'],
         'status': BookFileStatusToJSON(value['status']),
         'tags': value['tags'],
+        'subjectCodes': value['subjectCodes'],
     };
 }

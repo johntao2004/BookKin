@@ -92,6 +92,12 @@ export interface MetadataRequest {
      */
     tags?: Array<string>;
     /**
+     * Thema 1.6 subject codes.
+     * @type {Array<string>}
+     * @memberof MetadataRequest
+     */
+    subjectCodes?: Array<string>;
+    /**
      *
      * @type {Array<string>}
      * @memberof MetadataRequest
@@ -146,6 +152,7 @@ export function MetadataRequestFromJSONTyped(json: any, ignoreDiscriminator: boo
         'series': json['series'] == null ? undefined : json['series'],
         'seriesIndex': json['seriesIndex'] == null ? undefined : json['seriesIndex'],
         'tags': json['tags'] == null ? undefined : json['tags'],
+        'subjectCodes': json['subjectCodes'] == null ? undefined : json['subjectCodes'],
         'manualFields': json['manualFields'] == null ? undefined : json['manualFields'],
         'writeBack': json['writeBack'] == null ? undefined : json['writeBack'],
         'bookFileId': json['bookFileId'] == null ? undefined : json['bookFileId'],
@@ -176,6 +183,7 @@ export function MetadataRequestToJSONTyped(value?: MetadataRequest | null, ignor
         'series': value['series'],
         'seriesIndex': value['seriesIndex'],
         'tags': value['tags'],
+        'subjectCodes': value['subjectCodes'],
         'manualFields': value['manualFields'],
         'writeBack': value['writeBack'],
         'bookFileId': value['bookFileId'],

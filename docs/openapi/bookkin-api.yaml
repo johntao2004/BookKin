@@ -245,6 +245,22 @@ paths:
         - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 100, default: 60 } }
       responses:
         '200': { description: Cursor page, content: { application/json: { schema: { $ref: '#/components/schemas/BookPage' } } } }
+  /books/revision:
+    get:
+      tags: [Catalog]
+      operationId: getCatalogRevision
+      responses:
+        '200':
+          description: Catalog revision and the current user's latest reading update
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [userId, revision]
+                properties:
+                  userId: { type: string, format: uuid }
+                  revision: { type: integer, format: int64 }
+                  readingUpdatedAt: { type: [string, 'null'], format: date-time }
   /categories:
     get:
       tags: [Categories]
@@ -881,7 +897,7 @@ components:
       properties: { items: { type: array, items: { $ref: '#/components/schemas/LibraryRoot' } } }
     Book:
       type: object
-      required: [id, fileId, title, author, format, coverUrl, progress, addedAt, libraryRoot, relativePath, fingerprint, status, tags]
+      required: [id, fileId, title, author, format, coverUrl, progress, addedAt, libraryRoot, relativePath, fingerprint, status, tags, subjectCodes]
       properties:
         id: { type: string, format: uuid }
         fileId: { type: string, format: uuid }
@@ -899,6 +915,7 @@ components:
         fingerprint: { type: string }
         status: { $ref: '#/components/schemas/BookFileStatus' }
         tags: { type: array, items: { type: string } }
+        subjectCodes: { type: array, items: { type: string, maxLength: 32 } }
     BookPage: { type: object, required: [items], properties: { items: { type: array, items: { $ref: '#/components/schemas/Book' } }, nextCursor: { type: [string, 'null'] } } }
     BrowseBook:
       type: object
@@ -1040,8 +1057,8 @@ components:
     BookUploadStatus: { type: string, enum: [RECEIVING, INSPECTING, ENRICHING, READY_FOR_REVIEW, COMMITTING, SUCCEEDED, DUPLICATE, FAILED, CANCELLED, EXPIRED] }
     BookMetadata:
       type: object
-      required: [id, title, authors, translators, tags, sources]
-      properties: { id: { type: string, format: uuid }, title: { type: string }, subtitle: { type: [string, 'null'] }, authors: { type: array, items: { type: string } }, translators: { type: array, items: { type: string } }, language: { type: [string, 'null'] }, publisher: { type: [string, 'null'] }, publishedDate: { type: [string, 'null'] }, isbn: { type: [string, 'null'] }, description: { type: [string, 'null'] }, series: { type: [string, 'null'] }, seriesIndex: { type: [number, 'null'] }, tags: { type: array, items: { type: string } }, coverCacheKey: { type: [string, 'null'] }, coverUrl: { type: [string, 'null'] }, sources: { type: object, additionalProperties: { $ref: '#/components/schemas/MetadataSource' } } }
+      required: [id, title, authors, translators, tags, subjectCodes, sources]
+      properties: { id: { type: string, format: uuid }, title: { type: string }, subtitle: { type: [string, 'null'] }, authors: { type: array, items: { type: string } }, translators: { type: array, items: { type: string } }, language: { type: [string, 'null'] }, publisher: { type: [string, 'null'] }, publishedDate: { type: [string, 'null'] }, isbn: { type: [string, 'null'] }, description: { type: [string, 'null'] }, series: { type: [string, 'null'] }, seriesIndex: { type: [number, 'null'] }, tags: { type: array, items: { type: string } }, subjectCodes: { type: array, items: { type: string, maxLength: 32 } }, coverCacheKey: { type: [string, 'null'] }, coverUrl: { type: [string, 'null'] }, sources: { type: object, additionalProperties: { $ref: '#/components/schemas/MetadataSource' } } }
     BookMetadataDraft:
       type: object
       required: [title, authors, translators, tags, sources, targetPath]
@@ -1219,4 +1236,4 @@ components:
       properties: { id: { type: string, format: uuid }, bookId: { type: string, format: uuid }, bookTitle: { type: string }, bookAuthor: { type: string }, format: { $ref: '#/components/schemas/BookFormat' }, coverUrl: { type: string }, originalPath: { type: string }, trashPath: { type: string }, sizeBytes: { type: integer, format: int64 }, deletedBy: { type: string }, deletedAt: { type: string, format: date-time }, expiresAt: { type: string, format: date-time }, fingerprint: { type: string } }
     MetadataRequest:
       type: object
-      properties: { title: { type: string }, subtitle: { type: string }, authors: { type: array, items: { type: string } }, translators: { type: array, items: { type: string } }, language: { type: string }, publisher: { type: string }, publishedDate: { type: string }, isbn: { type: string }, description: { type: string }, series: { type: string }, seriesIndex: { type: number }, tags: { type: array, items: { type: string } }, manualFields: { type: array, items: { type: string } }, writeBack: { type: boolean }, bookFileId: { type: string, format: uuid }, expectedFingerprint: { type: string } }
+      properties: { title: { type: string }, subtitle: { type: string }, authors: { type: array, items: { type: string } }, translators: { type: array, items: { type: string } }, language: { type: string }, publisher: { type: string }, publishedDate: { type: string }, isbn: { type: string }, description: { type: string }, series: { type: string }, seriesIndex: { type: number }, tags: { type: array, items: { type: string } }, subjectCodes: { type: array, maxItems: 4, items: { type: string, maxLength: 32 } }, manualFields: { type: array, items: { type: string } }, writeBack: { type: boolean }, bookFileId: { type: string, format: uuid }, expectedFingerprint: { type: string } }

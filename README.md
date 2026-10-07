@@ -8,7 +8,7 @@ An open-source, self-hosted family library and personal book collection manager 
 
 开源、自托管的家庭电子书库与个人藏书管理平台，让家人的书籍、阅读进度与私人笔记各得其所。
 
-[![Docker](https://github.com/johntao2004/BookKin/actions/workflows/docker.yml/badge.svg)](https://github.com/johntao2004/BookKin/actions/workflows/docker.yml)
+[![Docker](https://github.com/elexvx/BookKin/actions/workflows/docker.yml/badge.svg)](https://github.com/elexvx/BookKin/actions/workflows/docker.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-C86B56.svg)](LICENSE)
 [![Java 21](https://img.shields.io/badge/Java-21-3B2F2F.svg)](apps/server/pom.xml)
 [![React 19](https://img.shields.io/badge/React-19-5D7D87.svg)](apps/web/package.json)
@@ -72,6 +72,12 @@ Install dependencies and create the local cover-complete demo library. The defau
 ```bash
 pnpm install
 pnpm demo:library
+```
+
+需要测试大量目录时，可额外生成 120 本真实 EPUB 压力演示书；它们仍由扫描器入库，不直接写数据库：
+
+```bash
+pnpm demo:library:stress
 ```
 
 Start the complete local preview in the background (API, Worker and web):

@@ -16,6 +16,7 @@
     "generate:client": "./apps/server/mvnw -f apps/server/pom.xml -Pgenerate-client generate-sources",
     "check:tokens": "node scripts/generate-design-tokens.mjs --check",
     "demo:library": "node scripts/create-demo-library.mjs",
+    "demo:library:stress": "node scripts/create-demo-library.mjs --stress-count=120",
     "demo:seed": "bash scripts/seed-native-demo.sh",
     "start:local": "bash scripts/start-local.sh",
     "stop:local": "bash scripts/stop-local.sh",

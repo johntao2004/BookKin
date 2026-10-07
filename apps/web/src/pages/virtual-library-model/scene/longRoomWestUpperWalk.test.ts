@@ -4,7 +4,7 @@ import {collectCameraColliders,resolveCameraCollision} from '../../virtual-libra
 import {WEST_UPPER_WALK_LENGTH,WEST_UPPER_WALK_LENGTHS,westUpperWalkPoint} from '../longRoomLayout';
 
 it('keeps the isolated historical west upper storage route supported and collision-free in both directions',()=>{
-  const built=buildLongRoom(0, new THREE.TextureLoader(), true);
+  const built=buildLongRoom({includeRetiredRooms:true}, new THREE.TextureLoader());
   built.root.updateMatrixWorld(true);
   const colliders=collectCameraColliders(built.root,'hall');
   const supports=[...built.root.children.filter(child=>child.name==='Continuous Long Room timber floor'),

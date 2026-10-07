@@ -165,7 +165,7 @@ export const tokens = {
     "popover": "0 8px 24px rgba(20, 20, 19, 0.12)"
   },
   "layout": {
-    "contentMax": 1200,
+    "contentMax": 1024,
     "readingMax": 760,
     "navHeight": 64,
     "touchTarget": 44,

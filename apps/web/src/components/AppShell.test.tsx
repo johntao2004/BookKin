@@ -65,10 +65,12 @@ describe("AppShell", () => {
     expect(trigger).toHaveAttribute("aria-expanded", "false");
   });
 
-  it("leaves only the reader navigation on reader routes", () => {
+  it("keeps the global navigation above reader routes", () => {
     renderShell("/reader/book-1");
 
-    expect(screen.queryByRole("banner")).not.toBeInTheDocument();
+    expect(screen.getByRole("banner")).toBeInTheDocument();
+    expect(screen.getByRole("navigation", { name: "全站导航" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "BookKin" })).toHaveAttribute("href", "/library");
     expect(screen.getByRole("main")).toHaveTextContent("正文");
   });
 
@@ -76,6 +78,7 @@ describe("AppShell", () => {
     renderShell("/library");
 
     expect(screen.getByRole("banner")).toBeInTheDocument();
+    expect(screen.getByRole("navigation", { name: "全站导航" })).toBeInTheDocument();
     const wordmark = screen.getByRole("link", { name: "BookKin" });
     expect(wordmark).toBeInTheDocument();
     expect(wordmark.previousElementSibling).toBeNull();
@@ -92,7 +95,7 @@ describe("AppShell", () => {
     const managementLabels = ["用户管理", "设置"];
 
     fireEvent.click(screen.getByRole("button", { name: "打开导航" }));
-    const drawer = screen.getByRole("navigation");
+    const drawer = screen.getByRole("navigation", { name: "移动端导航" });
     expect(within(screen.getByRole("dialog", { name: "BookKin" })).getByRole("heading", { name: "BookKin" })).toBeInTheDocument();
     for (const label of managementLabels) expect(within(drawer).queryByText(label)).not.toBeInTheDocument();
     expect(within(drawer).queryByText("展示书目设置")).not.toBeInTheDocument();

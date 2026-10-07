@@ -1,6 +1,7 @@
-export type VirtualLibraryMovementKey = "forward" | "backward" | "left" | "right";
+export type VirtualLibraryMovementKey = "forward" | "backward" | "left" | "right" | "up" | "down";
 
 export const VIRTUAL_LIBRARY_KEYBOARD_WALK_SPEED = 4.2;
+export const VIRTUAL_LIBRARY_KEYBOARD_FLIGHT_SPEED = 3.2;
 
 const MOVEMENT_CODE_MAP: Record<string, VirtualLibraryMovementKey> = {
   KeyW: "forward",
@@ -11,6 +12,12 @@ const MOVEMENT_CODE_MAP: Record<string, VirtualLibraryMovementKey> = {
   ArrowDown: "backward",
   ArrowLeft: "left",
   ArrowRight: "right",
+  ShiftLeft: "up",
+  ShiftRight: "up",
+  Shift: "up",
+  ControlLeft: "down",
+  ControlRight: "down",
+  Control: "down",
 };
 
 export function virtualLibraryMovementKey(code: string, key: string) {
@@ -19,6 +26,22 @@ export function virtualLibraryMovementKey(code: string, key: string) {
 
 export function isShelfMovementLocked(expandedShelfSectionId: number | null) {
   return expandedShelfSectionId !== null;
+}
+
+export function virtualLibraryVerticalFlightDelta(
+  pressed: ReadonlySet<VirtualLibraryMovementKey>,
+  distance: number,
+) {
+  if (distance <= 0) return 0;
+  return (Number(pressed.has("up")) - Number(pressed.has("down"))) * distance;
+}
+
+export function clampVirtualLibraryFlightHeight(
+  desiredHeight: number,
+  minimumHeight: number,
+  maximumHeight: number,
+) {
+  return Math.min(Math.max(desiredHeight, minimumHeight), Math.max(minimumHeight, maximumHeight));
 }
 
 /** Returns a camera-relative planar displacement with normalized diagonal speed. */

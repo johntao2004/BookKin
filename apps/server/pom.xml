@@ -9,7 +9,7 @@
     <relativePath/>
   </parent>
 
-  <groupId>io.github.johntao2004</groupId>
+  <groupId>com.elexvx</groupId>
   <artifactId>bookkin</artifactId>
   <version>0.1.0-SNAPSHOT</version>
   <name>BookKin</name>

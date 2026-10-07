@@ -47,7 +47,7 @@
 
 ## 后端：apps/server
 
-业务代码基准路径为 `src/main/java/io/github/johntao2004/bookkin/`。
+业务代码基准路径为 `src/main/java/io/github/elexvx/bookkin/`。
 
 | Java 包 | 职责 |
 | --- | --- |

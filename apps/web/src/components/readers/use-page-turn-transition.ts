@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
+import { useMediaQuery } from "../../ui/primitives";
 import { tokens } from "../../theme/generated-tokens";
 import type { PageCurlRenderer } from "./page-turn-curl";
 import type { PageTurnDirection } from "./page-turn-geometry";
@@ -12,6 +13,7 @@ const FALLBACK_ENTER_DURATION_MS = 250;
 const FALLBACK_EXIT_EASING = "cubic-bezier(0.45, 0, 0.65, 0.55)";
 const FALLBACK_ENTER_EASING = "cubic-bezier(0.18, 0.78, 0.2, 1)";
 const PAGE_SNAPSHOT_IDLE_TIMEOUT_MS = 800;
+export const PAGE_TURN_MOBILE_QUERY = `(max-width: ${tokens.layout.breakpointMobile - 0.05}px)`;
 
 type CachedPageSnapshot = {
   key: string;
@@ -219,6 +221,8 @@ export function usePageTurnTransition(
   enabled = true,
   { spread = false, snapshotKey = "page" }: PageTurnTransitionOptions = {},
 ) {
+  const mobileViewport = useMediaQuery(PAGE_TURN_MOBILE_QUERY);
+  const effectiveEnabled = enabled && mobileViewport;
   const runningRef = useRef(false);
   const frameRef = useRef<number | null>(null);
   const shadeAnimationRef = useRef<Animation | null>(null);
@@ -251,7 +255,7 @@ export function usePageTurnTransition(
 
   useEffect(() => {
     snapshotCacheRef.current = null;
-    if (!enabled || typeof window.requestIdleCallback !== "function") return;
+    if (!effectiveEnabled || typeof window.requestIdleCallback !== "function") return;
     let cancelled = false;
     const idleHandle = window.requestIdleCallback(() => {
       const target = targetRef.current;
@@ -273,7 +277,7 @@ export function usePageTurnTransition(
       cancelled = true;
       window.cancelIdleCallback(idleHandle);
     };
-  }, [enabled, snapshotKey, targetRef]);
+  }, [effectiveEnabled, snapshotKey, targetRef]);
 
   const animateCurl = useCallback((curl: PageCurlRenderer) => new Promise<void>((resolve) => {
     const startedAt = performance.now();
@@ -297,7 +301,7 @@ export function usePageTurnTransition(
     if (runningRef.current) return;
     const target = targetRef.current;
     const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
-    if (!enabled || !target || typeof target.animate !== "function" || reducedMotion) {
+    if (!effectiveEnabled || !target || typeof target.animate !== "function" || reducedMotion) {
       await changePage();
       return;
     }
@@ -370,7 +374,7 @@ export function usePageTurnTransition(
       runningRef.current = false;
       if (mountedRef.current) setTurning(false);
     }
-  }, [animateCurl, cleanupCurl, enabled, snapshotKey, spread, targetRef]);
+  }, [animateCurl, cleanupCurl, effectiveEnabled, snapshotKey, spread, targetRef]);
 
   return { turnPage, turning };
 }

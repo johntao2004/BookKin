@@ -18,6 +18,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode, type
 import { api } from "../../api/client";
 import type { Annotation } from "../../domain/types";
 import { tokens } from "../../theme/generated-tokens";
+import { readerWidthSx } from "../PageHeader";
 import { applyPdfTextAnnotations } from "./pdf-annotations";
 import { pdfTextToReadingBlocks, splitPdfInlineFootnoteReferences, type PdfReadingBlock } from "./pdf-reading-text";
 import { READER_CONTENT_HEIGHT, READER_PAGE_HEIGHT } from "./reader-layout";
@@ -389,7 +390,7 @@ export default function PdfDocumentReader({ bookId, annotations, theme, fontSize
     <Stack className="reader-viewport" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} sx={{ height: READER_CONTENT_HEIGHT, minHeight: 0, overflow: "hidden", bgcolor: viewMode === "ORIGINAL" ? theme.foreground : theme.background, color: viewMode === "ORIGINAL" ? theme.background : theme.foreground }}>
       {fontSourceUrl && <style>{`@font-face { font-family: ${fontFamily.split(",")[0]}; src: url("${fontSourceUrl}"); font-display: swap; }`}</style>}
       {viewMode === "READING" ? (
-        <Box ref={readingSurfaceRef} className="reader-page-turn-surface" sx={{ position: "relative", width: "100%", maxWidth: wideSpread ? tokens.layout.contentMax : tokens.layout.readingMax, height: READER_PAGE_HEIGHT, minHeight: 0, mx: "auto", overflow: "hidden", px: { xs: 0, sm: 1, md: 2 }, bgcolor: theme.background, backfaceVisibility: "hidden", transformStyle: "preserve-3d", willChange: turning ? "transform, opacity, filter, clip-path" : "auto" }}>
+        <Box ref={readingSurfaceRef} className="reader-page-turn-surface" sx={{ position: "relative", ...readerWidthSx, height: READER_PAGE_HEIGHT, minHeight: 0, overflow: "hidden", bgcolor: theme.background, backfaceVisibility: "hidden", transformStyle: "preserve-3d", willChange: turning ? "transform, opacity, filter, clip-path" : "auto" }}>
           <PdfReadingClipFrame>
             {textLoading
               ? <Stack spacing={1.5} sx={{ height: "100%", alignItems: "center", justifyContent: "center" }}><CircularProgress size={30} /><Typography sx={{ color: theme.muted }}>正在解析第 {pageNumber} 页文字…</Typography></Stack>

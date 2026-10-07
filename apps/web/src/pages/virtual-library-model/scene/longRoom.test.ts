@@ -7,7 +7,9 @@ import { LONG_ROOM, LONG_ROOM_BAY_PITCH, TRINITY_MEASURED_DIMENSIONS, galleryWal
   LONG_ROOM_FRONTMOST_CASE, LONG_ROOM_STAIR_ADJACENT_CASE, LONG_ROOM_STAIR_ALCOVE,
   longRoomLiveCatalogFace, longRoomLiveCatalogSectionIndex } from '../longRoomLayout';
 import { buildLongRoom, buildLongRoomProgressively, createLongRoomVault, longRoomRoofY,
-  LONG_ROOM_CATALOG_BOOKS_PER_ROW, LONG_ROOM_CATALOG_BOOK_SIZE, LONG_ROOM_SHELF_BOARD_THICKNESS,
+  LONG_ROOM_BOOKCASE_PILASTER_WIDTH, LONG_ROOM_BOOK_CENTER_OFFSET, LONG_ROOM_CATALOG_BOOKS_PER_ROW,
+  LONG_ROOM_CATALOG_BOOK_RENDERED_DEPTH, LONG_ROOM_CATALOG_BOOK_SIZE, LONG_ROOM_CATALOG_SPINE_RECESS,
+  LIVE_GALLERY_CORNER_RADIUS, LONG_ROOM_SHELF_BOARD_THICKNESS, LONG_ROOM_SHELF_FRONT_OFFSET, WEST_GALLERY_CROSSWALK,
   longRoomShelfBoardY } from './longRoom';
 import { createLibraryMaterials } from './materials';
 import { collectCameraColliders, resolveCameraCollision } from '../../virtual-library-collision';
@@ -24,7 +26,7 @@ afterEach(() => vi.restoreAllMocks());
 
 describe('Long Room historical reference assembly', () => {
   it('omits every removed window-end double reading stand from the live hall', () => {
-    const built = buildLongRoom(0, new THREE.TextureLoader());
+    const built = buildLongRoom({}, new THREE.TextureLoader());
     const removedFurniture: string[] = [];
     built.root.traverse(object => {
       if (object.name.includes('Reading stand') || object.name.includes('double reading stand')) {
@@ -36,7 +38,7 @@ describe('Long Room historical reference assembly', () => {
   });
 
   it('blocks the projecting aisle pilasters and walls after batching', () => {
-    const built = buildLongRoom(0, new THREE.TextureLoader());
+    const built = buildLongRoom({}, new THREE.TextureLoader());
     optimizeStaticMeshes(built.root, built.interactiveObjects);
     const colliders = collectCameraColliders(built.root, 'hall');
     const z = LONG_ROOM.length / 2 - LONG_ROOM.endMargin - 2 * LONG_ROOM_BAY_PITCH;
@@ -52,20 +54,22 @@ describe('Long Room historical reference assembly', () => {
     }
   });
 
-  it('preserves collision after mesh batching and allows the complete stair and gallery route', () => {
-    const built = buildLongRoom(120, new THREE.TextureLoader(), true);
+  it('preserves the live spiral route while keeping shelf ladders out of the hall', () => {
+    const built = buildLongRoom({ includeRetiredRooms: true }, new THREE.TextureLoader());
     const firstCase = built.shelfSections.find(section => section.id === 0)!;
-    const occupiedRows = new Set(built.bookSlots.filter(slot => slot.sectionId === 0).map(slot => slot.rowIndex));
-    expect(built.bookSlots).toHaveLength(120);
+    const occupiedRows = new Set(built.catalogSlots.filter(slot => slot.sectionId === 0).map(slot => slot.rowIndex));
+    expect(built.catalogSlots.filter(slot => slot.sectionId === 0)).toHaveLength(120);
     expect(occupiedRows.size).toBe(firstCase.shelfCount);
     expect(Math.max(...occupiedRows)).toBe(firstCase.shelfCount - 1);
     expect(firstCase.shelfCount).toBe(6);
+    expect(LONG_ROOM.caseThickness).toBeGreaterThanOrEqual(1.05);
+    expect(LONG_ROOM_BOOKCASE_PILASTER_WIDTH).toBeGreaterThan(0.9);
     expect(LONG_ROOM_CATALOG_BOOKS_PER_ROW).toBe(20);
     const firstLowerCase = built.root.children.find(child => (
       child.name.startsWith('Transverse oak case') && child.name.endsWith(':0')
     ))!;
     expect(firstLowerCase.children.filter(child => child.name === 'Continuous shelf board')).toHaveLength(6);
-    for (const slot of built.bookSlots.filter(item => item.sectionId === firstCase.id)) {
+    for (const slot of built.catalogSlots.filter(item => item.sectionId === firstCase.id)) {
       expect(slot.scale.toArray()).toEqual([
         LONG_ROOM_CATALOG_BOOK_SIZE.spineWidth,
         LONG_ROOM_CATALOG_BOOK_SIZE.height,
@@ -75,6 +79,11 @@ describe('Long Room historical reference assembly', () => {
         longRoomShelfBoardY(slot.rowIndex, LONG_ROOM.lowerCaseHeight)
           + LONG_ROOM_SHELF_BOARD_THICKNESS / 2,
       );
+      expect(Math.abs(slot.position.z - firstCase.centerZ!)).toBeCloseTo(LONG_ROOM_BOOK_CENTER_OFFSET);
+      const spineFront = Math.abs(slot.position.z - firstCase.centerZ!)
+        + LONG_ROOM_CATALOG_BOOK_RENDERED_DEPTH / 2;
+      expect(spineFront).toBeCloseTo(LONG_ROOM_SHELF_FRONT_OFFSET - LONG_ROOM_CATALOG_SPINE_RECESS);
+      expect(spineFront).toBeLessThan(LONG_ROOM_SHELF_FRONT_OFFSET);
     }
     expect(built.root.getObjectByName('Walkable gallery access stair')).toBeUndefined();
     expect(built.root.getObjectByName('Long Room pierced iron alcove stair study')).toBeDefined();
@@ -89,27 +98,120 @@ describe('Long Room historical reference assembly', () => {
     const memberBounds=westBalusters.geometry.boundingBox!.clone().applyMatrix4(placement);
     expect(memberBounds.min.y).toBeCloseTo(LONG_ROOM.galleryY+.17,4);
     expect(memberBounds.max.y).toBeCloseTo(LONG_ROOM.galleryY+.985,4);
-    const liveBuilt = buildLongRoom(0, new THREE.TextureLoader());
+    const liveBuilt = buildLongRoom({}, new THREE.TextureLoader());
     liveBuilt.root.updateMatrixWorld(true);
     const liveColliders = collectCameraColliders(liveBuilt.root, 'hall');
     const sx=HISTORIC_SPIRAL.x,sz=HISTORIC_SPIRAL.z,half=HISTORIC_SPIRAL.opening/2,eyeY=LONG_ROOM.galleryY+1.65;
-    // The opening's visible perimeter blocks side entry, but its landing admits a person.
-    for(const [x,z,dx,dz] of [[sx-half,sz,1,0],[sx,sz-half,0,1],[sx,sz+half,0,1],
-      [sx+half,sz+0.85,-1,0],[sx+half,sz-0.85,-1,0]]) {
+    expect(liveBuilt.root.getObjectByName('Long Room pierced iron alcove stair study')).toBeDefined();
+    expect(liveBuilt.root.getObjectByName('Iron stair upper landing')).toBeDefined();
+    expect(liveBuilt.root.children.filter(child => /shelf ladder/i.test(child.name))).toHaveLength(0);
+    expect(liveColliders.some(collider => collider.id.startsWith('shelf-ladder-'))).toBe(false);
+    expect(liveColliders.some(collider => collider.id.startsWith('spiral-opening-guard-'))).toBe(true);
+    for(const [probeIndex,[x,z,dx,dz]] of [[sx-half,sz,1,0],[sx,sz-half,0,1],[sx,sz+half,0,1],
+      [sx+half,sz+0.85,-1,0],[sx+half,sz-0.85,-1,0]].entries()) {
       const blocked=resolveCameraCollision({x:x-dx*0.45,y:eyeY,z:z-dz*0.45},{x:x+dx*0.45,y:eyeY,z:z+dz*0.45},liveColliders);
-      expect(blocked.blockedBy).toMatch(/^spiral-opening-guard-/);
+      expect(blocked.blockedBy, `spiral guard probe ${probeIndex}`).toMatch(/^spiral-opening-guard-/);
     }
     const doorway=resolveCameraCollision({x:sx+0.6,y:eyeY,z:sz},{x:sx+1.6,y:eyeY,z:sz},liveColliders);
     expect(doorway.blocked).toBe(false);
+    const stairApertureRay = new THREE.Raycaster(
+      new THREE.Vector3(sx, LONG_ROOM.galleryY + 0.2, sz),
+      new THREE.Vector3(0, -1, 0),
+    );
+    const liveGalleries = liveBuilt.root.children.filter(child => child.name === 'Continuous straight upper gallery');
+    expect(stairApertureRay.intersectObjects(liveGalleries, true)).toHaveLength(0);
+    const liveEastCrosswalk = liveBuilt.root.getObjectByName('Live east gallery ring crossing')!;
+    const westCrosswalk = liveBuilt.root.getObjectByName('Gallery end crossing')!;
+    expect(liveEastCrosswalk).toBeDefined();
+    expect(westCrosswalk).toBeDefined();
+    const roundedCorners = liveBuilt.root.getObjectByName('Supported curved live gallery corners')!;
+    expect(roundedCorners).toBeDefined();
+    expect(roundedCorners.children.filter(child =>
+      child.name === 'Solid curved gallery corner floor infill')).toHaveLength(4);
+    expect(roundedCorners.children.filter(child =>
+      child.name === 'Curved gallery corner handrail')).toHaveLength(4);
+    expect(roundedCorners.children.filter(child =>
+      child.name === 'Curved gallery corner supporting lower rail')).toHaveLength(4);
+    expect(liveColliders.filter(collider =>
+      collider.id.startsWith('live-gallery-corner-rail-'))).toHaveLength(32);
+    expect(liveColliders.filter(collider =>
+      collider.id.startsWith('live-gallery-corner-floor-'))).toHaveLength(32);
+    expect(liveColliders.filter(collider => collider.id.startsWith('gallery-guard-'))).toHaveLength(2);
+    expect(liveColliders.some(collider => collider.id.startsWith(
+      `crosswalk-guard-${WEST_GALLERY_CROSSWALK.outer}`,
+    ))).toBe(false);
+    expect(liveColliders.some(collider => collider.id ===
+      `live-east-crosswalk-guard-${EAST_GALLERY_CONNECTION.back}`)).toBe(false);
+    const eastFloorRay = new THREE.Raycaster(
+      new THREE.Vector3(0, LONG_ROOM.galleryY + 0.3, EAST_GALLERY_CONNECTION.center),
+      new THREE.Vector3(0, -1, 0),
+    );
+    expect(eastFloorRay.intersectObject(liveEastCrosswalk, true)[0]?.point.y)
+      .toBeCloseTo(LONG_ROOM.galleryY, 4);
     for (const side of [-1, 1]) {
-      const galleryRail = resolveCameraCollision(
-        {x: side * 6.3, y: eyeY, z: EAST_GALLERY_CONNECTION.center},
-        {x: side * 5.3, y: eyeY, z: EAST_GALLERY_CONNECTION.center},
+      const galleryPassage = resolveCameraCollision(
+        {x: side * (LONG_ROOM.galleryInnerX + 1), y: eyeY, z: EAST_GALLERY_CONNECTION.center},
+        {x: side * (LONG_ROOM.galleryInnerX - 0.7), y: eyeY, z: EAST_GALLERY_CONNECTION.center},
         liveColliders,
       );
-      expect(galleryRail.blockedBy).toMatch(/^gallery-guard-/);
+      expect(galleryPassage.blocked, `east gallery connection ${side}`).toBe(false);
     }
+    expect(resolveCameraCollision(
+      {x: 0, y: eyeY, z: EAST_GALLERY_CONNECTION.center},
+      {x: 0, y: eyeY, z: EAST_GALLERY_CONNECTION.front - 0.6},
+      liveColliders,
+    ).blockedBy).toMatch(/^live-east-crosswalk-guard-/);
+    expect(resolveCameraCollision(
+      {x: 0, y: eyeY, z: EAST_GALLERY_CONNECTION.center},
+      {x: 0, y: eyeY, z: EAST_GALLERY_CONNECTION.back + 2},
+      liveColliders,
+    ).blockedBy).toBe('long-room-east-solid-end');
+    for (const z of [WEST_GALLERY_CROSSWALK.inner - 0.05, EAST_GALLERY_CONNECTION.front + 0.05]) {
+      for (const side of [-1, 1]) {
+        const crosswalkFloor = z < 0
+          ? westCrosswalk.getObjectByName('Gallery end crosswalk')!
+          : liveEastCrosswalk.getObjectByName('Live east gallery crosswalk floor')!;
+        const cornerFloorRay = new THREE.Raycaster(
+          new THREE.Vector3(side * (LONG_ROOM.galleryInnerX - 0.1), LONG_ROOM.galleryY + 0.3, z),
+          new THREE.Vector3(0, -1, 0),
+        );
+        expect(cornerFloorRay.intersectObject(crosswalkFloor, true)[0]?.point.y,
+          `solid gallery floor at ${side},${z}`).toBeCloseTo(LONG_ROOM.galleryY, 4);
+      }
+    }
+    const cornerFloors = roundedCorners.children.filter(child =>
+      child.name === 'Solid curved gallery corner floor infill');
+    for (const [edgeZ, inwardZ] of [
+      [WEST_GALLERY_CROSSWALK.inner, 1],
+      [EAST_GALLERY_CONNECTION.front, -1],
+    ] as const) for (const side of [-1, 1]) {
+      const centerX = side * (LONG_ROOM.galleryInnerX - LIVE_GALLERY_CORNER_RADIUS);
+      const centerZ = edgeZ + inwardZ * LIVE_GALLERY_CORNER_RADIUS;
+      const startAngle = side === 1 ? 0 : Math.PI;
+      const endAngle = startAngle - side * inwardZ * Math.PI / 2;
+      const angle = (startAngle + endAngle) / 2;
+      const ray = new THREE.Raycaster(new THREE.Vector3(
+        centerX + Math.cos(angle) * (LIVE_GALLERY_CORNER_RADIUS + 0.06),
+        LONG_ROOM.galleryY + 0.3,
+        centerZ + Math.sin(angle) * (LIVE_GALLERY_CORNER_RADIUS + 0.06),
+      ), new THREE.Vector3(0, -1, 0));
+      expect(ray.intersectObjects(cornerFloors, false)[0]?.point.y,
+        `positive curved floor infill at ${side},${edgeZ}`).toBeCloseTo(LONG_ROOM.galleryY, 4);
+    }
+    const springingConnectors: THREE.Mesh[] = [];
+    liveBuilt.root.traverse(object => {
+      if (object instanceof THREE.Mesh && object.name === 'Vault rib springing connector') {
+        springingConnectors.push(object);
+      }
+    });
+    expect(springingConnectors).toHaveLength(LONG_ROOM_LIVE_SHELF_SECTION_COUNT);
+    for (const connector of springingConnectors) {
+      expect(new THREE.Box3().setFromObject(connector).max.y).toBeCloseTo(LONG_ROOM.vaultSpring, 4);
+    }
+    const staticMergeErrors = vi.spyOn(console, 'error').mockImplementation(() => undefined);
     optimizeStaticMeshes(liveBuilt.root, liveBuilt.interactiveObjects);
+    expect(staticMergeErrors.mock.calls.filter(call => String(call[0]).includes('mergeGeometries'))).toEqual([]);
+    staticMergeErrors.mockRestore();
     const optimizedLiveColliders = collectCameraColliders(liveBuilt.root, 'hall');
     expect([...optimizedLiveColliders].sort((a, b) => a.id.localeCompare(b.id)))
       .toEqual([...liveColliders].sort((a, b) => a.id.localeCompare(b.id)));
@@ -143,17 +245,18 @@ describe('Long Room historical reference assembly', () => {
       expect(near.visible).toBe(false); expect(far.visible).toBe(true);
     }
     expect([...colliders].sort((a, b) => a.id.localeCompare(b.id))).toEqual([...before].sort((a, b) => a.id.localeCompare(b.id)));
-    for (const [length,pointAt,routeColliders] of [
-      [HISTORIC_SPIRAL_ACCESS_LENGTH,galleryWalkPoint,optimizedLiveColliders],
-      [HENRY_JONES_WALK_LENGTH,henryJonesWalkPoint,colliders],
-      [serviceWalk.length,serviceWalk.pointAt,colliders],
+    for (const [routeName,length,pointAt,routeColliders] of [
+      ['historic spiral',HISTORIC_SPIRAL_ACCESS_LENGTH,galleryWalkPoint,optimizedLiveColliders],
+      ['Henry Jones',HENRY_JONES_WALK_LENGTH,henryJonesWalkPoint,colliders],
+      ['east service',serviceWalk.length,serviceWalk.pointAt,colliders],
     ] as const) for (const reverse of [false, true]) {
       let previous: {x: number; y: number; z: number} | null = null;
       for (let travelled = 0; travelled <= length; travelled += 0.2) {
         const point = pointAt(reverse ? length - travelled : travelled);
         const eye = {...point, y: point.y + 1.65};
         const resolved = resolveCameraCollision(previous ?? eye, eye, routeColliders);
-        expect(Math.hypot(resolved.x - eye.x, resolved.y - eye.y, resolved.z - eye.z), `blocked route ${travelled} reverse=${reverse} by ${resolved.blockedBy}`).toBeLessThan(0.01);
+        expect(Math.hypot(resolved.x - eye.x, resolved.y - eye.y, resolved.z - eye.z),
+          `${routeName} blocked at ${travelled} reverse=${reverse} by ${resolved.blockedBy}`).toBeLessThan(0.01);
         previous = eye;
       }
     }
@@ -172,7 +275,7 @@ describe('Long Room historical reference assembly', () => {
       slicesAtNavigation=slices.mock.calls.length;
       controller.abort();
     }, 0);
-    await expect(buildLongRoomProgressively(4, new THREE.TextureLoader(), controller.signal, slices))
+    await expect(buildLongRoomProgressively(new THREE.TextureLoader(), controller.signal, slices))
       .rejects.toMatchObject({name: 'AbortError'});
     clearTimeout(navigation);
     expect(slicesAtNavigation).toBeGreaterThan(0);
@@ -190,36 +293,35 @@ describe('Long Room historical reference assembly', () => {
     expect(box.max.y).toBeCloseTo(18.45, 4);
     expect(box.max.z - box.min.z).toBeCloseTo(90, 4);
     expect(box.max.x - box.min.x).toBeCloseTo(LONG_ROOM.vaultRadius * 2, 4);
-    const sideVaults = vault.children.filter(child => child.name === 'Upper alcove intersecting barrel vault');
-    expect(sideVaults).toHaveLength(40);
-    const beads = vault.children.filter(child => child.name === 'Rounded upper alcove arch bead') as THREE.Mesh[];
-    expect(beads).toHaveLength(40);
-    expect(new Set(beads.map(bead => bead.geometry)).size).toBe(1);
+    const sideCeilings = vault.children.filter(child => child.name === 'Continuous side gallery ceiling');
+    expect(sideCeilings).toHaveLength(2);
+    expect(vault.getObjectByName('Upper alcove intersecting barrel vault')).toBeUndefined();
+    expect(vault.getObjectByName('Rounded upper alcove arch bead')).toBeUndefined();
+    expect(vault.getObjectByName('Segmental vault sealed spandrel')).toBeUndefined();
     vault.updateMatrixWorld(true);
     for (const side of [-1, 1]) for (let bay = 0; bay < 20; bay++) {
       const ray = new THREE.Raycaster(new THREE.Vector3(side * 9, 9, longRoomBayZ(bay)), new THREE.Vector3(0, 1, 0));
-      const hit = ray.intersectObjects(sideVaults)[0];
-      expect(hit).toBeDefined(); expect(hit.point.y).toBeCloseTo(LONG_ROOM.vaultSpring + LONG_ROOM_BAY_PITCH / 2, 4);
+      const hit = ray.intersectObjects(sideCeilings)[0];
+      expect(hit).toBeDefined(); expect(hit.point.y).toBeCloseTo(LONG_ROOM.vaultSpring, 4);
     }
-    // Trace across the barrel/lunette junction: neither a gap nor the old low
-    // central barrel may cover the raised side-arch crown.
-    for(const side of [-1,1])for(const offset of [0,0.5,1]) {
-      const rise=Math.sqrt((LONG_ROOM_BAY_PITCH/2)**2-offset**2);
-      const seam=Math.sqrt(LONG_ROOM.vaultRadius**2-rise**2);
-      for(const dx of [-0.08,0,0.08]) {
-        const x=side*(seam+dx),z=longRoomBayZ(8)+offset;
+    // The complete barrel meets a complete flat side ceiling at one clean
+    // spring-line edge; there are no per-bay holes or intersecting overlays.
+    for(const side of [-1,1])for(const dx of [-0.02,0,0.02]) {
+        const x=side*(LONG_ROOM.vaultRadius+dx),z=longRoomBayZ(8);
         const ray=new THREE.Raycaster(new THREE.Vector3(x,9,z),new THREE.Vector3(0,1,0));
-        const hit=ray.intersectObjects([shell,...sideVaults])[0];
+        const hit=ray.intersectObjects([shell,...sideCeilings])[0];
         expect(hit,`missing barrel junction ${x},${z}`).toBeDefined();
-        expect(hit.point.y).toBeCloseTo(Math.max(longRoomRoofY(x),LONG_ROOM.vaultSpring+rise),1);
-      }
+        expect(hit.point.y).toBeCloseTo(
+          Math.abs(x) <= LONG_ROOM.vaultRadius ? longRoomRoofY(x) : LONG_ROOM.vaultSpring,
+          1,
+        );
     }
     expect(longRoomRoofY(0)).toBeCloseTo(18.45);
     expect(longRoomRoofY(9.15)).toBeCloseTo(LONG_ROOM.vaultSpring);
   });
 
-  it('builds straight two-level alcoves, real catalog reservations and closed room boundaries', () => {
-    const built = buildLongRoom(4, new THREE.TextureLoader(), true);
+  it('builds straight two-level alcoves, empty catalog anchors and closed room boundaries', () => {
+    const built = buildLongRoom({ includeRetiredRooms: true }, new THREE.TextureLoader());
     expect(built.shelfSections).toHaveLength(40);
     const capitalCores: THREE.Mesh[] = [], shafts: THREE.Mesh[] = [];
     built.root.traverse(object => {
@@ -233,6 +335,14 @@ describe('Long Room historical reference assembly', () => {
     expect(new Set(shafts.map(mesh => mesh.geometry)).size).toBe(2);
     expect(new Set(shafts.map(mesh => mesh.position.toArray().join(':'))).size).toBe(80);
     built.root.updateMatrixWorld(true);
+    const aisleShafts = shafts.filter(mesh => (
+      Math.abs(Math.abs(mesh.position.x) - LONG_ROOM.aisleHalfWidth) < 0.001
+    ));
+    expect(aisleShafts).toHaveLength(80);
+    for (const shaft of aisleShafts) {
+      const size = new THREE.Box3().setFromObject(shaft).getSize(new THREE.Vector3());
+      expect(size.z).toBeCloseTo(LONG_ROOM_BOOKCASE_PILASTER_WIDTH, 2);
+    }
     for (const side of [-1, 1]) for (const level of [0, 1]) {
       const backboards: THREE.BufferGeometry[] = [];
       for (let bay = 0; bay < 20; bay++) {
@@ -240,6 +350,7 @@ describe('Long Room historical reference assembly', () => {
         const board = cabinet.getObjectByName('Bookcase fitted backboard') as THREE.Mesh;
         backboards.push(board.geometry);
         const bounds = new THREE.Box3().setFromObject(cabinet);
+        expect(bounds.max.z - bounds.min.z).toBeGreaterThanOrEqual(LONG_ROOM.caseThickness);
         const expectedZ = LONG_ROOM.length / 2 - LONG_ROOM.endMargin - bay * LONG_ROOM_BAY_PITCH;
         expect((bounds.min.z + bounds.max.z) / 2).toBeCloseTo(expectedZ, 5);
         const descriptors = cabinet.userData.cameraColliderDescriptors;
@@ -250,7 +361,7 @@ describe('Long Room historical reference assembly', () => {
     }
 
 
-    expect(built.bookSlots).toHaveLength(4);
+    expect(built.catalogSlots).toHaveLength(built.shelfSections.length * 120);
     expect(built.root.children.some(child => child.userData.sitter)).toBe(false);
     const wallLamps=built.root.children.filter(child => child.name === 'Curved brass and glass wall lamp');
     expect(wallLamps).toHaveLength(18);
@@ -268,7 +379,7 @@ describe('Long Room historical reference assembly', () => {
         meshes.forEach((mesh,index)=>{expect(mesh.geometry).toBe(reference[index].geometry);expect(mesh.material).toBe(reference[index].material);});
       }
     }
-    expect(built.bookSlots.every(slot => slot.sectionId === 0)).toBe(true);
+    expect(built.catalogSlots.filter(slot => slot.sectionId === 0)).toHaveLength(120);
     const section = built.shelfSections.find(item => item.id === 0)!;
     expect(section.centerZ).toBeLessThan(40);
     expect(section.centerX).toBeLessThan(-LONG_ROOM.aisleHalfWidth);
@@ -278,7 +389,9 @@ describe('Long Room historical reference assembly', () => {
     const spiral = built.root.getObjectByName('Long Room pierced iron alcove stair study')!;
     expect(spiral.userData.placement).toContain('south-entry-alcove');
     expect(spiral.position.x + HISTORIC_SPIRAL.diameter / 2).toBeCloseTo(-LONG_ROOM.aisleHalfWidth);
-    expect(spiral.position.z).toBeCloseTo(longRoomBayZ(LONG_ROOM_STAIR_ALCOVE.bay));
+    expect(spiral.position.z).toBeCloseTo(HISTORIC_SPIRAL.z);
+    expect(Math.abs(spiral.position.z - longRoomBayZ(LONG_ROOM_STAIR_ALCOVE.bay)))
+      .toBeLessThan(LONG_ROOM_BAY_PITCH / 4);
     expect(spiral.userData.height).toBe(LONG_ROOM.galleryY);
     expect(built.root.children.filter(child => child.name === 'Iron stair opening guard')).toHaveLength(7);
     const galleries = built.root.children.filter(child => child.name === 'Continuous straight upper gallery');
@@ -319,7 +432,7 @@ describe('Long Room historical reference assembly', () => {
       expect(hit.distance).toBeLessThan(0.55);
     }
     expect(galleryWalkPoint(GALLERY_WALK_LENGTH).y).toBe(EAST_GALLERY_CONNECTION.upperFloor);
-    expect(LONG_ROOM.aisleHalfWidth + 0.15 - LONG_ROOM.galleryInnerX).toBeGreaterThan(1.3);
+    expect(LONG_ROOM.aisleHalfWidth + 0.15 - LONG_ROOM.galleryInnerX).toBeGreaterThan(2);
     const shadowLight = built.root.getObjectByName('Window daylight with architectural shadows') as THREE.DirectionalLight;
     expect(shadowLight.castShadow).toBe(true);
     expect(shadowLight.shadow.autoUpdate).toBe(false);
@@ -433,7 +546,7 @@ describe('Long Room historical reference assembly', () => {
 
 describe('live Long Room area removal', () => {
   it('omits retired areas and closes their entrances before and after batching', () => {
-    const built = buildLongRoom(4);
+    const built = buildLongRoom();
     for (const name of ['East pavilion Fagel room and circulation', 'East first to second floor service core',
       'West upper open doorway leaf', 'West upper storage rooms', 'East gallery doorway connection']) {
       expect(built.root.getObjectByName(name), name).toBeUndefined();
@@ -447,7 +560,7 @@ describe('live Long Room area removal', () => {
     expect(LONG_ROOM_LIVE_SHELF_SECTION_COUNT).toBe(38);
     for (const omitted of [LONG_ROOM_STAIR_ALCOVE, LONG_ROOM_FRONTMOST_CASE]) {
       expect(built.shelfSections.some(section => section.id === omitted.sectionId)).toBe(false);
-      expect(built.bookSlots.some(slot => slot.sectionId === omitted.sectionId)).toBe(false);
+      expect(built.catalogSlots.some(slot => slot.sectionId === omitted.sectionId)).toBe(false);
       expect(shouldRenderLongRoomShelfMarks(omitted.side, omitted.bay)).toBe(false);
       expect(shouldRenderLongRoomShelfMarks(omitted.side, omitted.bay, true)).toBe(true);
       for (const level of [0, 1]) {
@@ -465,14 +578,14 @@ describe('live Long Room area removal', () => {
       && child.userData.side === LONG_ROOM_FRONTMOST_CASE.side
       && child.userData.bay === LONG_ROOM_FRONTMOST_CASE.bay);
     expect(entranceCaseLamps).toHaveLength(0);
-    const entranceCaseLadders = built.root.children.filter(child => child.userData.side === LONG_ROOM_FRONTMOST_CASE.side
-      && child.userData.bay === LONG_ROOM_FRONTMOST_CASE.bay
-      && child.userData.face === 1);
-    expect(entranceCaseLadders).toHaveLength(0);
-    const retainedInnerLadder = built.root.children.filter(child => child.userData.side === LONG_ROOM_FRONTMOST_CASE.side
-      && child.userData.bay === LONG_ROOM_FRONTMOST_CASE.bay
-      && child.userData.face === -1);
-    expect(retainedInnerLadder).toHaveLength(1);
+    const liveLadders: THREE.Object3D[] = [];
+    built.root.traverse(object => { if (/ladder/i.test(object.name)) liveLadders.push(object); });
+    expect(liveLadders).toEqual([]);
+    expect(built.root.getObjectByName('Long Room pierced iron alcove stair study')).toBeDefined();
+    expect(built.root.getObjectByName('Iron stair upper landing')).toBeDefined();
+    const liveAccessColliders = collectCameraColliders(built.root, 'hall');
+    expect(liveAccessColliders.some(collider => collider.id.startsWith('shelf-ladder-'))).toBe(false);
+    expect(liveAccessColliders.some(collider => collider.id.startsWith('spiral-opening-guard-'))).toBe(true);
     for (const level of [0, 1]) {
       const adjacentCase = built.root.getObjectByName(
         `Transverse oak case ${LONG_ROOM_STAIR_ADJACENT_CASE.side}:${LONG_ROOM_STAIR_ADJACENT_CASE.bay}:${level}`,
@@ -513,11 +626,15 @@ describe('live Long Room area removal', () => {
       'Upper recessed arched niche backing', 'West upper triangular pediment']) {
       expect(built.root.getObjectByName(name), name).toBeUndefined();
     }
-    expect(built.bookSlots).toHaveLength(4);
-    expect(built.bookSlots.every(slot => slot.scale.x >= 0.16)).toBe(true);
+    expect(built.catalogSlots).toHaveLength(LONG_ROOM_LIVE_SHELF_SECTION_COUNT * 120);
+    expect(built.catalogSlots.every(slot => slot.scale.x >= 0.16)).toBe(true);
     let sceneryVolumes = 0;
-    built.root.traverse(object => { if (object.userData.isHistoricalScenery) sceneryVolumes++; });
+    built.root.traverse(object => {
+      if (object.userData.isHistoricalScenery) sceneryVolumes++;
+    });
     expect(sceneryVolumes).toBe(0);
+    expect(built.root.getObjectByName('Anonymous sample shelf volumes')).toBeUndefined();
+    expect(built.interactiveObjects.some(object => object.userData.isAnonymousShelfScenery)).toBe(false);
     const verifyClosures = () => {
       const colliders = collectCameraColliders(built.root, 'hall');
       for (const y of [1.65, LONG_ROOM.galleryY + 1.65]) {
