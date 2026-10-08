@@ -440,6 +440,15 @@
   border-radius: var(--radius-md);
 }
 .virtual-library-search-result span { color: var(--color-text-secondary); }
+.virtual-library-search-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+}
+.virtual-library-search-row .virtual-library-search-result {
+  min-width: 0;
+  flex: 1;
+}
 .virtual-library-terminal-access:not(:focus-visible) {
   position: absolute;
   width: 1px;

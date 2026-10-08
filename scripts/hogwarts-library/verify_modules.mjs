@@ -1,0 +1,28 @@
+import fs from 'node:fs/promises';import path from 'node:path';import crypto from 'node:crypto';import assert from 'node:assert/strict';import {fileURLToPath} from 'node:url';import os from 'node:os';import {spawnSync} from 'node:child_process';
+const ROOT=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../..');
+const source=path.resolve(process.argv[2]??path.join(ROOT,'scripts/hogwarts-library/deliverables/architecture-uncompressed.glb'));
+const out=path.join(ROOT,'apps/web/public/assets/hogwarts-library');
+const scratch=await fs.mkdtemp(path.join(os.tmpdir(),'bookkin-exact-modules-'));
+const sourceHashesPath=path.join(scratch,'source.bin'),moduleHashesPath=path.join(scratch,'modules.bin');
+const {MeshoptDecoder}=await import('../../apps/web/node_modules/three/examples/jsm/libs/meshopt_decoder.module.js');await MeshoptDecoder.ready;
+const sha=b=>crypto.createHash('sha256').update(b).digest('hex');
+function glb(b){assert.equal(b.toString('ascii',0,4),'glTF');assert.equal(b.readUInt32LE(8),b.length);const n=b.readUInt32LE(12);return {b,j:JSON.parse(b.subarray(20,20+n)),bin:b.subarray(28+n)};}
+async function buffers(x){return Promise.all(x.j.bufferViews.map(async v=>{let e=v.extensions?.KHR_meshopt_compression;if(!e){assert.equal(v.buffer,0);return x.bin.subarray(v.byteOffset??0,(v.byteOffset??0)+v.byteLength);}assert.equal(e.filter,'NONE');assert(['INDICES','ATTRIBUTES'].includes(e.mode));const b=await MeshoptDecoder.decodeGltfBufferAsync(e.count,e.byteStride,x.bin.subarray(e.byteOffset??0,(e.byteOffset??0)+e.byteLength),e.mode,e.filter);assert.equal(b.length,v.byteLength);return Buffer.from(b);}));}
+function triangleHashes(x,views){const hashes=[];for(const mesh of x.j.meshes)for(const p of mesh.primitives){assert.deepEqual(Object.keys(p.attributes).sort(),['NORMAL','POSITION','TEXCOORD_0']);const indexA=x.j.accessors[p.indices],ib=views[indexA.bufferView];assert.equal(indexA.type,'SCALAR');const stride=indexA.componentType===5123?2:4;assert([5123,5125].includes(indexA.componentType));const attrs=['POSITION','NORMAL','TEXCOORD_0'].map(k=>{const a=x.j.accessors[p.attributes[k]];assert.equal(a.componentType,5126);assert(!a.normalized);assert(!a.sparse);return{a,b:views[a.bufferView],width:k==='TEXCOORD_0'?8:12};});const material=Buffer.alloc(4);material.writeUInt32LE(p.material);const triangle=Buffer.alloc(100);material.copy(triangle);
+for(let t=0;t<indexA.count;t+=3){let offset=4;for(let c=0;c<3;c++){const id=stride===2?ib.readUInt16LE((t+c)*2):ib.readUInt32LE((t+c)*4);for(const a of attrs){assert(id<a.a.count);const start=(a.a.byteOffset??0)+id*(x.j.bufferViews[a.a.bufferView].byteStride??a.width);a.b.copy(triangle,offset,start,start+a.width);offset+=a.width;}}hashes.push(crypto.createHash('sha256').update(triangle).digest());}}
+return hashes;}
+const original=glb(await fs.readFile(source));const ov=await buffers(original);let sourceHashes=triangleHashes(original,ov);await fs.writeFile(sourceHashesPath,Buffer.concat(sourceHashes));sourceHashes=null;
+const inventory=JSON.parse(await fs.readFile(process.argv[4]??path.join(ROOT,'docs/verification/reference-library-modules.json'),'utf8'));const candidateHashes=[];let count=0,maxBytes=0;const decodedReport=[];
+for(const m of inventory.modules){const file=await fs.readFile(path.join(out,'modules',m.name+'.glb'));assert.equal(file.length,m.fileBytes);assert.equal(sha(file),m.sha256);const x=glb(file);assert.deepEqual(x.j.materials,original.j.materials);assert.deepEqual(x.j.textures,original.j.textures);assert.deepEqual(x.j.samplers,original.j.samplers);assert.equal(x.j.images.length,original.j.images.length);assert(x.j.extensionsRequired.includes('KHR_meshopt_compression'));assert.equal(x.j.nodes.length,1);assert.deepEqual(Object.keys(x.j.nodes[0]).sort(),['mesh','name']);const v=await buffers(x);const hs=triangleHashes(x,v);assert.equal(hs.length,m.triangles);for(const h of hs)candidateHashes.push(h);count+=hs.length;maxBytes=Math.max(maxBytes,file.length);decodedReport.push({module:m.name,triangles:hs.length});for(let i=0;i<x.j.images.length;i++){const im=x.j.images[i];assert.equal(im.uri,inventory.textures[i].uri);assert.equal(im.name,original.j.images[i].name);assert.equal(im.mimeType,original.j.images[i].mimeType);}}
+await fs.writeFile(moduleHashesPath,Buffer.concat(candidateHashes));
+for(let i=0;i<inventory.textures.length;i++){const texture=inventory.textures[i],b=await fs.readFile(path.join(out,'textures',path.basename(texture.uri)));const before=ov[original.j.images[i].bufferView];assert(b.equals(before));assert.equal(sha(b),texture.sha256);}
+const sorted=spawnSync('python',['-c',
+ 'import sys,json,hashlib,numpy as np; a=np.fromfile(sys.argv[1],dtype="V32"); b=np.fromfile(sys.argv[2],dtype="V32"); a.sort(); b.sort(); assert np.array_equal(a,b), "Triangle multiset differs"; print(json.dumps({"triangles":len(a),"canonicalTriangleMultisetSha256":hashlib.sha256(a.tobytes()).hexdigest()}))',
+ sourceHashesPath,moduleHashesPath],{encoding:'utf8'});
+assert.equal(sorted.status,0,sorted.stderr);const proof=JSON.parse(sorted.stdout);
+const report={sourceSha256:sha(original.b),modules:inventory.modules.length,triangles:count,maxModuleBytes:maxBytes,
+ sharedImages:inventory.textures.length,materialDefinitionsUnchanged:true,allImageBytesIdentical:true,
+ rawAttributeBitsAndOrderedCornersPreserved:true,completeTriangleMultisetIdentical:true,
+ hashRowBytes:32,hashedTriangleFields:'materialID + ordered 3 corners each POSITION/NORMAL/TEXCOORD_0 float32 raw bytes',...proof};
+await fs.writeFile(path.join(ROOT,'docs/verification/reference-library-exact-preservation.json'),JSON.stringify(report,null,2)+'\n');
+await fs.rm(scratch,{recursive:true});console.log(JSON.stringify(report,null,2));

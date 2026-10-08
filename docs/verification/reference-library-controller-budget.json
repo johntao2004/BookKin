@@ -1,0 +1,53 @@
+{
+  "scope": "Actual production streaming controller, material pool and batcher with real 13 Meshopt assets and actual shadow camera; filesystem fetch and image creation stub only. CPU timings/cloud memory/culling estimates, no WebGL/GPU/browser FPS claim.",
+  "imageCounts": {
+    "loads": 22,
+    "closed": 22
+  },
+  "paths": [
+    {
+      "multiDraw": true,
+      "startup": {
+        "modules": 8,
+        "bytes": 22928288,
+        "triangles": 829893,
+        "geometryCapacityBytes": 50310796
+      },
+      "residentModules": 13,
+      "shadowRequiredModules": 12,
+      "sharedResources": {
+        "materials": 56,
+        "textures": 11,
+        "pending": 0
+      },
+      "geometryBytes": 85099016,
+      "maxMaterialCopyCpuMs": 167.47168100000044,
+      "geometryCopyPeakBytes": null,
+      "consolidationPeakGeometryBytes": 0,
+      "singlePassDrawUpperBound": 28,
+      "fallbackResidencyLocked": false
+    },
+    {
+      "multiDraw": false,
+      "startup": {
+        "modules": 8,
+        "bytes": 22928288,
+        "triangles": 829893,
+        "geometryCapacityBytes": 41906050
+      },
+      "residentModules": 13,
+      "shadowRequiredModules": 12,
+      "sharedResources": {
+        "materials": 56,
+        "textures": 11,
+        "pending": 0
+      },
+      "geometryBytes": 85099016,
+      "maxMaterialCopyCpuMs": 1.3222210000003543,
+      "geometryCopyPeakBytes": null,
+      "consolidationPeakGeometryBytes": 106792446,
+      "singlePassDrawUpperBound": 28,
+      "fallbackResidencyLocked": true
+    }
+  ]
+}

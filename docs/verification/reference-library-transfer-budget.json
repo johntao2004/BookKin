@@ -1,0 +1,104 @@
+{
+  "moduleCount": 13,
+  "moduleBytes": 43684648,
+  "sharedTextureBytes": 6410857,
+  "largestModuleBytes": 9315084,
+  "allGeometryDecodedBytes": 80499590,
+  "allTriangles": 1552983,
+  "preBatchPrimitives": 140,
+  "startupModuleBytes": 22928288,
+  "startupGeometryBytes": 41906050,
+  "startupTriangles": 829893,
+  "startupModules": [
+    "core",
+    "sector-left-2",
+    "sector-right-2",
+    "a-end",
+    "central-furniture-north",
+    "globe",
+    "central-furniture-south",
+    "central-lighting"
+  ],
+  "textureImageInfo": [
+    {
+      "name": "r2-slate-normal",
+      "width": 512,
+      "height": 512,
+      "compressedBytes": 242563,
+      "rgba8Bytes": 1048576
+    },
+    {
+      "name": "r2-slate-roughness",
+      "width": 512,
+      "height": 512,
+      "compressedBytes": 197477,
+      "rgba8Bytes": 1048576
+    },
+    {
+      "name": "r2-oak-normal",
+      "width": 1024,
+      "height": 1024,
+      "compressedBytes": 780741,
+      "rgba8Bytes": 4194304
+    },
+    {
+      "name": "r2-oak-albedo",
+      "width": 1024,
+      "height": 1024,
+      "compressedBytes": 189095,
+      "rgba8Bytes": 4194304
+    },
+    {
+      "name": "r2-oak-roughness",
+      "width": 1024,
+      "height": 1024,
+      "compressedBytes": 632458,
+      "rgba8Bytes": 4194304
+    },
+    {
+      "name": "r2-aged-metal-normal",
+      "width": 512,
+      "height": 512,
+      "compressedBytes": 257993,
+      "rgba8Bytes": 1048576
+    },
+    {
+      "name": "r2-aged-metal-roughness",
+      "width": 512,
+      "height": 512,
+      "compressedBytes": 171044,
+      "rgba8Bytes": 1048576
+    },
+    {
+      "name": "r2-walnut-normal",
+      "width": 1024,
+      "height": 1024,
+      "compressedBytes": 779924,
+      "rgba8Bytes": 4194304
+    },
+    {
+      "name": "r2-walnut-albedo",
+      "width": 1024,
+      "height": 1024,
+      "compressedBytes": 189018,
+      "rgba8Bytes": 4194304
+    },
+    {
+      "name": "r2-walnut-roughness",
+      "width": 1024,
+      "height": 1024,
+      "compressedBytes": 632119,
+      "rgba8Bytes": 4194304
+    },
+    {
+      "name": "portrait-scholar-generated-r2",
+      "width": 793,
+      "height": 1983,
+      "compressedBytes": 2338425,
+      "rgba8Bytes": 6290076
+    }
+  ],
+  "estimatedTextureRgba8Bytes": 35650204,
+  "estimatedTextureRgba8WithMipmapsBytes": 47533605,
+  "scope": "Local file/buffer inventory and texture storage estimates, not observed GPU memory or download timing. Real catalog/readiness may load additional modules before or during first interaction."
+}

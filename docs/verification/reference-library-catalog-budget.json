@@ -1,0 +1,83 @@
+{
+  "scope": "Production catalog model layer only; 0/4 repository demo records and 120 synthetic unique fixture records through real sync code. Architecture absent. Canvas drawing/image I/O stubbed. Counts are CPU scene-graph/frustum estimates, not actual renderer draws/GPU/FPS or user catalog data.",
+  "rows": [
+    {
+      "fixtureRecords": 0,
+      "syncCpuMsWithCanvasAndImageStubs": 1.3588810000001104,
+      "catalogResident": {
+        "meshes": 0,
+        "triangles": 0,
+        "potentialPrimitiveDraws": 0,
+        "uniqueGeometries": 0,
+        "uniqueGeometryBytes": 0
+      },
+      "catalogEntryFrustum": {
+        "meshes": 0,
+        "triangles": 0,
+        "potentialPrimitiveDraws": 0,
+        "uniqueGeometries": 0,
+        "uniqueGeometryBytes": 0
+      },
+      "wholeInteractionLayerEntryFrustum": {
+        "meshes": 294,
+        "triangles": 448,
+        "potentialPrimitiveDraws": 64,
+        "uniqueGeometries": 336,
+        "uniqueGeometryBytes": 203840
+      },
+      "stableOneToOneIdentity": true
+    },
+    {
+      "fixtureRecords": 4,
+      "syncCpuMsWithCanvasAndImageStubs": 123.18314399999963,
+      "catalogResident": {
+        "meshes": 28,
+        "triangles": 13240,
+        "potentialPrimitiveDraws": 24,
+        "uniqueGeometries": 25,
+        "uniqueGeometryBytes": 1271464
+      },
+      "catalogEntryFrustum": {
+        "meshes": 28,
+        "triangles": 13240,
+        "potentialPrimitiveDraws": 24,
+        "uniqueGeometries": 25,
+        "uniqueGeometryBytes": 1271464
+      },
+      "wholeInteractionLayerEntryFrustum": {
+        "meshes": 322,
+        "triangles": 13688,
+        "potentialPrimitiveDraws": 88,
+        "uniqueGeometries": 361,
+        "uniqueGeometryBytes": 1475304
+      },
+      "stableOneToOneIdentity": true
+    },
+    {
+      "fixtureRecords": 120,
+      "syncCpuMsWithCanvasAndImageStubs": 2310.466039,
+      "catalogResident": {
+        "meshes": 840,
+        "triangles": 397200,
+        "potentialPrimitiveDraws": 720,
+        "uniqueGeometries": 721,
+        "uniqueGeometryBytes": 38119560
+      },
+      "catalogEntryFrustum": {
+        "meshes": 840,
+        "triangles": 397200,
+        "potentialPrimitiveDraws": 720,
+        "uniqueGeometries": 721,
+        "uniqueGeometryBytes": 38119560
+      },
+      "wholeInteractionLayerEntryFrustum": {
+        "meshes": 1134,
+        "triangles": 397648,
+        "potentialPrimitiveDraws": 784,
+        "uniqueGeometries": 1057,
+        "uniqueGeometryBytes": 38323400
+      },
+      "stableOneToOneIdentity": true
+    }
+  ]
+}

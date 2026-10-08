@@ -184,7 +184,7 @@ export function defaultCategoryForShelf(sectionId: number) {
 }
 
 /** Reserve separate bookcases per category; the scene consumes the same sorted order. */
-export function longRoomCatalogSectionCounts(books: readonly Book[]) {
+export function longRoomCatalogSectionCounts(books: readonly Book[], maxSections = LONG_ROOM_LIVE_SHELF_SECTION_COUNT) {
   const counts: number[] = [];
   let previousCategory = '';
   for (const {classification} of sortCatalogBooksByClassification(books)) {
@@ -192,6 +192,8 @@ export function longRoomCatalogSectionCounts(books: readonly Book[]) {
     counts[counts.length - 1]++;
     previousCategory = classification.category.id;
   }
-  if (counts.length > LONG_ROOM_LIVE_SHELF_SECTION_COUNT) throw new Error('Long Room catalog category capacity exceeded');
+  if (counts.length > maxSections) throw new Error(maxSections === LONG_ROOM_LIVE_SHELF_SECTION_COUNT
+    ? 'Long Room catalog category capacity exceeded'
+    : '虚拟书架分区已满，仍可通过搜索直接阅读全部藏书');
   return counts;
 }

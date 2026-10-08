@@ -4,6 +4,8 @@ import type { LibraryMaterials } from './materials';
 type MaterialLike = THREE.Material | THREE.Material[];
 
 export interface BookShelfSlot {
+  /** Persistent architectural address, independent of catalog record identity. */
+  slotId?: string;
   position: THREE.Vector3;
   scale: THREE.Vector3;
   rotationY: number;

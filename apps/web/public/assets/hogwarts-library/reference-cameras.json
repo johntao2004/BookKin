@@ -1,0 +1,242 @@
+{
+  "ground-to-a": {
+    "position": {
+      "x": 0,
+      "y": 2.4,
+      "z": 12.2
+    },
+    "target": {
+      "x": 0,
+      "y": 8,
+      "z": -14.4
+    },
+    "lensMm": 21,
+    "sensorWidthMm": 36,
+    "approximateMatch": true
+  },
+  "ground-to-b": {
+    "position": {
+      "x": -1.9,
+      "y": 2.5,
+      "z": -10.0
+    },
+    "target": {
+      "x": 0.3,
+      "y": 7.0,
+      "z": 16.0
+    },
+    "lensMm": 23,
+    "sensorWidthMm": 36,
+    "approximateMatch": true
+  },
+  "gallery-diagonal": {
+    "position": {
+      "x": -5.1,
+      "y": 8.25,
+      "z": 9.4
+    },
+    "target": {
+      "x": 4.9,
+      "y": 9.35,
+      "z": -6.3
+    },
+    "lensMm": 20,
+    "sensorWidthMm": 36,
+    "approximateMatch": true
+  },
+  "gallery-vault": {
+    "position": {
+      "x": -4.7,
+      "y": 8.5,
+      "z": 12.2
+    },
+    "target": {
+      "x": 0,
+      "y": 13,
+      "z": -8
+    },
+    "lensMm": 18,
+    "sensorWidthMm": 36,
+    "approximateMatch": true
+  },
+  "side-bay-study": {
+    "position": {
+      "x": 0,
+      "y": 6.2,
+      "z": 11.0
+    },
+    "target": {
+      "x": 10.5,
+      "y": 6.7,
+      "z": 0
+    },
+    "lensMm": 23,
+    "sensorWidthMm": 36,
+    "approximateMatch": true
+  },
+  "detail-gallery-kit": {
+    "position": {
+      "x": 5.8,
+      "y": 8.35,
+      "z": 4.8
+    },
+    "target": {
+      "x": 9.5,
+      "y": 9.2,
+      "z": 0.15
+    },
+    "lensMm": 35,
+    "sensorWidthMm": 36,
+    "approximateMatch": true
+  },
+  "detail-stair-kit": {
+    "position": {
+      "x": 2.3,
+      "y": 3.2,
+      "z": -8.8
+    },
+    "target": {
+      "x": 6.8,
+      "y": 3.7,
+      "z": -13.5
+    },
+    "lensMm": 32,
+    "sensorWidthMm": 36,
+    "approximateMatch": true
+  },
+  "reference-a-elevated": {
+    "position": {
+      "x": 0,
+      "y": 5.3,
+      "z": 7.6
+    },
+    "target": {
+      "x": 0,
+      "y": 7.45,
+      "z": -15.7
+    },
+    "lensMm": 25,
+    "sensorWidthMm": 36,
+    "approximateMatch": true
+  },
+  "reference-side-elevated": {
+    "position": {
+      "x": -4.4,
+      "y": 5.9,
+      "z": 8.0
+    },
+    "target": {
+      "x": 10.2,
+      "y": 8.4,
+      "z": -2.5
+    },
+    "lensMm": 24,
+    "sensorWidthMm": 36,
+    "approximateMatch": true
+  },
+  "detail-globe": {
+    "position": {
+      "x": 3.6,
+      "y": 3.1,
+      "z": -7.3
+    },
+    "target": {
+      "x": 0,
+      "y": 1.25,
+      "z": -11.7
+    },
+    "lensMm": 40,
+    "sensorWidthMm": 36,
+    "approximateMatch": true
+  },
+  "detail-column-statue": {
+    "position": {
+      "x": 0,
+      "y": 8.95,
+      "z": 5.8
+    },
+    "target": {
+      "x": 8.68,
+      "y": 9.5,
+      "z": 0
+    },
+    "lensMm": 24,
+    "sensorWidthMm": 36,
+    "approximateMatch": true
+  },
+  "detail-sculpture": {
+    "position": {
+      "x": 4.4,
+      "y": 6.5,
+      "z": 2.1
+    },
+    "target": {
+      "x": 8.29,
+      "y": 6.12,
+      "z": 0
+    },
+    "lensMm": 42,
+    "sensorWidthMm": 36,
+    "approximateMatch": true
+  },
+  "upper-corridor": {
+    "position": {
+      "x": 9.88,
+      "y": 7.78,
+      "z": 13.9
+    },
+    "target": {
+      "x": 9.95,
+      "y": 8.1,
+      "z": -10
+    },
+    "lensMm": 30,
+    "sensorWidthMm": 36,
+    "approximateMatch": true
+  },
+  "stair-gallery-join": {
+    "position": {
+      "x": 2.8,
+      "y": 10.1,
+      "z": -6.8
+    },
+    "target": {
+      "x": 7.2,
+      "y": 6.35,
+      "z": -13.7
+    },
+    "lensMm": 34,
+    "sensorWidthMm": 36,
+    "approximateMatch": true
+  },
+  "reference-side-straight": {
+    "position": {
+      "x": -3,
+      "y": 6.8,
+      "z": 2.5
+    },
+    "target": {
+      "x": 10.6,
+      "y": 7.5,
+      "z": 2.5
+    },
+    "lensMm": 21,
+    "sensorWidthMm": 36,
+    "approximateMatch": true
+  },
+  "detail-floor-joinery": {
+    "position": {
+      "x": 4.8,
+      "y": 3.5,
+      "z": 8.4
+    },
+    "target": {
+      "x": 2.15,
+      "y": 0.6,
+      "z": 3.2
+    },
+    "lensMm": 35,
+    "sensorWidthMm": 36,
+    "approximateMatch": true
+  }
+}

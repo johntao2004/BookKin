@@ -1,0 +1,37 @@
+{
+  "stage": "full",
+  "blenderVersion": "4.3.2",
+  "editableMeshObjects": 525,
+  "moduleCollections": 122,
+  "sharedMaterials": 28,
+  "verticesBeforeGltf": 3141327,
+  "polygonsBeforeGltf": 777606,
+  "trianglesBeforeGltf": 1586115,
+  "exportMaterialBatches": 28,
+  "bounds": {
+    "min": {
+      "x": -15.299999999999999,
+      "y": -0.36,
+      "z": -18.4
+    },
+    "max": {
+      "x": 15.299999999999999,
+      "y": 19.0,
+      "z": 18.4
+    }
+  },
+  "actualRenders": [],
+  "fixtureSuspensionChecks": {
+    "smallFixtureCount": 12,
+    "mainFixtureCount": 3,
+    "smallFixtureMaximumY": 5.739999771118164,
+    "galleryUndersideY": 5.74,
+    "mainFixtureMaximumY": 18.579999923706055,
+    "passed": true
+  },
+  "sourceMaterialBatches": 28,
+  "actualGltfMaterialPrimitives": 28,
+  "actualGltfVertices": 2105388,
+  "actualGltfTriangles": 1552983,
+  "actualGltfBytes": 91057412
+}

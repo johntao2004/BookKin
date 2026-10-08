@@ -6,7 +6,11 @@ settings:
 
 importers:
 
-  .: {}
+  .:
+    devDependencies:
+      meshoptimizer:
+        specifier: 1.1.1
+        version: 1.1.1
 
   apps/web:
     dependencies:

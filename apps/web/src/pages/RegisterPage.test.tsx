@@ -24,4 +24,6 @@ it('submits member registration only after passwords match',async()=>{
  fireEvent.change(screen.getByLabelText('确认密码',{exact:true}),{target:{value:'long-password-123'}});
  fireEvent.click(screen.getByRole('button',{name:'注册'}));
  await waitFor(()=>expect(submit).toHaveBeenCalledWith({username:'reader',displayName:'Reader',password:'long-password-123'}));
+ // Wait for Ant Design's delayed validation feedback before jsdom teardown.
+ await waitFor(()=>expect(screen.queryByText('两次密码不一致')).not.toBeInTheDocument());
 });

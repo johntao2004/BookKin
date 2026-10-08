@@ -35,7 +35,8 @@ import { Tooltip } from "@/ui/feedback";
 import { Typography } from "@/ui/primitives";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { readReferenceReaderState } from './reference-library-view';
 import { api } from "../api/client";
 import { useAuth } from "../auth/AuthContext";
 import { READER_CONTENT_HEIGHT, READER_PAGE_HEIGHT, READER_SHELL_HEIGHT } from "../components/readers/reader-layout";
@@ -66,6 +67,11 @@ export function ReaderPage() {
   const { mode: readerTheme, setMode: setBookKinTheme } = useBookKinTheme();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const readerLocation = useLocation();
+  const libraryReturnState = user ? readReferenceReaderState(readerLocation.state) : null;
+  const returnToLibrary = () => libraryReturnState
+    ? navigate('/virtual-library', {state: libraryReturnState})
+    : navigate(user ? "/library/all" : "/library");
   const annotationTarget = searchParams.get("locator") ?? undefined;
   const queryClient = useQueryClient();
   const guest = !user;
@@ -211,9 +217,9 @@ export function ReaderPage() {
   };
 
   if (bookQuery.isPending) return <Stack spacing={2} sx={{ minHeight: READER_SHELL_HEIGHT, alignItems: "center", justifyContent: "center" }}><CircularProgress /><Typography color="text.secondary">正在展开书页…</Typography></Stack>;
-  if (bookQuery.isError || !bookQuery.data) return <Stack spacing={2} sx={{ minHeight: READER_SHELL_HEIGHT, alignItems: "center", justifyContent: "center" }}><Alert severity="error">无法打开这本书</Alert><Button onClick={() => navigate("/library")}>返回书库</Button></Stack>;
+  if (bookQuery.isError || !bookQuery.data) return <Stack spacing={2} sx={{ minHeight: READER_SHELL_HEIGHT, alignItems: "center", justifyContent: "center" }}><Alert severity="error">无法打开这本书</Alert><Button onClick={returnToLibrary}>返回书库</Button></Stack>;
   const book = bookQuery.data;
-  if (!book.format) return <Stack spacing={2} sx={{ minHeight: READER_SHELL_HEIGHT, alignItems: "center", justifyContent: "center" }}><Alert severity="info">这本展示书目暂时没有可用文件</Alert><Button onClick={() => navigate("/library")}>返回书架</Button></Stack>;
+  if (!book.format) return <Stack spacing={2} sx={{ minHeight: READER_SHELL_HEIGHT, alignItems: "center", justifyContent: "center" }}><Alert severity="info">这本展示书目暂时没有可用文件</Alert><Button onClick={returnToLibrary}>返回书架</Button></Stack>;
   const privateBook = isPrivateBook(book);
   const progressPercent = privateBook ? (api.isDemo ? book.progress : Math.round((readerProgress ?? book.progress / 100) * 100)) : 0;
   const readerSubtitle = `${book.author} · ${privateBook && api.isDemo ? "第七章" : `${book.format} · ${guest ? "只读阅读" : `已读 ${progressPercent}%`}`}`;
@@ -229,8 +235,8 @@ export function ReaderPage() {
         bookmarked={Boolean(bookmark)}
         bookmarkBusy={bookmarkBusy}
         privateActions={!guest}
-        onBack={() => navigate(user ? "/library/all" : "/library")}
-        backLabel={user ? "返回全部书籍" : "返回书库"}
+        onBack={returnToLibrary}
+        backLabel={libraryReturnState ? "返回虚拟书库" : user ? "返回全部书籍" : "返回书库"}
         onOpenTableOfContents={() => setTocOpen(true)}
         onToggleBookmark={() => void toggleBookmark()}
         onOpenSettings={(event: any) => setSettingsAnchor(event.currentTarget)}

@@ -1,0 +1,7 @@
+# Rebuild outputs and local review artifacts. The runtime GLB/config are tracked.
+__pycache__/
+*.pyc
+deliverables/
+comparisons/
+verification-round*/
+*.log

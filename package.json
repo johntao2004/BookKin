@@ -24,5 +24,8 @@
     "start:preview": "node scripts/local-preview.mjs start",
     "status:preview": "node scripts/local-preview.mjs status",
     "stop:preview": "node scripts/local-preview.mjs stop"
+  },
+  "devDependencies": {
+    "meshoptimizer": "1.1.1"
   }
 }

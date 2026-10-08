@@ -14,7 +14,8 @@ import {
   collectCameraColliders,
   type CameraCollider,
 } from "./virtual-library-collision";
-import { LIBRARY } from "./virtual-library-model/config";
+import { LIBRARY, PALETTE } from "./virtual-library-model/config";
+import { createHistoricalBindingMaterial } from './virtual-library-model/scene/longRoomBindings';
 import {
   getShelfFrontPlacement,
   type ExpandableShelfSection,
@@ -38,7 +39,7 @@ import { LONG_ROOM } from "./virtual-library-model/longRoomLayout";
 
 export const ROTUNDA_CENTER = new THREE.Vector3(0, LONG_ROOM.camera.targetY, LONG_ROOM.camera.targetZ);
 export const ROTUNDA_CAMERA_RADIUS = LONG_ROOM.camera.radius;
-export const VIRTUAL_LIBRARY_SCENE_MODEL_VERSION = "trinity-long-room-real-catalog-sync-2026-09-16";
+export const VIRTUAL_LIBRARY_SCENE_MODEL_VERSION = "reference-modular-library-2026-10-08-r3";
 
 export const SHELF_PLAQUE_MOUNT = {
   gap: 0.012,
@@ -201,13 +202,9 @@ export function getCenteredShelfBookOffsets(
 }
 
 const BOOK_COLORS = [
-  tokens.color.primitive.coral600,
-  tokens.color.primitive.ink700,
-  tokens.color.primitive.ink500,
-  tokens.color.primitive.ink900,
-  tokens.color.primitive.coral700,
-  tokens.color.primitive.ink500,
-];
+  PALETTE.oxblood, PALETTE.oakWarm, PALETTE.green,
+  PALETTE.glassBlue, PALETTE.oak, PALETTE.stone,
+].map(color => new THREE.Color(color).getStyle());
 
 export interface SceneBook {
   book: Book;
@@ -588,7 +585,17 @@ function createBookMaterials(anisotropy: number): BookMaterials {
     paperTexture.minFilter = THREE.LinearMipmapLinearFilter;
     paperTexture.magFilter = THREE.LinearFilter;
   }
-  const spines = BOOK_COLORS.map((color) => material(color, { roughness: 0.8, metalness: 0.01 }));
+  // Reuse the existing procedural binding surface on real catalog models only.
+  // Six shared material variants add fine leather/tooling relief without any
+  // anonymous book instance or dependency on the position of the catalog row.
+  const spines = BOOK_COLORS.map((color, variant) => {
+    const binding = createHistoricalBindingMaterial(variant);
+    binding.color.set(color);
+    binding.roughness = 0.73 + (variant % 4) * 0.055;
+    binding.metalness = 0.015;
+    binding.bumpScale = 0.0013;
+    return binding;
+  });
   const spineTrims = BOOK_COLORS.map((color) => material(
     new THREE.Color(color)
       .lerp(new THREE.Color(tokens.color.primitive.ink900), 0.34)
@@ -1052,6 +1059,7 @@ function createBook(
     ?? nearestShelfSection(shelfPosition, shelfSections)?.id
     ?? assignment.bayIndex;
   group.userData.bookId = book.id;
+  group.userData.slotId = slot.slotId;
   group.userData.isVirtualBook = true;
   group.userData.shelfBayIndex = assignment.bayIndex;
   group.userData.shelfSectionId = shelfSectionId;
@@ -1112,6 +1120,7 @@ function updateSceneBookAssignment(
       / Math.max(Math.abs(sceneBook.shelfScale.z), 0.0001),
   );
   sceneBook.group.userData.bookId = assignment.book.id;
+  sceneBook.group.userData.slotId = assignment.slot.slotId;
   sceneBook.group.userData.shelfBayIndex = assignment.bayIndex;
   sceneBook.group.userData.shelfSectionId = shelfSectionId;
   sceneBook.group.userData.shelfRowIndex = assignment.shelfRowIndex;
@@ -1159,8 +1168,9 @@ function centerSceneBookClusters(
       if (section.centerX !== undefined && section.centerZ !== undefined) {
         const normalX = Math.cos(section.angle);
         const normalZ = Math.sin(section.angle);
-        sceneBook.shelfPosition.set(section.centerX - normalX * LONG_ROOM_BOOK_CENTER_OFFSET + tangentX * (offsets[index] ?? 0),
-          sceneBook.shelfPosition.y, section.centerZ - normalZ * LONG_ROOM_BOOK_CENTER_OFFSET + tangentZ * (offsets[index] ?? 0));
+        const bookCenterOffset = section.bookCenterOffset ?? LONG_ROOM_BOOK_CENTER_OFFSET;
+        sceneBook.shelfPosition.set(section.centerX - normalX * bookCenterOffset + tangentX * (offsets[index] ?? 0),
+          sceneBook.shelfPosition.y, section.centerZ - normalZ * bookCenterOffset + tangentZ * (offsets[index] ?? 0));
         if (sceneBook.group.userData.bookPresentation !== "inspection") {
           placeSceneBookOnShelf(sceneBook);
         }
@@ -1350,7 +1360,7 @@ function createShelfSectionControllers(
     // Keep the selection frame on the same front plane as the shelf boards.
     // The old extra offset made the outline read as a floating acrylic frame
     // in front of the case instead of an in-place shelf highlight.
-    const frameZ = -LONG_ROOM_SHELF_FRONT_OFFSET - SHELF_SELECTION_FRAME_GAP;
+    const frameZ = -(section.frontOffset ?? LONG_ROOM_SHELF_FRONT_OFFSET) - SHELF_SELECTION_FRAME_GAP;
     const frameWidth = section.width * 0.92;
     const frameHeight = section.height * 0.9;
     const verticalGeometry = new THREE.BoxGeometry(0.055, frameHeight, 0.025);
@@ -1389,7 +1399,16 @@ function createShelfSectionControllers(
 
     const labelMaterials: THREE.MeshBasicMaterial[] = [];
     const labelPlates: THREE.Object3D[] = [];
-    if (section.centerX !== undefined && section.centerZ !== undefined) {
+    if (section.plaquePlacement === 'shelf-front') {
+      const categoryLabel = createShelfLabel(labelTextureCache, plaqueBackingMaterial,
+        info.category.label, info.category.subtitle, Math.min(1.2, section.width * 0.4), 0.2, false);
+      categoryLabel.plaque.position.set(0, section.height / 2 + 0.12,
+        -(section.plaqueFrontOffset ?? section.frontOffset ?? section.depth / 2) - SHELF_PLAQUE_MOUNT.gap - SHELF_PLAQUE_MOUNT.backingDepth / 2);
+      categoryLabel.plaque.userData = {isShelfCategoryPlaque: true, sectionId: section.id, placement: 'shelf-front'};
+      root.add(categoryLabel.plaque);
+      labelMaterials.push(categoryLabel.material);
+      labelPlates.push(categoryLabel.plaque);
+    } else if (section.centerX !== undefined && section.centerZ !== undefined) {
       for (const level of [0, 1] as const) {
         const layout = getLongRoomAisleCategoryPlaqueLayout(section, level);
         if (!layout) continue;
@@ -1527,7 +1546,9 @@ export function createVirtualLibraryWorld(
   preparedHall?: LongRoomBuilt,
 ): LibraryWorld {
   const built = preparedHall ?? buildLongRoom({}, loader);
-  if (!built.root.userData.staticOptimization) optimizeStaticMeshes(built.root, built.interactiveObjects);
+  // Streaming owns its chunk geometry and material batches across async loads.
+  if (!built.root.userData.staticOptimization && !built.root.userData.streamingArchitecture)
+    optimizeStaticMeshes(built.root, built.interactiveObjects);
   built.root.userData.modelVersion = VIRTUAL_LIBRARY_SCENE_MODEL_VERSION;
   const hallCameraColliders = [
     ...collectCameraColliders(built.root, "hall"),
@@ -1585,7 +1606,7 @@ export function createVirtualLibraryWorld(
     });
     // Validate category capacity before creating or removing any GPU-backed
     // catalog model. The authoritative query remains an all-pages snapshot.
-    longRoomCatalogSectionCounts(nextBooks);
+    longRoomCatalogSectionCounts(nextBooks, built.shelfSections.length);
     const sortedBooks = sortCatalogBooksByClassification(nextBooks);
     const staged: SceneBook[] = [];
     const plans: Array<{

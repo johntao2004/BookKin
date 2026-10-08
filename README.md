@@ -23,7 +23,7 @@ BookKin turns a NAS folder into a private digital bookshelf for a household. It 
 | Area | Capabilities |
 | --- | --- |
 | Library | EPUB/PDF catalog, metadata and cover management, categories, booklists, search, cursor pagination, large-catalog tooling |
-| Virtual library | Original Gothic rotunda, real catalog books, shelf inspection, celestial catalog search and separate archive/office rooms |
+| Virtual library | Reference-guided two-storey timber library, losslessly streamed architecture, real catalog books, shelf inspection, search and twin spiral stairs |
 | Reading | EPUB.js and PDF.js readers, reading positions, bookmarks, highlights, underlines, bold marks, notes, custom fonts and whole-site themes |
 | Family accounts | Owner, administrator and member roles; private per-user progress and annotations; controlled public discovery |
 | NAS safety | Incremental scans, path validation, fingerprints, previews, idempotency keys, file leases, recycle bin and audited recovery paths |

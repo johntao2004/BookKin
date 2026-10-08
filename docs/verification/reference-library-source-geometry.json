@@ -1,0 +1,85 @@
+{
+  "file": "architecture.glb",
+  "bytes": 91057412,
+  "sha256": "0cc0db68263287c3bd3f6f30c8f7a58e4c32da8e279912674d5219323ee87a75",
+  "meshes": 28,
+  "materials": 28,
+  "materialPrimitives": 28,
+  "actualGltfVertices": 2105388,
+  "actualGltfTriangles": 1552983,
+  "bounds": {
+    "min": [
+      -15.300000190734863,
+      -0.36000001430511475,
+      -18.399999618530273
+    ],
+    "max": [
+      15.300000190734863,
+      19,
+      18.399999618530273
+    ]
+  },
+  "embeddedImages": 11,
+  "externalImageUris": [],
+  "finiteAttributes": true,
+  "noExportedLightsOrCameras": true,
+  "catalogContractChecked": true,
+  "zeroAreaTriangles": 0,
+  "globeLandMaterialPrimitives": 1,
+  "visibleFeatureMaterials": {
+    "Stone \u2022 carved pale scholar": {
+      "vertices": 368295,
+      "min": [
+        -8.374600410461426,
+        5.299799919128418,
+        -15.505596160888672
+      ],
+      "max": [
+        8.374600410461426,
+        6.847799777984619,
+        15.416357040405273
+      ]
+    },
+    "Bronze \u2022 end niche scholar": {
+      "vertices": 45050,
+      "min": [
+        -4.294259071350098,
+        6.616049766540527,
+        -17.463350296020508
+      ],
+      "max": [
+        4.456705570220947,
+        9.239049911499023,
+        -16.670351028442383
+      ]
+    },
+    "Globe \u2022 parchment": {
+      "vertices": 3098,
+      "min": [
+        -0.8199999928474426,
+        0.75,
+        -12.520000457763672
+      ],
+      "max": [
+        0.8199999928474426,
+        2.390000104904175,
+        -10.880000114440918
+      ]
+    },
+    "Globe \u2022 land": {
+      "vertices": 8789,
+      "min": [
+        -0.8065099716186523,
+        0.8925612568855286,
+        -12.389788627624512
+      ],
+      "max": [
+        0.8188361525535583,
+        2.3889517784118652,
+        -10.880587577819824
+      ]
+    }
+  },
+  "globeLandMinimumTriangleRadius": 0.8264648925668343,
+  "globeBaseSphereRadius": 0.82
+}

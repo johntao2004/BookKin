@@ -1,0 +1,303 @@
+# Original gallery sculptures modeled from the supplied reference silhouettes.
+# Paste/exec after the shared mesh helpers. Requires math, Vector, face, quad,
+# box, tube; STONE/OAK/DARK are fallbacks. No imported mesh or image geometry.
+# Local axes: x across the niche, y up, +z faces the central hall.
+# c = lower centre of plinth at the FRONT plane of the gallery fascia.
+# height = complete niche height; white figure is approximately 0.83 * height.
+# yaw follows box(): 0 faces +z, +pi/2 faces +x, -pi/2 faces -x.
+# The reference details do not resolve a specific portrait/identity, so these
+# are original scholarly figures with observed robes, held book and niches.
+
+def gallery_scholar(c, height=1.45, yaw=0, mat=None, frame_mat=None,
+                    recess_mat=None, variant=0, niche=True):
+ """Detailed standing stone scholar with carved face, drapery and book.
+
+ variant 0: long-haired bearded scholar, raised book and hanging right arm.
+ variant 1: hooded scholar reading an open volume at the chest.
+ variant 2: older capped scholar, raised book and hanging right arm.
+
+ Recommended side-gallery centres: c=(hall_facing_x, 5.02, pier_z),
+ yaw=-side*pi/2 (side +1 on the right wall), height 1.35..1.50.
+ Put the base just below the fascia, then align niche crown below handrail.
+ With niche=False the figure and its pale plinth alone are emitted.
+ Geometry is batched into the current MODULE, and no global state is changed.
+ """
+ mat=mat or STONE;frame_mat=frame_mat or OAK;recess_mat=recess_mat or DARK
+ s=height;cs=math.cos(yaw);sn=math.sin(yaw);variant=variant%3
+ def p(q):
+  x,y,z=q
+  return(c[0]+s*(x*cs+z*sn),c[1]+s*y,c[2]+s*(-x*sn+z*cs))
+ def f(m,points,smooth=False):face(m,[p(q) for q in points],smooth=smooth)
+ def q(m,a,b,cc,d,smooth=False):f(m,[a,b,cc,d],smooth)
+ def b(m,center,size,bevel=0):box(m,p(center),tuple(s*v for v in size),s*bevel,yaw)
+ def line(m,points,r=.003,n=7):tube(m,[p(v) for v in points],s*r,n)
+ def loft(m,rings,close=True):
+  # Counter-clockwise radial rings, ascending y or advancing along a path.
+  for a,bb in zip(rings,rings[1:]):
+   for j in range(len(a)):
+    k=(j+1)%len(a);q(m,a[j],bb[j],bb[k],a[k],True)
+  if close:f(m,rings[0]);f(m,list(reversed(rings[-1])))
+ def ellipsoid(m,center,radius,n=24,mrows=14,tilt=0):
+  # Purpose-shaped forms; no sphere-on-cylinder body construction.
+  rings=[];ct=math.cos(tilt);st=math.sin(tilt)
+  for j in range(1,mrows):
+   a=-math.pi/2+j*math.pi/mrows;ring=[]
+   for i in range(n):
+    t=i*math.tau/n;x=radius[0]*math.cos(a)*math.cos(t)
+    y=radius[1]*math.sin(a);z=radius[2]*math.cos(a)*math.sin(t)
+    ring.append((center[0]+x*ct-y*st,center[1]+x*st+y*ct,center[2]+z))
+   rings.append(ring)
+  loft(m,rings,False)
+  for i in range(n):
+   k=(i+1)%n
+   f(m,[(center[0]+radius[1]*st,center[1]-radius[1]*ct,center[2]),rings[0][i],rings[0][k]],True)
+   f(m,[(center[0]-radius[1]*st,center[1]+radius[1]*ct,center[2]),rings[-1][k],rings[-1][i]],True)
+ def smooth_samples(values,steps=4):
+  # Catmull-Rom sampling retains each authored bend but softens cloth/limbs.
+  result=[]
+  for i in range(len(values)-1):
+   a=values[max(i-1,0)];bb=values[i];cc=values[i+1];d=values[min(i+2,len(values)-1)]
+   for j in range(steps):
+    t=j/steps
+    result.append(tuple(.5*((2*bv)+(-av+cv)*t+(2*av-5*bv+4*cv-dv)*t*t+
+                       (-av+3*bv-3*cv+dv)*t*t*t) for av,bv,cv,dv in zip(a,bb,cc,d)))
+  result.append(tuple(values[-1]));return result
+ def tapered_path(m,points,radii,segments=14,flutes=0):
+  # Elliptic bell sleeves and hanging hair locks with genuine changing volume.
+  points=smooth_samples(points)
+  radii=smooth_samples([r if isinstance(r,tuple) else (r,r) for r in radii])
+  rings=[]
+  for i,pt in enumerate(points):
+   tangent=(Vector(points[min(i+1,len(points)-1)])-Vector(points[max(0,i-1)])).normalized()
+   axis=Vector((0,0,1))
+   if abs(tangent.dot(axis))>.95:axis=Vector((1,0,0))
+   aa=tangent.cross(axis).normalized();bb=tangent.cross(aa).normalized()
+   ra,rb=radii[i] if isinstance(radii[i],tuple) else (radii[i],radii[i])
+   ring=[]
+   for j in range(segments):
+    t=j*math.tau/segments;fold=1+flutes*math.cos(6*t+i*.055)
+    v=Vector(pt)+fold*(ra*math.cos(t)*aa+rb*math.sin(t)*bb)
+    ring.append(tuple(v))
+   rings.append(ring)
+  # Path rings use basis aa cross bb = tangent: this winding faces outward.
+  for a,bb in zip(rings,rings[1:]):
+   for j in range(segments):
+    k=(j+1)%segments;q(m,a[j],a[k],bb[k],bb[j],True)
+  f(m,list(reversed(rings[0])));f(m,rings[-1])
+ def cloth_ribbon(points,widths,depth=.013):
+  # Closed relief drape: broad creased cloth surface, not a cylindrical cord.
+  points=smooth_samples(points)
+  widths=[max(.001,row[0]) for row in smooth_samples([(w,) for w in widths])]
+  front=[];back=[];segments=12
+  for i,(pt,w) in enumerate(zip(points,widths)):
+   prev=points[max(0,i-1)];nxt=points[min(len(points)-1,i+1)]
+   dx=nxt[0]-prev[0];dy=nxt[1]-prev[1];length=max(.00001,math.hypot(dx,dy))
+   nx=-dy/length;ny=dx/length;row=[];rear=[]
+   for j in range(segments+1):
+    u=2*j/segments-1
+    bulge=depth*(1-u*u)*(1+.3*math.cos(u*3*math.pi+i*.4))
+    row.append((pt[0]+nx*w*u,pt[1]+ny*w*u,pt[2]+bulge))
+    rear.append((pt[0]+nx*w*u,pt[1]+ny*w*u,pt[2]-.003))
+   front.append(row);back.append(rear)
+  for a,bb,ar,br in zip(front,front[1:],back,back[1:]):
+   for j in range(segments):
+    q(mat,a[j],bb[j],bb[j+1],a[j+1],True)
+    q(mat,ar[j],ar[j+1],br[j+1],br[j])
+   q(mat,a[0],bb[0],br[0],ar[0]);q(mat,a[-1],ar[-1],br[-1],bb[-1])
+  f(mat,front[0]+list(reversed(back[0])));f(mat,list(reversed(front[-1]))+back[-1])
+ def hand(center,tilt=0,holding=False):
+  # Palm, thumb and four separated fingers retain a legible silhouette.
+  ellipsoid(mat,center,(.019,.031,.012),18,10,tilt)
+  for j in range(4):
+   x=center[0]+(j-1.5)*.009
+   yy=center[1]-.020;length=.033-.006*abs(j-1.4)
+   z=center[2]+(.007 if holding else .002)
+   line(mat,[(x,yy,z),(x+.003,yy-length*.60,z+.004),(x+.002,yy-length,z)],.0037,7)
+  side=-1 if center[0]>0 else 1
+  line(mat,[(center[0]+side*.014,center[1]+.013,center[2]),
+            (center[0]+side*.026,center[1]-.004,center[2]+.013),
+            (center[0]+side*.018,center[1]-.013,center[2]+.016)],.006,8)
+ def book(center,width=.12,length=.10,opening=.16):
+  # Distinct covers, concave page blocks, gutter and thin engraved page edges.
+  # The writing faces the hall; an original neutral prop, no lettering texture.
+  cx,cy,cz=center
+  for side in(-1,1):
+   inner=(cx,cy,cz);outer=(cx+side*width*.52,cy+.013,cz-opening*width)
+   corners=[(inner[0],cy-length/2,inner[2]),(outer[0],cy-length/2+.008,outer[2]),
+            (outer[0],cy+length/2,outer[2]),(inner[0],cy+length/2,inner[2])]
+   if side<0:corners.reverse()
+   back=[(x,y,z-.016) for x,y,z in corners]
+   f(mat,corners);f(mat,list(reversed(back)))
+   for i in range(4):q(mat,corners[i],back[i],back[(i+1)%4],corners[(i+1)%4])
+   for edge in range(3):
+    zz=-.004-edge*.004
+    line(mat,[(outer[0],cy-length/2+.008,outer[2]+zz),
+              (outer[0],cy+length/2,outer[2]+zz)],.0015,4)
+   line(mat,[(cx,cy-length/2,cz-.020),(outer[0]+side*.006,cy-length/2+.003,outer[2]-.020),
+             (outer[0]+side*.006,cy+length/2+.006,outer[2]-.020),(cx,cy+length/2+.006,cz-.020)],.004,6)
+  line(mat,[(cx,cy-length/2,cz+.002),(cx,cy+length/2,cz+.002)],.003,6)
+
+ # Rounded dark niche: a real recessed back, solid molded arch and side jambs.
+ # Its narrow scale and warm timber avoid reading as a freestanding monument.
+ if niche:
+  half=.222;spring=.748;rise=.222
+  outline=[(-half,.058,-.065),(half,.058,-.065),(half,spring,-.065)]
+  outline.extend([(half*math.cos(i*math.pi/28),spring+rise*math.sin(i*math.pi/28),-.065) for i in range(1,29)])
+  f(recess_mat,outline)
+  # Thickness returns into the fascia leave the niche interior visibly recessed.
+  for side in(-1,1):
+   b(frame_mat,(side*.240,.493,-.006),(.042,.91,.11),.005)
+   b(frame_mat,(side*.272,.498,-.023),(.021,.942,.112),.003)
+   line(frame_mat,[(side*half,.066,.041),(side*half,spring,.041)],.010,8)
+  for r,z,thickness in[(.222,.041,.009),(.241,.027,.013),(.271,-.020,.010)]:
+   pts=[(r*math.cos(i*math.pi/36),spring+r*math.sin(i*math.pi/36),z) for i in range(37)]
+   line(frame_mat,pts,thickness,8)
+  for i in range(28):
+   aa=i*math.pi/28;bb=(i+1)*math.pi/28
+   q(frame_mat,(half*math.cos(aa),spring+rise*math.sin(aa),-.065),
+     (half*math.cos(bb),spring+rise*math.sin(bb),-.065),
+     (half*math.cos(bb),spring+rise*math.sin(bb),.043),
+     (half*math.cos(aa),spring+rise*math.sin(aa),.043))
+  # Wide carved support is part of the gallery bracket rather than a new column.
+  b(frame_mat,(0,.022,.005),(.565,.044,.215),.007)
+  b(frame_mat,(0,.052,.006),(.526,.022,.230),.005)
+ # Stone pedestal, with actual feet below the hem and worn stepped rim.
+ b(mat,(0,.071,.054),(.344,.020,.202),.005)
+ b(mat,(0,.086,.054),(.315,.010,.186),.003)
+ ellipsoid(mat,(-.054,.105,.097),(.032,.020,.055),20,10,-.10)
+ ellipsoid(mat,(.053,.106,.103),(.031,.020,.056),20,10,.10)
+
+ # One shaped, closed robe body with contrapposto and changing fold directions.
+ profile=[(.108,.135,.068),(.137,.132,.068),(.190,.123,.065),(.245,.118,.067),
+          (.305,.111,.068),(.365,.104,.069),(.414,.109,.074),(.455,.111,.075),
+          (.500,.102,.070),(.545,.098,.067),(.590,.116,.073),(.630,.142,.078),
+          (.670,.154,.076),(.705,.131,.066),(.728,.094,.052),(.747,.046,.035)]
+ rings=[];n=56
+ for j,(yy,rx,rz) in enumerate(profile):
+  ring=[]
+  for i in range(n):
+   t=i*math.tau/n;front=max(0,math.sin(t));angle=t+.15*math.sin(yy*5)
+   # Asymmetric flutes gather at the hip and widen towards the weighted hem.
+   groove=(.007+.008*front)*(1-.48*yy)*(.62*math.cos(11*angle+yy*4)+.38*math.cos(17*angle-yy*6))
+   xshift=.012*math.sin((yy-.10)*5)
+   ring.append((xshift+(rx+groove)*math.cos(t),yy+.003*math.cos(7*t)*(1-yy),
+                .039+(rz+groove)*math.sin(t)))
+  rings.append(ring)
+ loft(mat,rings)
+ # Deep folded mantle crosses the robe and terminates in a weighted pointed hem.
+ cloth_ribbon([(-.115,.698,.089),(-.072,.655,.116),(-.012,.610,.124),(.067,.566,.119),
+               (.090,.510,.121),(.052,.433,.126),(-.020,.345,.127),(-.089,.266,.115)],
+              [.032,.045,.049,.040,.035,.040,.039,.018],.017)
+ cloth_ribbon([(.108,.645,.112),(.074,.572,.131),(.025,.490,.132),(-.034,.402,.125),
+               (-.088,.330,.116),(-.107,.286,.107)], [.021,.028,.029,.028,.025,.010],.012)
+ cloth_ribbon([(.072,.376,.116),(.025,.299,.123),(-.038,.223,.123),(-.105,.160,.110)],
+              [.021,.025,.023,.007],.014)
+ # Layered cowl folds loop across chest, with tapered fabric instead of ropes.
+ for j in range(3):
+  yy=.705-j*.026
+  cloth_ribbon([(-.107+j*.004,yy+.015,.093),(-.073,yy-.015,.119),(-.022,yy-.030,.129),
+                (.037,yy-.025,.128),(.092-j*.005,yy+.014,.102)],
+               [.009,.012,.013,.012,.008],.007)
+ # Neck emerges from the cowl; it is not visible as a separate cylinder.
+ ellipsoid(mat,(.008,.754,.039),(.036,.047,.034),20,12)
+
+ if variant==1:
+  # Symmetrical reading pose, both hands supporting a larger open codex.
+  for side in(-1,1):
+   tapered_path(mat,[(side*.130,.669,.047),(side*.162,.616,.060),(side*.143,.566,.105),
+                     (side*.096,.588,.165)],[(.055,.062),(.059,.056),(.050,.047),(.032,.034)],18,.13)
+   hand((side*.075,.583,.181),-side*.2,True)
+  book((0,.604,.208),.193,.117,.18)
+ else:
+  # Reference-like pose: one arm hangs, the other presents a small book.
+  tapered_path(mat,[(-.126,.676,.039),(-.162,.618,.058),(-.167,.548,.083),(-.160,.472,.096)],
+                [(.056,.060),(.057,.053),(.052,.045),(.033,.031)],18,.16)
+  hand((-.160,.446,.105),-.12,False)
+  tapered_path(mat,[(.126,.675,.042),(.164,.621,.060),(.195,.609,.089),(.220,.657,.117)],
+                [(.055,.063),(.062,.058),(.051,.047),(.028,.027)],18,.13)
+  # Draped open bell sleeve below the bent elbow has a sharp hanging point.
+  cloth_ribbon([(.153,.638,.086),(.169,.579,.107),(.189,.527,.093),(.203,.610,.102)],
+               [.033,.043,.019,.012],.012)
+  hand((.216,.677,.126),-.25,True)
+  book((.208,.700,.157),.122,.111,.22)
+
+ # Modeled head: asymmetric cheek/jaw sections, sloping forehead and chin.
+ head=[];n=36
+ for yy,rx,rz,zc in[(.762,.014,.016,.048),(.774,.029,.028,.051),(.790,.040,.037,.053),
+                    (.806,.048,.042,.051),(.824,.051,.043,.049),(.843,.050,.042,.047),
+                    (.861,.046,.038,.043),(.877,.035,.029,.039),(.887,.015,.014,.037)]:
+  ring=[]
+  for i in range(n):
+   t=i*math.tau/n;front=max(0,math.sin(t))
+   # Cheekbone relief and eye recess are sculpted into the volume itself.
+   recess=.004*math.exp(-((yy-.832)/.012)**2)*front**5
+   cheek=.003*math.exp(-((yy-.808)/.012)**2)*front
+   ring.append((.008+rx*math.cos(t),yy,zc+(rz+cheek-recess)*math.sin(t)))
+  head.append(ring)
+ loft(mat,head)
+ # Ears, nasal bridge/tip/alar wings, lips and eye lids have castable volume.
+ for side in(-1,1):
+  ellipsoid(mat,(.008+side*.051,.816,.040),(.010,.019,.012),16,10,side*.12)
+  eye_x=.008+side*.019
+  ellipsoid(mat,(eye_x,.831,.088),(.011,.004,.003),16,8)
+  line(mat,[(eye_x-.011,.830,.089),(eye_x-.005,.836,.091),(eye_x+.004,.837,.091),
+            (eye_x+.011,.832,.087)],.0025,7)
+  line(mat,[(eye_x-.010,.829,.089),(eye_x,.826,.092),(eye_x+.009,.829,.089)],.0016,6)
+  line(mat,[(eye_x-.013,.843,.084),(eye_x-.005,.846,.089),(eye_x+.009,.843,.086)],.0035,8)
+ # Nose is a closed faceted wedge, including the downturned tip.
+ verts=[(-.001,.842,.084),(.017,.842,.084),(.001,.811,.111),(.015,.811,.111),
+        (-.003,.804,.089),(.019,.804,.089),(.008,.806,.115)]
+ for ids in[(0,2,3,1),(0,4,6,2),(1,3,6,5),(2,6,3),(4,5,6),(0,1,5,4)]:f(mat,[verts[i] for i in ids],True)
+ for side in(-1,1):ellipsoid(mat,(.008+side*.013,.807,.095),(.008,.005,.008),14,8)
+ line(mat,[(-.009,.793,.090),(.001,.795,.096),(.008,.793,.096),(.014,.795,.095),(.025,.793,.090)],.0024,7)
+ line(mat,[(-.007,.790,.091),(.008,.788,.096),(.023,.791,.091)],.0027,7)
+
+ if variant==1:
+  # Closed hood shell sweeps behind the skull; scalloped edge frames the face.
+  hood=[]
+  for yy,rx,rz,zc in[(.720,.097,.052,.025),(.750,.080,.053,.017),(.790,.064,.055,.012),
+                    (.830,.064,.055,.013),(.868,.059,.052,.014),(.899,.035,.035,.017),(.908,.007,.007,.018)]:
+   row=[]
+   for i in range(34):
+    # The front quadrant is genuinely absent so no sheet covers the face.
+    t=.80*math.pi+i/33*1.40*math.pi
+    row.append((.008+rx*math.cos(t),yy,zc+rz*math.sin(t)))
+   hood.append(row)
+  for aa,bb in zip(hood,hood[1:]):
+   for i in range(33):q(mat,aa[i],bb[i],bb[i+1],aa[i+1],True)
+  for side in(-1,1):
+   line(mat,[(.008+side*.029,.897,.048),(.008+side*.050,.872,.064),
+             (.008+side*.057,.832,.067),(.008+side*.060,.789,.063),
+             (.008+side*.080,.749,.070),(.008+side*.094,.724,.085)],.009,9)
+ else:
+  # Close-fitting crown and individual swept hair locks, not a spherical wig.
+  for side in(-1,1):
+   for i in range(6):
+    xx=.008+side*(.014+i*.007)
+    tapered_path(mat,[(xx,.885-i*.002,.038),(.008+side*(.023+i*.005),.867-i*.002,.052-i*.004),
+                      (.008+side*(.048+i*.002),.837,.035-i*.006),
+                      (.008+side*(.049+i*.003),.790,.022-i*.007),
+                      (.008+side*(.043+i*.004),.746-i*.004,.015-i*.005)],
+                     [.009,.010,.009,.008,.003],8,.12)
+  # Beard gives a readable elder profile while the mouth/cheeks stay exposed.
+  beard=[]
+  for yy,rx,rz,zc in[(.794,.031,.017,.079),(.782,.034,.022,.079),(.763,.027,.020,.077),
+                    (.744,.019,.017,.071),(.731,.006,.008,.063)]:
+   beard.append([(.008+(rx+.002*math.cos(i*1.9))*math.cos(i*math.tau/28),yy,
+                   zc+rz*math.sin(i*math.tau/28)) for i in range(28)])
+  # Reverse descending rings to retain outward normals.
+  loft(mat,list(reversed(beard)))
+  for i in range(7):
+   xx=.008+(i-3)*.007
+   line(mat,[(xx,.788,.100),(xx*.8+.002,.769,.099),(xx*.55+.004,.747,.084)],.0022,6)
+  if variant==2:
+   # Soft polygonal scholar's cap, not an unrelated pointed wizard hat.
+   cap=[]
+   for yy,rx,rz in[(.861,.063,.057),(.869,.067,.060),(.880,.060,.057),(.900,.045,.043),(.916,.020,.022),(.921,.003,.004)]:
+    cap.append([(.004+rx*math.cos(i*math.tau/28),yy,.033+rz*math.sin(i*math.tau/28)) for i in range(28)])
+   loft(mat,cap)
+   line(mat,[(.004+.066*math.cos(i*math.tau/32),.868,.033+.060*math.sin(i*math.tau/32)) for i in range(33)],.005,8)
+ # Return local placement metadata for optional build manifest assertions.
+ return {'kind':'original_robed_scholar','variant':variant,'height':height,
+         'center':list(c),'yaw':yaw,'faces':'full modeled volume, cloth folds, facial features, hands and book',
+         'niche':bool(niche),'source':'User PNG 23667cf2 and bca0adca, gallery-front white figure silhouettes'}

@@ -6,7 +6,9 @@ import { CircularProgress } from "@/ui/feedback";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import * as THREE from "three";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { readReferenceReaderState, type ReferenceCameraPose } from './reference-library-view';
+import { getReferenceShelfFrame, getReferenceShelfFocusFov } from './reference-library-focus';
 import { tokens } from "../theme/generated-tokens";
 import type { Book } from "../domain/types";
 import { classifyCatalogBook, SHELF_CATEGORIES } from "./virtual-library-catalog";
@@ -32,16 +34,14 @@ import {
   getBookInspectionTransform,
   placeSceneBookOnShelf,
   setSceneBookRenderLayer,
-  ROTUNDA_CAMERA_RADIUS,
-  ROTUNDA_CENTER,
   VIRTUAL_LIBRARY_BOOK_PREVIEW_LAYER,
   VIRTUAL_LIBRARY_SCENE_MODEL_VERSION,
   VIRTUAL_LIBRARY_WORLD_LAYER,
   type SceneBook,
   type ShelfCategoryInfo,
 } from "./virtual-library-scene";
-import { LONG_ROOM, HISTORIC_SPIRAL, EAST_GALLERY_CONNECTION } from "./virtual-library-model/longRoomLayout";
-import { buildLongRoomProgressively, longRoomRoofY } from "./virtual-library-model/scene/longRoom";
+import { REFERENCE_LIBRARY as ACTIVE_HALL, referenceLibraryRoofY, referenceRouteLength, referenceRoutePoint, type ReferencePoint } from "./virtual-library-model/hogwartsLibraryLayout";
+import { buildReferenceLibraryProgressively } from "./virtual-library-model/scene/referenceLibrary";
 import { LIBRARY } from "./virtual-library-model/config";
 import {
   refreshVirtualLibraryBooks,
@@ -54,7 +54,6 @@ import {
   type LibraryRoomId,
 } from "./virtual-library-rooms";
 import "./virtual-library.css";
-import { henryJonesWalkPoint, HENRY_JONES_ROOM_START_DISTANCE, HENRY_JONES_WALK_LENGTH } from "./virtual-library-model/scene/longRoomWestWalk";
 import { VirtualLibrarySearch } from "./VirtualLibrarySearch";
 
 import { createDeferredSceneAction } from "./virtual-library-deferred-action";
@@ -68,14 +67,16 @@ const SCENE_ZOOM_STEP = 0.12;
 const BOOK_INSPECTION_ZOOM_STEP = 0.1;
 const WALKING_EYE_HEIGHT = 1.78;
 const HALL_FLIGHT_CEILING_CLEARANCE = 0.4;
+const ROTUNDA_CENTER = new THREE.Vector3(0, ACTIVE_HALL.camera.targetY, ACTIVE_HALL.camera.targetZ);
+const ROTUNDA_CAMERA_RADIUS = ACTIVE_HALL.camera.radius;
 const MOBILE_ROTUNDA_CENTER_Y = ROTUNDA_CENTER.y * 0.64;
 const TABLET_ROTUNDA_CENTER_Y = ROTUNDA_CENTER.y * 0.87;
 
-function clampHallFlightHeight(x: number, desiredHeight: number) {
+function clampHallFlightHeight(x: number, z: number, desiredHeight: number) {
   return clampVirtualLibraryFlightHeight(
     desiredHeight,
     WALKING_EYE_HEIGHT,
-    longRoomRoofY(x) - HALL_FLIGHT_CEILING_CLEARANCE,
+    referenceLibraryRoofY(x, z) - HALL_FLIGHT_CEILING_CLEARANCE,
   );
 }
 
@@ -106,6 +107,9 @@ const ROOM_DETAILS: Record<Exclude<LibraryRoomId, "hall">, { title: string; labe
 
 export function VirtualLibraryExperience() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const restoredView = useRef(readReferenceReaderState(location.state)?.libraryView ?? null);
+  const cameraPose = useRef<ReferenceCameraPose | null>(null);
   const queryClient = useQueryClient();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const sceneHostRef = useRef<HTMLDivElement | null>(null);
@@ -115,15 +119,16 @@ export function VirtualLibraryExperience() {
   const expandedShelfSectionIdRef = useRef<number | null>(null);
   const activeRoomRef = useRef<LibraryRoomId>("hall");
   const cameraYawTargetRef = useRef(0);
-  const cameraPitchTargetRef = useRef<number>(LONG_ROOM.camera.pitch);
+  const cameraPitchTargetRef = useRef<number>(ACTIVE_HALL.camera.pitch);
   const cameraTargetYRef = useRef(ROTUNDA_CENTER.y);
   const cameraTargetXZRef = useRef({ x: ROTUNDA_CENTER.x, z: ROTUNDA_CENTER.z });
   const roomNavigationRef = useRef<(room: LibraryRoomId) => void>(() => undefined);
   const readerNavigationRef = useRef<(bookId: string) => void>(() => undefined);
-  const henryAccessRef = useRef<() => void>(() => undefined);
-  const [henryWalking, setHenryWalking] = useState(false);
+  const stairAccessRef = useRef<(side: "left" | "right") => void>(() => undefined);
+  const [stairWalking, setStairWalking] = useState(false);
   const walkRef = useRef<(direction: number) => void>(() => undefined);
   const [categoryNavigation] = useState(() => createDeferredSceneAction<string>());
+  const [bookNavigation] = useState(() => createDeferredSceneAction<string>());
   const catalogShelfRef = useRef<() => void>(() => undefined);
   const [selectedBookId, setSelectedBookId] = useState<string | null>(null);
   const [sceneZoom, setSceneZoom] = useState(1);
@@ -136,6 +141,12 @@ export function VirtualLibraryExperience() {
   const searchOpenRef = useRef(false);
   searchOpenRef.current = searchOpen;
   const [sceneError, setSceneError] = useState(false);
+  const [sceneErrorMessage, setSceneErrorMessage] = useState("当前浏览器无法加载 3D 场景，请启用硬件加速后重试。");
+  const [sceneAttempt, setSceneAttempt] = useState(0);
+  const [architectureError, setArchitectureError] = useState<string | null>(null);
+  const [architectureProgress, setArchitectureProgress] = useState<string | null>(null);
+  const [spatialLoading, setSpatialLoading] = useState(false);
+  const architectureRetryRef = useRef<() => void>(() => undefined);
   const [catalogSyncError, setCatalogSyncError] = useState<string | null>(null);
   const [sceneLoading, setSceneLoading] = useState(true);
   const staticSceneBuildCountRef = useRef(0);
@@ -160,7 +171,7 @@ export function VirtualLibraryExperience() {
     [books, selectedBookId],
   );
   readerNavigationRef.current = (bookId) => {
-    navigate(`/reader/${encodeURIComponent(bookId)}`);
+    navigate(`/reader/${encodeURIComponent(bookId)}`, {state: {returnTo: '/virtual-library', libraryView: cameraPose.current}});
   };
 
   useEffect(() => {
@@ -196,13 +207,16 @@ export function VirtualLibraryExperience() {
       }
 
       setSceneError(false);
-      setHenryWalking(false);
+      setStairWalking(false);
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
       renderer.outputColorSpace = THREE.SRGBColorSpace;
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
       renderer.toneMappingExposure = LIBRARY.atmosphere.exposure;
       renderer.shadowMap.enabled = true;
       renderer.shadowMap.type = THREE.PCFShadowMap;
+      // Architecture and lights are static. Camera-only navigation reuses the map.
+      renderer.shadowMap.autoUpdate = false;
+      renderer.shadowMap.needsUpdate = true;
       renderer.info.autoReset = false;
 
       const scene = new THREE.Scene();
@@ -211,6 +225,10 @@ export function VirtualLibraryExperience() {
       const camera = new THREE.PerspectiveCamera(58, 1, 0.08, 120);
       let renderUntil = performance.now() + 1800;
       const invalidateScene = () => { renderUntil = performance.now() + 1800; };
+      const invalidateShadows = () => { renderer.shadowMap.needsUpdate = true; invalidateScene(); };
+      let architectureSignature = '';
+      let revealDeferredBooks = () => undefined;
+      let shadowUpdateCount = 0;
       const loadingManager = new THREE.LoadingManager(invalidateScene, invalidateScene, invalidateScene);
       const cameraTarget = ROTUNDA_CENTER.clone();
       let cameraBaseRadius: number = ROTUNDA_CAMERA_RADIUS;
@@ -231,10 +249,15 @@ export function VirtualLibraryExperience() {
       const textureLoader = new THREE.TextureLoader(loadingManager);
       let longestBuildSlice = 0, westBuildMaxSlice = 0, westBuildCpuMs = 0;
       const batchPhases: Record<string, {count: number; totalMs: number; maxMs: number}> = {};
-      let preparedHall;
+      let preparedHall!: Awaited<ReturnType<typeof buildReferenceLibraryProgressively>>;
       try {
-        preparedHall = await buildLongRoomProgressively(textureLoader, construction.signal,
+        preparedHall = await buildReferenceLibraryProgressively(textureLoader, construction.signal,
           (milliseconds, stage) => {
+            if (stage.endsWith('-wall') || stage.endsWith('-elapsed')) {
+              canvas.dataset.lastModuleWallStage = stage;
+              canvas.dataset.lastModuleWallMs = milliseconds.toFixed(1);
+              return;
+            }
             if (stage.startsWith('static-')) {
               const phase = batchPhases[stage] ??= {count: 0, totalMs: 0, maxMs: 0};
               phase.count++; phase.totalMs += milliseconds; phase.maxMs = Math.max(phase.maxMs, milliseconds);
@@ -247,12 +270,45 @@ export function VirtualLibraryExperience() {
               longestBuildSlice = milliseconds;
               canvas.dataset.longestBuildStage = stage;
             }
-          });
-      } catch {
+          }, {multiDraw: renderer.extensions.has('WEBGL_multi_draw'),
+            onChange: () => {
+              if (construction.signal.aborted) return;
+              invalidateScene();
+              const d = preparedHall?.streaming.diagnostics();
+              if (!d) return;
+              const signature = [d.residentModules, d.residentBytes,
+                d.batching.batchCount, d.batching.allocatedGeometryBytes].join('|');
+              if (signature !== architectureSignature) {architectureSignature = signature; invalidateShadows(); revealDeferredBooks();}
+              setArchitectureProgress(d.loadingModules || d.queuedModules || d.phase === 'consolidating'
+                ? `建筑细节加载中（${d.residentModules}/${d.totalModules}）` : null);
+              if (!d.failedModules && !d.consolidationError) setArchitectureError(null);
+              canvas.dataset.architectureDiagnostics = JSON.stringify(d);
+            }, onError: error => {
+              if (!construction.signal.aborted) setArchitectureError(error.message);
+            }});
+        // Reader-return destinations must be fully backed by their exact modules.
+        if (restoredView.current) await preparedHall.streaming.ensurePoint(restoredView.current);
+      } catch (error) {
+        if (preparedHall) {
+          await preparedHall.disposeArchitecture();
+          scene.add(preparedHall.root); disposeScene(scene);
+        }
         renderer.dispose();
-        if (!construction.signal.aborted) setSceneError(true);
+        if (!construction.signal.aborted) {
+          setSceneErrorMessage(error instanceof Error ? error.message : "建筑模型加载失败，请重试。");
+          setSceneError(true);
+        }
         return undefined;
       }
+      renderer.toneMappingExposure = preparedHall.referenceConfig.lighting.exposure;
+      architectureRetryRef.current = () => {
+        if (preparedHall.streaming.diagnostics().consolidationError) {
+          setSceneAttempt(attempt => attempt + 1); return;
+        }
+        void preparedHall.streaming.retryFailed().catch(error => {
+          if (!construction.signal.aborted) setArchitectureError(error instanceof Error ? error.message : '建筑细节重试失败');
+        });
+      };
       const finalizeStarted = performance.now();
       let world: ReturnType<typeof createVirtualLibraryWorld>;
       try {
@@ -263,13 +319,34 @@ export function VirtualLibraryExperience() {
           preparedHall,
         );
       } catch {
+        await preparedHall.disposeArchitecture();
+        scene.add(preparedHall.root); disposeScene(scene);
         renderer.dispose();
         if (!construction.signal.aborted) setSceneError(true);
         return undefined;
       }
       let selectedSceneBook: SceneBook | null = null;
+      const architectureWaitingBooks = new Map<SceneBook, boolean>();
+      revealDeferredBooks = () => {
+        for (const [book, pending] of architectureWaitingBooks) {
+          if (pending) continue;
+          if (!world.sceneBooks.includes(book)) {architectureWaitingBooks.delete(book); continue;}
+          const info = world.getShelfInfo(book.shelfSectionId);
+          if (info?.centerX === undefined || info.centerZ === undefined) continue;
+          architectureWaitingBooks.set(book, true);
+          void preparedHall.streaming.ensurePoint({x: info.centerX, y: info.targetY, z: info.centerZ}).then(() => {
+            if (construction.signal.aborted || !world.sceneBooks.includes(book)) return;
+            book.group.visible = true; architectureWaitingBooks.delete(book); updateCatalogDiagnostics(); invalidateShadows();
+          }).catch(error => {
+            if (!construction.signal.aborted) setArchitectureError(error instanceof Error ? error.message : '书架区域暂未加载');
+          }).finally(() => {
+            if (architectureWaitingBooks.has(book)) architectureWaitingBooks.set(book, false);
+          });
+        }
+      };
       const updateCatalogDiagnostics = () => {
-        canvas.dataset.renderedBookModelCount = String(world.sceneBooks.length);
+        canvas.dataset.renderedBookModelCount = String(world.sceneBooks.filter(book => book.group.visible).length);
+        canvas.dataset.pendingArchitecturalBooks = String(architectureWaitingBooks.size);
         canvas.dataset.shelvedBookModelCount = String(
           world.sceneBooks.length - (selectedSceneBook ? 1 : 0),
         );
@@ -288,6 +365,12 @@ export function VirtualLibraryExperience() {
           return;
         }
         setCatalogSyncError(null);
+        const changedBooks = new Set([...result.addedBookIds, ...result.replacedBookIds]);
+        for (const book of world.sceneBooks) if (changedBooks.has(book.book.id)) {
+          book.group.visible = false; architectureWaitingBooks.set(book, false);
+        }
+        revealDeferredBooks();
+        if (result.addedBookIds.length || result.removedBookIds.length || result.replacedBookIds.length) invalidateShadows();
         if (selectedSceneBook && result.removedBookIds.includes(selectedSceneBook.book.id)) {
           selectedSceneBook = null;
           selectedBookIdRef.current = null;
@@ -375,10 +458,10 @@ export function VirtualLibraryExperience() {
         } else if (expandedShelfSectionIdRef.current !== null) {
           cameraBaseRadius = 2.8;
           const info = world.getShelfInfo(expandedShelfSectionIdRef.current);
-          const span = Math.max(info?.height ?? LONG_ROOM.lowerCaseHeight,
+          const span = Math.max(info?.height ?? ACTIVE_HALL.lowerCaseHeight,
             (info?.width ?? 3.76) / (viewportWidth / viewportHeight));
           cameraFovTarget = THREE.MathUtils.radToDeg(2 * Math.atan(span * 1.12 / (2 * (cameraBaseRadius / sceneZoomRef.current))));
-          cameraTargetYBase = LONG_ROOM.lowerCaseHeight / 2;
+          cameraTargetYBase = ACTIVE_HALL.lowerCaseHeight / 2;
         } else if (viewportWidth <= 720) {
           cameraBaseRadius = ROTUNDA_CAMERA_RADIUS - 0.5;
           cameraFovTarget = 62;
@@ -396,12 +479,20 @@ export function VirtualLibraryExperience() {
       };
 
       let freeEye: THREE.Vector3 | null = null;
+      if (restoredView.current) {
+        const pose = restoredView.current;
+        freeEye = new THREE.Vector3(pose.x, pose.y, pose.z);
+        cameraYawCurrent = cameraYawTargetRef.current = pose.yaw;
+        cameraPitchCurrent = cameraPitchTargetRef.current = pose.pitch;
+        restoredView.current = null;
+      }
       let shelfFacingYaw = 0;
       let galleryDistance: number | null = null;
-      const walkingRoute = 'henry';
-      const walkLength = () => HENRY_JONES_WALK_LENGTH;
-      const walkMinimum = () => HENRY_JONES_ROOM_START_DISTANCE;
-      const walkPoint = henryJonesWalkPoint;
+      let walkingRoute: 'left-stair' | 'right-stair' = 'left-stair';
+      let stairRoute: ReferencePoint[] = preparedHall.referenceConfig.stairRoutes.left;
+      const walkLength = () => referenceRouteLength(stairRoute);
+      const walkMinimum = () => 0;
+      const walkPoint = (distance: number) => referenceRoutePoint(stairRoute, distance);
       let galleryDistanceCurrent = 0;
       let galleryPreviousEye: {x: number; y: number; z: number} | null = null;
       const galleryWalkOffset = new THREE.Vector3();
@@ -420,11 +511,12 @@ export function VirtualLibraryExperience() {
         const desiredZ = freeEye?.z ?? cameraTarget.z + Math.cos(cameraYawCurrent) * planarRadius;
         const activeCameraRoom = activeRoomRef.current;
         const colliders = world.getCameraColliders(activeCameraRoom);
-        const hallX = THREE.MathUtils.clamp(desiredX, -LONG_ROOM.width / 2 + 0.38, LONG_ROOM.width / 2 - 0.38);
+        const hallX = THREE.MathUtils.clamp(desiredX, -ACTIVE_HALL.width / 2 + 0.38, ACTIVE_HALL.width / 2 - 0.38);
+        const hallZ = THREE.MathUtils.clamp(desiredZ, -ACTIVE_HALL.length / 2 + 0.38, ACTIVE_HALL.length / 2 - 0.38);
         const desiredPosition = activeCameraRoom === "hall" ? {
           x: hallX,
-          y: clampHallFlightHeight(hallX, desiredY),
-          z: THREE.MathUtils.clamp(desiredZ, -LONG_ROOM.length / 2 + 0.38, LONG_ROOM.length / 2 - 0.38),
+          y: clampHallFlightHeight(hallX, hallZ, desiredY),
+          z: hallZ,
         } : { x: desiredX, y: desiredY, z: desiredZ };
         let collision = resolveCameraCollision(
           hasPositionedCamera && previousCameraRoom === activeCameraRoom
@@ -468,10 +560,19 @@ export function VirtualLibraryExperience() {
           canvas.dataset.walkDistance = galleryDistanceCurrent.toFixed(2);
           canvas.dataset.walkRoute = walkingRoute;
           canvas.dataset.walkLength = walkLength().toFixed(2);
-          canvas.dataset.walkFloor = point.y >= EAST_GALLERY_CONNECTION.upperFloor - 0.05 ? "2" : "1";
+          canvas.dataset.walkFloor = point.y >= ACTIVE_HALL.galleryY - 0.05 ? "2" : "1";
         } else {
           delete canvas.dataset.walkDistance; delete canvas.dataset.walkFloor;
           delete canvas.dataset.walkRoute; delete canvas.dataset.walkLength;
+        }
+        const focusedShelfId = expandedShelfSectionIdRef.current;
+        const focusedShelf = focusedShelfId === null ? null : world.getShelfInfo(focusedShelfId);
+        if (activeCameraRoom === 'hall' && focusedShelf) {
+          cameraFovTarget = getReferenceShelfFocusFov(camera, focusedShelf);
+          if (Math.abs(camera.fov - cameraFovTarget) > 0.001) {
+            camera.fov = cameraFovTarget;
+            camera.updateProjectionMatrix();
+          }
         }
         canvas.dataset.cameraYaw = cameraYawCurrent.toFixed(4);
         canvas.dataset.cameraPitch = cameraPitchCurrent.toFixed(4);
@@ -528,7 +629,8 @@ export function VirtualLibraryExperience() {
             return { book: null, shelfSectionId: null, portalRoom: null, terminal: true };
           }
         }
-        const bookHit = raycaster.intersectObjects(world.interactiveMeshes, false)[0];
+        const bookHit = raycaster.intersectObjects(world.interactiveMeshes, false)
+          .find(hit => findSceneBook(hit.object)?.group.visible);
         const book = bookHit ? findSceneBook(bookHit.object) : null;
         if (book) {
           if (isFocusedShelfTarget(focusedShelfSectionId, book.shelfSectionId)) {
@@ -553,10 +655,24 @@ export function VirtualLibraryExperience() {
           portalRoom: null,
         };
       };
+      let spatialRequest = 0;
+      const runAtReadyPoint = (point: {x: number; y: number; z: number}, action: () => void) => {
+        const request = ++spatialRequest;
+        setSpatialLoading(true);
+        void preparedHall.streaming.ensurePoint(point).then(() => {
+          if (!construction.signal.aborted && request === spatialRequest) {action(); invalidateScene();}
+        }).catch(error => {
+          if (!construction.signal.aborted && request === spatialRequest)
+            setArchitectureError(error instanceof Error ? error.message : '目标区域暂未加载');
+        }).finally(() => {
+          if (!construction.signal.aborted && request === spatialRequest) setSpatialLoading(false);
+        });
+      };
       const resetShelfFocus = () => {
+        spatialRequest++; setSpatialLoading(false);
         freeEye = null;
         cameraTargetXZRef.current = { x: ROTUNDA_CENTER.x, z: ROTUNDA_CENTER.z };
-        cameraPitchTargetRef.current = LONG_ROOM.camera.pitch;
+        cameraPitchTargetRef.current = ACTIVE_HALL.camera.pitch;
         sceneZoomRef.current = 1;
         setSceneZoom(1);
         updateCameraSettings();
@@ -577,24 +693,21 @@ export function VirtualLibraryExperience() {
         setExpandedShelfSectionId(null);
         resetShelfFocus();
       };
-      const focusShelf = (sectionId: number) => {
+      const focusShelfNow = (sectionId: number) => {
         pressedMovementKeys.clear();
         canvas.dataset.movementKeys = "";
         freeEye = null;
-        galleryDistance = null; setHenryWalking(false);
+        galleryDistance = null; setStairWalking(false);
         const info = world.getShelfInfo(sectionId);
         if (!info) return;
-        const besideHistoricStair = info.centerX !== undefined && info.centerZ !== undefined
-          && Math.abs(info.centerX - HISTORIC_SPIRAL.x) < 1
-          && Math.abs(info.centerZ - HISTORIC_SPIRAL.z) < 3;
-        const requestedYaw = -info.angle - Math.PI / 2 + (besideHistoricStair ? 0.65 : 0);
+        const requestedYaw = -info.angle - Math.PI / 2;
         const currentYaw = cameraYawTargetRef.current;
         const shortestTurn = Math.atan2(
           Math.sin(requestedYaw - currentYaw),
           Math.cos(requestedYaw - currentYaw),
         );
         cameraYawTargetRef.current = currentYaw + shortestTurn;
-        cameraPitchTargetRef.current = info.targetY > LONG_ROOM.galleryY ? 0.035 : -0.045;
+        cameraPitchTargetRef.current = info.targetY > ACTIVE_HALL.galleryY ? 0.035 : -0.045;
         const shelfFaceRadius = info.radius - info.depth * 0.56;
         cameraTargetXZRef.current = {
           x: info.centerX !== undefined ? info.centerX - Math.cos(info.angle) * info.depth * 0.56 : Math.cos(info.angle) * shelfFaceRadius,
@@ -616,8 +729,15 @@ export function VirtualLibraryExperience() {
         setSelectedShelfInfo(info);
         setViewPreset("free");
       };
+      const focusShelf = (sectionId: number) => {
+        const info = world.getShelfInfo(sectionId);
+        if (!info || info.centerX === undefined || info.centerZ === undefined) return;
+        runAtReadyPoint({x: info.centerX, y: info.targetY, z: info.centerZ}, () => {
+          if (expandedShelfSectionIdRef.current === sectionId) focusShelfNow(sectionId);
+        });
+      };
       catalogShelfRef.current = () => {
-        galleryDistance = null; setHenryWalking(false);
+        galleryDistance = null; setStairWalking(false);
         const first = world.sceneBooks[0];
         if (!first) { setSearchOpen(true); return; }
         if (world.getExpandedShelfSectionId() !== first.shelfSectionId) world.toggleShelfSection(first.shelfSectionId);
@@ -633,7 +753,17 @@ export function VirtualLibraryExperience() {
         expandedShelfSectionIdRef.current = first.shelfSectionId; setExpandedShelfSectionId(first.shelfSectionId);
         focusShelf(first.shelfSectionId);
       };
+      const focusBook = (bookId: string) => {
+        const book = world.sceneBooks.find(item => item.book.id === bookId);
+        if (!book) {setCatalogSyncError('这本书尚未入架，可从搜索结果直接阅读。'); return;}
+        clearSelectedBook();
+        if (world.getExpandedShelfSectionId() !== book.shelfSectionId) world.toggleShelfSection(book.shelfSectionId);
+        expandedShelfSectionIdRef.current = book.shelfSectionId;
+        setExpandedShelfSectionId(book.shelfSectionId);
+        focusShelf(book.shelfSectionId);
+      };
       const selectBook = (sceneBook: SceneBook) => {
+        invalidateShadows();
         if (selectedSceneBook && selectedSceneBook !== sceneBook) {
           selectedSceneBook.group.userData.bookPresentation = "shelved";
           setSceneBookRenderLayer(selectedSceneBook, VIRTUAL_LIBRARY_WORLD_LAYER);
@@ -655,6 +785,7 @@ export function VirtualLibraryExperience() {
         canvas.dataset.inspectedBookZoom = "1.00";
       };
       const clearSelectedBook = () => {
+        invalidateShadows();
         if (selectedSceneBook) {
           selectedSceneBook.group.userData.bookPresentation = "shelved";
           setSceneBookRenderLayer(selectedSceneBook, VIRTUAL_LIBRARY_WORLD_LAYER);
@@ -693,7 +824,7 @@ export function VirtualLibraryExperience() {
           Math.sin(-cameraYawTargetRef.current),
           Math.cos(-cameraYawTargetRef.current),
         );
-        cameraPitchTargetRef.current = room === "hall" ? LONG_ROOM.camera.pitch : -0.055;
+        cameraPitchTargetRef.current = room === "hall" ? ACTIVE_HALL.camera.pitch : -0.055;
         updateCameraSettings();
         cameraTargetYRef.current = cameraTargetYBase;
         cameraYawCurrent = cameraYawTargetRef.current;
@@ -829,24 +960,28 @@ export function VirtualLibraryExperience() {
         delete canvas.dataset.hoveredBookId;
         if (pointerState.mode === null) canvas.style.cursor = "grab";
       };
-      henryAccessRef.current = () => {
-        if(galleryDistance !== null && walkingRoute === 'henry') {
-          const entrance=henryJonesWalkPoint(0);
-          freeEye=new THREE.Vector3(entrance.x,entrance.y+WALKING_EYE_HEIGHT,entrance.z);
-          cameraYawCurrent=cameraYawTargetRef.current=Math.PI;
-          cameraPitchCurrent=cameraPitchTargetRef.current=0;
-          galleryDistance=null; galleryPreviousEye=null; hasPositionedCamera=false;
-          galleryWalkOffset.set(0, 0, 0);
-          setHenryWalking(false);
-        } else {
-          clearSelectedBook(); collapseFocusedShelf();
-          freeEye=null; galleryPreviousEye=null;
-          galleryDistance=walkMinimum(); galleryDistanceCurrent=walkMinimum();
-          galleryWalkOffset.set(0, 0, 0);
-          galleryLookYaw=cameraYawCurrent; galleryLookPitch=cameraPitchCurrent;
-          setHenryWalking(true);
-        }
+      const startStair = (side: "left" | "right") => {
+        if (selectedSceneBook || isShelfMovementLocked(expandedShelfSectionIdRef.current) || searchOpenRef.current) return;
+        pressedMovementKeys.clear();
+        const descending = camera.position.y > ACTIVE_HALL.galleryY;
+        const sourceRoute = preparedHall.referenceConfig.stairRoutes[side];
+        stairRoute = descending ? [...sourceRoute].reverse() : sourceRoute;
+        walkingRoute = side === 'left' ? 'left-stair' : 'right-stair';
+        freeEye = null;
+        galleryPreviousEye = null;
+        galleryDistanceCurrent = 0;
+        galleryDistance = walkLength();
+        galleryWalkOffset.set(0, 0, 0);
+        galleryLookYaw = cameraYawCurrent; galleryLookPitch = cameraPitchCurrent;
+        hasPositionedCamera = false;
+        setStairWalking(true);
         invalidateScene();
+      };
+      stairAccessRef.current = side => {
+        if (selectedSceneBook || isShelfMovementLocked(expandedShelfSectionIdRef.current) || searchOpenRef.current) return;
+        const route = preparedHall.referenceConfig.stairRoutes[side];
+        const point = camera.position.y > ACTIVE_HALL.galleryY ? route[route.length - 1] : route[0];
+        runAtReadyPoint(point, () => startStair(side));
       };
       const walk = (direction: number) => {
         if (isShelfMovementLocked(expandedShelfSectionIdRef.current)) return;
@@ -877,6 +1012,7 @@ export function VirtualLibraryExperience() {
         invalidateScene();
       };
       const canMoveContinuously = () => activeRoomRef.current === "hall"
+        && galleryDistance === null
         && !selectedSceneBook
         && !isShelfMovementLocked(expandedShelfSectionIdRef.current)
         && !searchOpenRef.current;
@@ -922,10 +1058,11 @@ export function VirtualLibraryExperience() {
         } else {
           freeEye ??= camera.position.clone();
           const desiredX = freeEye.x + (planarDelta?.x ?? 0);
+          const desiredZ = freeEye.z + (planarDelta?.z ?? 0);
           const safe = resolveCameraCollision(freeEye, {
             x: desiredX,
-            y: clampHallFlightHeight(desiredX, freeEye.y + verticalDelta),
-            z: freeEye.z + (planarDelta?.z ?? 0),
+            y: clampHallFlightHeight(desiredX, desiredZ, freeEye.y + verticalDelta),
+            z: desiredZ,
           }, colliders);
           freeEye.set(safe.x, safe.y, safe.z);
         }
@@ -946,6 +1083,20 @@ export function VirtualLibraryExperience() {
         }
         if (searchOpenRef.current) return;
         if (event.key !== "Escape") return;
+        spatialRequest++; setSpatialLoading(false);
+        if (galleryDistance !== null) {
+          // Stop on the already collision-resolved tread instead of resetting
+          // the visitor into the centre of the building.
+          freeEye = camera.position.clone();
+          camera.getWorldDirection(movementLook);
+          cameraYawCurrent = cameraYawTargetRef.current = Math.atan2(-movementLook.x, -movementLook.z);
+          cameraPitchCurrent = cameraPitchTargetRef.current = Math.atan2(-movementLook.y, Math.hypot(movementLook.x, movementLook.z));
+          galleryDistance = null; galleryPreviousEye = null;
+          pressedMovementKeys.clear();
+          setStairWalking(false);
+          invalidateScene();
+          return;
+        }
         if (activeRoomRef.current !== "hall") {
           navigateRoom("hall");
           return;
@@ -971,6 +1122,7 @@ export function VirtualLibraryExperience() {
       };
       const onWheel = (event: WheelEvent) => {
         event.preventDefault();
+        if (galleryDistance !== null) return;
         const sensitivity = event.ctrlKey ? 0.004 : 0.0015;
         if (selectedSceneBook) {
           const zoomDelta = THREE.MathUtils.clamp(
@@ -1050,10 +1202,10 @@ export function VirtualLibraryExperience() {
         }
         const info = world.getShelfInfo(sectionId);
         if (info?.centerX !== undefined && info.centerZ !== undefined) {
-          canvas.dataset.focusedShelfFrame = JSON.stringify([-1, 1].flatMap(side => [0, info.height].map(y => {
-            const point = new THREE.Vector3(info.centerX! + side * info.width / 2, y, info.centerZ! + info.depth / 2).project(camera);
+          canvas.dataset.focusedShelfFrame = JSON.stringify(getReferenceShelfFrame(info).map(corner => {
+            const point = corner.project(camera);
             return {x: point.x, y: point.y, z: point.z};
-          })));
+          }));
         }
         const screenPoints = world.sceneBooks
           .filter((sceneBook) => sceneBook.shelfSectionId === sectionId)
@@ -1144,13 +1296,39 @@ export function VirtualLibraryExperience() {
           galleryDistanceCurrent=galleryDistanceCurrent+THREE.MathUtils.clamp(next-galleryDistanceCurrent,-0.08,0.08);
         }
         positionCamera();
+        cameraPose.current = {x: camera.position.x, y: camera.position.y, z: camera.position.z,
+          yaw: cameraYawCurrent, pitch: cameraPitchCurrent};
+        if (galleryDistance !== null && Math.abs(galleryDistanceCurrent - galleryDistance) < 0.02) {
+          freeEye = camera.position.clone();
+          camera.getWorldDirection(movementLook);
+          cameraYawCurrent = cameraYawTargetRef.current = Math.atan2(-movementLook.x, -movementLook.z);
+          cameraPitchCurrent = cameraPitchTargetRef.current = Math.atan2(-movementLook.y, Math.hypot(movementLook.x, movementLook.z));
+          galleryDistance = null; galleryPreviousEye = null;
+          setStairWalking(false);
+          invalidateScene();
+        }
+        scene.updateMatrixWorld(true);
+        const shadowCameras: THREE.Camera[] = [];
+        scene.traverse(object => {
+          if (object instanceof THREE.DirectionalLight && object.castShadow) {
+            object.shadow.updateMatrices(object);
+            shadowCameras.push(object.shadow.camera);
+          }
+        });
+        preparedHall.streaming.updateView(camera, shadowCameras);
+        if (activeRoomRef.current !== 'hall') renderer.shadowMap.needsUpdate = true;
         world.animateEnvironment(reducedMotion ? 0 : elapsed);
         updateBookInspection();
         updateFocusedShelfDiagnostics();
         const renderStarted = performance.now();
         renderer.info.reset();
         camera.layers.set(VIRTUAL_LIBRARY_WORLD_LAYER);
+        const shadowPassRequested = renderer.shadowMap.needsUpdate;
         renderer.render(scene, camera);
+        if (shadowPassRequested) shadowUpdateCount++;
+        canvas.dataset.shadowUpdates = String(shadowUpdateCount);
+        canvas.dataset.shadowPassRequested = String(shadowPassRequested);
+        canvas.dataset.renderFpsLimit = '30';
         if (selectedSceneBook) {
           const autoClear = renderer.autoClear;
           const shadowsEnabled = renderer.shadowMap.enabled;
@@ -1197,6 +1375,7 @@ export function VirtualLibraryExperience() {
         if (disposed) return;
         canvas.dataset.shaderCompileMs = (performance.now() - shaderCompileStarted).toFixed(1);
         categoryNavigation.attach(focusCategory);
+        bookNavigation.attach(focusBook);
         if (document.activeElement === document.body) canvas.focus({ preventScroll: true });
         invalidateScene();
         frame = window.requestAnimationFrame(animate);
@@ -1223,6 +1402,7 @@ export function VirtualLibraryExperience() {
         canvas.removeEventListener("blur", clearMovementKeys);
         canvas.removeEventListener("wheel", onWheel);
         delete canvas.dataset.renderedBookModelCount;
+        delete canvas.dataset.pendingArchitecturalBooks;
         delete canvas.dataset.shelvedBookModelCount;
         delete canvas.dataset.occupiedShelfBayCount;
         delete canvas.dataset.catalogSyncRevision;
@@ -1257,10 +1437,18 @@ export function VirtualLibraryExperience() {
         delete canvas.dataset.focusedShelfBookCount;
         delete canvas.dataset.focusedShelfBookScreenPoints;
         roomNavigationRef.current = () => undefined;
-        henryAccessRef.current = () => undefined;
+        stairAccessRef.current = () => undefined;
         walkRef.current = () => undefined;
         catalogShelfRef.current = () => undefined;
         catalogSyncRef.current = () => undefined;
+        architectureRetryRef.current = () => undefined;
+        architectureWaitingBooks.clear(); revealDeferredBooks = () => undefined;
+        // Detach controller-owned geometry/materials before generic catalog cleanup.
+        void preparedHall.disposeArchitecture();
+        delete canvas.dataset.architectureDiagnostics;
+        delete canvas.dataset.shadowUpdates;
+        delete canvas.dataset.shadowPassRequested;
+        delete canvas.dataset.renderFpsLimit;
         disposeScene(scene);
 
         renderer.dispose();
@@ -1270,6 +1458,9 @@ export function VirtualLibraryExperience() {
     const initializationFrame = window.requestAnimationFrame(() => {
       setSceneLoading(true);
       setSceneError(false);
+      setArchitectureError(null);
+      setArchitectureProgress(null);
+      setSpatialLoading(false);
       setSelectedShelfInfo(null);
       setExpandedShelfSectionId(null);
       expandedShelfSectionIdRef.current = null;
@@ -1285,9 +1476,10 @@ export function VirtualLibraryExperience() {
       window.cancelAnimationFrame(initializationFrame);
       construction.abort();
       categoryNavigation.detach();
+      bookNavigation.detach();
       cleanupScene?.();
     };
-  }, [categoryNavigation]);
+  }, [categoryNavigation, bookNavigation, sceneAttempt]);
 
   useEffect(() => {
     catalogBooksRef.current = books;
@@ -1323,7 +1515,9 @@ export function VirtualLibraryExperience() {
           data-book-presentation={selectedBook ? "inspection" : "shelved"}
         />
       </div>
-      <VirtualLibrarySearch open={searchOpen} books={books} onClose={() => setSearchOpen(false)} />
+      <VirtualLibrarySearch open={searchOpen} books={books} onClose={() => setSearchOpen(false)}
+        onLocateBook={bookId => bookNavigation.request(bookId)}
+        onReadBook={bookId => readerNavigationRef.current(bookId)} />
       <div className="virtual-library-overlay">
         {activeRoom === "hall" ? (
           <Button component={Link} to="/library/all" startIcon={<ArrowBackRounded />} className="virtual-library-back" aria-label="返回书库">
@@ -1337,8 +1531,10 @@ export function VirtualLibraryExperience() {
         {activeRoom === "hall" && (
           <nav className="virtual-library-view-controls" aria-label="图书馆区域切换">
             <div className="virtual-library-space-shortcuts" aria-label="步行与藏书">
-              <Button disabled={shelfMovementLocked} onClick={() => walkRef.current(-1)} aria-label="沿长厅后退">后退</Button>
-              <Button disabled={shelfMovementLocked} onClick={() => walkRef.current(1)} aria-label="沿长厅前行">前行</Button>
+              <Button disabled={shelfMovementLocked || stairWalking} onClick={() => walkRef.current(-1)} aria-label="沿长厅后退">后退</Button>
+              <Button disabled={shelfMovementLocked || stairWalking} onClick={() => walkRef.current(1)} aria-label="沿长厅前行">前行</Button>
+              <Button disabled={shelfMovementLocked || stairWalking} onClick={() => stairAccessRef.current("left")} aria-label="沿左侧螺旋楼梯切换楼层">左侧楼梯</Button>
+              <Button disabled={shelfMovementLocked || stairWalking} onClick={() => stairAccessRef.current("right")} aria-label="沿右侧螺旋楼梯切换楼层">右侧楼梯</Button>
               <Button onClick={() => catalogShelfRef.current()}>我的藏书</Button>
               <Button onClick={() => setSearchOpen(true)} aria-label="搜索私人藏书">搜索藏书</Button>
             </div>
@@ -1363,8 +1559,8 @@ export function VirtualLibraryExperience() {
             <p id="gallery-walk-help" className="virtual-library-walk-help">
               {shelfMovementLocked
                 ? "当前面向书架，移动与升降已锁定；可拖动环顾、选择书籍，按 Esc 退出书架。"
-                : henryWalking
-                ? "已切换至 Henry Jones 室；按住 W/A/S/D 可连续前后与左右平移，拖动环顾，点击返回长厅。"
+                : stairWalking
+                ? "正在沿螺旋楼梯前往另一层；拖动可环顾。"
                 : "按住 W/A/S/D 可沿视角连续前后与左右平移，Shift 上升、Ctrl 下降，滚轮也可前后移动，拖动环顾。"}
             </p>
           </nav>
@@ -1387,6 +1583,10 @@ export function VirtualLibraryExperience() {
           <div ref={selectedBookTitleRef} className="virtual-library-book-title" role="status" aria-live="polite">
             <Link
               to={`/reader/${encodeURIComponent(selectedBook.id)}`}
+              onClick={event => {
+                if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+                event.preventDefault(); readerNavigationRef.current(selectedBook.id);
+              }}
               aria-label={`阅读《${selectedBook.title}》`}
             >
               {selectedBook.title}
@@ -1425,7 +1625,19 @@ export function VirtualLibraryExperience() {
             </Button>
           </div>
         )}
-        {sceneError && <div className="virtual-library-status" role="alert"><span>当前浏览器无法加载 3D 场景，请启用硬件加速后重试。</span></div>}
+        {!sceneError && !sceneLoading && architectureError && (
+          <div className="virtual-library-status" role="alert">
+            <span>{architectureError}</span>
+            <Button size="small" onClick={() => architectureRetryRef.current()}>重新加载建筑细节</Button>
+          </div>
+        )}
+        {!sceneError && !sceneLoading && !architectureError && !catalogSyncError && !booksQuery.isError
+          && (spatialLoading || architectureProgress) && (
+          <div className="virtual-library-status" role="status">
+            <span>{spatialLoading ? '正在加载目标区域…' : architectureProgress}</span>
+          </div>
+        )}
+        {sceneError && <div className="virtual-library-status" role="alert"><span>{sceneErrorMessage}</span><Button size="small" onClick={() => setSceneAttempt(attempt => attempt + 1)}>重新加载场景</Button></div>}
         {!booksQuery.isPending && !booksQuery.isError && books.length === 0 && (
           <div className="virtual-library-status" role="status"><span>书库里还没有可展示的 EPUB 或 PDF。</span></div>
         )}

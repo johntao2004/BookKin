@@ -1,0 +1,6 @@
+# Generated authoring tiles. Runtime content-hash PNGs remain tracked.
+textures/r2-*.png
+textures/r2-material-maps.json
+preview-*.png
+raw/
+render-report.json

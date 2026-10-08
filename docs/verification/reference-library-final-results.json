@@ -1,0 +1,91 @@
+{
+  "date": "2026-10-08",
+  "revision": "20261008-reference-modules-r3",
+  "baseCommit": "3c3e998f3a09400fd2605840e9eefd3df6917efd",
+  "intendedTarget": "main",
+  "sourceAsset": {
+    "sha256": "0cc0db68263287c3bd3f6f30c8f7a58e4c32da8e279912674d5219323ee87a75",
+    "bytes": 91057412,
+    "triangles": 1552983
+  },
+  "layout": {
+    "width": 30,
+    "length": 36,
+    "vaultCrownY": 18.7,
+    "galleryY": 6.2,
+    "transverseCases": 28,
+    "catalogSections": 56,
+    "totalSlots": 6720,
+    "colliderDescriptors": 367
+  },
+  "runtime": {
+    "moduleCount": 13,
+    "moduleBytes": 43684648,
+    "sharedTextureBytes": 6410857,
+    "largestModuleBytes": 9315084,
+    "allGeometryDecodedBytes": 80499590,
+    "allTriangles": 1552983,
+    "startupModuleBytes": 22928288,
+    "startupGeometryBytes": 41906050,
+    "startupTriangles": 829893
+  },
+  "checks": {
+    "lint": "passed",
+    "typecheck": "passed",
+    "fullSuite": {
+      "files": 100,
+      "tests": 347,
+      "unhandledErrors": 0,
+      "result": "passed"
+    },
+    "sitesPackaging": {
+      "tests": 4,
+      "result": "passed"
+    },
+    "build": "passed",
+    "tokens": "passed",
+    "builtAssetIdentity": {
+      "files": 28,
+      "result": "byte-identical"
+    },
+    "exactTriangleAndImagePreservation": {
+      "sourceSha256": "0cc0db68263287c3bd3f6f30c8f7a58e4c32da8e279912674d5219323ee87a75",
+      "modules": 13,
+      "triangles": 1552983,
+      "maxModuleBytes": 9315084,
+      "sharedImages": 11,
+      "materialDefinitionsUnchanged": true,
+      "allImageBytesIdentical": true,
+      "rawAttributeBitsAndOrderedCornersPreserved": true,
+      "completeTriangleMultisetIdentical": true,
+      "hashRowBytes": 32,
+      "hashedTriangleFields": "materialID + ordered 3 corners each POSITION/NORMAL/TEXCOORD_0 float32 raw bytes",
+      "canonicalTriangleMultisetSha256": "27a85b43ea25048a8781d1674e7e206818a3a9ade17b3c86bc3176ffc60a18ed"
+    },
+    "independentController": {
+      "result": "passed",
+      "realModules": 13,
+      "canonicalActiveMaterialVariants": 28,
+      "sharedTexturesPerScene": 11,
+      "peakConcurrency": 2,
+      "nativeDefaultEntryTriangleEstimate": 1533311,
+      "fallbackDefaultEntryTriangles": 1552983,
+      "steadyArchitectureDrawBoundPerPass": 28,
+      "scope": "CPU scene/loader verification with image IO stubbed; excludes catalog/UI; not GPU draw counters or FPS"
+    },
+    "authoringSyntax": "passed",
+    "diffWhitespace": "passed"
+  },
+  "testStabilization": "Registration test waits for existing Ant Design delayed feedback to clear before jsdom teardown; product code and assertions unchanged. Prior 342-assertion run had 2 unhandled errors and is not counted as clean.",
+  "browserQA": "unverified: supported cloud-browser localhost request was security-blocked; no bypass attempted",
+  "backend": "not run; no server source changed",
+  "performanceLimits": [
+    "Architecture retains 1,552,983 triangles; the broad entry view sees almost all geometry.",
+    "The directional shadow view normally retains all 13 modules.",
+    "Fallback consolidation is all-resident and gives up fine-grained culling and eviction.",
+    "The application retains its approximately 30 FPS scheduling cap.",
+    "Construction can still produce CPU long tasks; browser/GPU response remains unmeasured.",
+    "Large-catalog model and plaque overhead remains separate from architecture batching."
+  ],
+  "validationRunner": "Existing package scripts via npm; dependency lock and offline encoder version are recorded. pnpm wrapper attempted an implicit install into an unavailable home directory."
+}

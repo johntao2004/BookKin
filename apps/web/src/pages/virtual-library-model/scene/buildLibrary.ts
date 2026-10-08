@@ -42,6 +42,12 @@ export interface BuiltLibrary {
 }
 
 export interface ExpandableShelfSection {
+  /** Asset-specific planes; legacy builders retain their existing defaults. */
+  frontOffset?: number;
+  bookCenterOffset?: number;
+  plaquePlacement?: 'shelf-front';
+  plaqueFrontOffset?: number;
+  slotPrefix?: string;
   centerX?: number;
   centerZ?: number;
   id: number;

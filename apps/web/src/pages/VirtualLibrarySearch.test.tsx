@@ -32,4 +32,13 @@ describe('catalog orb search', () => {
     fireEvent.click(screen.getByRole('link', {name:'阅读《山川与灯火》'}));
     expect(close).toHaveBeenCalledOnce();
   });
+  it('can locate a real catalog result without opening the reader', () => {
+    const locate = vi.fn(), read = vi.fn(), close = vi.fn();
+    render(<TestProviders><VirtualLibrarySearch open books={books} onClose={close} onLocateBook={locate} onReadBook={read} /></TestProviders>);
+    fireEvent.change(screen.getByRole('textbox', {name: '搜索书名、作者或分类'}), {target: {value: '星空'}});
+    fireEvent.click(screen.getByRole('button', {name: '定位《星空图鉴》到书架'}));
+    expect(locate).toHaveBeenCalledWith('book-two');
+    expect(close).toHaveBeenCalledOnce();
+    expect(read).not.toHaveBeenCalled();
+  });
 });
