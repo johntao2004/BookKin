@@ -59,6 +59,25 @@ describe("AnnotationsPage", () => {
     expect(api.listAnnotations).toHaveBeenCalledWith(bookId);
   });
 
+  it.each(["/annotations", "/annotations?q=not-found"]) ("没有阅读笔记书籍时显示统一空态（%s）", async (initialPath) => {
+    vi.mocked(api.listAnnotationBooks).mockResolvedValueOnce({ items: [] });
+    render(<TestProviders initialPath={initialPath}><Routes><Route path="/annotations" element={<AnnotationsPage />} /></Routes></TestProviders>);
+
+    expect(await screen.findByRole("heading", { name: "无书目" })).toBeInTheDocument();
+    expect(screen.queryByText("在阅读器中选择文字，即可划线并写下想法。")).not.toBeInTheDocument();
+    expect(screen.queryByText("换一个书名或作者关键词试试。")).not.toBeInTheDocument();
+  });
+
+  it("单本书没有笔记时保留书籍操作并显示统一空态", async () => {
+    vi.mocked(api.listAnnotations).mockResolvedValueOnce([]);
+    render(<TestProviders initialPath={`/annotations?bookId=${bookId}`}><Routes><Route path="/annotations" element={<AnnotationsPage />} /></Routes></TestProviders>);
+
+    expect(await screen.findByRole("heading", { name: "无书目", level: 4 })).toBeInTheDocument();
+    expect(screen.queryByText("这本书还没有阅读笔记或划线。")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "回到书中" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "导出 Word" })).toBeInTheDocument();
+  });
+
   it("exports the selected book's notes as Word", async () => {
     vi.spyOn(api, "downloadAnnotationExport").mockResolvedValue("《山川与灯火》阅读笔记.docx");
     render(<TestProviders initialPath={`/annotations?bookId=${bookId}`}><Routes><Route path="/annotations" element={<AnnotationsPage />} /></Routes></TestProviders>);

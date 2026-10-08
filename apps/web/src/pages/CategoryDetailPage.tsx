@@ -1,5 +1,4 @@
 import { ArrowBackRounded } from "@/ui/icons";
-import { AutoStoriesOutlined } from "@/ui/icons";
 import { FilterListRounded } from "@/ui/icons";
 import { TuneRounded } from "@/ui/icons";
 import { Alert } from "@/ui/feedback";
@@ -22,6 +21,7 @@ import { api } from "../api/client";
 import { useAuth } from "../auth/AuthContext";
 import { AddToBooklistDialog } from "../components/AddToBooklistDialog";
 import { BrowseBookCard } from "../components/CatalogDiscoveryCards";
+import { BookCatalogEmptyState } from "../components/BookCatalogEmptyState";
 import { CategoryBooksDrawer } from "../components/CategoryBooksDrawer";
 import { PageContainer, PageHeader } from "../components/PageHeader";
 import type { BrowseBook } from "../domain/types";
@@ -87,11 +87,13 @@ export function CategoryDetailPage() {
       <PageHeader
         eyebrow="CATEGORY"
         title={category.name}
-        description={category.description || "这个分类还没有简介。"}
         action={category.editable ? <Button variant="outlined" startIcon={<TuneRounded />} onClick={() => setOrganizerOpen(true)}>整理本分类</Button> : undefined}
       />
       <Stack direction={{ xs: "column", md: "row" }} sx={{ justifyContent: "space-between", alignItems: { xs: "stretch", md: "center" }, gap: `${tokens.spacing[4]}px`, mb: `${tokens.spacing[8]}px` }}>
-        <Typography color="text.secondary">{category.bookCount} 本可见藏书</Typography>
+        <Stack spacing={1} sx={{ minWidth: 0 }}>
+          {category.description && <Typography color="text.secondary" sx={{ maxWidth: tokens.layout.readingMax }}>{category.description}</Typography>}
+          <Typography color="text.secondary">{category.bookCount} 本可见藏书</Typography>
+        </Stack>
         <Stack direction={{ xs: "column", sm: "row" }} sx={{ gap: `${tokens.spacing[3]}px`, alignItems: { xs: "stretch", sm: "center" } }}>
           <FormControl size="small" sx={{ minWidth: 126 }}>
             <InputLabel id="category-format-label">格式</InputLabel>
@@ -116,11 +118,7 @@ export function CategoryDetailPage() {
           {books.map((book) => <BrowseBookCard key={book.id} book={book} onAdd={user ? setAddBook : undefined} />)}
         </Box>
       ) : (
-        <Stack sx={{ alignItems: "center", textAlign: "center", py: `${tokens.spacing[16]}px`, gap: `${tokens.spacing[3]}px` }}>
-          <AutoStoriesOutlined color="primary" sx={{ fontSize: 48 }} />
-          <Typography variant="h4">{query || format !== "ALL" ? "没有匹配的书" : "这个分类还是空的"}</Typography>
-          <Typography color="text.secondary">{category.editable ? "可以整理本分类，把藏书加入这里。" : "稍后再回来看看。"}</Typography>
-        </Stack>
+        <BookCatalogEmptyState />
       )}
       {booksQuery.hasNextPage && !booksQuery.isFetchNextPageError ? <Stack ref={triggerRef} sx={{ alignItems: "center", py: `${tokens.spacing[8]}px` }}>{booksQuery.isFetchingNextPage ? <CircularProgress size={24} /> : supported ? <Typography variant="caption" color="text.disabled">继续向下浏览将加载更多</Typography> : <Button onClick={loadNextPage}>继续加载</Button>}</Stack> : null}
       {booksQuery.isFetchNextPageError ? <Alert severity="warning" sx={{ mt: `${tokens.spacing[6]}px` }} action={<Button color="inherit" onClick={() => void booksQuery.fetchNextPage()}>重新加载</Button>}>更多分类书目加载失败，已显示的书籍不受影响。</Alert> : null}

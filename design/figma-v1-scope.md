@@ -40,6 +40,8 @@
 - Figma 文件：[BookKin · 电子图书馆 V1](https://www.figma.com/design/zRtcdgwQ0yRMpeTHMV9hox)
 - 历史记录（本轮未重新验证远端）：5 个变量集合、73 个变量、9 个文本样式、3 个效果样式。
 - 待验证：Starter 套餐触发 MCP 调用上限后，`P1.g`/`P1.h` 尚未执行；恢复额度后从 Phase 1 验证继续，不得直接进入组件创建。
+- 2026-10-08 上次布局变量核对：关联文件现有 75 个变量，未找到名称包含 `content`、`layout`、`width`、`reading` 或 `max` 的变量；该项为历史远端核对，本次未重新检查 Figma。
+- 2026-10-08 后续共享外框 gutter 对齐步骤仅调整代码布局规则，复用现有 `spacing[3]` / `spacing[6]` 固定 12px / 24px gutter 并移除 `pageWidthSx` 最大宽度限制；该步骤未修改 Token 数值或新增变量。此前本轮已将兼容保留的 `design/tokens.json` `layout.contentMax` 从 1024 更新为 1280，并运行 `pnpm generate:tokens` / `pnpm check:tokens`。布局变量缺失依据上次 75 变量历史核对记录，本次不声称已同步 Figma。
 
 ### 2026-09-09 表单表面色同步
 

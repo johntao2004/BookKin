@@ -10,6 +10,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { readReferenceReaderState, type ReferenceCameraPose } from './reference-library-view';
 import { getReferenceShelfFrame, getReferenceShelfFocusFov } from './reference-library-focus';
 import { tokens } from "../theme/generated-tokens";
+import { EMPTY_CATALOG_TITLE } from "../ui/empty-state-copy";
 import type { Book } from "../domain/types";
 import { classifyCatalogBook, SHELF_CATEGORIES } from "./virtual-library-catalog";
 import { resolveCameraCollision } from "./virtual-library-collision";
@@ -1639,7 +1640,7 @@ export function VirtualLibraryExperience() {
         )}
         {sceneError && <div className="virtual-library-status" role="alert"><span>{sceneErrorMessage}</span><Button size="small" onClick={() => setSceneAttempt(attempt => attempt + 1)}>重新加载场景</Button></div>}
         {!booksQuery.isPending && !booksQuery.isError && books.length === 0 && (
-          <div className="virtual-library-status" role="status"><span>书库里还没有可展示的 EPUB 或 PDF。</span></div>
+          <div className="virtual-library-status" role="status"><span>{EMPTY_CATALOG_TITLE}</span></div>
         )}
       </div>
     </div>

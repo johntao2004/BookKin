@@ -71,7 +71,6 @@ export function UsersPage() {
         eyebrow="ACCESS CONTROL"
         title="用户管理"
         action={<Button variant="contained" startIcon={<AddRounded />} onClick={() => setCreateOpen(true)}>创建用户</Button>}
-        description="管理家庭成员账户；每个人的进度、书签与笔记默认私有。"
       />}
 
       {usersQuery.isPending ? <Stack sx={{ alignItems: "center", py: 10 }}><CircularProgress /></Stack> : (

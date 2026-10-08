@@ -1,5 +1,4 @@
 import { ArrowBackRounded } from "@/ui/icons";
-import { AutoStoriesOutlined } from "@/ui/icons";
 import { EditOutlined } from "@/ui/icons";
 import { TuneRounded } from "@/ui/icons";
 import { Alert } from "@/ui/feedback";
@@ -22,9 +21,10 @@ import { api } from "../api/client";
 import { useAuth } from "../auth/AuthContext";
 import { AddToBooklistDialog } from "../components/AddToBooklistDialog";
 import { BooklistFormDialog } from "../components/BooklistFormDialog";
+import { BookCatalogEmptyState } from "../components/BookCatalogEmptyState";
 import { BooklistOrganizerDrawer } from "../components/BooklistOrganizerDrawer";
 import { BrowseBookCard, CoverMosaic, VisibilityChip } from "../components/CatalogDiscoveryCards";
-import { PageContainer } from "../components/PageHeader";
+import { PageContainer, PageTitle } from "../components/PageHeader";
 import type { BooklistDetail, BrowseBook } from "../domain/types";
 import { useInfiniteScrollTrigger } from "../hooks/useInfiniteScrollTrigger";
 import { tokens } from "../theme/generated-tokens";
@@ -96,7 +96,7 @@ export function BooklistDetailPage() {
             <Typography variant="overline" color="primary.main">{booklist.kind === "OFFICIAL" ? "OFFICIAL BOOKLIST" : "BOOKLIST"}</Typography>
             <VisibilityChip visibility={booklist.visibility} />
           </Stack>
-          <Typography variant="h2" component="h1">{booklist.title}</Typography>
+          <PageTitle>{booklist.title}</PageTitle>
           <Typography color="text.secondary" sx={{ maxWidth: 720 }}>{booklist.description || "创建者还没有写下这份书单的说明。"}</Typography>
           <Typography variant="body2" color="text.secondary">{booklist.kind === "OFFICIAL" ? "BookKin官方整理" : `由 ${booklist.ownerDisplayName} 创建`} · {booklist.bookCount} 本</Typography>
           {booklist.editable ? (
@@ -128,12 +128,9 @@ export function BooklistDetailPage() {
           {books.map((book) => <BrowseBookCard key={book.id} book={book} onAdd={user ? setAddBook : undefined} />)}
         </Box>
       ) : (
-        <Stack sx={{ alignItems: "center", textAlign: "center", py: `${tokens.spacing[16]}px`, gap: `${tokens.spacing[3]}px` }}>
-          <AutoStoriesOutlined color="primary" sx={{ fontSize: 48 }} />
-          <Typography variant="h4">{query || format !== "ALL" ? "没有匹配的书" : "书单还是空的"}</Typography>
-          <Typography color="text.secondary">{booklist.editable ? "打开“整理书单”，从藏书库加入第一本书。" : "创建者还没有加入书籍。"}</Typography>
-          {booklist.editable && !query && format === "ALL" ? <Button variant="contained" onClick={() => setOrganizerOpen(true)}>整理书单</Button> : null}
-        </Stack>
+        <BookCatalogEmptyState
+          action={booklist.editable && !query && format === "ALL" ? <Button variant="contained" onClick={() => setOrganizerOpen(true)}>整理书单</Button> : undefined}
+        />
       )}
       {booksQuery.hasNextPage && !booksQuery.isFetchNextPageError ? <Stack ref={triggerRef} sx={{ alignItems: "center", py: `${tokens.spacing[8]}px` }}>{booksQuery.isFetchingNextPage ? <CircularProgress size={24} /> : supported ? <Typography variant="caption" color="text.disabled">继续向下浏览将加载更多</Typography> : <Button onClick={loadNextPage}>继续加载</Button>}</Stack> : null}
       {booksQuery.isFetchNextPageError ? <Alert severity="warning" sx={{ mt: `${tokens.spacing[6]}px` }} action={<Button color="inherit" onClick={() => void booksQuery.fetchNextPage()}>重新加载</Button>}>更多书单内容加载失败，已显示的书籍不受影响。</Alert> : null}

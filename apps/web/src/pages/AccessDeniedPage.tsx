@@ -3,6 +3,7 @@ import { Button } from "@/ui/buttons";
 import { Stack } from "@/ui/primitives";
 import { Typography } from "@/ui/primitives";
 import { Link } from "react-router-dom";
+import { PageTitle, pageWidthSx } from "../components/PageHeader";
 import { tokens } from "../theme/generated-tokens";
 
 export type AccessDeniedReason = "AUTHENTICATION_REQUIRED" | "INSUFFICIENT_ROLE";
@@ -14,10 +15,10 @@ export function AccessDeniedPage({ reason, returnTo }: { reason: AccessDeniedRea
     <Stack
       component="main"
       sx={{
+        ...pageWidthSx,
         minHeight: authenticationRequired ? "100dvh" : `calc(100dvh - ${tokens.layout.navHeight}px)`,
         alignItems: "center",
         justifyContent: "center",
-        px: `${tokens.spacing[5]}px`,
         py: `${tokens.spacing[10]}px`,
         bgcolor: "background.default",
         color: "text.primary",
@@ -29,9 +30,9 @@ export function AccessDeniedPage({ reason, returnTo }: { reason: AccessDeniedRea
         <Typography variant="overline" sx={{ color: "primary.main", fontWeight: tokens.typography.fontWeight.semibold }}>
           {authenticationRequired ? "401 · 需要登录" : "403 · 权限受限"}
         </Typography>
-        <Typography component="h1" variant="h2">
+        <PageTitle>
           {authenticationRequired ? "这间书房暂未为你开门" : "这把钥匙打不开这一页"}
-        </Typography>
+        </PageTitle>
         <Typography sx={{ maxWidth: tokens.layout.readingMax, color: "text.secondary" }}>
           {authenticationRequired
             ? "请先登录，再继续访问这项私人书库功能。"

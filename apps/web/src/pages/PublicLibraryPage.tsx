@@ -1,4 +1,3 @@
-import { AutoStoriesOutlined } from "@/ui/icons";
 import { MenuBookRounded } from "@/ui/icons";
 import { Alert } from "@/ui/feedback";
 import { Box } from "@/ui/primitives";
@@ -14,6 +13,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import { api } from "../api/client";
 import { flattenUniquePaginatedItems, PaginatedItemReveal } from "../components/PaginatedItemReveal";
+import { BookCatalogEmptyState } from "../components/BookCatalogEmptyState";
 import { useInfiniteScrollTrigger } from "../hooks/useInfiniteScrollTrigger";
 import { PageContainer, PageHeader } from "../components/PageHeader";
 import type { DisplayBook } from "../domain/types";
@@ -54,11 +54,7 @@ export function PublicLibraryPage() {
       ) : displayQuery.isError && !displayQuery.data ? (
         <Alert severity="error">首页暂时无法读取，请稍后刷新。</Alert>
       ) : books.length === 0 ? (
-        <Stack spacing={2} sx={{ alignItems: "center", textAlign: "center", py: 12 }}>
-          <AutoStoriesOutlined color="primary" sx={{ fontSize: 42 }} />
-          <Typography variant="h4">还没有公开书目</Typography>
-          <Typography color="text.secondary">{user ? "通过“管理首页书目”添加书籍。" : "登录后可通过“管理首页书目”添加书籍。"}</Typography>
-        </Stack>
+        <BookCatalogEmptyState />
       ) : (
         <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2, minmax(0, 1fr))", sm: "repeat(3, minmax(0, 1fr))", md: "repeat(4, minmax(0, 1fr))", lg: "repeat(6, minmax(0, 1fr))" }, gap: { xs: 2, sm: 3, md: 4 } }}>
           {bookEntries.map(({ item: book, pageIndex, itemIndex }) => (

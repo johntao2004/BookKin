@@ -20,6 +20,7 @@ import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import { api } from "../api/client";
 import type { BrowseBook } from "../domain/types";
 import { tokens } from "../theme/generated-tokens";
+import { EMPTY_CATALOG_TITLE } from "../ui/empty-state-copy";
 
 export function CategoryBooksDrawer({ open, categoryId, categoryName, onClose }: {
   open: boolean;
@@ -153,7 +154,7 @@ export function CategoryBooksDrawer({ open, categoryId, categoryName, onClose }:
               );
             })}
           </List>
-        ) : <Alert severity="info">没有找到匹配的藏书。</Alert>}
+        ) : <Typography color="text.secondary">{EMPTY_CATALOG_TITLE}</Typography>}
       </Stack>
     </Drawer>
   );

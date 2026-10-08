@@ -5,6 +5,7 @@ import { Alert } from "../ui/feedback";
 import { Button } from "../ui/buttons";
 import { Skeleton } from "../ui/antd";
 import { Stack } from "../ui/primitives";
+import { Typography } from "../ui/primitives";
 import { api } from "../api/client";
 import { UploadReview } from "../components/BookUploadDialog";
 import { PageContainer, PageHeader } from "../components/PageHeader";
@@ -25,11 +26,11 @@ export function UploadEditPage() {
   };
   return <PageContainer><Stack spacing={3}>
     {cancelError && <Alert severity="error">{cancelError}</Alert>}
-    <PageHeader title="编辑书籍信息" description={upload?.originalFilename ?? "已上传，可以在这里修改书籍信息。"} />
+    <PageHeader eyebrow="EDIT BOOK INFO" title="编辑书籍信息" />
     {query.isError ? <Alert severity="error">无法加载书籍信息。<Button onClick={() => void query.refetch()}>重试</Button></Alert>
-      : !upload || ["RECEIVING", "INSPECTING", "ENRICHING", "COMMITTING"].includes(upload.status) ? <div role="status" aria-label="正在准备书籍信息"><Skeleton active /></div>
+      : !upload || ["RECEIVING", "INSPECTING", "ENRICHING", "COMMITTING"].includes(upload.status) ? <Stack role="status" aria-label="正在准备书籍信息" spacing={2}>{upload && <Typography variant="caption" color="text.secondary" sx={{ overflowWrap: "anywhere" }}>{upload.originalFilename}</Typography>}<Skeleton active /></Stack>
       : upload.status === "READY_FOR_REVIEW" ? <UploadReview key={upload.id} upload={upload} publishToDisplay={params.get("publish") === "true"} onChanged={async () => { await query.refetch(); }} onCommitted={async () => { await Promise.all([client.invalidateQueries({ queryKey: ["books"] }), client.invalidateQueries({ queryKey: ["display-books"] }), client.invalidateQueries({ queryKey: ["book-uploads"] })]); next(); }} />
-      : <Alert severity={upload.status === "SUCCEEDED" ? "success" : "warning"}>{upload.status === "SUCCEEDED" ? "书籍信息已保存。" : upload.errorDetail ?? "该上传已结束，无法继续编辑。"}<Button onClick={next}>返回书库</Button></Alert>}
+      : <Stack spacing={1}><Typography variant="caption" color="text.secondary" sx={{ overflowWrap: "anywhere" }}>{upload.originalFilename}</Typography><Alert severity={upload.status === "SUCCEEDED" ? "success" : "warning"}>{upload.status === "SUCCEEDED" ? "书籍信息已保存。" : upload.errorDetail ?? "该上传已结束，无法继续编辑。"}<Button onClick={next}>返回书库</Button></Alert></Stack>}
     {upload?.status === "READY_FOR_REVIEW" && <Button disabled={cancelling} onClick={async () => { setCancelling(true); try { await api.cancelBookUpload(uploadId); await client.invalidateQueries({ queryKey: ["book-uploads"] }); next(); } catch (error) { setCancelError(error instanceof Error ? error.message : "取消失败，请重试"); } finally { setCancelling(false); } }}>取消本次上传</Button>}
   </Stack></PageContainer>;
 }

@@ -34,6 +34,7 @@ import { useAuth } from "../auth/AuthContext";
 import { BookUploadDialog } from "../components/BookUploadDialog";
 import { PageContainer, PageHeader } from "../components/PageHeader";
 import { tokens } from "../theme/generated-tokens";
+import { EMPTY_CATALOG_TITLE } from "../ui/empty-state-copy";
 
 export function DisplayBooksSettingsPage() {
   const { user } = useAuth();
@@ -127,9 +128,8 @@ export function DisplayBooksSettingsPage() {
   return (
     <PageContainer>
       <PageHeader
-        eyebrow="DISPLAY CATALOG"
+        eyebrow="DISPLAY BOOKS"
         title="管理首页书目"
-        description="管理首页向所有访客展示的书籍及其顺序。移出这里只会解除展示关系，不会删除平台书籍、NAS 文件或个人阅读数据。"
         action={<Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", justifyContent: "flex-end" }}><Button component={Link} to="/library">返回首页</Button><Button startIcon={<RefreshRounded />} onClick={refresh} disabled={displayQuery.isFetching}>刷新</Button>{canUpload && <Button variant="contained" startIcon={<CloudUploadOutlined />} onClick={() => setUploadOpen(true)}>上传并展示</Button>}</Stack>}
       />
       {displayQuery.isError ? <Alert severity="error" action={<Button color="inherit" onClick={refresh}>重试</Button>}>公共书单暂时无法读取。</Alert> : null}
@@ -137,14 +137,14 @@ export function DisplayBooksSettingsPage() {
         <Stack direction={{ xs: "column", sm: "row" }} sx={{ justifyContent: "space-between", alignItems: { xs: "flex-start", sm: "flex-end" }, gap: `${tokens.spacing[3]}px` }}>
           <Box>
             <Typography id="display-order-heading" variant="h4">当前展示顺序</Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: `${tokens.spacing[1]}px` }}>拖动书目调整顺序，键盘操作可使用每行右侧的上移、下移按钮；调整后自动保存。</Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: `${tokens.spacing[1]}px` }}>拖动书目调整顺序，键盘操作可使用每行右侧的上移、下移按钮；调整后自动保存。移出展示只会解除展示关系，不会删除书籍、NAS 文件或个人阅读数据。</Typography>
           </Box>
           <Stack direction="row" sx={{ alignItems: "center", gap: `${tokens.spacing[3]}px` }}>
             <Chip label={`${orderedIds.length} 本已展示`} size="small" variant="outlined" />
             <Button variant="contained" startIcon={<AddRounded />} onClick={openAddDialog} disabled={displayQuery.isPending || Boolean(busyId)}>新增</Button>
           </Stack>
         </Stack>
-        {displayQuery.isPending ? <Stack sx={{ alignItems: "center", py: 8 }}><CircularProgress /></Stack> : orderedIds.length === 0 ? <Alert severity="info">还没有展示书目，请点击“新增”从藏书库中选择。</Alert> : (
+        {displayQuery.isPending ? <Stack sx={{ alignItems: "center", py: 8 }}><CircularProgress /></Stack> : orderedIds.length === 0 ? <Typography color="text.secondary">{EMPTY_CATALOG_TITLE}</Typography> : (
           <List aria-label="当前展示书目，可拖动排序" sx={{ bgcolor: "background.paper", border: 1, borderColor: "divider", borderRadius: `${tokens.radius.lg}px`, p: 0, overflow: "hidden" }}>
             {orderedIds.map((id, index) => {
               const book = displayedById.get(id);
@@ -178,7 +178,7 @@ export function DisplayBooksSettingsPage() {
                 </ListItemButton>
               ))}
             </List>
-          ) : <Alert severity="info" sx={{ mt: `${tokens.spacing[4]}px` }}>{sourceQuery.trim() ? "没有匹配的未展示书籍。" : "所有藏书都已经加入展示书单。"}</Alert>}
+          ) : <Typography color="text.secondary" sx={{ mt: `${tokens.spacing[4]}px` }}>{EMPTY_CATALOG_TITLE}</Typography>}
         </DialogContent>
         <DialogActions>
           <Button onClick={closeAddDialog} disabled={Boolean(busyId)}>取消</Button>

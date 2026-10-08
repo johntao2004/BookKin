@@ -18,7 +18,7 @@ describe("RecycleBinPage", () => {
     render(<TestProviders initialPath="/recycle-bin"><Routes><Route path="/recycle-bin" element={<RecycleBinPage />} /></Routes></TestProviders>);
 
     expect(await screen.findByRole("heading", { name: "回收站" })).toBeInTheDocument();
-    expect(screen.getByText("从藏书中移除的书会进入这里，保留 30 天。")).toBeInTheDocument();
+    expect(screen.getByText("条目会在这里保留 30 天。恢复时不会覆盖同路径的新文件；到期后自动清理，只有主人可以提前永久清理。")).toBeInTheDocument();
     expect(await screen.findByRole("img", { name: "声之来信封面" })).toBeInTheDocument();
     expect(screen.getByText("顾安安")).toBeInTheDocument();
     expect(screen.getByText("EPUB")).toBeInTheDocument();

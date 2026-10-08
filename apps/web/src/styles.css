@@ -961,6 +961,84 @@ html {
   background: var(--color-primary);
 }
 
+.bk-settings-navigation.ant-tabs .ant-tabs-tab {
+  color: var(--color-text-primary);
+  font-size: var(--typography-font-size-body);
+  font-weight: var(--typography-font-weight-medium);
+}
+
+.bk-settings-navigation.ant-tabs .ant-tabs-tab .ant-tabs-tab-btn,
+.bk-settings-navigation.ant-tabs .ant-tabs-tab-active .ant-tabs-tab-btn {
+  color: var(--color-text-primary);
+}
+
+.bk-settings-navigation.ant-tabs .ant-tabs-tab:hover {
+  color: var(--color-text-primary);
+  background: var(--color-surface-soft);
+}
+
+.bk-settings-navigation.ant-tabs .ant-tabs-tab-active,
+.bk-settings-navigation.ant-tabs .ant-tabs-tab-active:hover {
+  color: var(--color-text-primary);
+  background: var(--color-surface-strong);
+}
+
+.bk-settings-navigation.ant-tabs .ant-tabs-tab-active,
+.bk-settings-navigation.ant-tabs .ant-tabs-tab-active .ant-tabs-tab-btn,
+.bk-settings-navigation.ant-tabs .ant-tabs-tab-active:hover .ant-tabs-tab-btn {
+  font-weight: var(--typography-font-weight-semibold);
+}
+
+.bk-settings-navigation .ant-tabs-tab-btn:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus);
+  border-radius: var(--radius-md);
+}
+
+.bk-settings-navigation--desktop.ant-tabs-left > .ant-tabs-nav,
+.bk-settings-navigation--desktop.ant-tabs-left > div > .ant-tabs-nav {
+  box-sizing: border-box;
+  align-self: flex-start;
+  height: fit-content;
+  margin: 0;
+  padding: var(--spacing-xs);
+  background: var(--color-surface-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.bk-settings-navigation--desktop.ant-tabs-left > .ant-tabs-nav::before,
+.bk-settings-navigation--desktop.ant-tabs-left > div > .ant-tabs-nav::before {
+  display: none;
+}
+
+.bk-settings-navigation--desktop.ant-tabs-left > .ant-tabs-nav .ant-tabs-nav-list,
+.bk-settings-navigation--desktop.ant-tabs-left > div > .ant-tabs-nav .ant-tabs-nav-list {
+  width: 100%;
+  align-items: stretch;
+  gap: var(--spacing-1);
+}
+
+.bk-settings-navigation--desktop.ant-tabs-left > .ant-tabs-nav .ant-tabs-tab,
+.bk-settings-navigation--desktop.ant-tabs-left > div > .ant-tabs-nav .ant-tabs-tab {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: var(--layout-touch-target);
+  margin: 0;
+  padding: 0 var(--spacing-sm);
+}
+
+.bk-settings-navigation--desktop.ant-tabs-left > .ant-tabs-nav .ant-tabs-ink-bar,
+.bk-settings-navigation--desktop.ant-tabs-left > div > .ant-tabs-nav .ant-tabs-ink-bar {
+  display: none;
+}
+
+.bk-settings-navigation--desktop.ant-tabs-left > .ant-tabs-body-holder,
+.bk-settings-navigation--desktop.ant-tabs-left > div > .ant-tabs-body-holder {
+  margin-left: 0;
+  border-left: 0;
+}
+
 .ant-table-wrapper,
 .ant-table {
   color: var(--color-text-primary);
@@ -1117,7 +1195,7 @@ html {
 
 @media (max-width: 767px) {
   .bk-top-nav-inner {
-    padding-inline: var(--spacing-md);
+    padding-inline: var(--spacing-3);
   }
 
   .bk-action-toolbar {
@@ -1148,6 +1226,53 @@ html {
   box-shadow: none;
   padding: var(--spacing-6);
 }
+
+.bk-reader-font-upload-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--spacing-4);
+  min-width: 0;
+}
+
+.bk-reader-font-upload-grid--wide {
+  grid-template-columns: minmax(0, 1fr) calc(var(--layout-touch-target) * 5);
+  align-items: end;
+}
+
+.bk-reader-font-upload-grid > *,
+.bk-reader-font-upload-kind,
+.bk-reader-font-upload-action {
+  min-width: 0;
+  width: 100%;
+}
+
+.bk-reader-font-upload-kind {
+  gap: var(--spacing-2);
+}
+
+.bk-reader-font-upload-grid .bk-field > .ant-input,
+.bk-reader-font-upload-grid .bk-select,
+.bk-reader-font-upload-grid .bk-select .ant-select-selector,
+.bk-reader-font-upload-grid .bk-reader-font-upload-button {
+  box-sizing: border-box;
+  height: var(--layout-touch-target);
+  min-height: var(--layout-touch-target);
+}
+
+.bk-reader-font-upload-grid .bk-select,
+.bk-reader-font-upload-grid .bk-select .ant-select-selector {
+  width: 100%;
+}
+
+.bk-reader-font-upload-guidance {
+  margin: 0;
+  text-align: start;
+}
+
+.bk-reader-font-upload-grid--wide .bk-reader-font-upload-guidance {
+  grid-column: 1 / -1;
+}
+
 .bk-field-label, .bk-input-label {
   color: var(--color-text-primary);
   font-weight: var(--typography-font-weight-medium);

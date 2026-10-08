@@ -1,6 +1,5 @@
 import { ArrowForwardRounded } from "@/ui/icons";
-import { AutoStoriesOutlined } from "@/ui/icons";
-import { CategoryOutlined } from "@/ui/icons";
+import { AddRounded } from "@/ui/icons";
 import { TuneRounded } from "@/ui/icons";
 import { Alert } from "@/ui/feedback";
 import { Box } from "@/ui/primitives";
@@ -21,6 +20,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { api } from "../api/client";
 import { useAuth } from "../auth/AuthContext";
 import { BrowseBookCard } from "../components/CatalogDiscoveryCards";
+import { BookCatalogEmptyState } from "../components/BookCatalogEmptyState";
 import { CategoryManagementDialog } from "../components/CategoryManagementDialog";
 import { PageContainer, PageHeader } from "../components/PageHeader";
 import { useInfiniteScrollTrigger } from "../hooks/useInfiniteScrollTrigger";
@@ -110,19 +110,21 @@ export function CategoriesPage() {
     setParams(next, { replace: true });
   };
 
-  const headerAction = categories.length || canManage ? (
-    <Stack direction="row" sx={{ alignItems: "center", gap: `${tokens.spacing[3]}px`, flexWrap: "wrap" }}>
-      {categories.length ? <Chip variant="outlined" label={`${categories.length} 个主题`} /> : null}
-      {canManage ? <Button variant="outlined" startIcon={<TuneRounded />} onClick={() => setManageOpen(true)}>管理分类</Button> : null}
-    </Stack>
+  const categoryManagementAction = canManage ? categoriesQuery.isSuccess && categories.length === 0 ? (
+    <Button variant="contained" startIcon={<AddRounded />} onClick={() => setManageOpen(true)}>创建分类</Button>
+  ) : (
+    <Button variant="outlined" startIcon={<TuneRounded />} disabled={!categoriesQuery.isSuccess} onClick={() => setManageOpen(true)}>管理分类</Button>
   ) : undefined;
+  const headerAction = categories.length ? (
+    <Stack direction="row" sx={{ alignItems: "center", gap: `${tokens.spacing[3]}px`, flexWrap: "wrap" }}>
+      <Chip variant="outlined" label={`${categories.length} 个主题`} />
+      {categoryManagementAction}
+    </Stack>
+  ) : categoryManagementAction;
 
   return (
     <PageContainer>
-      <PageHeader eyebrow="CATEGORIES" title="分类"
-        description={user ? "从主题进入藏书，再用格式、书名或作者缩小范围。" : "从公开书目中，按主题找到下一本想读的书。"}
-        action={headerAction}
-      />
+      <PageHeader eyebrow="CATEGORIES" title="分类" action={headerAction} />
 
       {categoriesQuery.isPending ? (
         <Stack sx={{ alignItems: "center", py: `${tokens.spacing[20]}px` }}><CircularProgress /><Typography color="text.secondary" sx={{ mt: `${tokens.spacing[2]}px` }}>正在整理分类目录…</Typography></Stack>
@@ -223,12 +225,9 @@ export function CategoriesPage() {
               {books.map((book) => <BrowseBookCard key={book.id} book={book} />)}
             </Box>
           ) : (
-            <Stack sx={{ alignItems: "center", textAlign: "center", py: `${tokens.spacing[16]}px`, gap: `${tokens.spacing[3]}px` }}>
-              <AutoStoriesOutlined color="primary" sx={{ fontSize: tokens.typography.fontSize.display }} />
-              <Typography variant="h4">{query || format !== "ALL" ? "没有匹配的书" : "这个分类还是空的"}</Typography>
-              <Typography color="text.secondary">{query || format !== "ALL" ? "换个关键词或格式再试试。" : selectedCategory.editable ? "可以打开分类详情，把藏书整理进来。" : "稍后再回来看看。"}</Typography>
-              {query || format !== "ALL" ? <Button onClick={clearBookFilters}>清除筛选</Button> : null}
-            </Stack>
+            <BookCatalogEmptyState
+              action={query || format !== "ALL" ? <Button onClick={clearBookFilters}>清除筛选</Button> : undefined}
+            />
           )}
 
           {booksQuery.hasNextPage && !booksQuery.isFetchNextPageError ? (
@@ -239,14 +238,16 @@ export function CategoriesPage() {
           {booksQuery.isFetchNextPageError ? <Alert severity="warning" sx={{ mt: `${tokens.spacing[6]}px` }} action={<Button color="inherit" onClick={() => void booksQuery.fetchNextPage()}>重新加载</Button>}>更多分类书目加载失败，已显示的书籍不受影响。</Alert> : null}
         </>
       ) : (
-        <Stack sx={{ alignItems: "center", textAlign: "center", py: `${tokens.spacing[20]}px`, gap: `${tokens.spacing[3]}px` }}>
-          <CategoryOutlined color="primary" sx={{ fontSize: tokens.typography.fontSize.display }} />
-          <Typography variant="h4">还没有分类</Typography>
-          <Typography color="text.secondary">{canManage ? "创建第一个分类，再把藏书整理进来。" : "管理员整理完成后，分类会出现在这里。"}</Typography>
-          {canManage ? <Button variant="contained" onClick={() => setManageOpen(true)}>创建分类</Button> : null}
-        </Stack>
+        <BookCatalogEmptyState />
       )}
-      {canManage ? <CategoryManagementDialog open={manageOpen} categories={categories} onClose={() => setManageOpen(false)} /> : null}
+      {canManage && categoriesQuery.isSuccess ? (
+        <CategoryManagementDialog
+          open={manageOpen}
+          mode={categories.length === 0 ? "create" : "manage"}
+          categories={categories}
+          onClose={() => setManageOpen(false)}
+        />
+      ) : null}
     </PageContainer>
   );
 }

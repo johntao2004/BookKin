@@ -31,17 +31,19 @@ import { useAuth } from "../auth/AuthContext";
 import { BookCard } from "../components/BookCard";
 import { AddToBooklistDialog } from "../components/AddToBooklistDialog";
 import { BookUploadDialog } from "../components/BookUploadDialog";
+import { BookCatalogEmptyState } from "../components/BookCatalogEmptyState";
 import { FileOperationDialog } from "../components/FileOperationDialog";
 import { MetadataDialog } from "../components/MetadataDialog";
 import { OverviewCardHeader } from "../components/OverviewCardHeader";
 import { OverviewEmptyState } from "../components/OverviewEmptyState";
 import { flattenUniquePaginatedItems, PaginatedItemReveal } from "../components/PaginatedItemReveal";
-import { PageContainer } from "../components/PageHeader";
+import { PageContainer, PageHeader } from "../components/PageHeader";
 import { ReadingStatsPanel } from "../components/ReadingStatsPanel";
 import { RecentAnnotationsPanel } from "../components/RecentAnnotationsPanel";
 import type { Book, FileOperationType } from "../domain/types";
 import { useInfiniteScrollTrigger } from "../hooks/useInfiniteScrollTrigger";
 import { tokens } from "../theme/generated-tokens";
+import { EMPTY_CATALOG_TITLE } from "../ui/empty-state-copy";
 
 type SortKey = "recent" | "title" | "author";
 
@@ -108,12 +110,21 @@ export function LibraryPage() {
     setParams(next, { replace: true });
   };
 
+  const clearBookFilters = () => {
+    const next = new URLSearchParams(params);
+    next.delete("q");
+    next.delete("format");
+    setParams(next, { replace: true });
+  };
+
   const reading = loadedBooks.find((book) => book.progress > 0);
   const featured = books[0] ?? reading;
 
   return (
     <>
-      <PageContainer sx={{ pt: { xs: 3, md: 5 } }}>
+      <PageContainer>
+        <PageHeader eyebrow="LIBRARY" title="藏书库" />
+
         <Box
           component="section"
           aria-label="书库概览"
@@ -177,7 +188,7 @@ export function LibraryPage() {
                       <Button variant="contained" startIcon={<MenuBookRounded />} onClick={() => navigate(`/reader/${featured.id}`)}>开始阅读</Button>
                     </Stack>
                   </Stack>
-                </Box> : <OverviewEmptyState titleId="featured-book-title" title="还没有藏书" description="添加第一本书后，新藏会显示在这里。" />}
+                </Box> : <OverviewEmptyState titleId="featured-book-title" title={EMPTY_CATALOG_TITLE} />}
               </Box>
 
               <Box sx={{ minWidth: 0, gridColumn: { sm: 1 }, gridRow: { sm: 2 }, display: "flex", "& > *": { flex: 1 } }}>
@@ -198,6 +209,8 @@ export function LibraryPage() {
                 justifyContent: "flex-start",
                 p: { xs: `${tokens.spacing[6]}px`, lg: `${tokens.spacing[8]}px` },
                 bgcolor: "secondary.dark",
+                border: 1,
+                borderColor: "secondary.dark",
                 color: "common.white",
                 borderRadius: `${tokens.radius.xl}px`,
               }}
@@ -239,30 +252,35 @@ export function LibraryPage() {
           </>}
         </Box>
 
-        <Stack sx={{ alignItems: "stretch", gap: 2, mb: 3 }}>
-          <Box sx={{ minWidth: 0 }}>
-            <Typography variant="h3">全部藏书</Typography>
-            {query && <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>找到 {books.length} 本相关藏书</Typography>}
-          </Box>
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          sx={{
+            alignItems: { xs: "stretch", sm: "center" },
+            justifyContent: "space-between",
+            gap: `${tokens.spacing[3]}px`,
+            mb: `${tokens.spacing[4]}px`,
+          }}
+        >
+          <Typography variant="h4" component="h2">全部藏书</Typography>
           <Stack
-            direction={{ xs: "column", sm: "row" }}
-            spacing={1.5}
+            direction="row"
             sx={{
-              width: "100%",
-              justifyContent: "flex-end",
-              flexWrap: { xs: "nowrap", sm: "wrap" },
-              alignItems: { xs: "stretch", sm: "center" },
+              width: { xs: "100%", sm: "auto" },
+              justifyContent: { xs: "flex-start", sm: "flex-end" },
+              alignItems: "center",
+              flexWrap: "wrap",
+              gap: `${tokens.spacing[3]}px`,
             }}
           >
-            {canManage && <Button variant="contained" startIcon={<CloudUploadOutlined />} onClick={() => setUploadOpen(true)} sx={{ whiteSpace: "nowrap" }}>上传书籍</Button>}
-            <FormControl size="small" sx={{ minWidth: 118 }}>
+            {canManage && <Button variant="contained" startIcon={<CloudUploadOutlined />} onClick={() => setUploadOpen(true)} sx={{ whiteSpace: "nowrap", width: { xs: "100%", sm: "auto" } }}>上传书籍</Button>}
+            <FormControl size="small" sx={{ minWidth: 118, flex: { xs: "1 1 0", sm: "0 0 auto" } }}>
               <Select label="格式" value={format} onChange={(event: any) => updateParam("format", event.target.value, "ALL")} startAdornment={<FilterListRounded sx={{ mr: 1, color: "text.secondary" }} />}>
                 <MenuItem value="ALL">全部格式</MenuItem>
                 <MenuItem value="EPUB">EPUB</MenuItem>
                 <MenuItem value="PDF">PDF</MenuItem>
               </Select>
             </FormControl>
-            <FormControl size="small" sx={{ minWidth: 126 }}>
+            <FormControl size="small" sx={{ minWidth: 126, flex: { xs: "1 1 0", sm: "0 0 auto" } }}>
               <Select label="排序" value={sort} onChange={(event: any) => updateParam("sort", event.target.value, "recent")}>
                 <MenuItem value="recent">最近入库</MenuItem>
                 <MenuItem value="title">按书名</MenuItem>
@@ -272,6 +290,8 @@ export function LibraryPage() {
           </Stack>
         </Stack>
 
+        {query && <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>找到 {books.length} 本相关藏书</Typography>}
+
         {booksQuery.isPending ? (
           <Box role="status" aria-label="正在加载藏书" sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2, minmax(0, 1fr))", md: "repeat(4, minmax(0, 1fr))" }, gap: 3 }}>
             {Array.from({ length: 4 }, (_, index) => <Box key={index}><Box sx={{ aspectRatio: "2 / 3", bgcolor: "action.hover", borderRadius: `${tokens.radius.lg}px`, mb: 2 }} /><Skeleton active title={false} paragraph={{ rows: 2 }} /></Box>)}
@@ -279,12 +299,9 @@ export function LibraryPage() {
         ) : booksQuery.isError && !booksQuery.data ? (
           <Alert severity="error">书库暂时无法读取，请检查 API 与 NAS 状态。</Alert>
         ) : books.length === 0 ? (
-          <Stack spacing={2} sx={{ alignItems: "center", textAlign: "center", py: 12 }}>
-            <AutoAwesomeOutlined color="primary" sx={{ fontSize: 42 }} />
-            <Typography variant="h4">没有找到匹配的书</Typography>
-            <Typography color="text.secondary">试试作者、书名或标签，或者清除格式筛选。</Typography>
-            <Button onClick={() => setParams({})}>清除筛选</Button>
-          </Stack>
+          <BookCatalogEmptyState
+            action={query || format !== "ALL" ? <Button onClick={clearBookFilters}>清除筛选</Button> : undefined}
+          />
         ) : (
           <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2, minmax(0, 1fr))", sm: "repeat(3, minmax(0, 1fr))", md: "repeat(4, minmax(0, 1fr))", lg: "repeat(6, minmax(0, 1fr))" }, gap: { xs: 2, sm: 3, md: 4 } }}>
             {bookEntries.map(({ item: book, pageIndex, itemIndex }) => (

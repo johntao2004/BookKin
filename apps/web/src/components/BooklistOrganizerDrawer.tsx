@@ -25,6 +25,7 @@ import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import { api } from "../api/client";
 import type { BooklistDetail, BrowseBook } from "../domain/types";
 import { tokens } from "../theme/generated-tokens";
+import { EMPTY_CATALOG_TITLE } from "../ui/empty-state-copy";
 
 async function loadAllBooklistBooks(id: string): Promise<BrowseBook[]> {
   const items: BrowseBook[] = [];
@@ -178,7 +179,7 @@ export function BooklistOrganizerDrawer({ open, booklist, onClose, onChanged }: 
                   </ListItem>
                 ))}
               </List>
-            ) : <Alert severity="info">书单还是空的，请从右侧加入藏书。</Alert>}
+            ) : <Typography color="text.secondary">{EMPTY_CATALOG_TITLE}</Typography>}
           </Box>
           <Stack component="aside" sx={{ gap: `${tokens.spacing[3]}px`, position: { md: "sticky" }, top: `${tokens.spacing[6]}px` }}>
             <Typography variant="h5">加入藏书</Typography>
@@ -191,7 +192,7 @@ export function BooklistOrganizerDrawer({ open, booklist, onClose, onChanged }: 
                   </ListItem>
                 ))}
               </List>
-            ) : <Alert severity="info">没有可加入的匹配藏书。</Alert>}
+            ) : <Typography color="text.secondary">{EMPTY_CATALOG_TITLE}</Typography>}
           </Stack>
         </Box>
       </Stack>

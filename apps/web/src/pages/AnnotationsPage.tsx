@@ -3,7 +3,6 @@ import { DescriptionOutlined } from "@/ui/icons";
 import { FormatQuoteRounded } from "@/ui/icons";
 import { GridOnRounded } from "@/ui/icons";
 import { MenuBookOutlined } from "@/ui/icons";
-import { NotesOutlined } from "@/ui/icons";
 import { Alert } from "@/ui/feedback";
 import { Box } from "@/ui/primitives";
 import { Button } from "@/ui/buttons";
@@ -20,7 +19,8 @@ import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useDeferredValue, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { api } from "../api/client";
-import { PageContainer, PageHeader } from "../components/PageHeader";
+import { PageContainer, PageHeader, PageTitle } from "../components/PageHeader";
+import { BookCatalogEmptyState } from "../components/BookCatalogEmptyState";
 import { annotationColorBackground, annotationColorHex } from "../domain/annotation-colors";
 import type { Annotation, AnnotationBookSummary, AnnotationStyle } from "../domain/types";
 import { tokens } from "../theme/generated-tokens";
@@ -56,13 +56,9 @@ function AnnotationBooks({ onOpen }: { onOpen: (bookId: string) => void }) {
 
   return (
     <PageContainer>
-      <PageHeader eyebrow="READING NOTES" title="阅读笔记" description="按书籍整理高亮、下划线、加粗与阅读笔记；所有内容仅当前账户可见。" />
+      <PageHeader eyebrow="READING NOTES" title="阅读笔记" />
       {query.isPending ? <Loading /> : query.isError ? <Alert severity="error">无法读取阅读笔记书目</Alert> : books.length === 0 ? (
-        <Stack spacing={1} sx={{ py: 12, alignItems: "center", textAlign: "center" }}>
-          <NotesOutlined sx={{ fontSize: 46, color: "text.disabled" }} />
-          <Typography variant="h4">{deferredSearch ? "没有找到相关书籍" : "还没有留下阅读笔记"}</Typography>
-          <Typography color="text.secondary">{deferredSearch ? "换一个书名或作者关键词试试。" : "在阅读器中选择文字，即可划线并写下想法。"}</Typography>
-        </Stack>
+        <BookCatalogEmptyState />
       ) : (
         <>
           <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "repeat(2, minmax(0, 1fr))", lg: "repeat(3, minmax(0, 1fr))" }, gap: 2.5 }}>
@@ -131,7 +127,7 @@ function BookAnnotations({ bookId, onBack }: { bookId: string; onBack: () => voi
         <Stack direction="row" spacing={2.5} sx={{ alignItems: "center", minWidth: 0 }}>
           <Box component="img" src={book.coverUrl} alt={`${book.title}封面`} sx={{ width: 82, height: 116, objectFit: "cover", borderRadius: 1.5, boxShadow: tokens.shadow.cover }} />
           <Box sx={{ minWidth: 0 }}>
-            <Typography variant="h2" component="h1">{book.title}</Typography>
+            <PageTitle>{book.title}</PageTitle>
             <Typography color="text.secondary" sx={{ mt: 0.5 }}>{book.author} · {annotations.length} 条批注</Typography>
           </Box>
         </Stack>
@@ -142,7 +138,9 @@ function BookAnnotations({ bookId, onBack }: { bookId: string; onBack: () => voi
         </Stack>
       </Stack>
 
-      {annotations.length === 0 ? <Alert severity="info">这本书还没有阅读笔记或划线。</Alert> : (
+      {annotations.length === 0 ? (
+        <BookCatalogEmptyState />
+      ) : (
         <Stack spacing={2}>
           {annotations.map((annotation, index) => <AnnotationEntry key={annotation.id} annotation={annotation} index={annotations.length - index} />)}
         </Stack>

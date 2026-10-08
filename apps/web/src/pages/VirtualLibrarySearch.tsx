@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import type { Book } from '../domain/types';
 import { SearchRounded } from '../ui/icons';
 import { Button } from '../ui/buttons';
+import { EMPTY_CATALOG_TITLE } from '../ui/empty-state-copy';
 
 export function searchLibraryBooks(books: Book[], query: string) {
   const terms = query.normalize('NFKC').toLocaleLowerCase().trim().split(/\s+/).filter(Boolean);
@@ -39,7 +40,7 @@ export function VirtualLibrarySearch({open, books, onClose, onLocateBook, onRead
         }} aria-label={`阅读《${book.title}》`}>
         <strong>{book.title}</strong><span>{book.author || '佚名'} · {book.format}</span>
       </Link>{onLocateBook && <Button size="small" aria-label={`定位《${book.title}》到书架`}
-        onClick={() => {onClose(); onLocateBook(book.id);}}>定位到书架</Button>}</div>) : <Empty description="没有找到匹配的藏书，试试其他关键词" image={Empty.PRESENTED_IMAGE_SIMPLE} />}
+        onClick={() => {onClose(); onLocateBook(book.id);}}>定位到书架</Button>}</div>) : <Empty description={EMPTY_CATALOG_TITLE} image={Empty.PRESENTED_IMAGE_SIMPLE} />}
     </div></>}
   </Modal>;
 }

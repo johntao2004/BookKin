@@ -1,7 +1,7 @@
 import { PageContainer } from "../components/PageHeader";
 import { CloudUploadOutlined } from "@/ui/icons";
 import { Alert } from "@/ui/feedback";
-import { Box } from "@/ui/primitives";
+import { Box, useMediaQuery } from "@/ui/primitives";
 import { Button } from "@/ui/buttons";
 import { Card } from "@/ui/cards";
 import { CardContent } from "@/ui/primitives";
@@ -24,11 +24,12 @@ import type { ReaderFont } from "../domain/types";
 import { tokens } from "../theme/generated-tokens";
 
 const allowedExtensions = new Set(["woff2", "woff", "ttf", "otf"]);
-const uploadActionWidth = tokens.layout.touchTarget * 5;
+const wideFontUploadQuery = `(min-width: ${tokens.layout.breakpointTablet}px)`;
 
 export function ReaderFontsPage() {
   const queryClient = useQueryClient();
   const fontsQuery = useQuery({ queryKey: ["reader-fonts", "admin"], queryFn: api.listReaderFontsForAdmin });
+  const isWideFontUpload = useMediaQuery(wideFontUploadQuery);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [displayName, setDisplayName] = useState("");
   const [kind, setKind] = useState<ReaderFont["kind"]>("SERIF");
@@ -84,28 +85,23 @@ export function ReaderFontsPage() {
 
       <Stack className="bk-form-section" sx={{ mb: 4 }}>
         <Stack spacing={2}>
-          <Stack direction={{ xs: "column", md: "row" }} spacing={3} sx={{ alignItems: { md: "flex-end" } }}>
-            <Stack spacing={2} sx={{ flex: 1, width: "100%" }}>
-              <Typography variant="h5">上传自定义字体</Typography>
-              <Typography variant="body2" color="text.secondary">上传前请确认字体许可允许在家庭成员之间使用；系统会校验扩展名、文件签名、大小和 SHA-256。</Typography>
-              <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-                <TextField label="展示名称（可选）" value={displayName} onChange={(event: any) => setDisplayName(event.target.value)} fullWidth />
-                <FormControl sx={{ minWidth: { sm: 170 }, gap: `${tokens.spacing[2]}px` }}>
-                  <InputLabel id="reader-font-kind-label">字体类型</InputLabel>
-                  <Select labelId="reader-font-kind-label" label="字体类型" value={kind} onChange={(event: any) => setKind(event.target.value as ReaderFont["kind"])}>
-                    <MenuItem value="SERIF">衬线字体</MenuItem>
-                    <MenuItem value="SANS">无衬线字体</MenuItem>
-                  </Select>
-                </FormControl>
-              </Stack>
-              <TextField label="来源 / 许可说明（可选）" value={licenseNote} onChange={(event: any) => setLicenseNote(event.target.value)} fullWidth />
-            </Stack>
-            <Stack sx={{ width: { xs: "100%", md: uploadActionWidth }, flexShrink: 0 }}>
+          <Typography variant="h5">上传自定义字体</Typography>
+          <Box className={`bk-reader-font-upload-grid${isWideFontUpload ? " bk-reader-font-upload-grid--wide" : ""}`}>
+            <TextField className="bk-reader-font-upload-name" label="展示名称（可选）" value={displayName} onChange={(event: any) => setDisplayName(event.target.value)} fullWidth />
+            <FormControl className="bk-reader-font-upload-kind" fullWidth>
+              <InputLabel id="reader-font-kind-label">字体类型</InputLabel>
+              <Select className="bk-reader-font-upload-kind-select" labelId="reader-font-kind-label" label="字体类型" value={kind} onChange={(event: any) => setKind(event.target.value as ReaderFont["kind"])}>
+                <MenuItem value="SERIF">衬线字体</MenuItem>
+                <MenuItem value="SANS">无衬线字体</MenuItem>
+              </Select>
+            </FormControl>
+            <TextField className="bk-reader-font-upload-license" label="来源 / 许可说明（可选）" value={licenseNote} onChange={(event: any) => setLicenseNote(event.target.value)} fullWidth />
+            <Stack className="bk-reader-font-upload-action" sx={{ width: "100%", minWidth: 0 }}>
               <input ref={inputRef} hidden type="file" accept=".woff2,.woff,.ttf,.otf" onChange={(event: any) => { const file = event.target.files?.[0]; if (file) void upload(file); }} />
-              <Button variant="contained" size="large" startIcon={busy ? <CircularProgress size={18} color="inherit" /> : <CloudUploadOutlined />} disabled={busy} onClick={() => inputRef.current?.click()}>{busy ? `上传中 ${uploadProgress}%` : "选择字体文件"}</Button>
+              <Button className="bk-reader-font-upload-button" variant="contained" fullWidth startIcon={busy ? <CircularProgress size={18} color="inherit" /> : <CloudUploadOutlined />} disabled={busy} onClick={() => inputRef.current?.click()}>{busy ? `上传中 ${uploadProgress}%` : "选择字体文件"}</Button>
             </Stack>
-          </Stack>
-          <Typography component="p" variant="caption" color="text.secondary" sx={{ mt: `${tokens.spacing[2]}px`, ml: "auto", width: { xs: "100%", md: uploadActionWidth }, textAlign: "center" }}>WOFF2 / WOFF / TTF / OTF · ≤ 25 MB</Typography>
+            <Typography className="bk-reader-font-upload-guidance" component="p" variant="caption" color="text.secondary">WOFF2 / WOFF / TTF / OTF · ≤ 25 MB</Typography>
+          </Box>
         </Stack>
       </Stack>
 

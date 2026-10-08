@@ -68,7 +68,9 @@ describe("RecentAnnotationsPanel", () => {
     vi.mocked(api.listAnnotations).mockResolvedValueOnce([]);
     render(<TestProviders><RecentAnnotationsPanel /></TestProviders>);
 
-    expect(await screen.findByText("还没有批注")).toBeInTheDocument();
+    const emptyTitle = await screen.findByRole("heading", { name: "无书目" });
+    expect(emptyTitle).toHaveClass("bk-typography-h4");
+    expect(screen.queryByText("去书中划下第一句话，它会出现在这里。")).not.toBeInTheDocument();
     expect(screen.queryByRole("button")).not.toBeInTheDocument();
   });
 

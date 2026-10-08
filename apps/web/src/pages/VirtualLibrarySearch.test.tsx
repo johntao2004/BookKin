@@ -27,7 +27,7 @@ describe('catalog orb search', () => {
     const link = screen.getByRole('link', {name:'阅读《山川与灯火》'});
     expect(link).toHaveAttribute('href', '/reader/book-one');
     fireEvent.change(input, {target:{value:'不存在'}});
-    expect(screen.getByText('没有找到匹配的藏书，试试其他关键词')).toBeInTheDocument();
+    expect(screen.getByText('无书目')).toBeInTheDocument();
     fireEvent.change(input, {target:{value:'顾远'}});
     fireEvent.click(screen.getByRole('link', {name:'阅读《山川与灯火》'}));
     expect(close).toHaveBeenCalledOnce();

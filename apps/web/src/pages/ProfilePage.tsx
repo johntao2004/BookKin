@@ -25,7 +25,7 @@ export function ProfilePage() {
   if (!user) return null;
   const role = { OWNER: "主人", ADMIN: "管理员", MEMBER: "成员" }[user.role];
   return <PageContainer>
-    <PageHeader title="个人信息" description="查看账户资料，管理邮箱与账户安全。" />
+    <PageHeader eyebrow="PROFILE" title="个人信息" />
     <Stack spacing={3}>
       <Stack component="section" className="bk-form-section" spacing={2} aria-label="账户资料">
         <Typography component="h2" variant="h4">账户资料</Typography>

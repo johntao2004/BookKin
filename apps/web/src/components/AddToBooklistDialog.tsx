@@ -18,6 +18,7 @@ import { useState } from "react";
 import { api } from "../api/client";
 import type { BooklistDetail } from "../domain/types";
 import { tokens } from "../theme/generated-tokens";
+import { EMPTY_CATALOG_TITLE } from "../ui/empty-state-copy";
 import { VisibilityChip } from "./CatalogDiscoveryCards";
 import { BooklistFormDialog } from "./BooklistFormDialog";
 
@@ -84,8 +85,7 @@ export function AddToBooklistDialog({ open, bookId, bookTitle, onClose, onComple
               </List>
             ) : (
               <Box sx={{ textAlign: "center", py: `${tokens.spacing[8]}px` }}>
-                <Typography variant="h5">还没有个人书单</Typography>
-                <Typography color="text.secondary" sx={{ mt: `${tokens.spacing[2]}px` }}>先创建一个，再把这本书收进去。</Typography>
+                <Typography variant="h5">{EMPTY_CATALOG_TITLE}</Typography>
               </Box>
             )}
             <Button variant={personalLists.length ? "outlined" : "contained"} startIcon={<AddRounded />} onClick={() => setCreateOpen(true)}>新建个人书单</Button>

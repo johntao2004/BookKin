@@ -18,6 +18,7 @@ import { useDeferredValue, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { api } from "../api/client";
 import { useAuth } from "../auth/AuthContext";
+import { BookCatalogEmptyState } from "../components/BookCatalogEmptyState";
 import { PageContainer, PageHeader } from "../components/PageHeader";
 import type { FileOperationPreview, RecycleBinEntry } from "../domain/types";
 import { tokens } from "../theme/generated-tokens";
@@ -67,25 +68,20 @@ export function RecycleBinPage() {
   };
 
   return (
-    <PageContainer sx={{ pt: { xs: 3, md: 5 } }}>
+    <PageContainer>
       <PageHeader
         eyebrow="RECYCLE BIN"
         title="回收站"
-        description="从藏书中移除的书会进入这里，保留 30 天。"
         action={<Chip label={`${entries.length} 本待处理`} variant="outlined" />}
       />
-      <Alert severity="warning" sx={{ mb: 4 }}>恢复时不会覆盖同路径的新文件；到期后自动清理，只有主人可以提前永久清理。</Alert>
+      <Alert severity="warning" sx={{ mb: 4 }}>条目会在这里保留 30 天。恢复时不会覆盖同路径的新文件；到期后自动清理，只有主人可以提前永久清理。</Alert>
 
       {query.isPending ? (
         <Stack spacing={2} sx={{ py: 12, alignItems: "center" }}><CircularProgress /><Typography color="text.secondary">正在打开回收站…</Typography></Stack>
       ) : query.isError ? (
         <Alert severity="error">回收站暂时无法读取，请检查 API 与 NAS 状态。</Alert>
       ) : entries.length === 0 ? (
-        <Stack spacing={2} sx={{ alignItems: "center", textAlign: "center", py: 12 }}>
-          <RestoreFromTrashOutlined sx={{ fontSize: 44, color: "text.disabled" }} />
-          <Typography variant="h4">{search ? "没有找到匹配的书" : "回收站是空的"}</Typography>
-          <Typography color="text.secondary">{search ? "可以按书名、作者、格式或原路径搜索。" : "从藏书中删除的书会以书籍卡片出现在这里。"}</Typography>
-        </Stack>
+        <BookCatalogEmptyState />
       ) : (
         <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2, minmax(0, 1fr))", sm: "repeat(3, minmax(0, 1fr))", md: "repeat(4, minmax(0, 1fr))", lg: "repeat(6, minmax(0, 1fr))" }, gap: { xs: 2, sm: 3, md: 4 } }}>
           {entries.map((entry) => (

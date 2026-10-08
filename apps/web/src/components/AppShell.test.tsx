@@ -69,7 +69,7 @@ describe("AppShell", () => {
     renderShell("/reader/book-1");
 
     expect(screen.getByRole("banner")).toBeInTheDocument();
-    expect(screen.getByRole("navigation", { name: "全站导航" })).toBeInTheDocument();
+    expect(screen.getByRole("navigation", { name: "全站导航" })).toHaveStyle({ width: "100%", maxWidth: "none" });
     expect(screen.getByRole("link", { name: "BookKin" })).toHaveAttribute("href", "/library");
     expect(screen.getByRole("main")).toHaveTextContent("正文");
   });

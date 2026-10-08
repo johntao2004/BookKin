@@ -1,7 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { TestProviders } from "../../test/TestProviders";
-import { tokens } from "../../theme/generated-tokens";
 import { ReaderTopBar } from "./ReaderTopBar";
 
 function renderTopBar(format: "EPUB" | "PDF") {
@@ -47,7 +46,7 @@ describe("ReaderTopBar", () => {
   it("uses the same page frame as the global navigation", () => {
     renderTopBar("PDF");
 
-    expect(screen.getByRole("navigation", { name: "阅读器顶部导航" })).toHaveStyle({ maxWidth: `${tokens.layout.contentMax}px` });
+    expect(screen.getByRole("navigation", { name: "阅读器顶部导航" })).toHaveStyle({ width: "100%", maxWidth: "none" });
     expect(screen.getByText("山川与灯火").parentElement).toHaveStyle({ flex: "1 1 0%" });
   });
 });

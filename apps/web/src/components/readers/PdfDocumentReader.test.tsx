@@ -65,7 +65,7 @@ describe("PdfReadingClipFrame", () => {
     const readingSurface = container.querySelector(".reader-page-turn-surface");
     const pagination = screen.getByRole("navigation", { name: "PDF 翻页" });
     expect(window.matchMedia).toHaveBeenCalledWith(`(min-width: ${tokens.layout.breakpointTablet}px)`);
-    await waitFor(() => expect(frame?.parentElement).toHaveStyle({ maxWidth: `${tokens.layout.contentMax}px` }));
+    await waitFor(() => expect(frame?.parentElement).toHaveStyle({ width: "100%", maxWidth: "none" }));
     expect(readingSurface?.nextElementSibling).toBe(pagination);
     expect(addEventListener).toHaveBeenCalledWith("change", expect.any(Function));
     expect(removeEventListener).not.toHaveBeenCalled();

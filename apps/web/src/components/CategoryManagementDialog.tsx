@@ -25,8 +25,9 @@ import { api } from "../api/client";
 import type { CategorySummary } from "../domain/types";
 import { tokens } from "../theme/generated-tokens";
 
-export function CategoryManagementDialog({ open, categories, onClose }: {
+export function CategoryManagementDialog({ open, mode, categories, onClose }: {
   open: boolean;
+  mode: "create" | "manage";
   categories: CategorySummary[];
   onClose: () => void;
 }) {
@@ -40,9 +41,16 @@ export function CategoryManagementDialog({ open, categories, onClose }: {
   const [deleteTarget, setDeleteTarget] = useState<CategorySummary | null>(null);
 
   useEffect(() => {
-    if (!open) return;
-    setOrdered(categories);
+    if (open) setOrdered(categories);
   }, [categories, open]);
+
+  useEffect(() => {
+    setEditingId(null);
+    setName("");
+    setDescription("");
+    setDeleteTarget(null);
+    if (open) setNotice("");
+  }, [mode, open]);
 
   const resetForm = () => {
     setEditingId(null);
@@ -61,7 +69,10 @@ export function CategoryManagementDialog({ open, categories, onClose }: {
     setBusy(true);
     try {
       if (editingId) await api.updateCategory(editingId, { name, description });
-      else await api.createCategory({ name, description });
+      else {
+        await api.createCategory({ name, description });
+        if (mode === "create") onClose();
+      }
       await queryClient.invalidateQueries({ queryKey: ["categories"] });
       setNotice(editingId ? "分类已更新" : "分类已创建");
       resetForm();
@@ -71,6 +82,12 @@ export function CategoryManagementDialog({ open, categories, onClose }: {
       setBusy(false);
     }
   };
+
+  const saveButton = (
+    <Button variant="contained" startIcon={editingId ? <EditOutlined /> : <AddRounded />} disabled={!name.trim() || busy} onClick={() => void save()}>
+      {editingId ? "保存修改" : "创建分类"}
+    </Button>
+  );
 
   const move = async (index: number, delta: number) => {
     const target = index + delta;
@@ -110,37 +127,42 @@ export function CategoryManagementDialog({ open, categories, onClose }: {
 
   return (
     <>
-      <Dialog open={open} onClose={busy ? undefined : onClose} fullWidth maxWidth="md">
-        <DialogTitle>管理分类</DialogTitle>
+      <Dialog open={open} onClose={busy ? undefined : onClose} fullWidth maxWidth={mode === "create" ? "sm" : "md"}>
+        <DialogTitle>{mode === "create" ? "创建分类" : "管理分类"}</DialogTitle>
         <DialogContent>
-          <Alert severity="info" sx={{ mb: `${tokens.spacing[6]}px` }}>分类独立于文件标签；调整或删除分类不会改写原书，也不会删除 NAS 文件。</Alert>
-          <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "minmax(0, 1.18fr) minmax(280px, .82fr)" }, gap: `${tokens.spacing[8]}px` }}>
-            <Box>
-              <Typography variant="h5" sx={{ mb: `${tokens.spacing[3]}px` }}>当前顺序</Typography>
-              {ordered.length ? (
-                <List sx={{ p: 0, border: 1, borderColor: "divider", borderRadius: `${tokens.radius.lg}px`, overflow: "hidden" }}>
-                  {ordered.map((category, index) => (
-                    <ListItem key={category.id} divider={index < ordered.length - 1} sx={{ px: `${tokens.spacing[3]}px` }}>
-                      <ListItemText primary={category.name} secondary={`${category.bookCount} 本 · ${category.description || "暂无简介"}`} />
-                      <Tooltip title="上移"><span><IconButton size="small" disabled={index === 0 || busy} onClick={() => void move(index, -1)} aria-label={`上移 ${category.name}`}><ArrowUpwardRounded fontSize="small" /></IconButton></span></Tooltip>
-                      <Tooltip title="下移"><span><IconButton size="small" disabled={index === ordered.length - 1 || busy} onClick={() => void move(index, 1)} aria-label={`下移 ${category.name}`}><ArrowDownwardRounded fontSize="small" /></IconButton></span></Tooltip>
-                      <Tooltip title="编辑"><IconButton size="small" onClick={() => edit(category)} aria-label={`编辑 ${category.name}`}><EditOutlined fontSize="small" /></IconButton></Tooltip>
-                      <Tooltip title="删除"><IconButton size="small" color="error" onClick={() => setDeleteTarget(category)} aria-label={`删除 ${category.name}`}><DeleteOutlineRounded fontSize="small" /></IconButton></Tooltip>
-                    </ListItem>
-                  ))}
-                </List>
-              ) : <Alert severity="info">还没有分类，请从右侧创建第一个分类。</Alert>}
-            </Box>
+          {mode === "manage" ? <Alert severity="info" sx={{ mb: `${tokens.spacing[6]}px` }}>分类独立于文件标签；调整或删除分类不会改写原书，也不会删除 NAS 文件。</Alert> : null}
+          <Box sx={{ display: "grid", gridTemplateColumns: mode === "manage" ? { xs: "1fr", md: "minmax(0, 1.18fr) minmax(280px, .82fr)" } : "minmax(0, 1fr)", gap: `${tokens.spacing[8]}px` }}>
+            {mode === "manage" ? (
+              <Box>
+                <Typography variant="h5" sx={{ mb: `${tokens.spacing[3]}px` }}>当前顺序</Typography>
+                {ordered.length ? (
+                  <List sx={{ p: 0, border: 1, borderColor: "divider", borderRadius: `${tokens.radius.lg}px`, overflow: "hidden" }}>
+                    {ordered.map((category, index) => (
+                      <ListItem key={category.id} divider={index < ordered.length - 1} sx={{ px: `${tokens.spacing[3]}px` }}>
+                        <ListItemText primary={category.name} secondary={`${category.bookCount} 本 · ${category.description || "暂无简介"}`} />
+                        <Tooltip title="上移"><span><IconButton size="small" disabled={index === 0 || busy} onClick={() => void move(index, -1)} aria-label={`上移 ${category.name}`}><ArrowUpwardRounded fontSize="small" /></IconButton></span></Tooltip>
+                        <Tooltip title="下移"><span><IconButton size="small" disabled={index === ordered.length - 1 || busy} onClick={() => void move(index, 1)} aria-label={`下移 ${category.name}`}><ArrowDownwardRounded fontSize="small" /></IconButton></span></Tooltip>
+                        <Tooltip title="编辑"><IconButton size="small" onClick={() => edit(category)} aria-label={`编辑 ${category.name}`}><EditOutlined fontSize="small" /></IconButton></Tooltip>
+                        <Tooltip title="删除"><IconButton size="small" color="error" onClick={() => setDeleteTarget(category)} aria-label={`删除 ${category.name}`}><DeleteOutlineRounded fontSize="small" /></IconButton></Tooltip>
+                      </ListItem>
+                    ))}
+                  </List>
+                ) : <Alert severity="info">当前没有分类。</Alert>}
+              </Box>
+            ) : null}
             <Stack sx={{ gap: `${tokens.spacing[4]}px` }}>
-              <Typography variant="h5">{editingId ? "编辑分类" : "新建分类"}</Typography>
+              {mode === "manage" ? <Typography variant="h5">{editingId ? "编辑分类" : "新建分类"}</Typography> : null}
               <TextField autoFocus label="分类名称" value={name} onChange={(event: any) => setName(event.target.value)} slotProps={{ htmlInput: { maxLength: 160 } }} />
               <TextField label="简介" value={description} onChange={(event: any) => setDescription(event.target.value)} multiline minRows={4} slotProps={{ htmlInput: { maxLength: 2000 } }} />
-              <Button variant="contained" startIcon={editingId ? <EditOutlined /> : <AddRounded />} disabled={!name.trim() || busy} onClick={() => void save()}>{editingId ? "保存修改" : "创建分类"}</Button>
+              {mode === "manage" ? saveButton : null}
               {editingId ? <Button onClick={resetForm}>取消编辑</Button> : null}
             </Stack>
           </Box>
         </DialogContent>
-        <DialogActions><Button onClick={onClose} disabled={busy}>完成</Button></DialogActions>
+        <DialogActions>
+          {mode === "create" ? <Button onClick={onClose} disabled={busy}>取消</Button> : <Button onClick={onClose} disabled={busy}>完成</Button>}
+          {mode === "create" ? saveButton : null}
+        </DialogActions>
       </Dialog>
 
       <Dialog open={Boolean(deleteTarget)} onClose={busy ? undefined : () => setDeleteTarget(null)} maxWidth="xs" fullWidth>

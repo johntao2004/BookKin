@@ -28,7 +28,7 @@ function MailForm({initial}: {initial: MailSettings}) {
     try { await action(); } catch(e) { setError(e instanceof Error ? e.message : "操作失败"); } finally { setBusy(false); }
   };
   return <Stack spacing={3}>
-    <PageHeader title="邮件服务" description="配置 SMTP，用于发送找回邮箱验证和密码重置链接。仅主人可修改。" />
+    <PageHeader eyebrow="MAIL" title="邮件服务" embeddedDescription="配置 SMTP，用于发送找回邮箱验证和密码重置链接。仅主人可修改。" />
     <Stack className="bk-form-section" component="form" spacing={2} onSubmit={(e: FormEvent) => {e.preventDefault(); void run(async () => {
       const saved = await api.saveMailSettings(form); setForm(saved); client.setQueryData(["mail-settings"], saved); setDirty(false); setMessage("邮件配置已保存。");
     });}}>
