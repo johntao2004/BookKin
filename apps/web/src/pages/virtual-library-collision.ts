@@ -96,6 +96,13 @@ export interface CameraCollisionResult extends CameraPosition {
   blockedBy: string | null;
 }
 
+/** Eye-relative upright clearance. `below` includes the body beneath the camera. */
+export interface CameraCollisionClearance {
+  horizontal: number;
+  above: number;
+  below: number;
+}
+
 interface CollisionHit {
   collider: CameraCollider;
   normal: CameraPosition;
@@ -358,19 +365,22 @@ function sweepBox(
   start: CameraPosition,
   end: CameraPosition,
   collider: BoxCameraCollider,
-  clearance: number,
+  clearance: CameraCollisionClearance,
 ): CollisionHit | null {
   const localStart = rotateIntoBox(start, collider);
   const localEnd = rotateIntoBox(end, collider);
+  const eyeOffset = (clearance.below - clearance.above) / 2;
+  localStart.y -= eyeOffset;
+  localEnd.y -= eyeOffset;
   const delta = {
     x: localEnd.x - localStart.x,
     y: localEnd.y - localStart.y,
     z: localEnd.z - localStart.z,
   };
   const half = {
-    x: collider.halfX + clearance,
-    y: collider.halfY + clearance,
-    z: collider.halfZ + clearance,
+    x: collider.halfX + clearance.horizontal,
+    y: collider.halfY + (clearance.above + clearance.below) / 2,
+    z: collider.halfZ + clearance.horizontal,
   };
   if (
     Math.abs(localStart.x) < half.x
@@ -421,11 +431,11 @@ function sweepCylinder(
   start: CameraPosition,
   end: CameraPosition,
   collider: CylinderCameraCollider,
-  clearance: number,
+  clearance: CameraCollisionClearance,
 ): CollisionHit | null {
-  const radius = collider.radius + clearance;
-  const minY = collider.minY - clearance;
-  const maxY = collider.maxY + clearance;
+  const radius = collider.radius + clearance.horizontal;
+  const minY = collider.minY - clearance.above;
+  const maxY = collider.maxY + clearance.below;
   const startX = start.x - collider.x;
   const startZ = start.z - collider.z;
   const deltaX = end.x - start.x;
@@ -455,6 +465,9 @@ function sweepCylinder(
         if (y < minY || y > maxY) continue;
         const x = startX + deltaX * time;
         const z = startZ + deltaZ * time;
+        // Only entering contacts block motion. An exit or an exact tangent
+        // at t=0 must not push the camera away from a column or stall sliding.
+        if (x * deltaX + z * deltaZ >= 0) continue;
         const length = Math.max(Math.hypot(x, z), COLLISION_EPSILON);
         candidates.push({
           collider,
@@ -467,6 +480,7 @@ function sweepCylinder(
 
   if (Math.abs(deltaY) > COLLISION_EPSILON) {
     for (const [planeY, normalY] of [[minY, -1], [maxY, 1]] as const) {
+      if (normalY * deltaY >= 0) continue;
       const time = (planeY - start.y) / deltaY;
       if (time < 0 || time > 1) continue;
       const x = startX + deltaX * time;
@@ -487,9 +501,9 @@ function sweepRadialBoundary(
   start: CameraPosition,
   end: CameraPosition,
   collider: RadialBoundaryCameraCollider,
-  clearance: number,
+  clearance: CameraCollisionClearance,
 ): CollisionHit | null {
-  const allowedRadius = Math.max(0.01, collider.maxRadius - clearance);
+  const allowedRadius = Math.max(0.01, collider.maxRadius - clearance.horizontal);
   const startX = start.x - collider.x;
   const startZ = start.z - collider.z;
   if (startX * startX + startZ * startZ > allowedRadius * allowedRadius) return null;
@@ -513,7 +527,7 @@ function sweepRadialBoundary(
     const z = startZ + deltaZ * time;
     if (x * deltaX + z * deltaZ <= 0) continue;
     const y = start.y + deltaY * time;
-    if (y + clearance < collider.minY || y - clearance > collider.maxY) continue;
+    if (y + clearance.above < collider.minY || y - clearance.below > collider.maxY) continue;
     const length = Math.max(Math.hypot(x, z), COLLISION_EPSILON);
     return {
       collider,
@@ -528,7 +542,7 @@ function sweepCollider(
   start: CameraPosition,
   end: CameraPosition,
   collider: CameraCollider,
-  clearance: number,
+  clearance: CameraCollisionClearance,
 ) {
   if (collider.shape === "box") return sweepBox(start, end, collider, clearance);
   if (collider.shape === "cylinder") return sweepCylinder(start, end, collider, clearance);
@@ -538,13 +552,14 @@ function sweepCollider(
 function boxPenetration(
   position: CameraPosition,
   collider: BoxCameraCollider,
-  clearance: number,
+  clearance: CameraCollisionClearance,
 ): Penetration | null {
   const local = rotateIntoBox(position, collider);
+  local.y -= (clearance.below - clearance.above) / 2;
   const half = {
-    x: collider.halfX + clearance,
-    y: collider.halfY + clearance,
-    z: collider.halfZ + clearance,
+    x: collider.halfX + clearance.horizontal,
+    y: collider.halfY + (clearance.above + clearance.below) / 2,
+    z: collider.halfZ + clearance.horizontal,
   };
   if (
     Math.abs(local.x) >= half.x
@@ -571,11 +586,11 @@ function boxPenetration(
 function cylinderPenetration(
   position: CameraPosition,
   collider: CylinderCameraCollider,
-  clearance: number,
+  clearance: CameraCollisionClearance,
 ): Penetration | null {
-  const radius = collider.radius + clearance;
-  const minY = collider.minY - clearance;
-  const maxY = collider.maxY + clearance;
+  const radius = collider.radius + clearance.horizontal;
+  const minY = collider.minY - clearance.above;
+  const maxY = collider.maxY + clearance.below;
   const offsetX = position.x - collider.x;
   const offsetZ = position.z - collider.z;
   const radialDistance = Math.hypot(offsetX, offsetZ);
@@ -596,10 +611,10 @@ function cylinderPenetration(
 function radialBoundaryPenetration(
   position: CameraPosition,
   collider: RadialBoundaryCameraCollider,
-  clearance: number,
+  clearance: CameraCollisionClearance,
 ): Penetration | null {
-  if (position.y + clearance < collider.minY || position.y - clearance > collider.maxY) return null;
-  const allowedRadius = Math.max(0.01, collider.maxRadius - clearance);
+  if (position.y + clearance.above < collider.minY || position.y - clearance.below > collider.maxY) return null;
+  const allowedRadius = Math.max(0.01, collider.maxRadius - clearance.horizontal);
   const offsetX = position.x - collider.x;
   const offsetZ = position.z - collider.z;
   const distance = Math.hypot(offsetX, offsetZ);
@@ -615,7 +630,7 @@ function radialBoundaryPenetration(
 function colliderPenetration(
   position: CameraPosition,
   collider: CameraCollider,
-  clearance: number,
+  clearance: CameraCollisionClearance,
 ) {
   if (collider.shape === "box") return boxPenetration(position, collider, clearance);
   if (collider.shape === "cylinder") {
@@ -627,7 +642,7 @@ function colliderPenetration(
 function recoverFromPenetration(
   position: CameraPosition,
   colliders: readonly CameraCollider[],
-  clearance: number,
+  clearance: CameraCollisionClearance,
 ) {
   const recovered = { ...position };
   let blockedBy: string | null = null;
@@ -654,7 +669,7 @@ function earliestCollision(
   start: CameraPosition,
   end: CameraPosition,
   colliders: readonly CameraCollider[],
-  clearance: number,
+  clearance: CameraCollisionClearance,
 ) {
   let earliest: CollisionHit | null = null;
   for (const collider of colliders) {
@@ -668,9 +683,12 @@ export function resolveCameraCollision(
   previous: CameraPosition,
   desired: CameraPosition,
   colliders: readonly CameraCollider[],
-  clearance = CAMERA_COLLISION_CLEARANCE,
+  clearance: number | CameraCollisionClearance = CAMERA_COLLISION_CLEARANCE,
 ): CameraCollisionResult {
-  const recoveredStart = recoverFromPenetration(previous, colliders, clearance);
+  const profile = typeof clearance === "number"
+    ? {horizontal: clearance, above: clearance, below: clearance}
+    : clearance;
+  const recoveredStart = recoverFromPenetration(previous, colliders, profile);
   let current = recoveredStart.position;
   let remaining = {
     x: desired.x - current.x,
@@ -685,7 +703,7 @@ export function resolveCameraCollision(
       y: current.y + remaining.y,
       z: current.z + remaining.z,
     };
-    const hit = earliestCollision(current, end, colliders, clearance);
+    const hit = earliestCollision(current, end, colliders, profile);
     if (!hit) {
       current = end;
       break;
@@ -717,7 +735,7 @@ export function resolveCameraCollision(
     if (Math.hypot(remaining.x, remaining.y, remaining.z) < COLLISION_EPSILON) break;
   }
 
-  const recoveredEnd = recoverFromPenetration(current, colliders, clearance);
+  const recoveredEnd = recoverFromPenetration(current, colliders, profile);
   blockedBy ??= recoveredEnd.blockedBy;
   return {
     ...recoveredEnd.position,

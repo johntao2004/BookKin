@@ -16,6 +16,10 @@ import { classifyCatalogBook, SHELF_CATEGORIES } from "./virtual-library-catalog
 import { resolveCameraCollision } from "./virtual-library-collision";
 import {
   cameraRelativeWalkDelta,
+  resolveGuidedStairCollision,
+  isGuidedStairSupport,
+  WALKING_EYE_HEIGHT,
+  WALKING_CAMERA_CLEARANCE,
   clampVirtualLibraryFlightHeight,
   isShelfMovementLocked,
   virtualLibraryMovementKey,
@@ -66,7 +70,6 @@ const MIN_SCENE_ZOOM = 0.72;
 const MAX_SCENE_ZOOM = 1.55;
 const SCENE_ZOOM_STEP = 0.12;
 const BOOK_INSPECTION_ZOOM_STEP = 0.1;
-const WALKING_EYE_HEIGHT = 1.78;
 const HALL_FLIGHT_CEILING_CLEARANCE = 0.4;
 const ROTUNDA_CENTER = new THREE.Vector3(0, ACTIVE_HALL.camera.targetY, ACTIVE_HALL.camera.targetZ);
 const ROTUNDA_CAMERA_RADIUS = ACTIVE_HALL.camera.radius;
@@ -502,6 +505,8 @@ export function VirtualLibraryExperience() {
       const walkingUp = new THREE.Vector3(0, 1, 0);
       const movementLook = new THREE.Vector3();
       const pressedMovementKeys = new Set<VirtualLibraryMovementKey>();
+      const stairObstacles = world.getCameraColliders("hall")
+        .filter(collider => !isGuidedStairSupport(collider));
       const positionCamera = () => {
         cameraTarget.x = cameraTargetXCurrent;
         cameraTarget.y = cameraTargetYCurrent;
@@ -525,6 +530,7 @@ export function VirtualLibraryExperience() {
             : desiredPosition,
           desiredPosition,
           colliders,
+          activeCameraRoom === "hall" && freeEye ? WALKING_CAMERA_CLEARANCE : undefined,
         );
         camera.position.set(collision.x, collision.y, collision.z);
         hasPositionedCamera = true;
@@ -544,7 +550,8 @@ export function VirtualLibraryExperience() {
             z: point.z + galleryWalkOffset.z,
           };
           // Sweep from the previous eye, not from the ground or the orbit camera.
-          const safe = resolveCameraCollision(galleryPreviousEye ?? resolved, resolved, colliders);
+          const safe = resolveGuidedStairCollision(galleryPreviousEye ?? resolved, resolved, colliders, stairObstacles,
+            {x: point.x, y: point.y + WALKING_EYE_HEIGHT, z: point.z});
           collision = safe;
           camera.position.set(safe.x, safe.y, safe.z);
           galleryPreviousEye = {x: safe.x, y: safe.y, z: safe.z};
@@ -997,7 +1004,7 @@ export function VirtualLibraryExperience() {
           y: freeEye.y,
           z: freeEye.z - Math.cos(cameraYawCurrent) * direction * 1.5,
         };
-        const safe = resolveCameraCollision(freeEye, desired, world.getCameraColliders("hall"));
+        const safe = resolveCameraCollision(freeEye, desired, world.getCameraColliders("hall"), WALKING_CAMERA_CLEARANCE);
         freeEye.set(safe.x, safe.y, safe.z);
         invalidateScene();
       };
@@ -1052,7 +1059,7 @@ export function VirtualLibraryExperience() {
             x: previous.x + (planarDelta?.x ?? 0),
             y: previous.y,
             z: previous.z + (planarDelta?.z ?? 0),
-          }, colliders);
+          }, colliders, WALKING_CAMERA_CLEARANCE);
           galleryWalkOffset.x += safe.x - previous.x;
           galleryWalkOffset.z += safe.z - previous.z;
           galleryPreviousEye = {x: safe.x, y: safe.y, z: safe.z};
@@ -1064,7 +1071,7 @@ export function VirtualLibraryExperience() {
             x: desiredX,
             y: clampHallFlightHeight(desiredX, desiredZ, freeEye.y + verticalDelta),
             z: desiredZ,
-          }, colliders);
+          }, colliders, WALKING_CAMERA_CLEARANCE);
           freeEye.set(safe.x, safe.y, safe.z);
         }
         invalidateScene();

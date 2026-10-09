@@ -39,7 +39,7 @@ import { LONG_ROOM } from "./virtual-library-model/longRoomLayout";
 
 export const ROTUNDA_CENTER = new THREE.Vector3(0, LONG_ROOM.camera.targetY, LONG_ROOM.camera.targetZ);
 export const ROTUNDA_CAMERA_RADIUS = LONG_ROOM.camera.radius;
-export const VIRTUAL_LIBRARY_SCENE_MODEL_VERSION = "reference-modular-library-2026-10-08-r3";
+export const VIRTUAL_LIBRARY_SCENE_MODEL_VERSION = "reference-modular-library-2026-10-09-r4";
 
 export const SHELF_PLAQUE_MOUNT = {
   gap: 0.012,

@@ -1,8 +1,8 @@
 {
-  "sourceSha256": "0cc0db68263287c3bd3f6f30c8f7a58e4c32da8e279912674d5219323ee87a75",
+  "sourceSha256": "7a892bba063d3ceef2f009233c1956662914c1f1f790b98b7701415b83513aef",
   "modules": 13,
-  "triangles": 1552983,
-  "maxModuleBytes": 9315084,
+  "triangles": 1554611,
+  "maxModuleBytes": 9345908,
   "sharedImages": 11,
   "materialDefinitionsUnchanged": true,
   "allImageBytesIdentical": true,
@@ -10,5 +10,5 @@
   "completeTriangleMultisetIdentical": true,
   "hashRowBytes": 32,
   "hashedTriangleFields": "materialID + ordered 3 corners each POSITION/NORMAL/TEXCOORD_0 float32 raw bytes",
-  "canonicalTriangleMultisetSha256": "27a85b43ea25048a8781d1674e7e206818a3a9ade17b3c86bc3176ffc60a18ed"
+  "canonicalTriangleMultisetSha256": "230f6a56ee343fac78b5f8d402afbe812a4c124527f90a875b161535087ea636"
 }

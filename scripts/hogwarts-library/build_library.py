@@ -286,7 +286,7 @@ def pilaster_relief(x,z,base,height,width):
   for k in(-1,0,1):relief_leaf(OAK,(xx,base+height-.8,z+k*width*.22),.58,width*.18,-k*.18,'x' if face_side>0 else '-x',.07)
   rosette(EDGE,(xx,base+height+.075,z),.105,'x')
 
-def fluted_pier(x,z,base,height,width=.52):
+def fluted_pier(x,z,base,height,width=.52,passage_side=False):
  # Reference piers are solid square timber members with flat corner stiles and
  # a LIMITED inset fluted panel, below one tall flared corbel and a simple cap.
  # They are not bundles of full-face cylindrical reeds or stacked capitals.
@@ -308,7 +308,12 @@ def fluted_pier(x,z,base,height,width=.52):
   for (u,v),(uu,vv) in zip(contour,contour[1:]):
    quad(OAK,(x+u,shaft0,z+v),(x+uu,shaft0,z+vv),(x+uu,shaft1,z+vv),(x+u,shaft1,z+v),smooth=False)
  for yy,sz,hh in [(base+.10,width+.21,.20),(base+.245,width+.12,.085),(shaft0,width+.04,.085),(shaft1+.03,width+.10,.09)]:
-  box(OAK,(x,yy,z),(sz,hh,sz),.018)
+  # Rebate only the gallery passage side of the foot moulding; the shaft
+  # retains its broad square section and the other three faces keep their plinth.
+  if passage_side and yy<base+.4:
+   direction=1 if x>0 else -1
+   box(OAK,(x-direction*(sz-width)/4,yy,z),((sz+width)/2,hh,sz),.018)
+  else:box(OAK,(x,yy,z),(sz,hh,sz),.018)
  # A gently concave, broad timber corbel links the inset shaft to the roof rib.
  rings=[];capbase=shaft1+.075;capheight=base+height-.10-capbase
  for t,f in[(0,1.10),(.12,1.11),(.35,1.20),(.65,1.42),(.86,1.55),(1,1.58)]:
@@ -384,7 +389,7 @@ for z in (-15.5,-10.5,-5.5,-.5,4.5,9.5,14.5):box(OAK,(0,.03,z),(17.3,.05,.16))
 # Gallery slabs, with rectilinear safety clearance around both spiral apertures.
 MODULE='01_Gallery_floors'
 for side in (-1,1):
- slabs=[(11.9,3.3,6.2,29.4),(12.15,-13.5,5.7,4.2),(11.9,-16.8,6.2,2.4)]
+ slabs=[(11.9,3.3,6.2,29.4),(12.0,-13.5,6.0,4.2),(11.9,-16.8,6.2,2.4)]
  for k,(x,z,w,l) in enumerate(slabs):
   box(OAK,(side*x,5.97,z),(w,.46,l),.035);collision_box(f'gallery-{side}-{k}',(side*x,5.97,z),(w,.46,l))
  for z in (-16.8,16.8):
@@ -392,6 +397,10 @@ for side in (-1,1):
   if side==1:collision_box(f'crosswalk-{z}',(0,5.97,z),(17.6,.46,2.4))
  # Top landing extends from the radial exit into the rear crosswalk.
  box(OAK,(side*6.8,6.02,-15.675),(1.5,.36,1.35),.035);collision_box(f'stair-landing-{side}',(side*6.8,6.02,-15.675),(1.5,.36,1.35))
+ # Close the gap beside the final tread so the whole walking footprint has
+ # support; the infill stays on the gap side and does not bury earlier treads.
+ box(OAK,(side*7.175,6.02,-14.5),(.75,.36,1.0),.02)
+ collision_box(f'stair-exit-infill-{side}',(side*7.175,6.02,-14.5),(.75,.36,1.0))
 # Outer stone walls with actual tall window openings; wall segments never cover the glass.
 MODULE='02_Outer_walls'
 for side in(-1,1):
@@ -412,7 +421,9 @@ for side in(-1,1):
  for z in BOUNDS:
   MODULE=f'03_Pier_{side}_{z}'
   fluted_pier(side*5.8,z,0,3.95,.74);collision_box(f'lower-pier-{side}-{z}',(side*5.8,2.7,z),(.95,5.4,.95))
-  fluted_pier(side*5.8,z,6.22,7.40,.82);collision_box(f'upper-pier-{side}-{z}',(side*5.8,9.85,z),(1.04,7.3,1.04))
+  fluted_pier(side*5.8,z,6.22,7.40,.82,passage_side=True)
+  collision_box(f'upper-pier-{side}-{z}',(side*5.8,9.63,z),(.82,6.18,.82))
+  collision_box(f'upper-pier-foot-{side}-{z}',(side*5.7475,6.41,z),(.925,.38,1.03))
   if FULL:
    gallery_scholar((side*5.29,5.19,z),height=1.80,yaw=-side*math.pi/2,mat='Stone • carved pale scholar',variant=(BOUNDS.index(z)+(1 if side>0 else 0))%3)
    collision_box(f'lower-pier-niche-{side}-{z}',(side*5.29,6.06,z),(.57,1.9,.94))
@@ -447,7 +458,7 @@ for side in(-1,1):
  for z in BOUNDS:
   for level in(0,1):
    MODULE=f'05_Case_{"L" if side<0 else "R"}_{level}_{z}'
-   x0,x1=(6.45,11.4) if level==0 else(8.0,11.4);cx=side*(x0+x1)/2;width=x1-x0;base=.25 if level==0 else 6.45;pitch=.77 if level==0 else .88;top=base+6*pitch
+   x0,x1=(6.45,11.4) if level==0 else(8.10,11.58);cx=side*(x0+x1)/2;width=x1-x0;base=.25 if level==0 else 6.45;pitch=.77 if level==0 else .88;top=base+6*pitch
    box(DARK,(cx,(base+top)/2,z),(width,top-base+.12,.12));collision_box(f'case-back-{side}-{level}-{z}',(cx,(base+top)/2,z),(width,top-base+.15,.14))
    for r in range(7):
     y=base+r*pitch;box(OAK,(cx,y,z),(width,.105,.65),.018)
@@ -457,10 +468,10 @@ for side in(-1,1):
    for endx in(x0,x1):
     for j in range(48):
      u=-.30+j*.6/48;v=-.30+(j+1)*.6/48
-     a=side*(endx-.122+.02*math.sin(j*math.pi/8)**2);b=side*(endx-.122+.02*math.sin((j+1)*math.pi/8)**2)
+     a=side*(endx-(.070 if level==1 else .122)+.02*math.sin(j*math.pi/8)**2);b=side*(endx-(.070 if level==1 else .122)+.02*math.sin((j+1)*math.pi/8)**2)
      quad(OAK,(a,base+.12,z+u),(b,base+.12,z+v),(b,top-.1,z+v),(a,top-.1,z+u),smooth=True)
    # Shelf bays stay horizontally clear for the app's contiguous real-catalog run.
-   for yy,ww,dd in[(base-.13,width+.28,.83),(top+.18,width+.36,.83),(top+.33,width+.5,.92)]:box(OAK,(cx,yy,z),(ww,.16,dd),.018)
+   for yy,ww,dd in[(base-.13,width+(.17 if level==1 else .28),.83),(top+.18,width+.36,.83),(top+.33,width+.5,.92)]:box(OAK,(cx,yy,z),(ww,.16,dd),.018)
    cornice(OAK,(cx,top+.29,z),width+.24,'z',.73)
    for endx in(x0,x1):
     for zz in(-.405,.405):
@@ -475,12 +486,13 @@ for side in(-1,1):
 # edge meets the transverse real-catalog cabinet, with no floating screen gap.
 for side in(-1,1):
  for z in BOUNDS:
-  MODULE=f'06_Gothic_screen_{side}_{z}';cx=side*6.96
-  half=.76;spring=9.38;rise=1.43;crown=spring+rise
+  MODULE=f'06_Gothic_screen_{side}_{z}';cx=side*7.1125
+  half=.9025;spring=9.38;rise=1.43;crown=spring+rise
   # Broad solid side stiles tied into pier and cabinet rather than freestanding posts.
-  for sign in(-1,1):
-   box(OAK,(cx+sign*.905,8.00,z),(.31,3.56,.49),.025)
-   for yy in(6.40,9.38):box(OAK,(cx+sign*.905,yy,z),(.40,.13,.59),.018)
+  # The outer jamb is the actual cabinet stile: no duplicate upright inside
+  # the doorway. The inner jamb remains tied into the giant pier.
+  box(OAK,(side*6.055,8.00,z),(.31,3.56,.49),.025)
+  for yy in(6.40,9.38):box(OAK,(side*6.055,yy,z),(.31,.13,.59),.018)
   # Closed timber shoulders following a round arch (visible curved reference top).
   for k in range(40):
    a=k*math.pi/40;b=(k+1)*math.pi/40
@@ -490,7 +502,7 @@ for side in(-1,1):
   for facez in(-.32,.32):
    arch(EDGE,(cx,0,z+facez),half+.045,spring,rise,.035,.04,'z',40)
    # Paired lancet cusps remain above head height. Lower doorway stays clear.
-   for dx in(-.34,.34):carved_arch(cx+dx,z+facez,9.25,.33,9.73,10.38,.075,.12)
+   for dx in(-.4075,.4075):carved_arch(cx+dx,z+facez,9.25,.3975,9.73,10.38,.075,.12)
    for sg in(-1,1):relief_leaf(OAK,(cx+sg*.67,10.19,z+facez),.38,.12,-sg*.52,'z',.06)
   pierced_header(cx,z,10.92,12.16,2.13,11.40,.36,.49)
   for sign in(-1,1):
@@ -502,14 +514,14 @@ for side in(-1,1):
   cornice(OAK,(side*8.62,12.16,z),5.83,'z',.59)
   for zz in(-.20,.20):
    for xx in(8.1,9.2,10.3,11.3):panel_frame((side*xx,12.34,z+zz),.86,.23,'z',EDGE,.07)
-  for xx in(6.055,7.865):collision_box(f'screen-stile-{side}-{z}-{xx}',(side*xx,8.0,z),(.34,3.6,.52))
+  collision_box(f'screen-stile-{side}-{z}-6.055',(side*6.055,8.0,z),(.31,3.6,.52))
   collision_box(f'screen-header-{side}-{z}',(cx,11.48,z),(2.13,1.40,.5))
 # Complete all exposed floor edges. Stair aperture returns use the second,
 # turned-baluster railing type visible in the close foreground of S01/S03.
 MODULE='07_Gallery_railings'
 for side in(-1,1):
  rail_side(side*8.62,-11.4,15.6)
- turned_guard(f'aperture-{side}',[(side*8.62,-11.4),(side*9.13,-11.4),(side*9.13,-15.6),(side*7.55,-15.6)])
+ turned_guard(f'aperture-{side}',[(side*8.62,-11.4),(side*9.10,-11.4),(side*9.10,-15.6),(side*7.55,-15.6)])
 rail_end(-15.6,-6.05,6.05)
 rail_end(15.6,-8.62,-2.4);rail_end(15.6,2.4,8.62)
 # Reference fascia between lower arcade and gallery. All bays are connected.
@@ -715,7 +727,7 @@ for side in(-1,1):
   for p,q in zip(vs,vs[1:]+vs[:1]):quad(OAK,p,q,(q[0],q[1]-.12,q[2]),(p[0],p[1]-.12,p[2]))
   tube(EDGE,[(cx+ri*math.cos(a),yy-.015,cz+ri*math.sin(a)),(cx+ro*math.cos(a),yy-.015,cz+ro*math.sin(a))],.032,8)
   # Balusters on the outer margin; last exit sector left open.
-  if i<N-1:
+  if i<N-2:
    mid=(a+b)/2;bx=cx+1.94*math.cos(mid);bz=cz+1.94*math.sin(mid)
    lathe(OAK,(bx,yy,bz),[(0,.044),(.07,.046),(.1,.032),(.17,.031),(.22,.049),(.29,.065),(.35,.061),(.40,.04),(.50,.027),(.60,.03),(.68,.048),(.74,.055),(.8,.04),(.9,.025),(.97,.034),(1.05,.037)],12)
   mid=(a+b)/2
@@ -724,23 +736,39 @@ for side in(-1,1):
  for radius,yadd in[(1.98,1.05),(1.98,.25),(.36,.96)]:
   pts=[]
   for i in range(160):
-   t=i/159*(N-1)/N;a=start+direction*TAU*.95*t;pts.append((cx+radius*math.cos(a),.18+6.2*t+yadd,cz+radius*math.sin(a)))
+   t=i/159*(N-2)/N;a=start+direction*TAU*.95*t;pts.append((cx+radius*math.cos(a),.18+6.2*t+yadd,cz+radius*math.sin(a)))
 
   if yadd>1:sweep_profile(OAK,pts,(0,1,0),[(-.085,-.045),(.085,-.045),(.105,.02),(.078,.072),(0,.09),(-.078,.072),(-.105,.02)])
   else:tube(IRON,pts,.028,8)
  # Solid profiled outer helical stringer and raised edge beads.
  helix=[]
  for i in range(129):
-  t=i/128;a=start+direction*TAU*.95*t;helix.append((cx+1.95*math.cos(a),6.2*t,cz+1.95*math.sin(a)))
+  t=i/128;a=start+direction*TAU*.95*t
+  # Taper the raised outer stringer into the final radial exit instead of
+  # leaving a 20 cm timber lip across the flush landing route.
+  exit_t=max(0,min(1,(t-(N-2)/N)/(2/N)));lower=.20*exit_t*exit_t*(3-2*exit_t)
+  helix.append((cx+1.95*math.cos(a),6.2*t-lower,cz+1.95*math.sin(a)))
  sweep_profile(OAK,helix,(0,1,0),[(-.07,-.21),(.07,-.21),(.09,-.15),(.085,.13),(.06,.2),(-.06,.2),(-.085,.13),(-.09,-.15)])
  for off in(-.16,.14):tube(EDGE,[(x,y+off,z) for x,y,z in helix],.024,6)
  lathe(OAK,(cx,0,cz),[(0,.38),(.2,.42),(.4,.3),(6.4,.28),(6.6,.37),(6.78,.18),(6.95,.0)],20)
  COLLISIONS.append({'id':f'stair-center-{side}','shape':'cylinder','center':{'x':cx,'y':3.3,'z':cz},'radius':.4,'height':6.6})
  # Only the final stair-access edge is open; lateral landing edges are guarded.
  for edge,x in enumerate((cx-.75,cx+.75)):
-  turned_guard(f'landing-{side}-{edge}',[(x,-15.6),(x,-15.0)])
- COLLISIONS.append({'id':f'stair-outer-guard-{side}','shape':'arc','center':{'x':cx,'y':3.4,'z':cz},'radius':1.99,'radialDepth':.16,'height':6.8,'startAngle':min(start,end-direction*TAU*.95/N),'endAngle':max(start,end-direction*TAU*.95/N),'segments':48})
- ROUTES['left' if side<0 else 'right']={'center':{'x':cx,'y':0,'z':cz},'outerRadius':2.,'innerRadius':.31,'rise':6.2,'turns':.95,'direction':direction,'startAngle':start,'endAngle':end,'steps':N,'route':[{'x':steps[0]['x'],'y':0,'z':steps[0]['z']}]+steps+[{'x':cx,'y':6.2,'z':-15.25},{'x':cx,'y':6.2,'z':-16.25}], 'aperture':{'xMin':cx-2.1,'xMax':cx+2.1,'zMin':-15.6,'zMax':-11.4},'landing':{'center':{'x':cx,'y':6.2,'z':-15.675},'size':{'x':1.5,'z':1.35}}}
+  gap_side=(x-cx)*side>0
+  turned_guard(f'landing-{side}-{edge}',[(x,-15.6),(x,-14.0 if gap_side else -15.0)])
+ turned_guard(f'landing-infill-{side}',[(cx+side*.75,-14.0),(cx,-14.0)])
+ # Every guard follows its own tread elevation; a full-height cylinder
+ # invents a wall at the upper exit and does not describe the helical model.
+ for i in range(N-2):
+  a=start+direction*TAU*.95*i/N;b=start+direction*TAU*.95*(i+1)/N;yy=6.2*(i+1)/N
+  COLLISIONS.append({'id':f'stair-outer-guard-{side}-{i}','shape':'arc','center':{'x':cx,'y':yy+.58,'z':cz},'radius':1.98,'radialDepth':.21,'height':1.16,'startAngle':min(a,b),'endAngle':max(a,b),'segments':2})
+ # Finish the helical handrail on the adjacent landing terminal post.
+ t=(N-2)/N;a=start+direction*TAU*.95*t
+ helix_rail_end=(cx+1.98*math.cos(a),.18+6.2*t+1.05,cz+1.98*math.sin(a))
+ terminal=(cx-side*.75,7.36,-15.6)
+ connector=[tuple(helix_rail_end[j]*(1-u)+terminal[j]*u for j in range(3)) for u in(0,.25,.5,.75,1)]
+ sweep_profile(OAK,connector,(0,1,0),[(-.085,-.045),(.085,-.045),(.105,.02),(.078,.072),(0,.09),(-.078,.072),(-.105,.02)])
+ ROUTES['left' if side<0 else 'right']={'center':{'x':cx,'y':0,'z':cz},'outerRadius':2.,'innerRadius':.31,'rise':6.2,'turns':.95,'direction':direction,'startAngle':start,'endAngle':end,'steps':N,'route':[{'x':cx-side*.16,'y':0,'z':cz-1.05},{'x':steps[0]['x'],'y':0,'z':steps[0]['z']}]+steps+[{'x':cx,'y':6.2,'z':-15.25},{'x':cx,'y':6.2,'z':-16.25}], 'aperture':{'xMin':cx-2.1,'xMax':cx+2.1,'zMin':-15.6,'zMax':-11.4},'landing':{'center':{'x':cx,'y':6.2,'z':-15.675},'size':{'x':1.5,'z':1.35}}}
 # Reading furniture and useful visual props. No books, writing paper, people or duplicate catalog objects.
 MODULE='13_Reading_furniture'
 def lamp(x,y,z):
@@ -931,6 +959,8 @@ for c in COLLISIONS:
   c['center']['x']+=3 if c['center']['x']>0 else -3
 for c in COLLISIONS:
  if c['id'].startswith('chandelier-body-') and c['center']['x']!=0:c['center']['x']+=3 if c['center']['x']>0 else -3
+# Final-coordinate shells remain tied to the profiles above.
+exec(compile((SRC/'walk_clearance_colliders.fragment').read_text(),str(SRC/'walk_clearance_colliders.fragment'),'exec'))
 # Regression guard on actual generated vertices, before material batching.
 fixture_modules={module for module,mat in BUILD if module.startswith('16_Chandelier_')}
 small_fixture_tops=[];main_fixture_tops=[]
@@ -1053,7 +1083,7 @@ for name,(pos,target,lens) in camera_defs.items():
  data=bpy.data.cameras.new(name);data.lens=lens;data.clip_start=.05;data.clip_end=250;ob=bpy.data.objects.new(name,data);camcol.objects.link(ob);ob.location=V(pos);ob.rotation_euler=(Vector(V(target))-ob.location).to_track_quat('-Z','Y').to_euler();CAMERAS[name]={'position':dict(zip('xyz',pos)),'target':dict(zip('xyz',target)),'lensMm':lens,'sensorWidthMm':36,'approximateMatch':True}
 scene.camera=bpy.data.objects['ground-to-a']
 # Data contract is independent from the display mesh and measured nowhere.
-config={'revision':'round3-reference-geometry-repair','version':1,'coordinateSystem':'Three.js x width, y up, z length; meters are project scale estimates','source':'User-supplied Hogwarts Legacy screenshots, S01–S09; 5 unique original 2048×1152 PNGs plus PDF previews','dimensions':{'width':30,'length':36,'groundY':0,'galleryY':6.2,'outerWallX':15,'centralVoidX':8.8,'vaultSpringY':13.8,'vaultCrownY':18.7,'endA':-18,'endB':18},'bays':BAYS,'boundaries':BOUNDS,'shelves':{'lower':{'xMin':9.45,'xMax':14.4,'baseY':.25,'pitch':.77,'rows':6},'upper':{'xMin':11,'xMax':14.4,'baseY':6.45,'pitch':.88,'rows':6},'depth':.65,'frontOffset':.37,'boardThickness':.105,'backThickness':.12,'omittedCases':[]},'stairs':ROUTES,'collisions':COLLISIONS,'cameras':CAMERAS,'previewLighting':{'engine':'Cycles CPU','threads':2,'samples':args.samples,'viewTransform':'AgX','look':'Medium High Contrast','exposure':.6,'note':'Area lights and world are preview-only, not included in GLB. Browser lighting must be configured independently.'},'estimates':['All dimensions and counts, including six bays, are adjustable project-scale estimates, not a survey.','Upper transverse-case orientation and inner-gallery passage remain an interpretation of partial views.','Spiral turns, tread count, handedness and landing apertures are circulation adaptations pending close views.','End B room depth and polygon balcony angles are estimates.','The A-end canvas uses a newly generated painterly interpretation of the supplied portrait, not extracted game artwork or a verified character likeness; the pale gallery figures are original modeled scholarly sculptures, not verified character likenesses.','Window count and glass, inaccessible rear chambers, joinery details and full ornament profiles are not observed completely.'],'omissions':['No anonymous filler books; shelves are reserved for real catalog objects.','No screenshots applied as architectural planes, logos, NPCs, stationery or filler catalog books. Books held by sculptures are part of the stone relief only.','No claimed baked lighting, target-computer frame rate or surveyed accuracy.','Exact sculptural likeness, game-specific heraldry and unseen carvings are not reproduced.']}
+config={'revision':'20261009-walk-clearance-r4','version':1,'coordinateSystem':'Three.js x width, y up, z length; meters are project scale estimates','source':'User-supplied Hogwarts Legacy screenshots, S01–S09; 5 unique original 2048×1152 PNGs plus PDF previews','dimensions':{'width':30,'length':36,'groundY':0,'galleryY':6.2,'outerWallX':15,'centralVoidX':8.8,'vaultSpringY':13.8,'vaultCrownY':18.7,'endA':-18,'endB':18},'bays':BAYS,'boundaries':BOUNDS,'shelves':{'lower':{'xMin':9.45,'xMax':14.4,'baseY':.25,'pitch':.77,'rows':6},'upper':{'xMin':11.10,'xMax':14.58,'baseY':6.45,'pitch':.88,'rows':6},'depth':.65,'frontOffset':.37,'boardThickness':.105,'backThickness':.12,'omittedCases':[]},'stairs':ROUTES,'collisions':COLLISIONS,'cameras':CAMERAS,'previewLighting':{'engine':'Cycles CPU','threads':2,'samples':args.samples,'viewTransform':'AgX','look':'Medium High Contrast','exposure':.6,'note':'Area lights and world are preview-only, not included in GLB. Browser lighting must be configured independently.'},'estimates':['All dimensions and counts, including six bays, are adjustable project-scale estimates, not a survey.','Upper transverse-case orientation and inner-gallery passage remain an interpretation of partial views.','Spiral turns, tread count, handedness and landing apertures are circulation adaptations pending close views.','End B room depth and polygon balcony angles are estimates.','The A-end canvas uses a newly generated painterly interpretation of the supplied portrait, not extracted game artwork or a verified character likeness; the pale gallery figures are original modeled scholarly sculptures, not verified character likenesses.','Window count and glass, inaccessible rear chambers, joinery details and full ornament profiles are not observed completely.'],'omissions':['No anonymous filler books; shelves are reserved for real catalog objects.','No screenshots applied as architectural planes, logos, NPCs, stationery or filler catalog books. Books held by sculptures are part of the stone relief only.','No claimed baked lighting, target-computer frame rate or surveyed accuracy.','Exact sculptural likeness, game-specific heraldry and unseen carvings are not reproduced.']}
 config['scaleNote']=config['coordinateSystem']
 config['colliders']=config.pop('collisions')
 config['stairRoutes']={side:data['route'] for side,data in ROUTES.items()}

@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { readFileSync } from 'node:fs';
 import { getReferenceShelfFocusFov, getReferenceShelfFrame } from './reference-library-focus';
 import { collectCameraColliders, markCameraCollider, resolveCameraCollision } from './virtual-library-collision';
-import { createReferenceCatalogAnchors, type ReferenceSceneConfig } from './virtual-library-model/scene/referenceLibrary';
+import { createReferenceCatalogAnchors, referenceCameraColliderDescriptors, type ReferenceSceneConfig } from './virtual-library-model/scene/referenceLibrary';
 import { REFERENCE_LIBRARY as R } from './virtual-library-model/hogwartsLibraryLayout';
 
 it('uses the correct elevation and face for every shelf frame', () => {
@@ -19,7 +19,7 @@ it('uses the correct elevation and face for every shelf frame', () => {
 it('keeps all 56 focused cases inside desktop and portrait frames after wall collision', () => {
   const config: ReferenceSceneConfig = JSON.parse(readFileSync('public/assets/hogwarts-library/scene-config.json', 'utf8'));
   const root = new THREE.Group();
-  config.colliders.forEach(collider => markCameraCollider(root, collider));
+  referenceCameraColliderDescriptors(config).forEach(collider => markCameraCollider(root, collider));
   const colliders = collectCameraColliders(root, 'hall');
   for (const aspect of [16 / 9, 9 / 16]) for (const section of createReferenceCatalogAnchors().shelfSections) {
     const info = {...section, targetY: section.baseY + section.height / 2};
@@ -40,6 +40,14 @@ it('keeps all 56 focused cases inside desktop and portrait frames after wall col
     camera.updateProjectionMatrix();
     expect(camera.fov).toBeGreaterThan(0);
     expect(camera.fov).toBeLessThan(150);
+    // A correct eye position is insufficient if its near-plane corners clip
+    // through the wall. Check all corners after the focus FOV adjustment.
+    camera.updateMatrixWorld(true);
+    for (const x of [-1, 1]) for (const y of [-1, 1]) {
+      const corner = new THREE.Vector3(x, y, -1).unproject(camera);
+      const safeCorner = resolveCameraCollision(corner, corner, colliders, 0);
+      expect(Math.hypot(safeCorner.x - corner.x, safeCorner.y - corner.y, safeCorner.z - corner.z)).toBeLessThan(0.000001);
+    }
     for (const corner of getReferenceShelfFrame(info)) {
       const projected = corner.project(camera);
       expect(Math.abs(projected.x)).toBeLessThanOrEqual(1 / 1.12 + 0.00001);

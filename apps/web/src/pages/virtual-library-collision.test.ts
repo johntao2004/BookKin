@@ -268,3 +268,49 @@ describe("virtual library camera collision", () => {
     });
   });
 });
+
+describe('upright visitor clearance and boundary motion', () => {
+  const body = {horizontal: 0.3, above: 0.3, below: 1.53};
+  it('blocks body-height furniture below the eye while retaining overhead clearance', () => {
+    const desk = {...hallBox, id: 'desk', y: 0.6, halfY: 0.6};
+    const start = {x: -2, y: 1.78, z: 0};
+    expect(resolveCameraCollision(start, {...start, x: 2}, [desk]).blocked).toBe(false);
+    const safe = resolveCameraCollision(start, {...start, x: 2}, [desk], body);
+    expect(safe.x).toBeLessThanOrEqual(-0.8);
+    // Flight remains available once the entire body clears the obstacle.
+    const high = {...start, y: 3};
+    expect(resolveCameraCollision(high, {...high, x: 2}, [desk], body).x).toBe(2);
+    const ceiling = {...hallBox, id: 'ceiling', y: 3, halfY: 0.1, halfX: 8, halfZ: 8};
+    const up = resolveCameraCollision({x: 0, y: 1.78, z: 0}, {x: 0, y: 5, z: 0}, [ceiling], body);
+    expect(up.y).toBeLessThanOrEqual(2.6);
+  });
+
+  it('sweeps tall-body contact at rotated thin barriers at high speed and diagonally', () => {
+    for (const rotationY of [0, Math.PI / 6, Math.PI / 2, -Math.PI / 3]) {
+      const rail = {...hallBox, id: 'rail', y: 0.65, halfY: 0.65, halfX: 8, halfZ: 0.025, rotationY};
+      const local = (x: number, z: number) => ({x: Math.cos(rotationY) * x + Math.sin(rotationY) * z,
+        y: 1.78, z: -Math.sin(rotationY) * x + Math.cos(rotationY) * z});
+      for (const distance of [0.5, 5, 50]) {
+        const safe = resolveCameraCollision(local(-1, distance), local(1, -distance), [rail], body);
+        const localZ = Math.sin(rotationY) * safe.x + Math.cos(rotationY) * safe.z;
+        expect(safe.blockedBy).toBe('rail');
+        expect(localZ).toBeGreaterThanOrEqual(0.325 - 0.000001);
+      }
+    }
+  });
+
+  it('allows exact cylinder contact to separate or slide without adding unwanted motion', () => {
+    const column: CylinderCameraCollider = {id: 'column', room: 'hall', shape: 'cylinder', x: 0, z: 0,
+      radius: 0.5, minY: 0, maxY: 4};
+    const start = {x: 0.8, y: 2, z: 0};
+    const away = resolveCameraCollision(start, {...start, x: 2}, [column]);
+    expect(away.blocked).toBe(false);
+    expect(away.x).toBe(2);
+    const tangent = resolveCameraCollision(start, {...start, z: 2}, [column]);
+    expect(tangent.blocked).toBe(false);
+    expect(tangent.x).toBe(0.8);
+    expect(tangent.z).toBe(2);
+    const inward = resolveCameraCollision(start, {...start, x: -2}, [column]);
+    expect(inward.x).toBeGreaterThanOrEqual(0.8);
+  });
+});

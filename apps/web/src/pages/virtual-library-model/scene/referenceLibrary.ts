@@ -44,7 +44,8 @@ export function createReferenceCatalogAnchors() {
   for (const level of [0, 1]) for (const side of [-1, 1]) {
     for (const [bay, z] of REFERENCE_BAY_BOUNDARIES.entries()) for (const face of [1, -1] as const) {
       const inner = level === 0 ? R.lowerCaseInnerX : R.upperCaseInnerX;
-      const width = R.caseOuterX - inner;
+      const outer = level === 0 ? R.caseOuterX : R.upperCaseOuterX;
+      const width = outer - inner;
       const centerX = side * (inner + width / 2);
       const id = shelfSections.length;
       const baseY = level === 0 ? 0 : R.galleryY;
@@ -76,6 +77,14 @@ export function createReferenceCatalogAnchors() {
     }
   }
   return {shelfSections, catalogSlots};
+}
+
+/** The catalog cases contain boards and books in front of their thin back panel.
+ * Keep the full occupied cabinet core solid, without widening either aisle. */
+export function referenceCameraColliderDescriptors(config: ReferenceSceneConfig) {
+  return config.colliders.map(collider => collider.shape === 'box' && collider.id.startsWith('case-back-')
+    ? {...collider, size: {...collider.size, z: Math.max(collider.size.z, R.shelfFrontOffset * 2)}}
+    : collider);
 }
 
 /** Reject malformed generated config rather than installing broken collision. */
@@ -165,7 +174,7 @@ export async function buildReferenceLibraryProgressively(
   root.add(architecture);
   let streaming: ReferenceLibraryStreaming | undefined;
   try {
-    for (const collider of config.colliders) markCameraCollider(root, collider);
+    for (const collider of referenceCameraColliderDescriptors(config)) markCameraCollider(root, collider);
     const materials = createReferenceMaterials();
     root.userData.disposableCatalogResources = {geometries: [], materials: Object.values(materials)};
     const catalogTerminal = new THREE.Group();

@@ -69,7 +69,7 @@ assert hi[1]>=18.7 and hi[1]<20
 config=json.loads((assets/'scene-config.json').read_text())
 assert config['dimensions']['width']==30 and config['dimensions']['length']==36
 assert config['dimensions']['galleryY']==6.2 and config['dimensions']['vaultCrownY']==18.7
-assert config['shelves']['lower']['xMin']==9.45 and config['shelves']['upper']['xMin']==11
+assert config['shelves']['lower']['xMin']==9.45 and config['shelves']['upper']['xMin']==11.10 and config['shelves']['upper']['xMax']==14.58
 assert config['shelves']['lower']['baseY']==.25
 assert config['shelves']['upper']['baseY']==6.45
 assert config['shelves']['boardThickness']==.105

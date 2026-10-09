@@ -1,0 +1,37 @@
+# Tight, model-derived flight shells for the actual carved doorway profiles.
+# These are authored in final Three.js coordinates, after the width translation.
+# Ordinary gallery walking remains below all tracery (lowest carving is 9.21).
+def clearance_profile_box(name, points, depth, pad=.04):
+ lo=[min(p[k] for p in points) for k in range(3)]
+ hi=[max(p[k] for p in points) for k in range(3)]
+ collision_box(name,tuple((a+b)/2 for a,b in zip(lo,hi)),
+               (max(.01,hi[0]-lo[0]+2*pad),max(.01,hi[1]-lo[1]+2*pad),depth))
+for side in (-1,1):
+ for z in BOUNDS:
+  cx=side*10.1125
+  # Ten short strips cover the actual closed shoulders of the large arch.
+  for i in range(10):
+   a=i*math.pi/10;b=(i+1)*math.pi/10
+   points=[(cx+.9025*math.cos(t),9.38+1.43*math.sin(t),z) for t in(a,b)]
+   points += [(p[0],10.94,z) for p in points]
+   clearance_profile_box(f'door-shoulder-{side}-{z}-{i}',points,.72,.02)
+  # Both decorative faces share the same closed timber partition depth.
+  for lancet,dx in enumerate((-.4075,.4075)):
+   lx=cx+dx;half=.3975
+   for edge in (-1,1):
+    stem=[(lx+edge*half,9.25,z),(lx+edge*half,9.73,z)]
+    clearance_profile_box(f'door-tracery-stem-{side}-{z}-{lancet}-{edge}',stem,.80)
+    points=[(lx+edge*half*(1-(k/6)**2),9.73+.65*k/6,z) for k in range(7)]
+    for k,(a,b) in enumerate(zip(points,points[1:])):
+     clearance_profile_box(f'door-tracery-curve-{side}-{z}-{lancet}-{edge}-{k}',[a,b],.80)
+ # Lower solid arcade spandrels were visible but previously had no shell.
+ for z in BAYS:
+  for i in range(14):
+   a=i*math.pi/14;b=(i+1)*math.pi/14
+   zz=[z+2.15*math.cos(t) for t in(a,b)]
+   yy=min(3.9+1.51*math.sin(t) for t in(a,b))
+   collision_box(f'lower-arcade-shoulder-{side}-{z}-{i}',
+                 (side*8.8,(yy+5.84)/2,sum(zz)/2),(.94,5.84-yy,abs(zz[1]-zz[0])+.02))
+for z in (-8,1,10):
+ COLLISIONS.append({'id':f'chandelier-suspension-{z}','shape':'cylinder',
+  'center':{'x':0,'y':(15.675+18.58)/2,'z':z},'radius':.035,'height':18.58-15.675})

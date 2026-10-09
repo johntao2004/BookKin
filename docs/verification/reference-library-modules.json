@@ -1,22 +1,22 @@
 {
-  "sourceBytes": 91057412,
-  "sourceSha256": "0cc0db68263287c3bd3f6f30c8f7a58e4c32da8e279912674d5219323ee87a75",
+  "sourceBytes": 91106260,
+  "sourceSha256": "7a892bba063d3ceef2f009233c1956662914c1f1f790b98b7701415b83513aef",
   "modules": [
     {
       "name": "a-end",
-      "fileBytes": 2973944,
-      "sha256": "97cbd0b01301af5efbf11492fc908888f36862e3c51af255b608b8b820d8473c",
-      "triangles": 100809,
+      "fileBytes": 2973808,
+      "sha256": "190446e1eef29de141691c7d7da0dca39179e04805d9c06c51fdd388d70ae9b4",
+      "triangles": 100749,
       "primitives": 10,
-      "decodedGeometryBytes": 5723668,
+      "decodedGeometryBytes": 5722620,
       "bounds": {
         "min": [
-          -14.6850004196167,
+          -14.831999778747559,
           0.017999999225139618,
           -18.062000274658203
         ],
         "max": [
-          14.6850004196167,
+          14.831999778747559,
           13.880000114440918,
           -15.191200256347656
         ]
@@ -36,19 +36,19 @@
     },
     {
       "name": "b-end",
-      "fileBytes": 2080796,
-      "sha256": "455b851dcd7bc502d55de064ea1647b32e393b2c670f3f83dd8b9d5298f36a95",
-      "triangles": 71894,
+      "fileBytes": 2081096,
+      "sha256": "5bc0da936dc626a10a82059815f89a1713fa34082693e68a5b4afbad1a65811b",
+      "triangles": 71852,
       "primitives": 4,
-      "decodedGeometryBytes": 3943084,
+      "decodedGeometryBytes": 3941716,
       "bounds": {
         "min": [
-          -14.6850004196167,
+          -14.831999778747559,
           0.017999999225139618,
           14.5
         ],
         "max": [
-          14.6850004196167,
+          14.831999778747559,
           17.43000030517578,
           18.019500732421875
         ]
@@ -145,11 +145,11 @@
     },
     {
       "name": "core",
-      "fileBytes": 9315084,
-      "sha256": "91d45477f4bafc35186cabbc31d969f62d2708d372ce9cddffef567ee045ca6d",
-      "triangles": 356858,
+      "fileBytes": 9345908,
+      "sha256": "034b2c2536e94ab5fcc82974369e36f94666fcd11ba239a7cf586fb749b4809d",
+      "triangles": 357598,
       "primitives": 17,
-      "decodedGeometryBytes": 17310050,
+      "decodedGeometryBytes": 17395776,
       "bounds": {
         "min": [
           -15.300000190734863,
@@ -210,11 +210,11 @@
     },
     {
       "name": "sector-left-0",
-      "fileBytes": 5276952,
-      "sha256": "8cd86ff2b6d179582397168d968af4109f18629669e077ddd1cd9949709e10af",
-      "triangles": 190330,
+      "fileBytes": 5302060,
+      "sha256": "d61f3ccec80b34b0b69371c30345c55425c5c10bc047a659171b0f9ff9d26c0b",
+      "triangles": 191752,
       "primitives": 14,
-      "decodedGeometryBytes": 10156668,
+      "decodedGeometryBytes": 10200988,
       "bounds": {
         "min": [
           -14.989999771118164,
@@ -246,11 +246,11 @@
     },
     {
       "name": "sector-left-1",
-      "fileBytes": 4134148,
-      "sha256": "298056548629ab1f748d644696d2a9439d689af8d990868bbd7c34a6e442f088",
-      "triangles": 137889,
+      "fileBytes": 4121180,
+      "sha256": "cc24021b50b4c43ec450dbb3e262f8291ebedb1362b45246c77254c79916778e",
+      "triangles": 137465,
       "primitives": 15,
-      "decodedGeometryBytes": 7287302,
+      "decodedGeometryBytes": 7255254,
       "bounds": {
         "min": [
           -14.989999771118164,
@@ -283,11 +283,11 @@
     },
     {
       "name": "sector-left-2",
-      "fileBytes": 4417464,
-      "sha256": "5bd43b473a00b08936fedcdb2ab41e4ec707324cab5ffd814f45fb0dd5f31bb2",
-      "triangles": 150321,
+      "fileBytes": 4404588,
+      "sha256": "f1315607bc64d5a49e8292e1b8ce98fb1aabf7cd475f269eaf88c1388e9ef5a2",
+      "triangles": 149818,
       "primitives": 15,
-      "decodedGeometryBytes": 7963718,
+      "decodedGeometryBytes": 7930140,
       "bounds": {
         "min": [
           -14.989999771118164,
@@ -320,11 +320,11 @@
     },
     {
       "name": "sector-right-0",
-      "fileBytes": 5183220,
-      "sha256": "ea905048792afcdec439663a5988a996b26df0ed353bfe39ff9009e0dda44b95",
-      "triangles": 186451,
+      "fileBytes": 5208628,
+      "sha256": "266e95e87d7139c1b0c8497eb5d73969573b305dd91ab2f6e5c02d131566591c",
+      "triangles": 187873,
       "primitives": 14,
-      "decodedGeometryBytes": 9969026,
+      "decodedGeometryBytes": 10013596,
       "bounds": {
         "min": [
           2.790273427963257,
@@ -356,11 +356,11 @@
     },
     {
       "name": "sector-right-1",
-      "fileBytes": 4081244,
-      "sha256": "ef4dbc314bf23311bf2bea82bbdf1188f1978fdcf341dff2e0f6540043548a85",
-      "triangles": 136526,
+      "fileBytes": 4068136,
+      "sha256": "81cd4920c6265cd3d34e72dd736d584f2853d3a055d64f988f5078a9a89e3591",
+      "triangles": 136102,
       "primitives": 15,
-      "decodedGeometryBytes": 7237460,
+      "decodedGeometryBytes": 7205796,
       "bounds": {
         "min": [
           7.907323837280273,
@@ -393,11 +393,11 @@
     },
     {
       "name": "sector-right-2",
-      "fileBytes": 4312744,
-      "sha256": "17371693d75fdf0a302bddf561a211ed0be9865749af88518b11bd0b6fc6a70e",
-      "triangles": 148314,
+      "fileBytes": 4300476,
+      "sha256": "a907e06cc4c2c9f82f64aae7ae79c5911759635d3cf4902cdbd72b3128fb9315",
+      "triangles": 147811,
       "primitives": 15,
-      "decodedGeometryBytes": 7859452,
+      "decodedGeometryBytes": 7825650,
       "bounds": {
         "min": [
           7.907323837280273,
@@ -510,10 +510,10 @@
   ],
   "totals": {
     "modules": 13,
-    "triangles": 1552983,
-    "moduleBytes": 43684648,
+    "triangles": 1554611,
+    "moduleBytes": 43714932,
     "texturesBytes": 6410857,
-    "decodedGeometryBytes": 80499590,
+    "decodedGeometryBytes": 80540698,
     "primitives": 140
   }
 }

@@ -111,7 +111,7 @@ describe('reference-library architecture integration', () => {
     expect(new Set(shelfSections.map(section => section.baseY))).toEqual(new Set([0, R.galleryY]));
     expect(R).toMatchObject({width: 30, length: 36, height: 18.7, galleryY: 6.2});
     expect(shelfSections[0].width).toBeCloseTo(4.95);
-    expect(shelfSections[28].width).toBeCloseTo(3.4);
+    expect(shelfSections[28].width).toBeCloseTo(3.48);
     expect(catalogSlots.some(slot => slot.position.y > R.galleryY)).toBe(true);
     for (const section of shelfSections) {
       expect(section.plaquePlacement).toBe('shelf-front');
@@ -121,6 +121,10 @@ describe('reference-library architecture integration', () => {
 
   it('rests real books on the Blender shelf-board contract with headroom', () => {
     const actual = JSON.parse(readFileSync('public/assets/hogwarts-library/scene-config.json', 'utf8'));
+    expect(actual.shelves.lower.xMin).toBe(R.lowerCaseInnerX);
+    expect(actual.shelves.lower.xMax).toBe(R.caseOuterX);
+    expect(actual.shelves.upper.xMin).toBe(R.upperCaseInnerX);
+    expect(actual.shelves.upper.xMax).toBe(R.upperCaseOuterX);
     expect(actual.shelves.boardThickness).toBe(R.shelfBoardThickness);
     expect(actual.shelves.backThickness).toBe(R.shelfBackThickness);
     expect(actual.shelves.lower.baseY).toBe(R.lowerShelfBase);

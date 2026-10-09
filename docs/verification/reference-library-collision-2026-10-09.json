@@ -1,0 +1,21 @@
+{
+  "revision": "20261009-walk-clearance-r4",
+  "evidence": "CPU geometry/collision regression; not browser or GPU acceptance",
+  "body": {
+    "horizontal": 0.3,
+    "above": 0.3,
+    "below": 1.53
+  },
+  "eyeHeight": 1.78,
+  "descriptorCount": 1132,
+  "runtimeColliderCount": 1192,
+  "maximumStairDrift": 0,
+  "maximumOffsetStairDrift": 0,
+  "maximumClearGalleryDrift": 0,
+  "helicalGuardRadialSamples": 300,
+  "renderedTwentyBookWidth": 3.2691071976423256,
+  "twentyBookTargetWidth": 3.276,
+  "minimumRenderedBookStileClearance": 0.01499520194530568,
+  "minimumBookTargetStileClearance": 0.012000000000000455,
+  "largeDiagonalFlightSteps": 160
+}

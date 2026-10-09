@@ -12,7 +12,8 @@ export const REFERENCE_LIBRARY = {
   lowerCaseHeight: 5,
   upperCaseHeight: 5.7,
   lowerCaseInnerX: 9.45,
-  upperCaseInnerX: 11,
+  upperCaseInnerX: 11.1,
+  upperCaseOuterX: 14.58,
   caseOuterX: 14.4,
   caseDepth: 0.65,
   shelfFrontOffset: 0.37,
@@ -30,8 +31,8 @@ export const REFERENCE_LIBRARY = {
   sideVaultRadius: 2.45,
   camera: { targetY: 4.2, targetZ: -3.5, radius: 19, pitch: -0.1277 },
   book: { spineWidth: 0.16, height: 0.48, coverWidth: 0.30 },
-  manifestUrl: '/assets/hogwarts-library/library-manifest.json?v=20261008-reference-modules-r3',
-  configUrl: '/assets/hogwarts-library/scene-config.json?v=20261008-reference-modules-r3',
+  manifestUrl: '/assets/hogwarts-library/library-manifest.json?v=20261009-walk-clearance-r4',
+  configUrl: '/assets/hogwarts-library/scene-config.json?v=20261009-walk-clearance-r4',
 } as const;
 
 export const REFERENCE_BAY_BOUNDARIES = [-15, -10, -5, 0, 5, 10, 15] as const;

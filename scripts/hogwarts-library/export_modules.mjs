@@ -91,7 +91,8 @@ for(const part of parts.values()){
  await fs.writeFile(path.join(OUT,'modules',`${part.name}.glb`),result);
  const materialIds=[...new Set(part.primitives.map(p=>p.material))];inventory.push({name:part.name,fileBytes:result.length,sha256:sha(result),triangles:part.sourceTriangles,primitives:part.primitives.length,decodedGeometryBytes:decoded,bounds:{min:part.min,max:part.max},materialIds});
 }
-assert.equal(inventory.reduce((s,p)=>s+p.triangles,0),1552983);
+const sourceTriangles=original.meshes.reduce((sum,mesh)=>sum+mesh.primitives.reduce((n,p)=>n+original.accessors[p.indices].count/3,0),0);
+assert.equal(inventory.reduce((s,p)=>s+p.triangles,0),sourceTriangles);
 const report={sourceBytes:source.length,sourceSha256:sha(source),modules:inventory.sort((a,b)=>a.name.localeCompare(b.name)),textures,totals:{modules:inventory.length,triangles:total,moduleBytes:inventory.reduce((s,p)=>s+p.fileBytes,0),texturesBytes:textures.reduce((s,p)=>s+p.bytes,0),decodedGeometryBytes:inventory.reduce((s,p)=>s+p.decodedGeometryBytes,0),primitives:inventory.reduce((s,p)=>s+p.primitives,0)}};
 await fs.writeFile(path.join(ROOT,'docs/verification/reference-library-modules.json'),JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify(report.totals));console.log(JSON.stringify(inventory.sort((a,b)=>b.fileBytes-a.fileBytes).slice(0,10).map(({name,fileBytes,triangles,primitives})=>({name,fileBytes,triangles,primitives})),null,2));
 
@@ -102,7 +103,7 @@ const bankBytes=Buffer.from(JSON.stringify(bank));await fs.writeFile(path.join(O
 const startup=new Set(['core','a-end','sector-left-2','sector-right-2','globe','central-furniture-north','central-furniture-south','central-lighting']);
 const materialCapacityLimits=original.materials.map((m,id)=>({name:m.name,vertices:0,indices:0}));
 for(const part of parts.values())for(const p of part.primitives){materialCapacityLimits[p.material].vertices+=p.attributes.POSITION.count;materialCapacityLimits[p.material].indices+=p.indices.length;}
-const manifest={materialCapacityLimits,version:1,revision:'20261008-reference-modules-r3',
+const manifest={materialCapacityLimits,version:1,revision:'20261009-walk-clearance-r4',
  source:{sha256:report.sourceSha256,bytes:report.sourceBytes,triangles:total},
  materialsUrl:`/assets/hogwarts-library/materials.gltf?v=${sha(bankBytes).slice(0,16)}`,
  chunks:inventory.map(m=>({id:m.name,url:`/assets/hogwarts-library/modules/${m.name}.glb?v=${m.sha256.slice(0,16)}`,
