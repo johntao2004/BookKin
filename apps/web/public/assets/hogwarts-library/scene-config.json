@@ -3759,20 +3759,20 @@
     }
   ],
   "lighting": {
-    "exposure": 0.82,
+    "exposure": 0.88,
     "hemisphere": {
-      "sky": "#4a3428",
-      "ground": "#1c120c",
-      "intensity": 0.2
+      "sky": "#c4a07a",
+      "ground": "#3a2418",
+      "intensity": 1.45
     },
     "ambient": {
-      "color": "#e7c39a",
-      "intensity": 0.14
+      "color": "#f0d7b0",
+      "intensity": 0.85
     },
     "directional": [
       {
-        "color": "#c5d4df",
-        "intensity": 0.32,
+        "color": "#f3d7b4",
+        "intensity": 0.5,
         "position": [
           0.4,
           7.2,
@@ -3788,31 +3788,31 @@
     "points": [
       {
         "color": "#ffb15a",
-        "intensity": 14,
-        "distance": 5.4,
+        "intensity": 64,
+        "distance": 5.6,
         "position": [
           0,
-          1.35,
+          1.7,
           -9
         ]
       },
       {
         "color": "#ffb15a",
-        "intensity": 14,
-        "distance": 5.4,
+        "intensity": 64,
+        "distance": 5.6,
         "position": [
           0,
-          1.35,
+          1.7,
           0
         ]
       },
       {
         "color": "#ffb15a",
-        "intensity": 14,
-        "distance": 5.4,
+        "intensity": 64,
+        "distance": 5.6,
         "position": [
           0,
-          1.35,
+          1.7,
           7
         ]
       }

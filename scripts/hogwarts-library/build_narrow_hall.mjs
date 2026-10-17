@@ -530,14 +530,14 @@ function buildMaterials(images) {
     [MAT.walnut]: colorMaterial(MAT.walnut, {baseColorTexture: {index: 0}}, {rough: 0.78}),
     [MAT.oak]: colorMaterial(MAT.oak, {baseColorTexture: {index: 1}}, {rough: 0.7}),
     [MAT.stone]: colorMaterial(MAT.stone, {baseColorTexture: {index: 2}}, {rough: 0.92}),
-    [MAT.plaster]: colorMaterial(MAT.plaster, {baseColorFactor: [0.16, 0.17, 0.19, 1]}, {rough: 0.9}),
-    [MAT.iron]: colorMaterial(MAT.iron, {baseColorFactor: [0.05, 0.05, 0.055, 1]}, {metal: 0.72, rough: 0.46}),
-    [MAT.brass]: colorMaterial(MAT.brass, {baseColorFactor: [0.42, 0.28, 0.12, 1]}, {metal: 0.64, rough: 0.4}),
-    [MAT.glass]: colorMaterial(MAT.glass, {baseColorFactor: [0.05, 0.22, 0.12, 1]}, {metal: 0.08, rough: 0.22}),
-    [MAT.candle]: colorMaterial(MAT.candle, {baseColorFactor: [1, 0.62, 0.28, 1]}, {rough: 0.4, emissive: [1, 0.55, 0.2]}),
-    [MAT.window]: colorMaterial(MAT.window, {baseColorFactor: [0.55, 0.64, 0.7, 1]}, {rough: 0.18, emissive: [0.08, 0.1, 0.12]}),
+    [MAT.plaster]: colorMaterial(MAT.plaster, {baseColorFactor: [0.52, 0.46, 0.4, 1]}, {rough: 0.9}),
+    [MAT.iron]: colorMaterial(MAT.iron, {baseColorFactor: [0.2, 0.19, 0.18, 1]}, {metal: 0.72, rough: 0.46}),
+    [MAT.brass]: colorMaterial(MAT.brass, {baseColorFactor: [0.62, 0.42, 0.18, 1]}, {metal: 0.64, rough: 0.4}),
+    [MAT.glass]: colorMaterial(MAT.glass, {baseColorFactor: [0.1, 0.32, 0.18, 1]}, {metal: 0.08, rough: 0.22}),
+    [MAT.candle]: colorMaterial(MAT.candle, {baseColorFactor: [1, 0.72, 0.38, 1]}, {rough: 0.4, emissive: [1, 0.62, 0.28]}),
+    [MAT.window]: colorMaterial(MAT.window, {baseColorFactor: [0.72, 0.8, 0.84, 1]}, {rough: 0.18, emissive: [0.22, 0.24, 0.26]}),
     [MAT.still]: colorMaterial(MAT.still, {baseColorTexture: {index: 3}}, {rough: 0.86}),
-    [MAT.leather]: colorMaterial(MAT.leather, {baseColorFactor: [0.1, 0.07, 0.045, 1]}, {rough: 0.74}),
+    [MAT.leather]: colorMaterial(MAT.leather, {baseColorFactor: [0.32, 0.18, 0.1, 1]}, {rough: 0.74}),
   };
   return {
     asset: {version: '2.0', generator: 'BookKin narrow hall'},
@@ -554,9 +554,9 @@ function buildMaterials(images) {
 fs.mkdirSync(MODULES, {recursive: true});
 fs.mkdirSync(TEXTURES, {recursive: true});
 const textureFiles = {
-  'walnut-albedo.png': grain(512, 512, [74, 48, 30], 0.18),
-  'oak-albedo.png': grain(512, 512, [112, 78, 48], 0.08),
-  'stone-albedo.png': grain(512, 512, [58, 54, 50], 0),
+  'walnut-albedo.png': grain(512, 512, [168, 112, 70], 0.18),
+  'oak-albedo.png': grain(512, 512, [204, 156, 102], 0.08),
+  'stone-albedo.png': grain(512, 512, [148, 138, 126], 0),
   'still-life-lamp-books.png': stillLife(512, 512),
 };
 for (const [name, pixels] of Object.entries(textureFiles)) writePng(path.join(TEXTURES, name), 512, 512, pixels);
@@ -617,14 +617,16 @@ const config = {
   stairRoutes,
   cameras: [{id: 'entrance', position: [0, 1.5, -16.4], target: [0, R.camera.targetY, R.camera.targetZ], fov: 58}],
   lighting: {
-    exposure: 0.82,
-    hemisphere: {sky: '#4a3428', ground: '#1c120c', intensity: 0.2},
-    ambient: {color: '#e7c39a', intensity: 0.14},
+    // ACES plus the directional cap (under 0.6) leaves a 0.3 lux sun invisible.
+    // Warm hemisphere and ambient carry the room; the three lamps stay local.
+    exposure: 0.88,
+    hemisphere: {sky: '#c4a07a', ground: '#3a2418', intensity: 1.45},
+    ambient: {color: '#f0d7b0', intensity: 0.85},
     directional: [{
-      color: '#c5d4df', intensity: 0.32,
+      color: '#f3d7b4', intensity: 0.5,
       position: [0.4, 7.2, -13], target: [0, 0.4, -13],
     }],
-    points: NARROW_HALL.tableZ.map(z => ({color: '#ffb15a', intensity: 14, distance: 5.4, position: [0, 1.35, z]})),
+    points: NARROW_HALL.tableZ.map(z => ({color: '#ffb15a', intensity: 64, distance: 5.6, position: [0, 1.7, z]})),
   },
   omissions: [
     'No non-catalog filler or decorative books. Empty shelves stay empty.',
