@@ -1606,6 +1606,9 @@ export function createVirtualLibraryWorld(
     });
     // Validate category capacity before creating or removing any GPU-backed
     // catalog model. The authoritative query remains an all-pages snapshot.
+    // Slot order is the shelf order. The live hall lists the south entrance
+    // bay first, so the first real books group there. Empty sections get no
+    // meshes: filler and decorative books are not created.
     longRoomCatalogSectionCounts(nextBooks, built.shelfSections.length);
     const sortedBooks = sortCatalogBooksByClassification(nextBooks);
     const staged: SceneBook[] = [];

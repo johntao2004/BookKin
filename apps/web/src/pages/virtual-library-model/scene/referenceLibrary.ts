@@ -40,9 +40,12 @@ export interface ReferenceLibraryBuilt extends LongRoomBuilt {
 export function createReferenceCatalogAnchors() {
   const shelfSections: ExpandableShelfSection[] = [];
   const catalogSlots: LongRoomSlot[] = [];
-  // Put accessible ground-floor bays before upper gallery cases in allocation.
-  for (const level of [0, 1]) for (const side of [-1, 1]) {
-    for (const [bay, z] of REFERENCE_BAY_BOUNDARIES.entries()) for (const face of [1, -1] as const) {
+  // Ground before gallery. Within a level, south bays first, then the east
+  // (right-hand) side, then the south face. Real books therefore land in the
+  // entrance bay; later sections stay empty until the catalog fills them.
+  for (const level of [0, 1]) {
+    for (const [bay, z] of REFERENCE_BAY_BOUNDARIES.entries()) {
+      for (const side of [1, -1] as const) for (const face of [-1, 1] as const) {
       const inner = level === 0 ? R.lowerCaseInnerX : R.upperCaseInnerX;
       const outer = level === 0 ? R.caseOuterX : R.upperCaseOuterX;
       const width = outer - inner;
@@ -75,6 +78,7 @@ export function createReferenceCatalogAnchors() {
         catalogSlots.push(slot);
       }
     }
+  }
   }
   return {shelfSections, catalogSlots};
 }
@@ -142,8 +146,12 @@ export function addReferenceLighting(root: THREE.Group, config: ReferenceSceneCo
     // One bounded shadow map; dense decorative lights are emissive geometry.
     light.castShadow = index === 0;
     if (light.castShadow) {
-      light.shadow.mapSize.set(2048, 2048);
-      Object.assign(light.shadow.camera, {left: -20, right: 20, top: 22, bottom: -22, near: 0.2, far: 70});
+      // Entrance-only shadow. A hall-sized frustum marks every module required.
+      light.shadow.mapSize.set(R.shadowMapSize, R.shadowMapSize);
+      Object.assign(light.shadow.camera, {
+        left: -R.shadowHalfWidth, right: R.shadowHalfWidth,
+        top: R.shadowHalfDepth, bottom: -R.shadowHalfDepth, near: 0.2, far: R.shadowFar,
+      });
       light.shadow.normalBias = 0.035;
     }
     root.add(light, light.target);
