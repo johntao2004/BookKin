@@ -1,58 +1,68 @@
 /**
- * Project-scale estimates reconstructed from the nine supplied views, not
- * surveyed game dimensions. Blender uses the same contract and exports Y-up.
+ * Live narrow-hall contract. Units are metres, Y-up, matching the
+ * generator in scripts/hogwarts-library/build_narrow_hall.mjs.
+ * The retired 30 m hall is not the runtime target.
  */
 export const REFERENCE_LIBRARY = {
-  length: 36,
-  // User clarified width-only expansion: length, height and case count stay fixed.
-  width: 30,
-  height: 18.7,
-  galleryY: 6.2,
-  galleryInnerX: 8.8,
-  lowerCaseHeight: 5,
-  upperCaseHeight: 5.7,
-  lowerCaseInnerX: 9.45,
-  upperCaseInnerX: 11.1,
-  upperCaseOuterX: 14.58,
-  caseOuterX: 14.4,
-  caseDepth: 0.65,
-  shelfFrontOffset: 0.37,
-  categoryPlaqueFrontOffset: 0.46,
+  length: 40,
+  width: 16,
+  height: 11.2,
+  galleryY: 4,
+  galleryInnerX: 2.2,
+  lowerCaseHeight: 3.85,
+  upperCaseHeight: 3.5,
+  lowerCaseInnerX: 1.9,
+  upperCaseInnerX: 3.35,
+  upperCaseOuterX: 7.7,
+  caseOuterX: 7.75,
+  caseDepth: 0.72,
+  shelfFrontOffset: 0.42,
+  categoryPlaqueFrontOffset: 0.5,
   shelfRows: 6,
   booksPerRow: 20,
-  shelfBoardThickness: 0.105,
-  shelfBackThickness: 0.12,
-  lowerShelfBase: 0.25,
-  upperShelfBase: 6.45,
-  lowerShelfPitch: 0.77,
-  upperShelfPitch: 0.88,
-  vaultSpring: 13.8,
-  sideVaultSpring: 12.15,
-  sideVaultRadius: 2.45,
-  camera: { targetY: 4.2, targetZ: -3.5, radius: 19, pitch: -0.1277 },
-  book: { spineWidth: 0.16, height: 0.48, coverWidth: 0.30 },
-  manifestUrl: '/assets/hogwarts-library/library-manifest.json?v=20261009-walk-clearance-r4',
-  configUrl: '/assets/hogwarts-library/scene-config.json?v=20261009-walk-clearance-r4',
+  shelfBoardThickness: 0.05,
+  shelfBackThickness: 0.08,
+  lowerShelfBase: 0.38,
+  upperShelfBase: 4.28,
+  lowerShelfPitch: 0.58,
+  upperShelfPitch: 0.55,
+  vaultSpring: 8.4,
+  camera: {targetY: 1.55, targetZ: -13, radius: 3.4, pitch: -0.02, yaw: Math.PI},
+  shadowMapSize: 1024,
+  shadowHalfWidth: 4.5,
+  shadowHalfDepth: 4.5,
+  shadowFar: 14,
+  book: {spineWidth: 0.16, height: 0.48, coverWidth: 0.30},
+  manifestUrl: '/assets/hogwarts-library/library-manifest.json?v=20261017-narrow-hall',
+  configUrl: '/assets/hogwarts-library/scene-config.json?v=20261017-narrow-hall',
 } as const;
 
-export const REFERENCE_BAY_BOUNDARIES = [-15, -10, -5, 0, 5, 10, 15] as const;
+/** Eight alcove centres, south to north. Pitch is 4 m so a shelf camera fits between cases. */
+export const REFERENCE_BAY_BOUNDARIES = [-15, -11, -7, -3, 1, 5, 9, 13] as const;
+
+export const NARROW_HALL = {
+  revision: '20261017-narrow-hall',
+  aisleHalfWidth: 1.7,
+  galleryWalkX: 2.8,
+  gateZ: 15.2,
+  gateOpening: 0.7,
+  tableZ: [-9, 0, 7] as const,
+  stairs: {
+    left: {x: -5.15, z: -13, radius: 0.95},
+    right: {x: 5.15, z: 11, radius: 0.95},
+  },
+} as const;
+
 export const REFERENCE_SECTION_CAPACITY = REFERENCE_LIBRARY.shelfRows * REFERENCE_LIBRARY.booksPerRow;
 export const REFERENCE_BOOK_CENTER_OFFSET = REFERENCE_LIBRARY.shelfFrontOffset
   - REFERENCE_LIBRARY.book.coverWidth * 0.96 / 2 - 0.018;
 
+/** One barrel vault over the whole width. z is kept so callers can sample a 3D point. */
 export function referenceLibraryRoofY(x: number, z = 0) {
-  if (Math.abs(x) <= REFERENCE_LIBRARY.galleryInnerX) {
-    const normalized = Math.min(1, Math.abs(x) / REFERENCE_LIBRARY.galleryInnerX);
-    return REFERENCE_LIBRARY.vaultSpring + (REFERENCE_LIBRARY.height - REFERENCE_LIBRARY.vaultSpring)
-      * Math.sqrt(Math.max(0, 1 - normalized * normalized));
-  }
-  // Side barrels run across the hall, so their ceiling depends on the bay's
-  // longitudinal position. A constant spring height lets flight cross the
-  // curved surface near either end of every bay.
-  const bayDistance = Math.min(...REFERENCE_BAY_BOUNDARIES.slice(1).map((end, i) =>
-    Math.abs(z - (REFERENCE_BAY_BOUNDARIES[i] + end) / 2)));
-  const normalized = Math.min(1, bayDistance / REFERENCE_LIBRARY.sideVaultRadius);
-  return REFERENCE_LIBRARY.sideVaultSpring + REFERENCE_LIBRARY.sideVaultRadius
+  const half = REFERENCE_LIBRARY.width / 2;
+  const normalized = Math.min(1, Math.abs(x) / half);
+  void z;
+  return REFERENCE_LIBRARY.vaultSpring + (REFERENCE_LIBRARY.height - REFERENCE_LIBRARY.vaultSpring)
     * Math.sqrt(Math.max(0, 1 - normalized * normalized));
 }
 
