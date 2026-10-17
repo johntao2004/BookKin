@@ -16,7 +16,7 @@ it('uses the correct elevation and face for every shelf frame', () => {
   }
 });
 
-it('keeps all 56 focused cases inside desktop and portrait frames after wall collision', () => {
+it('keeps every focused case inside desktop and portrait frames after wall collision', () => {
   const config: ReferenceSceneConfig = JSON.parse(readFileSync('public/assets/hogwarts-library/scene-config.json', 'utf8'));
   const root = new THREE.Group();
   referenceCameraColliderDescriptors(config).forEach(collider => markCameraCollider(root, collider));

@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { collectCameraColliders, markCameraCollider, resolveCameraCollision } from '../../virtual-library-collision';
 import { WALKING_CAMERA_CLEARANCE, WALKING_EYE_HEIGHT, resolveGuidedStairCollision, isGuidedStairSupport } from '../../virtual-library-navigation';
-import { REFERENCE_LIBRARY as R, referenceRouteLength, referenceRoutePoint } from '../hogwartsLibraryLayout';
+import { NARROW_HALL, REFERENCE_LIBRARY as R, referenceRouteLength, referenceRoutePoint } from '../hogwartsLibraryLayout';
 import { referenceCameraColliderDescriptors, validateReferenceConfig, createReferenceCatalogAnchors } from './referenceLibrary';
 
 import { demoBooks } from '../../../data/demo';
@@ -20,60 +20,64 @@ const metrics: Record<string, number> = {descriptorCount: config.colliders.lengt
   maximumStairDrift: 0, maximumOffsetStairDrift: 0, maximumClearGalleryDrift: 0};
 afterAll(() => {
   if (process.env.BOOKKIN_COLLISION_REPORT) writeFileSync(process.env.BOOKKIN_COLLISION_REPORT,
-    `${JSON.stringify({revision: '20261009-walk-clearance-r4', evidence: 'CPU geometry/collision regression; not browser or GPU acceptance',
+    `${JSON.stringify({revision: NARROW_HALL.revision, evidence: 'CPU geometry/collision regression; not browser or GPU acceptance',
       body: WALKING_CAMERA_CLEARANCE, eyeHeight: WALKING_EYE_HEIGHT, ...metrics}, null, 2)}\n`);
 });
 
 describe('live reference-library body clearance', () => {
-  it('stops a standing visitor at both gallery rails, both aperture guards and both landing sides', () => {
-    for (const side of [-1, 1]) for (const z of [-13.5, -8, 2, 12]) {
-      const safe = resolveCameraCollision({x: side * 9.95, y: eyeY, z}, {x: side * 6, y: eyeY, z}, colliders, WALKING_CAMERA_CLEARANCE);
-      expect(Math.abs(safe.x), `${side}/${z}/${safe.blockedBy}`).toBeGreaterThan(8.8);
-    }
-    for (const side of [-1, 1]) for (const direction of [-1, 1]) {
-      const x = side * 6.8;
-      const safe = resolveCameraCollision({x, y: eyeY, z: -15.3}, {x: x + direction * 2, y: eyeY, z: -15.3}, colliders, WALKING_CAMERA_CLEARANCE);
-      expect(Math.abs(safe.x - x)).toBeLessThan(0.5);
+  it('stops a standing visitor at both gallery rails and both outer walls', () => {
+    for (const side of [-1, 1]) for (const z of [-12, -2, 4, 12]) {
+      const safe = resolveCameraCollision(
+        {x: side * NARROW_HALL.galleryWalkX, y: eyeY, z},
+        {x: side * 0.4, y: eyeY, z},
+        colliders, WALKING_CAMERA_CLEARANCE);
+      expect(Math.abs(safe.x), `${side}/${z}/${safe.blockedBy}`).toBeGreaterThan(2.05);
+      const wall = resolveCameraCollision(
+        {x: side * 6.2, y: WALKING_EYE_HEIGHT, z},
+        {x: side * 9, y: WALKING_EYE_HEIGHT, z},
+        colliders, WALKING_CAMERA_CLEARANCE);
+      expect(Math.abs(wall.x), wall.blockedBy ?? '').toBeLessThan(7.7);
     }
   });
 
-  it('blocks outward motion at the tread height of every helical guard, including segment joins', () => {
-    const guards = config.colliders.filter(c => c.shape === 'arc' && c.id.startsWith('stair-outer-guard-'));
-    expect(guards).toHaveLength(60);
-    metrics.helicalGuardRadialSamples = guards.length * 5;
-    for (const guard of guards) {
-      if (guard.shape !== 'arc') throw new Error('Expected arc');
-      const segments = colliders.filter(c => c.id.startsWith(`${guard.id}-`));
-      for (const fraction of [0, 0.25, 0.5, 0.75, 1]) {
-        const angle = guard.startAngle + (guard.endAngle - guard.startAngle) * fraction;
-        const point = (radius: number) => ({x: guard.center.x + Math.cos(angle) * radius,
-          y: guard.center.y - guard.height / 2 + WALKING_EYE_HEIGHT,
-          z: guard.center.z + Math.sin(angle) * radius});
-        const safe = resolveCameraCollision(point(1.05), point(3.5), segments, WALKING_CAMERA_CLEARANCE);
-        expect(safe.blocked, `${guard.id}/${fraction}`).toBe(true);
-        expect(Math.hypot(safe.x - guard.center.x, safe.z - guard.center.z)).toBeLessThan(1.7);
+  it('keeps both stair poles and wall rails off the walking helix', () => {
+    for (const name of ['left', 'right'] as const) {
+      const pole = config.colliders.find(c => c.id === `stair-pole-${name}`);
+      const rail = config.colliders.find(c => c.id === `stair-outer-rail-${name}`);
+      expect(pole?.shape).toBe('box');
+      expect(rail?.shape).toBe('box');
+      if (pole?.shape !== 'box' || rail?.shape !== 'box') continue;
+      for (const point of config.stairRoutes[name]) {
+        expect(Math.hypot(point.x - pole.center.x, point.z - pole.center.z)).toBeGreaterThan(0.45);
       }
+      const outward = {x: rail.center.x + Math.sign(rail.center.x) * 1.2, y: WALKING_EYE_HEIGHT, z: rail.center.z};
+      const inward = {x: rail.center.x - Math.sign(rail.center.x) * 1.2, y: WALKING_EYE_HEIGHT, z: rail.center.z};
+      const safe = resolveCameraCollision(outward, inward, colliders, WALKING_CAMERA_CLEARANCE);
+      expect(Math.abs(safe.x), rail.id).toBeGreaterThan(Math.abs(rail.center.x) - rail.size.x / 2 - 0.05);
     }
   });
 
-  it('does not walk through the twelve upper desks at standing eye height', () => {
-    for (const desk of config.colliders.filter(c => c.id.startsWith('upper-desk-'))) {
-      if (desk.shape !== 'box') throw new Error('Expected box');
-      const direction = Math.sign(desk.center.x);
-      const start = {x: desk.center.x - direction * 1.7, y: eyeY, z: desk.center.z};
-      const end = {...start, x: desk.center.x + direction * 1.7};
+  it('does not walk through the three reading tables at standing eye height', () => {
+    const tables = config.colliders.filter(c => c.id.startsWith('reading-table-'));
+    expect(tables).toHaveLength(3);
+    for (const table of tables) {
+      if (table.shape !== 'box') throw new Error('Expected box');
+      const start = {x: table.center.x, y: WALKING_EYE_HEIGHT, z: table.center.z - 1.8};
+      const end = {...start, z: table.center.z + 1.8};
       const safe = resolveCameraCollision(start, end, colliders, WALKING_CAMERA_CLEARANCE);
-      expect(direction * (safe.x - desk.center.x), desk.id).toBeLessThan(-desk.size.x / 2 - 0.29);
+      expect(safe.z, table.id).toBeLessThan(table.center.z - table.size.z / 2 - 0.29);
     }
   });
 
-  it('keeps both galleries usable with 45 cm of left/right offset, in both directions', () => {
+  it('keeps both galleries usable with a small lateral offset, in both directions', () => {
     const failures: string[] = [];
-    for (const side of [-1, 1]) for (const offset of [-0.45, 0, 0.45]) for (const direction of [-1, 1]) {
-      const x = side * (10.1 + offset);
-      let previous = {x, y: eyeY, z: -16.4 * direction};
-      for (let step = 1; step <= 410; step++) {
-        const desired = {x, y: eyeY, z: (-16.4 + step * 0.08) * direction};
+    const zStart = -17;
+    const steps = 390;
+    for (const side of [-1, 1]) for (const offset of [-0.08, 0, 0.08]) for (const direction of [-1, 1]) {
+      const x = side * (NARROW_HALL.galleryWalkX + offset);
+      let previous = {x, y: eyeY, z: direction < 0 ? zStart + steps * 0.08 : zStart};
+      for (let step = 1; step <= steps; step++) {
+        const desired = {x, y: eyeY, z: direction < 0 ? previous.z - 0.08 : zStart + step * 0.08};
         const safe = resolveCameraCollision(previous, desired, colliders, WALKING_CAMERA_CLEARANCE);
         metrics.maximumClearGalleryDrift = Math.max(metrics.maximumClearGalleryDrift,
           Math.hypot(safe.x - desired.x, safe.y - desired.y, safe.z - desired.z));
@@ -109,7 +113,7 @@ describe('live reference-library body clearance', () => {
 
   it('stops at each cabinet face before the eye reaches shelf boards, in both levels and directions', () => {
     const cases = colliders.filter(c => c.id.startsWith('case-back-'));
-    expect(cases).toHaveLength(28);
+    expect(cases).toHaveLength(32);
     for (const cabinet of cases) {
       if (cabinet.shape !== 'box') throw new Error('Expected box');
       for (const direction of [-1, 1]) {
@@ -132,7 +136,8 @@ it('keeps a full twenty-book upper row, including binding details, inside both s
   const scene = new THREE.Scene();
   try {
     const anchors = createReferenceCatalogAnchors();
-    const source = anchors.shelfSections[28];
+    const source = anchors.shelfSections.find(section => section.baseY === R.galleryY);
+    if (!source) throw new Error('Expected an upper shelf');
     const section = {...source, id: 0};
     const slots = anchors.catalogSlots.filter(slot => slot.sectionId === source.id)
       .map(slot => ({...slot, sectionId: 0, catalogSectionIndex: 0}));
@@ -158,7 +163,7 @@ it('keeps a full twenty-book upper row, including binding details, inside both s
     }
     // Compare to the conservative exported stile collision, not only nominal
     // case width; full rows previously clipped their inner faces.
-    const stiles = colliders.filter(c => c.id.startsWith('case-stile--1-1--15-'));
+    const stiles = colliders.filter(c => c.id.startsWith(`case-stile-${source.slotPrefix}-`));
     expect(stiles).toHaveLength(2);
     if (stiles[0].shape !== 'box' || stiles[1].shape !== 'box') throw new Error('Expected stiles');
     stiles.sort((a, b) => a.x - b.x);
@@ -214,7 +219,8 @@ it('retains supported stair travel with small lateral offsets and clean exits/re
       metrics.maximumOffsetStairDrift = Math.max(metrics.maximumOffsetStairDrift, maximumDrift);
       expect(maximumDrift, maximumDriftHit).toBeLessThan(0.09);
       const standing = resolveCameraCollision(previous, previous, colliders, WALKING_CAMERA_CLEARANCE);
-      expect(Math.hypot(standing.x - previous.x, standing.y - previous.y, standing.z - previous.z)).toBeLessThan(0.001);
+      expect(Math.hypot(standing.x - previous.x, standing.y - previous.y, standing.z - previous.z),
+        `${reverse}/${offset}/${standing.blockedBy}/${JSON.stringify(previous)}`).toBeLessThan(0.001);
     }
   }
 });

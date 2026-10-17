@@ -219,11 +219,12 @@ describe('reference library module streaming', () => {
     await vi.waitFor(() => expect(controller!.diagnostics().allDetailsResident).toBe(true), {timeout: 10_000});
     if (!multiDraw) await vi.waitFor(() => expect(controller!.diagnostics().batching.consolidatedFallback).toBe(true), {timeout: 10_000});
     const diagnostics = controller.diagnostics();
-    expect(diagnostics).toMatchObject({residentModules: 13, failedModules: 0, peakConcurrentLoads: 2,
-      fallbackResidencyLocked: !multiDraw, shadowRequiredModules: 13});
+    expect(diagnostics).toMatchObject({residentModules: actual.chunks.length, failedModules: 0, peakConcurrentLoads: 2,
+      fallbackResidencyLocked: !multiDraw, shadowRequiredModules: actual.chunks.length});
     expect(diagnostics.residentTriangles).toBe(actual.chunks.reduce((sum, chunk) => sum + chunk.triangles, 0));
     expect(diagnostics.batching.residentTriangles).toBe(diagnostics.residentTriangles);
-    expect(diagnostics.batching.batchCount).toBe(28);
+    const bank = JSON.parse(readFileSync(root + 'materials.gltf', 'utf8')) as {materials: unknown[]};
+    expect(diagnostics.batching.batchCount).toBe(bank.materials.length);
     settings.parent.traverse(object => {
       if (object instanceof THREE.Mesh) expect([object.castShadow, object.receiveShadow]).toEqual([true, true]);
     });
@@ -296,7 +297,7 @@ describe('canonical reference material ownership', () => {
     await pool.dispose(); expect(image.close).toHaveBeenCalledTimes(1);
   });
 
-  it('shares exact shading variants across all thirteen real Meshopt modules', async () => {
+  it('shares exact shading variants across the real hall modules', async () => {
     const root = 'public/assets/hogwarts-library/';
     const manifest: ReferenceLibraryManifest = JSON.parse(readFileSync(root + 'library-manifest.json', 'utf8'));
     const bank = await new GLTFLoader().parseAsync(readFileSync(root + 'materials.gltf', 'utf8'), '/assets/hogwarts-library/');
@@ -339,10 +340,9 @@ describe('canonical reference material ownership', () => {
       }
       geometries.forEach(geometry => geometry.dispose());
     }
-    expect(manifest.chunks).toHaveLength(13);
     expect(primitiveCount).toBe(manifest.chunks.reduce((sum, chunk) => sum + chunk.primitives, 0));
-    expect(primitiveCount).toBe(140);
-    expect(variants.size).toBe(28);
+    const bankJson = JSON.parse(readFileSync(root + 'materials.gltf', 'utf8')) as {materials: unknown[]};
+    expect(variants.size).toBe(bankJson.materials.length);
     await pool.dispose();
   });
 

@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { collectCameraColliders, markCameraCollider, resolveCameraCollision } from '../../virtual-library-collision';
 import { demoBooks } from '../../../data/demo';
 import { createVirtualLibraryWorld, disposeScene, getShelvedBookTransform, SHELF_PLAQUE_MOUNT } from '../../virtual-library-scene';
-import { REFERENCE_LIBRARY as R, REFERENCE_BOOK_CENTER_OFFSET, referenceLibraryRoofY, referenceRouteLength, referenceRoutePoint } from '../hogwartsLibraryLayout';
+import { NARROW_HALL, REFERENCE_BAY_BOUNDARIES, REFERENCE_LIBRARY as R, REFERENCE_BOOK_CENTER_OFFSET, referenceLibraryRoofY, referenceRouteLength, referenceRoutePoint } from '../hogwartsLibraryLayout';
 import { createReferenceCatalogAnchors, validateReferenceConfig, type ReferenceSceneConfig } from './referenceLibrary';
 import type { LibraryMaterials } from './materials';
 
@@ -47,71 +47,79 @@ describe('reference-library architecture integration', () => {
     }
     expect(Object.fromEntries(failures)).toEqual({});
   });
-  it('keeps the seven upper partition openings traversable on both galleries', () => {
+  it('keeps both gallery walks clear and the aisle rail closed', () => {
     const actual: unknown = JSON.parse(readFileSync('public/assets/hogwarts-library/scene-config.json', 'utf8'));
     validateReferenceConfig(actual);
     const root = new THREE.Group();
     for (const collider of actual.colliders) markCameraCollider(root, collider);
     const colliders = collectCameraColliders(root, 'hall');
     const failures: string[] = [];
-    for (const side of [-1, 1]) for (const direction of [-1, 1]) {
-      let previous = {x: side * 9.95, y: R.galleryY + 1.78, z: -16.4 * direction};
-      for (let step = 1; step <= 410; step++) {
-        const eye = {...previous, x: side * 9.95, y: R.galleryY + 1.78, z: (-16.4 + step * 0.08) * direction};
+    const eyeY = R.galleryY + 1.78;
+    for (const side of [-1, 1]) {
+      let previous = {x: side * NARROW_HALL.galleryWalkX, y: eyeY, z: -17};
+      for (let step = 1; step <= 390; step++) {
+        const eye = {x: side * NARROW_HALL.galleryWalkX, y: eyeY, z: -17 + step * 0.08};
         const safe = resolveCameraCollision(previous, eye, colliders);
         const drift = Math.hypot(safe.x - eye.x, safe.y - eye.y, safe.z - eye.z);
-        if (drift > 0.05) failures.push(`${side}/${direction}/${eye.z.toFixed(2)}: ${safe.blockedBy}`);
+        if (drift > 0.05) failures.push(`${side}/${eye.z.toFixed(2)}: ${safe.blockedBy}`);
         previous = safe;
       }
+      const blocked = resolveCameraCollision(
+        {x: side * NARROW_HALL.galleryWalkX, y: eyeY, z: 0},
+        {x: side * 0.4, y: eyeY, z: 0},
+        colliders,
+      );
+      expect(Math.abs(blocked.x)).toBeGreaterThan(2.05);
     }
     expect(failures).toEqual([]);
   });
 
-  it('guards all three exposed stair-aperture edges and both landing sides', () => {
+  it('leaves a walk-through in the north iron gate and blocks the bars', () => {
     const actual: unknown = JSON.parse(readFileSync('public/assets/hogwarts-library/scene-config.json', 'utf8'));
     validateReferenceConfig(actual);
     const root = new THREE.Group();
     for (const collider of actual.colliders) markCameraCollider(root, collider);
     const colliders = collectCameraColliders(root, 'hall');
-    for (const side of [-1, 1]) {
-      for (const segment of [0, 1, 2]) {
-        expect(actual.colliders.some(c => c.id === `guard-aperture-${side}-${segment}`)).toBe(true);
-      }
-      for (const edge of [0, 1]) {
-        expect(actual.colliders.some(c => c.id === `guard-landing-${side}-${edge}-0`)).toBe(true);
-      }
-      for (const z of [-15.2, -14.0, -12.0]) {
-        const safe = resolveCameraCollision({x: side * 9.9, y: 7.0, z}, {x: side * 8.8, y: 7.0, z}, colliders);
-        expect(Math.abs(safe.x)).toBeGreaterThan(9.3);
-      }
-    }
+    const open = resolveCameraCollision(
+      {x: 0, y: 1.78, z: NARROW_HALL.gateZ - 1.2},
+      {x: 0, y: 1.78, z: NARROW_HALL.gateZ + 1.2},
+      colliders,
+    );
+    expect(Math.abs(open.z - (NARROW_HALL.gateZ + 1.2))).toBeLessThan(0.05);
+    const barred = resolveCameraCollision(
+      {x: 1.2, y: 1.78, z: NARROW_HALL.gateZ - 1.2},
+      {x: 1.2, y: 1.78, z: NARROW_HALL.gateZ + 1.2},
+      colliders,
+    );
+    expect(barred.blocked).toBe(true);
+    expect(barred.z).toBeLessThan(NARROW_HALL.gateZ);
   });
 
-  it('keeps all twelve upper reading sets inside deep bays and outside the gallery route', () => {
+  it('keeps the three reading tables in the aisle and out of the gallery walk', () => {
     const actual: unknown = JSON.parse(readFileSync('public/assets/hogwarts-library/scene-config.json', 'utf8'));
     validateReferenceConfig(actual);
-    const desks = actual.colliders.filter(c => c.id.startsWith('upper-desk-'));
-    const chairs = actual.colliders.filter(c => c.id.startsWith('upper-chair-'));
-    expect(desks).toHaveLength(12);
-    expect(chairs).toHaveLength(12);
-    for (const fixture of [...desks, ...chairs]) {
-      expect(fixture.shape).toBe('box');
-      if (fixture.shape !== 'box') continue;
-      expect(Math.abs(fixture.center.x) - fixture.size.x / 2).toBeGreaterThan(11.5);
-      expect(Math.abs(fixture.center.x) + fixture.size.x / 2).toBeLessThan(R.width / 2);
-      expect(fixture.center.y - fixture.size.y / 2).toBeCloseTo(R.galleryY);
+    const tables = actual.colliders.filter(c => c.id.startsWith('reading-table-'));
+    expect(tables).toHaveLength(3);
+    for (const table of tables) {
+      expect(table.shape).toBe('box');
+      if (table.shape !== 'box') continue;
+      expect(Math.abs(table.center.x) + table.size.x / 2).toBeLessThan(NARROW_HALL.aisleHalfWidth);
+      expect(Math.abs(table.center.x) + table.size.x / 2).toBeLessThan(NARROW_HALL.galleryWalkX - 0.4);
+      expect(table.center.y + table.size.y / 2).toBeLessThan(R.galleryY);
     }
   });
 
   it('defines two levels with unique stable shelf addresses and no decorative books', () => {
     const {shelfSections, catalogSlots} = createReferenceCatalogAnchors();
-    expect(shelfSections).toHaveLength(56);
-    expect(catalogSlots).toHaveLength(56 * 120);
+    expect(shelfSections).toHaveLength(64);
+    expect(catalogSlots).toHaveLength(64 * 120);
     expect(new Set(catalogSlots.map(slot => slot.slotId)).size).toBe(catalogSlots.length);
     expect(new Set(shelfSections.map(section => section.baseY))).toEqual(new Set([0, R.galleryY]));
-    expect(R).toMatchObject({width: 30, length: 36, height: 18.7, galleryY: 6.2});
-    expect(shelfSections[0].width).toBeCloseTo(4.95);
-    expect(shelfSections[28].width).toBeCloseTo(3.48);
+    expect(R).toMatchObject({width: 16, length: 40, height: 11.2, galleryY: 4});
+    expect(shelfSections[0].centerZ).toBe(REFERENCE_BAY_BOUNDARIES[0]);
+    expect(shelfSections[0].centerX).toBeGreaterThan(0);
+    expect(shelfSections[0].width).toBeCloseTo(R.caseOuterX - R.lowerCaseInnerX);
+    expect(shelfSections.find(section => section.baseY === R.galleryY)?.width).toBeCloseTo(R.upperCaseOuterX - R.upperCaseInnerX);
     expect(catalogSlots.some(slot => slot.position.y > R.galleryY)).toBe(true);
     for (const section of shelfSections) {
       expect(section.plaquePlacement).toBe('shelf-front');
@@ -144,30 +152,30 @@ describe('reference-library architecture integration', () => {
     }
   });
 
-  it('uses the active architectural width and finite roof envelope', () => {
+  it('uses one barrel vault above the gallery cases', () => {
     expect(referenceLibraryRoofY(0)).toBe(R.height);
-    expect(referenceLibraryRoofY(R.width / 2)).toBe(R.sideVaultSpring);
+    expect(referenceLibraryRoofY(R.width / 2)).toBe(R.vaultSpring);
     for (let x = -R.width / 2; x <= R.width / 2; x += 0.25) {
-      expect(Number.isFinite(referenceLibraryRoofY(x))).toBe(true);
-      expect(referenceLibraryRoofY(x)).toBeGreaterThan(R.galleryY + R.upperCaseHeight);
+      expect(Number.isFinite(referenceLibraryRoofY(x, -12))).toBe(true);
+      expect(referenceLibraryRoofY(x, 8)).toBeGreaterThan(R.galleryY + R.upperCaseHeight);
+      expect(referenceLibraryRoofY(x, 8)).toBe(referenceLibraryRoofY(x, -8));
     }
   });
 
-  it('matches both side barrels along z without changing the central vault height', () => {
-    for (const x of [-14.6, -12, -9, 9, 12, 14.6]) {
-      for (const centerZ of [-12.5, -7.5, -2.5, 2.5, 7.5, 12.5]) {
-        expect(referenceLibraryRoofY(x, centerZ)).toBeCloseTo(14.6);
-        expect(referenceLibraryRoofY(x, centerZ - 2.45)).toBeCloseTo(12.15);
-        expect(referenceLibraryRoofY(x, centerZ + 2.45)).toBeCloseTo(12.15);
-        expect(referenceLibraryRoofY(x, centerZ + 2.3)).toBeCloseTo(12.9940971508);
-        expect(referenceLibraryRoofY(0, centerZ)).toBe(R.height);
-        expect(referenceLibraryRoofY(R.galleryInnerX, centerZ)).toBe(R.vaultSpring);
-      }
-    }
-    // Conservative spring-height limits also cover the gaps and both ends.
-    for (const z of [-18, -15, -10, -5, 0, 5, 10, 15, 18]) {
-      expect(referenceLibraryRoofY(12, z)).toBe(R.sideVaultSpring);
-    }
+  it('starts warm, local, and under the triangle budget', () => {
+    const config = JSON.parse(readFileSync('public/assets/hogwarts-library/scene-config.json', 'utf8'));
+    const manifest = JSON.parse(readFileSync('public/assets/hogwarts-library/library-manifest.json', 'utf8'));
+    expect(config.lighting.exposure).toBeGreaterThanOrEqual(0.7);
+    expect(config.lighting.exposure).toBeLessThanOrEqual(0.9);
+    expect(config.lighting.points).toHaveLength(3);
+    expect(config.lighting.points.every((point: {distance: number; color: string}) =>
+      point.distance >= 4 && point.distance <= 6 && point.color.toLowerCase() === '#ffb15a')).toBe(true);
+    expect(config.lighting.directional[0].intensity).toBeLessThan(0.6);
+    const triangles = manifest.chunks.reduce((sum: number, chunk: {triangles: number}) => sum + chunk.triangles, 0);
+    expect(triangles).toBeLessThan(400_000);
+    expect(manifest.chunks.filter((chunk: {core: boolean; startup: boolean}) => chunk.core || chunk.startup)
+      .map((chunk: {id: string}) => chunk.id)).toEqual(['entrance']);
+    expect(config.omissions.join(' ')).toMatch(/filler|decorative/i);
   });
 
   it('validates collider and route data before creating a scene', () => {
@@ -218,6 +226,11 @@ describe('reference-library architecture integration', () => {
       expect(world.sceneBooks).toHaveLength(0);
       world.syncCatalogBooks(demoBooks.slice(0, 4));
       expect(world.sceneBooks).toHaveLength(4);
+      const southBay = REFERENCE_BAY_BOUNDARIES[0];
+      for (const sceneBook of world.sceneBooks) {
+        expect(Math.abs(sceneBook.shelfPosition.z - southBay)).toBeLessThan(1);
+        expect(sceneBook.shelfPosition.y).toBeLessThan(R.galleryY);
+      }
       expect(new Set(world.sceneBooks.map(book => book.group.userData.bookId)).size).toBe(4);
       expect(world.sceneBooks.every(book => typeof book.group.userData.slotId === 'string')).toBe(true);
       const book = world.sceneBooks[0];

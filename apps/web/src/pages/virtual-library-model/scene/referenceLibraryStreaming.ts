@@ -288,7 +288,7 @@ async function loadMaterialBank(manager: THREE.LoadingManager, url: string, sign
   return createReferenceMaterialPool(gltf.parser);
 }
 
-/** Exact spatial modules, shared shading, bounded work; no model simplification. */
+/** Spatial modules and shared shading. The live hall is a reduced original model. */
 export async function createReferenceLibraryStreaming(options: ReferenceLibraryStreamingOptions): Promise<ReferenceLibraryStreaming> {
   const {parent, manager, signal} = options;
   signal.throwIfAborted();
@@ -359,7 +359,8 @@ export async function createReferenceLibraryStreaming(options: ReferenceLibraryS
     // LAN HTTP may not expose SubtleCrypto. Size/revision checks still apply;
     // the generated delivery manifest additionally records every SHA-256.
     if (globalThis.crypto?.subtle) {
-      const digest = await crypto.subtle.digest('SHA-256', bytes);
+      // Copy into a fresh view. Some runtimes reject a foreign ArrayBuffer.
+      const digest = await crypto.subtle.digest('SHA-256', Uint8Array.from(new Uint8Array(bytes)));
       const hash = [...new Uint8Array(digest)].map(n => n.toString(16).padStart(2, '0')).join('');
       if (hash !== record.manifest.sha256.toLowerCase()) throw new Error(`建筑模块校验失败: ${record.manifest.id}`);
     }
