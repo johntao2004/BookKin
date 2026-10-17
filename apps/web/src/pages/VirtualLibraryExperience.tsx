@@ -12,7 +12,6 @@ import { getReferenceShelfFrame, getReferenceShelfFocusFov } from './reference-l
 import { tokens } from "../theme/generated-tokens";
 import { EMPTY_CATALOG_TITLE } from "../ui/empty-state-copy";
 import type { Book } from "../domain/types";
-import { classifyCatalogBook, SHELF_CATEGORIES } from "./virtual-library-catalog";
 import { resolveCameraCollision } from "./virtual-library-collision";
 import {
   cameraRelativeWalkDelta,
@@ -122,7 +121,7 @@ export function VirtualLibraryExperience() {
   const sceneZoomRef = useRef(1);
   const expandedShelfSectionIdRef = useRef<number | null>(null);
   const activeRoomRef = useRef<LibraryRoomId>("hall");
-  const cameraYawTargetRef = useRef(0);
+  const cameraYawTargetRef = useRef(ACTIVE_HALL.camera.yaw);
   const cameraPitchTargetRef = useRef<number>(ACTIVE_HALL.camera.pitch);
   const cameraTargetYRef = useRef(ROTUNDA_CENTER.y);
   const cameraTargetXZRef = useRef({ x: ROTUNDA_CENTER.x, z: ROTUNDA_CENTER.z });
@@ -131,7 +130,6 @@ export function VirtualLibraryExperience() {
   const stairAccessRef = useRef<(side: "left" | "right") => void>(() => undefined);
   const [stairWalking, setStairWalking] = useState(false);
   const walkRef = useRef<(direction: number) => void>(() => undefined);
-  const [categoryNavigation] = useState(() => createDeferredSceneAction<string>());
   const [bookNavigation] = useState(() => createDeferredSceneAction<string>());
   const catalogShelfRef = useRef<() => void>(() => undefined);
   const [selectedBookId, setSelectedBookId] = useState<string | null>(null);
@@ -165,11 +163,6 @@ export function VirtualLibraryExperience() {
   });
   const books = useMemo(() => booksQuery.data?.pages.flatMap(page => page.items) ?? [], [booksQuery.data]);
   catalogBooksRef.current = books;
-  const categoryCounts = useMemo(() => {
-    const counts = new Map<string, number>();
-    books.forEach(book => {const id = classifyCatalogBook(book).category.id; counts.set(id, (counts.get(id) ?? 0) + 1);});
-    return counts;
-  }, [books]);
   const selectedBook = useMemo(
     () => books.find((book) => book.id === selectedBookId) ?? null,
     [books, selectedBookId],
@@ -751,14 +744,6 @@ export function VirtualLibraryExperience() {
         if (world.getExpandedShelfSectionId() !== first.shelfSectionId) world.toggleShelfSection(first.shelfSectionId);
         expandedShelfSectionIdRef.current = first.shelfSectionId;
         setExpandedShelfSectionId(first.shelfSectionId);
-        focusShelf(first.shelfSectionId);
-      };
-      const focusCategory = (categoryId: string) => {
-        const first = world.sceneBooks.find(book => book.classification.category.id === categoryId);
-        if (!first) return;
-        clearSelectedBook();
-        if (world.getExpandedShelfSectionId() !== first.shelfSectionId) world.toggleShelfSection(first.shelfSectionId);
-        expandedShelfSectionIdRef.current = first.shelfSectionId; setExpandedShelfSectionId(first.shelfSectionId);
         focusShelf(first.shelfSectionId);
       };
       const focusBook = (bookId: string) => {
@@ -1382,7 +1367,6 @@ export function VirtualLibraryExperience() {
       void renderer.compileAsync(scene, camera).then(() => {
         if (disposed) return;
         canvas.dataset.shaderCompileMs = (performance.now() - shaderCompileStarted).toFixed(1);
-        categoryNavigation.attach(focusCategory);
         bookNavigation.attach(focusBook);
         if (document.activeElement === document.body) canvas.focus({ preventScroll: true });
         invalidateScene();
@@ -1483,11 +1467,10 @@ export function VirtualLibraryExperience() {
     return () => {
       window.cancelAnimationFrame(initializationFrame);
       construction.abort();
-      categoryNavigation.detach();
       bookNavigation.detach();
       cleanupScene?.();
     };
-  }, [categoryNavigation, bookNavigation, sceneAttempt]);
+  }, [bookNavigation, sceneAttempt]);
 
   useEffect(() => {
     catalogBooksRef.current = books;
@@ -1546,30 +1529,12 @@ export function VirtualLibraryExperience() {
               <Button onClick={() => catalogShelfRef.current()}>我的藏书</Button>
               <Button onClick={() => setSearchOpen(true)} aria-label="搜索私人藏书">搜索藏书</Button>
             </div>
-            <div className="virtual-library-space-shortcuts virtual-library-category-shortcuts" aria-label="藏书分区">
-              {SHELF_CATEGORIES.filter(category => categoryCounts.has(category.id)).map(category => (
-                <Button key={category.id} aria-pressed={selectedShelfInfo?.category.id === category.id}
-                  aria-label={`${category.label}，${categoryCounts.get(category.id)} 本`}
-                  onClick={() => categoryNavigation.request(category.id)}>
-                  <span className="virtual-library-category-button-label">
-                    <span>{category.label}</span>
-                    <span className="virtual-library-category-button-meta">
-                      <span className="virtual-library-category-button-standard">
-                        <small>{category.subtitle.split(" · ")[0]}</small>
-                        {category.code && <small>· {category.code}</small>}
-                      </span>
-                      <small>{categoryCounts.get(category.id)} 本</small>
-                    </span>
-                  </span>
-                </Button>
-              ))}
-            </div>
             <p id="gallery-walk-help" className="virtual-library-walk-help">
               {shelfMovementLocked
-                ? "当前面向书架，移动与升降已锁定；可拖动环顾、选择书籍，按 Esc 退出书架。"
+                ? "面向书架时移动已锁定，拖动环顾，Esc 退出。"
                 : stairWalking
-                ? "正在沿螺旋楼梯前往另一层；拖动可环顾。"
-                : "按住 W/A/S/D 可沿视角连续前后与左右平移，Shift 上升、Ctrl 下降，滚轮也可前后移动，拖动环顾。"}
+                ? "正在沿旋梯换层，拖动可环顾。"
+                : "W/A/S/D 行走，Shift/Ctrl 升降，拖动环顾。分类在搜索藏书里。"}
             </p>
           </nav>
         )}

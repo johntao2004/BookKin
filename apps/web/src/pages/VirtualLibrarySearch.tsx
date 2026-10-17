@@ -3,6 +3,7 @@ import { useMemo, useRef, useState } from 'react';
 import type { InputRef } from 'antd';
 import { Link } from 'react-router-dom';
 import type { Book } from '../domain/types';
+import { classifyCatalogBook, SHELF_CATEGORIES } from './virtual-library-catalog';
 import { SearchRounded } from '../ui/icons';
 import { Button } from '../ui/buttons';
 import { EMPTY_CATALOG_TITLE } from '../ui/empty-state-copy';
@@ -22,14 +23,34 @@ export function VirtualLibrarySearch({open, books, onClose, onLocateBook, onRead
   onReadBook?: (bookId: string) => void;
 }) {
   const [query, setQuery] = useState('');
+  const [categoryId, setCategoryId] = useState<string | null>(null);
   const input = useRef<InputRef>(null);
-  const results = useMemo(() => searchLibraryBooks(books, query), [books, query]);
+  const categories = useMemo(() => {
+    const counts = new Map<string, number>();
+    books.forEach(book => {
+      const id = classifyCatalogBook(book).category.id;
+      counts.set(id, (counts.get(id) ?? 0) + 1);
+    });
+    return SHELF_CATEGORIES.filter(category => counts.has(category.id))
+      .map(category => ({...category, count: counts.get(category.id) ?? 0}));
+  }, [books]);
+  const results = useMemo(() => {
+    const matched = searchLibraryBooks(books, query);
+    return categoryId ? matched.filter(book => classifyCatalogBook(book).category.id === categoryId) : matched;
+  }, [books, categoryId, query]);
   const hasQuery = query.trim().length > 0;
+  const active = hasQuery || categoryId !== null;
   return <Modal aria-label="搜索藏书" centered closable={false} open={open} onCancel={onClose} footer={null}
-    afterOpenChange={visible => { if (visible) input.current?.focus(); else setQuery(''); }}>
+    afterOpenChange={visible => { if (visible) input.current?.focus(); else { setQuery(''); setCategoryId(null); } }}>
     <Input ref={input} size="large" prefix={<SearchRounded />} aria-label="搜索书名、作者或分类" placeholder="搜索书名、作者或分类"
       allowClear value={query} onChange={event => setQuery(event.target.value)} />
-    {hasQuery && <><p role="status">找到 {results.length} 本藏书</p>
+    {categories.length > 0 && <div className="virtual-library-search-categories" aria-label="藏书分区">
+      {categories.map(category => <Button key={category.id} size="small" aria-pressed={categoryId === category.id}
+        onClick={() => setCategoryId(current => current === category.id ? null : category.id)}>
+        {category.label} · {category.count}
+      </Button>)}
+    </div>}
+    {active && <><p role="status">找到 {results.length} 本藏书</p>
     <div className="virtual-library-search-results">
       {results.length ? results.map(book => <div key={book.id} className="virtual-library-search-row"><Link className="virtual-library-search-result"
         to={`/reader/${encodeURIComponent(book.id)}`} onClick={event => {

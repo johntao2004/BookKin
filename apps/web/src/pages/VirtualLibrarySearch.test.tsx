@@ -32,6 +32,14 @@ describe('catalog orb search', () => {
     fireEvent.click(screen.getByRole('link', {name:'阅读《山川与灯火》'}));
     expect(close).toHaveBeenCalledOnce();
   });
+  it('filters by a shelf category from inside search', () => {
+    render(<TestProviders><VirtualLibrarySearch open books={books} onClose={vi.fn()} /></TestProviders>);
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', {name: '小说 · 1'}));
+    expect(screen.getByRole('status')).toHaveTextContent('找到 1 本藏书');
+    expect(screen.getByRole('link', {name: '阅读《山川与灯火》'})).toBeInTheDocument();
+    expect(screen.queryByRole('link', {name: '阅读《星空图鉴》'})).not.toBeInTheDocument();
+  });
   it('can locate a real catalog result without opening the reader', () => {
     const locate = vi.fn(), read = vi.fn(), close = vi.fn();
     render(<TestProviders><VirtualLibrarySearch open books={books} onClose={close} onLocateBook={locate} onReadBook={read} /></TestProviders>);
