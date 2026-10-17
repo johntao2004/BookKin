@@ -1,10 +1,19 @@
 #!/usr/bin/env python3
-"""BookKin reference reconstruction. Blender 4.3.2; project-scale estimates.
+"""Retired 30 m hall. The live narrow hall is build_narrow_hall.mjs.
+BookKin reference reconstruction. Blender 4.3.2; project-scale estimates.
 Run: blender -b -t 2 --python scripts/hogwarts-library/build_library.py -- --stage full
 Architectural coordinates are Three.js (x, y up, z). Blender uses (x, -z, y).
 No game meshes/textures, screenshot planes or synthetic shelf books are used.
 """
-import bpy, math, json, sys, os, random, argparse
+import os, sys
+if os.environ.get("BOOKKIN_LEGACY_HALL") != "1":
+    sys.stderr.write(
+        "This Blender script builds the retired 30 m hall and would overwrite the live narrow hall.\n"
+        "Generate the live hall with scripts/hogwarts-library/build_narrow_hall.mjs.\n"
+        "Set BOOKKIN_LEGACY_HALL=1 to run this script anyway.\n"
+    )
+    raise SystemExit(2)
+import bpy, math, json, random, argparse
 from mathutils import Vector
 from pathlib import Path
 from collections import defaultdict

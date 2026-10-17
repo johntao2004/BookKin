@@ -1,3 +1,4 @@
+// Retired splitter for the 30 m hall. The live hall is build_narrow_hall.mjs.
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
