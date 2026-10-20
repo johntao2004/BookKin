@@ -1,3 +1,4 @@
+import { tokens } from "../theme/generated-tokens";
 import {
   AppstoreAddOutlined,
   AppstoreOutlined,
@@ -122,7 +123,7 @@ function sxValue(key: string, value: unknown): unknown {
   if (typeof value !== "number") return value;
   if (unitlessProperties.has(key)) return value;
   if (spacingProperties.has(key)) return `${value * 8}px`;
-  if (key === "borderRadius") return `${value * 4}px`;
+  if (key === "borderRadius") return value === 0 ? "0px" : value >= tokens.radius.full ? `${tokens.radius.full}px` : `${tokens.radius.md}px`;
   return `${value}px`;
 }
 

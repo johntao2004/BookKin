@@ -63,7 +63,7 @@ export function applyPdfTextAnnotations(
       mark.dataset.highlightColor = segment.annotation.color ?? "YELLOW";
       mark.textContent = text.slice(segment.start, segment.end);
       mark.style.color = "inherit";
-      mark.style.borderRadius = "2px";
+      mark.style.borderRadius = "var(--radius-md)";
       mark.style.background = segment.annotation.style === "HIGHLIGHT"
         ? annotationColorBackground(segment.annotation.color)
         : "transparent";

@@ -17,7 +17,7 @@ const breakpointValues: Record<string, number> = {
   sm: tokens.layout.breakpointMobile,
   md: tokens.layout.breakpointTablet,
   lg: tokens.layout.breakpointDesktop,
-  xl: 1920,
+  xl: tokens.layout.breakpointWide,
 };
 
 export const bookKinThemeOptions: Record<ReaderTheme, BookKinThemeOption> = {
@@ -99,6 +99,14 @@ export function createAntdTheme(mode: ReaderTheme) {
   return {
     algorithm: mode === "NIGHT" ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
     components: {
+      Skeleton: {
+        gradientFromColor: colors.surfaceSoft,
+        gradientToColor: colors.surfaceStrong,
+        blockRadius: tokens.radius.sm,
+        titleHeight: tokens.typography.fontSize.titleSm,
+        paragraphLiHeight: tokens.typography.fontSize.bodySm,
+        paragraphMarginTop: tokens.spacing[3],
+      },
       Notification: {
         fontSize: tokens.typography.fontSize.bodySm,
         fontSizeLG: tokens.typography.fontSize.bodySm,
@@ -114,6 +122,15 @@ export function createAntdTheme(mode: ReaderTheme) {
         borderRadius: tokens.radius.md,
         primaryShadow: "none",
         defaultShadow: "none",
+        defaultBg: colors.surfaceCard,
+        defaultColor: colors.textPrimary,
+        defaultBorderColor: colors.border,
+        defaultHoverBg: colors.surfaceSoft,
+        defaultHoverColor: colors.textPrimary,
+        defaultHoverBorderColor: colors.borderStrong,
+        defaultActiveBg: colors.surfaceStrong,
+        defaultActiveColor: colors.textPrimary,
+        defaultActiveBorderColor: colors.borderStrong,
         dangerShadow: "none",
         fontWeight: tokens.typography.fontWeight.medium,
       },
@@ -126,6 +143,8 @@ export function createAntdTheme(mode: ReaderTheme) {
         bodyPadding: tokens.spacing.xl,
       },
       Dropdown: {
+        fontSize: tokens.typography.fontSize.bodySm,
+        controlHeight: tokens.layout.menuItemHeight,
         borderRadiusLG: tokens.radius.lg,
         controlItemBgHover: colors.surfaceSoft,
         controlItemBgActive: colors.surfaceStrong,
@@ -153,6 +172,8 @@ export function createAntdTheme(mode: ReaderTheme) {
         paddingLG: tokens.spacing.lg,
       },
       Menu: {
+        fontSize: tokens.typography.fontSize.bodySm,
+        itemHeight: tokens.layout.menuItemHeight,
         itemBorderRadius: tokens.radius.md,
         itemSelectedBg: colors.surfaceStrong,
         itemHoverBg: colors.surfaceSoft,
@@ -242,6 +263,12 @@ export function createAntdTheme(mode: ReaderTheme) {
       lineHeight: tokens.typography.lineHeight.body,
       fontSizeSM: tokens.typography.fontSize.bodySm,
       fontSizeLG: tokens.typography.fontSize.titleSm,
+      fontSizeHeading1: tokens.typography.fontSize.heading,
+      fontSizeHeading2: tokens.typography.fontSize.headingSm,
+      fontSizeHeading3: tokens.typography.fontSize.title,
+      fontSizeHeading4: tokens.typography.fontSize.titleSm,
+      fontSizeHeading5: tokens.typography.fontSize.body,
+      fontWeightStrong: tokens.typography.fontWeight.semibold,
     },
   };
 }

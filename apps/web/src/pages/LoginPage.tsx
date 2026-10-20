@@ -14,7 +14,6 @@ import { useAuth } from "../auth/AuthContext";
 import { setupStatusQueryOptions } from "../auth/setup-status";
 import { api } from "../api/client";
 import { AuthFrame } from "../components/AuthFrame";
-import { getLoginGreeting } from "./login-greeting";
 
 export function getLoginDefaults(isDemo: boolean) {
   return isDemo
@@ -50,12 +49,12 @@ export function LoginPage() {
     }
   };
 
-  if (!ready) return <AuthFrame title="正在进入书房" description="正在确认登录状态…"><Typography role="status">正在加载…</Typography></AuthFrame>;
-  if (sessionError) return <AuthFrame title="暂时无法进入书房"><Alert severity="error">{sessionError}</Alert><Button onClick={retrySession}>重试连接</Button></AuthFrame>;
+  if (!ready) return <AuthFrame title="登录"><Typography role="status">正在加载…</Typography></AuthFrame>;
+  if (sessionError) return <AuthFrame title="登录"><Alert severity="error">{sessionError}</Alert><Button onClick={retrySession} sx={{ width: { xs: "100%", sm: "auto" } }}>重试连接</Button></AuthFrame>;
   if (user) return <Navigate to={user.mustChangePassword ? "/change-password" : "/library"} replace />;
 
   return (
-    <AuthFrame title="回到你的书房" description="请输入用户名和密码，继续访问你的书房。" greeting={getLoginGreeting(new Date().getHours())}>
+    <AuthFrame title="登录">
       {(location.state as {registered?:boolean} | null)?.registered && <Alert severity="success">注册成功，请登录。</Alert>}
       <Stack component="form" spacing={2.5} onSubmit={submit}>
         <TextField label="用户名" autoComplete="username" value={username} onChange={(event: any) => setUsername(event.target.value)} required autoFocus />
@@ -79,7 +78,7 @@ export function LoginPage() {
           }}
         />
         {error && <Alert severity="error">{error}</Alert>}
-        <Button type="submit" variant="contained" size="large" disabled={loading}>{loading ? "正在登录…" : "登录"}</Button>
+        <Button type="submit" variant="contained" size="large" disabled={loading} sx={{ width: { xs: "100%", sm: "auto" } }}>{loading ? "正在登录…" : "登录"}</Button>
       </Stack>
       <Typography variant="body2" sx={{ mt: 2 }}><Link to="/forgot-password">忘记密码？</Link></Typography>
       {setupStatus.isSuccess && !setupStatus.isFetching && setupStatus.data.initialized === false && (

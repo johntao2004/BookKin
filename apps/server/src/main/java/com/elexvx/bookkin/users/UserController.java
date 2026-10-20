@@ -28,11 +28,13 @@ import org.springframework.web.bind.annotation.RestController;
 @PreAuthorize("hasAnyRole('OWNER','ADMIN')")
 public class UserController {
     private final UserRepository users;
+    private final com.elexvx.bookkin.auth.SessionLifecycleService sessions;
     private final PasswordEncoder passwords;
     private final AuditService audit;
     private final com.elexvx.bookkin.auth.PasswordPolicyService passwordPolicy;
 
-    public UserController(UserRepository users, PasswordEncoder passwords, AuditService audit, com.elexvx.bookkin.auth.PasswordPolicyService passwordPolicy) {
+    public UserController(UserRepository users, PasswordEncoder passwords, AuditService audit, com.elexvx.bookkin.auth.PasswordPolicyService passwordPolicy, com.elexvx.bookkin.auth.SessionLifecycleService sessions) {
+        this.sessions=sessions;
         this.users = users;
         this.passwords = passwords;
         this.audit = audit; this.passwordPolicy=passwordPolicy;
@@ -89,7 +91,7 @@ public class UserController {
         var target = users.findById(id).orElseThrow(() -> ApiException.notFound("USER_NOT_FOUND", "用户不存在。"));
         ensureCanManage(actor, target);
         if (target.id().equals(actor.id())) throw ApiException.conflict("SELF_REVOKE_FORBIDDEN", "不能从用户管理中撤销当前会话。");
-        users.revokeSessions(id);
+        sessions.requestRevocation(target.username());
         audit.record(actor.id(), "USER_SESSIONS_REVOKED", "USER", id.toString(), null, null, null, null,
                 "SUCCEEDED", "{}");
     }

@@ -1,0 +1,54 @@
+{
+  "revision": "20261020-lower-gallery-r27",
+  "sourceSha256": "ff7d2c6a277e720243acf25049355e9b11cb9f1cf6a754c3662504beb397e64a",
+  "configSha256": "f8908d564e8550ad980e21b41bc1879ec199b699754eb96aea465a9b6e35efa5",
+  "change": {
+    "lowerArtworks": 5,
+    "removedDecorativeDoor": true,
+    "removedFourSilhouettePanels": true,
+    "preserved": [
+      "structural arcade",
+      "exterior wall",
+      "open passage bays",
+      "stairs",
+      "upper artworks"
+    ]
+  },
+  "checks": {
+    "sourceGeometry": "passed",
+    "exact13ModuleTrianglePreservation": "passed",
+    "canvasAndFrameRays": 705,
+    "solidSpandrelRays": 75,
+    "openArcadeRays": 30,
+    "remainingDoorMaterialTriangles": 0,
+    "negativeControlRejected": true,
+    "endWalls": "passed",
+    "crosswalk": "passed",
+    "walkClearance": "passed",
+    "lint": "passed",
+    "typecheck": "passed",
+    "focusedTests": "40/40 passed",
+    "build": "passed",
+    "fullSuite": "not rerun"
+  },
+  "browser": {
+    "views": [
+      "front",
+      "oblique",
+      "close",
+      "overview"
+    ],
+    "revision": "20261020-lower-gallery-r27",
+    "failedModules": 0,
+    "errors": [],
+    "evidence": ".artifacts/model-clearance/lower-gallery-runtime-r27.json"
+  },
+  "execution": {
+    "freeRelayExecutor": "two bounded attempts returned no patch; lead implemented and reviewed verifier"
+  },
+  "git": {
+    "committed": false,
+    "pushed": false,
+    "deployed": false
+  }
+}

@@ -25,7 +25,7 @@ for side in (-1,1):
     for k,(a,b) in enumerate(zip(points,points[1:])):
      clearance_profile_box(f'door-tracery-curve-{side}-{z}-{lancet}-{edge}-{k}',[a,b],.80)
  # Lower solid arcade spandrels were visible but previously had no shell.
- for z in BAYS:
+ for z in BAYS+[-17.5,17.5]:
   for i in range(14):
    a=i*math.pi/14;b=(i+1)*math.pi/14
    zz=[z+2.15*math.cos(t) for t in(a,b)]
@@ -35,3 +35,10 @@ for side in (-1,1):
 for z in (-8,1,10):
  COLLISIONS.append({'id':f'chandelier-suspension-{z}','shape':'cylinder',
   'center':{'x':0,'y':(15.675+18.58)/2,'z':z},'radius':.035,'height':18.58-15.675})
+
+# Solid shared shoulders and terminal wall ties match the visible arcade.
+for side in(-1,1):
+ for z in BOUNDS:
+  collision_box(f'arcade-shared-shoulder-{side}-{z}',(side*8.8,(3.9+5.84)/2,z),(.54,5.84-3.9,.21))
+ for end in(-1,1):
+  collision_box(f'arcade-end-jamb-{side}-{end}',(side*8.8,(3.9+5.84)/2,end*19.9475),(.54,5.84-3.9,.105))

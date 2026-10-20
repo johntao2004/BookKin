@@ -10,7 +10,11 @@ const LibraryRoots = lazy(() => import("./LibraryRootsPage").then(m => ({ defaul
 const Fonts = lazy(() => import("./ReaderFontsPage").then(m => ({ default: m.ReaderFontsPage })));
 const AiSettings = lazy(() => import("./AiSettingsPage").then(m => ({ default: m.AiSettingsPage })));
 const MailSettings = lazy(() => import("./MailSettingsPage").then(m => ({default:m.MailSettingsPage})));
+const UserManagement = lazy(() => import("./UserManagementPage").then(m => ({ default: m.UserManagementPage })));
+const Personalization = lazy(() => import("./SiteSettingsPage").then(m => ({default:m.SiteSettingsPage})));
 const sections = [
+  { key: "users", label: "用户管理", component: UserManagement, managed: true },
+  { key: "personalization", label: "个性化设置", component: Personalization, managed: true, ownerOnly: true },
   { key: "library-roots", label: "书库状态", component: LibraryRoots, managed: true },
   { key: "reader-fonts", label: "阅读字体", component: Fonts, managed: true },
   { key: "mail", label: "邮件服务", component: MailSettings, managed: true, ownerOnly: true },
@@ -27,34 +31,32 @@ export function SettingsPage() {
   const isMobile = useMediaQuery(mobileSettingsQuery);
   const canManage = user?.role === "OWNER" || user?.role === "ADMIN";
   const available = sections.filter(s => s.ownerOnly ? user?.role === "OWNER" : canManage || !s.managed);
-  const requested = available.find(s => `#${s.key}` === location.hash);
+  const requested = available.find(s => `#${s.key}` === location.hash || (s.key === "users" && location.hash.startsWith("#users/")));
   const active = requested ?? available[0] ?? sections[0];
   useEffect(() => {
     if (location.hash === "#recovery-email" || !canManage) { navigate("/profile", { replace: true }); return; }
-    if (location.hash === "#display-books") { navigate("/display-books", { replace: true }); return; }
-    if (location.hash === "#file-operations") { navigate("/admin/users#operations", { replace: true }); return; }
-    if (location.hash === "#users") { navigate("/admin/users", { replace: true }); return; }
+    if (location.hash === "#display-books") { navigate("/library/all", { replace: true }); return; }
+    if (location.hash === "#file-operations") { navigate("/settings#users/operations", { replace: true }); return; }
     if (!requested) navigate({ pathname: "/settings", hash: `#${active.key}` }, { replace: true });
   }, [requested, active.key, navigate, location.hash, canManage]);
   const Panel = active.component;
   const content = <Box
     component="section"
+    className="bk-settings-panel"
     id={active.key}
     aria-label={active.label}
     sx={{
       minWidth: 0,
-      bgcolor: "background.paper",
-      border: 1,
-      borderColor: "divider",
-      borderRadius: `${tokens.radius.lg}px`,
-      p: { xs: `${tokens.spacing[4]}px`, sm: `${tokens.spacing[6]}px` },
+      py: `${tokens.spacing[4]}px`,
     }}
   >
-    {active.key !== "mail" && <Typography variant="h5" component="h2" sx={{ mb: `${tokens.spacing[4]}px` }}>{active.label}</Typography>}
+    <Typography variant="h5" component="h2" sx={{ mb: `${tokens.spacing[6]}px` }}>{active.label}</Typography>
     <EmbeddedSettingsContext.Provider value>
-      <Suspense fallback={<Skeleton active paragraph={{ rows: 6 }} />}>
-        {active.managed ? <RequireAuth roles={active.ownerOnly ? ["OWNER"] : ["OWNER", "ADMIN"]}><Panel /></RequireAuth> : <Panel />}
-      </Suspense>
+      <Box sx={{ width: "100%", minWidth: 0, maxWidth: "none" }}>
+        <Suspense fallback={<Skeleton active paragraph={{ rows: 6 }} />}>
+          {active.managed ? <RequireAuth roles={active.ownerOnly ? ["OWNER"] : ["OWNER", "ADMIN"]}><Panel /></RequireAuth> : <Panel />}
+        </Suspense>
+      </Box>
     </EmbeddedSettingsContext.Provider>
   </Box>;
   return <PageContainer>

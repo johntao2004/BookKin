@@ -16,10 +16,10 @@ const inventory=JSON.parse(await fs.readFile(process.argv[4]??path.join(ROOT,'do
 for(const m of inventory.modules){const file=await fs.readFile(path.join(out,'modules',m.name+'.glb'));assert.equal(file.length,m.fileBytes);assert.equal(sha(file),m.sha256);const x=glb(file);assert.deepEqual(x.j.materials,original.j.materials);assert.deepEqual(x.j.textures,original.j.textures);assert.deepEqual(x.j.samplers,original.j.samplers);assert.equal(x.j.images.length,original.j.images.length);assert(x.j.extensionsRequired.includes('KHR_meshopt_compression'));assert.equal(x.j.nodes.length,1);assert.deepEqual(Object.keys(x.j.nodes[0]).sort(),['mesh','name']);const v=await buffers(x);const hs=triangleHashes(x,v);assert.equal(hs.length,m.triangles);for(const h of hs)candidateHashes.push(h);count+=hs.length;maxBytes=Math.max(maxBytes,file.length);decodedReport.push({module:m.name,triangles:hs.length});for(let i=0;i<x.j.images.length;i++){const im=x.j.images[i];assert.equal(im.uri,inventory.textures[i].uri);assert.equal(im.name,original.j.images[i].name);assert.equal(im.mimeType,original.j.images[i].mimeType);}}
 await fs.writeFile(moduleHashesPath,Buffer.concat(candidateHashes));
 for(let i=0;i<inventory.textures.length;i++){const texture=inventory.textures[i],b=await fs.readFile(path.join(out,'textures',path.basename(texture.uri)));const before=ov[original.j.images[i].bufferView];assert(b.equals(before));assert.equal(sha(b),texture.sha256);}
-const sorted=spawnSync('python',['-c',
+const sorted=spawnSync(process.env.PYTHON ?? 'python3',['-c',
  'import sys,json,hashlib,numpy as np; a=np.fromfile(sys.argv[1],dtype="V32"); b=np.fromfile(sys.argv[2],dtype="V32"); a.sort(); b.sort(); assert np.array_equal(a,b), "Triangle multiset differs"; print(json.dumps({"triangles":len(a),"canonicalTriangleMultisetSha256":hashlib.sha256(a.tobytes()).hexdigest()}))',
  sourceHashesPath,moduleHashesPath],{encoding:'utf8'});
-assert.equal(sorted.status,0,sorted.stderr);const proof=JSON.parse(sorted.stdout);
+assert.ifError(sorted.error);assert.equal(sorted.status,0,sorted.stderr);const proof=JSON.parse(sorted.stdout);
 const report={sourceSha256:sha(original.b),modules:inventory.modules.length,triangles:count,maxModuleBytes:maxBytes,
  sharedImages:inventory.textures.length,materialDefinitionsUnchanged:true,allImageBytesIdentical:true,
  rawAttributeBitsAndOrderedCornersPreserved:true,completeTriangleMultisetIdentical:true,

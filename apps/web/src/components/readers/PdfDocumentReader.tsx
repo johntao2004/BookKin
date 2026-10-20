@@ -11,7 +11,7 @@ import { IconButton } from "@/ui/buttons";
 import { Popover } from "@/ui/primitives";
 import { Stack } from "@/ui/primitives";
 import { Typography } from "@/ui/primitives";
-import { getDocument, GlobalWorkerOptions, TextLayer, type PDFDocumentProxy, type RenderTask } from "pdfjs-dist";
+import { getDocument, GlobalWorkerOptions, TextLayer, type PDFDocumentProxy, type PDFDataRangeTransport, type RenderTask } from "pdfjs-dist";
 import pdfWorker from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 import "pdfjs-dist/web/pdf_viewer.css";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode, type RefObject, type TouchEvent } from "react";
@@ -21,10 +21,11 @@ import { tokens } from "../../theme/generated-tokens";
 import { readerWidthSx } from "../PageHeader";
 import { applyPdfTextAnnotations } from "./pdf-annotations";
 import { pdfTextToReadingBlocks, splitPdfInlineFootnoteReferences, type PdfReadingBlock } from "./pdf-reading-text";
-import { READER_CONTENT_HEIGHT, READER_PAGE_HEIGHT } from "./reader-layout";
+import type { ReaderPageLayout } from "./reader-layout";
 import { isEditableReaderTarget, isReaderSwipe } from "./reader-navigation";
 import { PageTurnShade } from "./PageTurnShade";
 import { readerSelectionFromRect, type ReaderSelection } from "./types";
+import { useReaderPageLayout } from "./use-reader-page-layout";
 import { usePageTurnTransition } from "./use-page-turn-transition";
 
 GlobalWorkerOptions.workerSrc = pdfWorker;
@@ -66,7 +67,7 @@ export function previousPdfLocation({
   };
 }
 
-export default function PdfDocumentReader({ bookId, annotations, theme, fontSize, fontFamily, pageTurnEnabled = true, fontSourceUrl, contentUrl, readOnly = false, target, onSelect, onPosition }: {
+export default function PdfDocumentReader({ bookId, annotations, theme, fontSize, fontFamily, pageTurnEnabled = true, fontSourceUrl, contentUrl, dataRange, readOnly = false, target, onSelect, onPosition }: {
   bookId: string;
   annotations: Annotation[];
   theme: { background: string; foreground: string; muted: string };
@@ -75,6 +76,7 @@ export default function PdfDocumentReader({ bookId, annotations, theme, fontSize
   pageTurnEnabled?: boolean;
   fontSourceUrl?: string;
   contentUrl?: string;
+  dataRange?: PDFDataRangeTransport;
   readOnly?: boolean;
   target?: string;
   onSelect: (selection: ReaderSelection) => void;
@@ -98,7 +100,6 @@ export default function PdfDocumentReader({ bookId, annotations, theme, fontSize
   const footnoteRequestRef = useRef(0);
   const footnoteOriginRef = useRef(new Map<string, string>());
   const [activeFootnote, setActiveFootnote] = useState<ActivePdfFootnote | null>(null);
-  const [wideSpread, setWideSpread] = useState(false);
   const [pendingPreviousPageNumber, setPendingPreviousPageNumber] = useState<number | null>(null);
   const [displayedPosition, setDisplayedPosition] = useState({
     pageNumber: 1,
@@ -108,6 +109,8 @@ export default function PdfDocumentReader({ bookId, annotations, theme, fontSize
   const initialTargetRef = useRef(target);
   const touchStartXRef = useRef<number | null>(null);
   const readingSurfaceRef = useRef<HTMLDivElement | null>(null);
+  const pageLayout = useReaderPageLayout(readingSurfaceRef);
+  const wideSpread = pageLayout?.spread ?? false;
   const virtualPageCountsRef = useRef(new Map<number, number>());
   const pendingPreviousPageNumberRef = useRef<number | null>(null);
   const previousPageReadyResolverRef = useRef<(() => void) | null>(null);
@@ -128,15 +131,6 @@ export default function PdfDocumentReader({ bookId, annotations, theme, fontSize
   }, [pageNumber, turning, virtualPageCount, virtualPageIndex]);
 
   useEffect(() => {
-    if (typeof window.matchMedia !== "function") return;
-    const mediaQuery = window.matchMedia(`(min-width: ${tokens.layout.breakpointTablet}px)`);
-    const update = () => setWideSpread(mediaQuery.matches);
-    update();
-    mediaQuery.addEventListener("change", update);
-    return () => mediaQuery.removeEventListener("change", update);
-  }, []);
-
-  useEffect(() => {
     let disposed = false;
     textCacheRef.current.clear();
     virtualPageCountsRef.current.clear();
@@ -154,7 +148,7 @@ export default function PdfDocumentReader({ bookId, annotations, theme, fontSize
     setReadingBlocks([]);
     setTextLoading(true);
     setError("");
-    const task = getDocument({ url: contentUrl ?? `/api/v1/books/${bookId}/content`, withCredentials: true, rangeChunkSize: 1024 * 1024 });
+    const task = getDocument(dataRange ? { range: dataRange, disableAutoFetch: true, disableStream: true, rangeChunkSize: 1024 * 1024 } : { url: contentUrl ?? `/api/v1/books/${bookId}/content`, withCredentials: true, rangeChunkSize: 1024 * 1024 });
     void Promise.all([task.promise, readOnly ? Promise.resolve(null) : api.getReadingPosition(bookId)]).then(([loaded, position]) => {
       if (disposed) return;
       setDocument(loaded);
@@ -172,7 +166,7 @@ export default function PdfDocumentReader({ bookId, annotations, theme, fontSize
       previousPageReadyResolverRef.current = null;
       void task.destroy();
     };
-  }, [bookId, contentUrl, readOnly]);
+  }, [bookId, contentUrl, dataRange, readOnly]);
 
   useEffect(() => {
     if (viewMode !== "ORIGINAL" || !document || !canvasRef.current || !textLayerRef.current) return;
@@ -384,19 +378,19 @@ export default function PdfDocumentReader({ bookId, annotations, theme, fontSize
     else goPrevious();
   };
 
-  if (error) return <Stack sx={{ minHeight: READER_CONTENT_HEIGHT, alignItems: "center", justifyContent: "center", p: 3 }}><Alert severity="error">{error}</Alert></Stack>;
+  if (error) return <Stack sx={{ height: "100%", alignItems: "center", justifyContent: "center", p: 3 }}><Alert severity="error">{error}</Alert></Stack>;
 
   return (
-    <Stack className="reader-viewport" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} sx={{ height: READER_CONTENT_HEIGHT, minHeight: 0, overflow: "hidden", bgcolor: viewMode === "ORIGINAL" ? theme.foreground : theme.background, color: viewMode === "ORIGINAL" ? theme.background : theme.foreground }}>
+    <Stack className="reader-viewport" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} sx={{ height: "100%", minHeight: 0, overflow: "hidden", bgcolor: viewMode === "ORIGINAL" ? theme.foreground : theme.background, color: viewMode === "ORIGINAL" ? theme.background : theme.foreground }}>
       {fontSourceUrl && <style>{`@font-face { font-family: ${fontFamily.split(",")[0]}; src: url("${fontSourceUrl}"); font-display: swap; }`}</style>}
       {viewMode === "READING" ? (
-        <Box ref={readingSurfaceRef} className="reader-page-turn-surface" sx={{ position: "relative", ...readerWidthSx, height: READER_PAGE_HEIGHT, minHeight: 0, overflow: "hidden", bgcolor: theme.background, backfaceVisibility: "hidden", transformStyle: "preserve-3d", willChange: turning ? "transform, opacity, filter, clip-path" : "auto" }}>
-          <PdfReadingClipFrame>
+        <Box ref={readingSurfaceRef} className="reader-page-turn-surface" data-reader-spread={wideSpread} sx={{ position: "relative", ...readerWidthSx, flex: "1 1 auto", minHeight: 0, overflow: "hidden", bgcolor: theme.background, backfaceVisibility: "hidden", transformStyle: "preserve-3d", willChange: turning ? "transform, opacity, filter, clip-path" : "auto" }}>
+          <PdfReadingClipFrame width={pageLayout?.articleWidth}>
             {textLoading
               ? <Stack spacing={1.5} sx={{ height: "100%", alignItems: "center", justifyContent: "center" }}><CircularProgress size={30} /><Typography sx={{ color: theme.muted }}>正在解析第 {pageNumber} 页文字…</Typography></Stack>
               : readingBlocks.length === 0 && document
                 ? <PdfImagePage document={document} pageNumber={pageNumber} muted={theme.muted} />
-                : <PdfPagedText textRef={readingTextRef} blocks={readingBlocks} pageNumber={pageNumber} theme={theme} fontFamily={fontFamily} fontSize={fontSize} wideSpread={wideSpread} pageIndex={virtualPageIndex} onPageCountChange={handleVirtualPageCountChange} onOpenFootnote={openFootnote} onReturnToReference={returnToFootnoteReference} onCaptureSelection={() => captureSelection(pageNumber)} />}
+                : <PdfPagedText textRef={readingTextRef} blocks={readingBlocks} pageNumber={pageNumber} theme={theme} fontFamily={fontFamily} fontSize={fontSize} layout={pageLayout} pageIndex={virtualPageIndex} onPageCountChange={handleVirtualPageCountChange} onOpenFootnote={openFootnote} onReturnToReference={returnToFootnoteReference} onCaptureSelection={() => captureSelection(pageNumber)} />}
           </PdfReadingClipFrame>
           <PageTurnShade />
         </Box>
@@ -407,15 +401,15 @@ export default function PdfDocumentReader({ bookId, annotations, theme, fontSize
           {rendering && <Stack sx={{ position: "absolute", inset: 0, alignItems: "center", justifyContent: "center", bgcolor: "rgba(255,255,255,.78)" }}><CircularProgress size={30} /></Stack>}
         </Box>
       )}
-      <Stack component="nav" aria-label="PDF 翻页" className="pdf-reader-pagination" direction="row" spacing={1} sx={{ flex: `0 0 ${tokens.layout.readerControlHeight}px`, minHeight: tokens.layout.readerControlHeight, alignItems: "center", justifyContent: "center", overflowX: "auto", px: { xs: 1, sm: 2 }, py: 0.75, bgcolor: theme.background, color: theme.foreground, borderTop: "1px solid", borderColor: "divider" }}>
-        <IconButton color="inherit" aria-label="PDF 上一页" disabled={turning || !canPrevious} onClick={goPrevious}><NavigateBeforeRounded /></IconButton>
-        <Typography variant="body2" sx={{ minWidth: { xs: 120, sm: 180 }, textAlign: "center", color: theme.muted }}>{document ? `第 ${displayedPosition.pageNumber} 页 · ${displayedPosition.virtualPageIndex + 1}/${displayedPosition.virtualPageCount} · 共 ${document.numPages} 页` : "正在打开 PDF…"}</Typography>
-        <IconButton color="inherit" aria-label="PDF 下一页" disabled={turning || !canNext} onClick={goNext}><NavigateNextRounded /></IconButton>
+      <Stack component="nav" aria-label="PDF 翻页" className="pdf-reader-pagination" direction="row" spacing={1} sx={{ ...readerWidthSx, flex: `0 0 ${tokens.layout.readerControlHeight}px`, minHeight: tokens.layout.readerControlHeight, alignItems: "center", justifyContent: "center", overflowX: "auto", py: 0.75, bgcolor: theme.background, color: theme.foreground, borderTop: "1px solid", borderColor: "divider" }}>
+        <IconButton color="inherit" aria-label="PDF 上一页" disabled={turning || !canPrevious} onClick={goPrevious} sx={{ width: tokens.layout.touchTarget, height: tokens.layout.touchTarget }}><NavigateBeforeRounded /></IconButton>
+        <Typography variant="body2" sx={{ minWidth: 0, flex: "1 1 auto", textAlign: "center", whiteSpace: "nowrap", color: theme.muted }}>{document ? `第 ${displayedPosition.pageNumber} 页 · ${displayedPosition.virtualPageIndex + 1}/${displayedPosition.virtualPageCount} · 共 ${document.numPages} 页` : "正在打开 PDF…"}</Typography>
+        <IconButton color="inherit" aria-label="PDF 下一页" disabled={turning || !canNext} onClick={goNext} sx={{ width: tokens.layout.touchTarget, height: tokens.layout.touchTarget }}><NavigateNextRounded /></IconButton>
         {viewMode === "ORIGINAL" && <>
           <Box sx={{ width: { xs: 0, sm: 8 } }} />
-          <IconButton color="inherit" aria-label="缩小 PDF" disabled={scale <= 0.75} onClick={() => setScale((value) => Math.max(0.75, value - 0.25))}><RemoveRounded /></IconButton>
+          <IconButton color="inherit" aria-label="缩小 PDF" disabled={scale <= 0.75} onClick={() => setScale((value) => Math.max(0.75, value - 0.25))} sx={{ width: tokens.layout.touchTarget, height: tokens.layout.touchTarget }}><RemoveRounded /></IconButton>
           <Typography variant="caption" sx={{ display: { xs: "none", sm: "block" }, color: "#C8C0B5" }}>{Math.round(scale * 100)}%</Typography>
-          <IconButton color="inherit" aria-label="放大 PDF" disabled={scale >= 2.5} onClick={() => setScale((value) => Math.min(2.5, value + 0.25))}><AddRounded /></IconButton>
+          <IconButton color="inherit" aria-label="放大 PDF" disabled={scale >= 2.5} onClick={() => setScale((value) => Math.min(2.5, value + 0.25))} sx={{ width: tokens.layout.touchTarget, height: tokens.layout.touchTarget }}><AddRounded /></IconButton>
         </>}
       </Stack>
       <Popover
@@ -444,18 +438,18 @@ export default function PdfDocumentReader({ bookId, annotations, theme, fontSize
   );
 }
 
-export function PdfReadingClipFrame({ children }: { children: ReactNode }) {
-  return <Box className="pdf-reading-clip-frame" sx={{ height: "100%", minHeight: 0, width: "100%", overflow: "hidden" }}>{children}</Box>;
+export function PdfReadingClipFrame({ children, width }: { children: ReactNode; width?: number }) {
+  return <Box className="pdf-reading-clip-frame" sx={{ height: "100%", minHeight: 0, width: width ? `${width}px` : "100%", maxWidth: "100%", mx: "auto", overflow: "hidden" }}>{children}</Box>;
 }
 
-function PdfPagedText({ textRef, blocks, pageNumber, theme, fontFamily, fontSize, wideSpread, pageIndex, onPageCountChange, onOpenFootnote, onReturnToReference, onCaptureSelection }: {
+function PdfPagedText({ textRef, blocks, pageNumber, theme, fontFamily, fontSize, layout, pageIndex, onPageCountChange, onOpenFootnote, onReturnToReference, onCaptureSelection }: {
   textRef: RefObject<HTMLDivElement | null>;
   blocks: PdfReadingBlock[];
   pageNumber: number;
   theme: { background: string; foreground: string; muted: string };
   fontFamily: string;
   fontSize: number;
-  wideSpread: boolean;
+  layout: ReaderPageLayout | null;
   pageIndex: number;
   onPageCountChange: (count: number) => void;
   onOpenFootnote: (marker: string, anchor: HTMLElement, originId: string, sourcePageNumber: number, sourceBlocks: PdfReadingBlock[]) => void;
@@ -463,33 +457,10 @@ function PdfPagedText({ textRef, blocks, pageNumber, theme, fontFamily, fontSize
   onCaptureSelection: () => void;
 }) {
   const frameRef = useRef<HTMLDivElement | null>(null);
-  const visibleColumns = wideSpread ? 2 : 1;
-  const gap = tokens.layout.readerPageGap;
-  const [columnWidth, setColumnWidth] = useState<number | null>(null);
-  const [columnGap, setColumnGap] = useState<number>(gap);
-
-  useEffect(() => {
-    const frame = frameRef.current;
-    if (!frame) return;
-    const measureColumnWidth = () => {
-      const styles = window.getComputedStyle(frame);
-      const paddingRight = Number.parseFloat(styles.paddingRight) || 0;
-      const padding = (Number.parseFloat(styles.paddingLeft) || 0) + paddingRight;
-      const contentWidth = Math.max(1, frame.clientWidth - padding);
-      // Keep the next CSS column outside the clipped page frame. The reader
-      // uses padding for the page margin, so the column gap must be at least
-      // that margin or the next virtual page can peek into the current one.
-      const nextGap = Math.max(gap, paddingRight + tokens.spacing[2]);
-      const nextWidth = Math.max(1, Math.floor((contentWidth - (visibleColumns - 1) * nextGap) / visibleColumns));
-      setColumnGap((current) => current === nextGap ? current : nextGap);
-      setColumnWidth((current) => current === nextWidth ? current : nextWidth);
-    };
-    measureColumnWidth();
-    if (typeof ResizeObserver === "undefined") return;
-    const observer = new ResizeObserver(measureColumnWidth);
-    observer.observe(frame);
-    return () => observer.disconnect();
-  }, [gap, visibleColumns]);
+  const visibleColumns = layout?.visibleColumns ?? 1;
+  const columnWidth = layout?.columnWidth ?? null;
+  const columnGap = layout?.columnGap ?? tokens.layout.readerPageGap;
+  const pagePadding = layout?.pagePadding ?? tokens.spacing[5];
 
   useEffect(() => {
     const frame = frameRef.current;
@@ -507,9 +478,9 @@ function PdfPagedText({ textRef, blocks, pageNumber, theme, fontFamily, fontSize
     const observer = new ResizeObserver(measure);
     observer.observe(frame);
     return () => { observer.disconnect(); window.cancelAnimationFrame(animationFrame); };
-  }, [blocks, columnGap, columnWidth, fontFamily, fontSize, onPageCountChange, visibleColumns]);
+  }, [blocks, columnGap, columnWidth, fontFamily, fontSize, layout?.articleWidth, onPageCountChange, visibleColumns]);
 
-  const pageStride = columnWidth === null ? 0 : visibleColumns * (columnWidth + columnGap);
+  const pageStride = layout?.pageStride ?? 0;
 
   return (
     <Box
@@ -524,7 +495,9 @@ function PdfPagedText({ textRef, blocks, pageNumber, theme, fontFamily, fontSize
       className="reader-paged-text"
       sx={{
         height: "100%",
-        width: "100%",
+        width: layout ? `${layout.articleWidth}px` : "100%",
+        maxWidth: "100%",
+        mx: "auto",
         overflow: "visible",
         transform: columnWidth === null ? `translateX(-${pageIndex * 100}%)` : `translateX(-${pageIndex * pageStride}px)`,
         transition: "none",
@@ -540,7 +513,7 @@ function PdfPagedText({ textRef, blocks, pageNumber, theme, fontFamily, fontSize
         writingMode: "horizontal-tb",
         textOrientation: "mixed",
         unicodeBidi: "normal",
-        px: { xs: `${tokens.spacing[5]}px`, sm: `${tokens.spacing[10]}px`, md: `${tokens.spacing[12]}px` },
+        px: `${pagePadding}px`,
         pt: { xs: `${tokens.spacing[6]}px`, md: `${tokens.spacing[10]}px` },
         pb: `${tokens.spacing[6]}px`,
         color: theme.foreground,
@@ -702,7 +675,6 @@ function PdfImagePage({ document, pageNumber, muted }: { document: PDFDocumentPr
         <Box component="canvas" ref={canvasRef} role="img" aria-label={`PDF 第 ${pageNumber} 页图片`} sx={{ display: error ? "none" : "block", maxWidth: "100%", height: "auto", borderRadius: `${tokens.radius.lg}px`, boxShadow: tokens.shadow.cover }} />
         {loading && !error && <Stack sx={{ position: "absolute", inset: 0, alignItems: "center", justifyContent: "center", gap: `${tokens.spacing[2]}px`, bgcolor: "background.default" }}><CircularProgress size={tokens.spacing[8]} /><Typography variant="body2" sx={{ color: muted }}>正在加载第 {pageNumber} 页图片…</Typography></Stack>}
       </Box>
-      {!error && <Typography variant="caption" component="p" sx={{ color: muted }}>第 {pageNumber} 页 · 图片页按阅读宽度展示 · 未进行 OCR</Typography>}
     </Stack>
   );
 }

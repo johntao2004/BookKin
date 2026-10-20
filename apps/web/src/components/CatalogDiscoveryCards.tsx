@@ -1,17 +1,14 @@
+import { BookCardPresentation } from "./BookCardPresentation";
 import { AddRounded } from "@/ui/icons";
 import { AutoStoriesOutlined } from "@/ui/icons";
 import { LockOutlined } from "@/ui/icons";
-import { MenuBookRounded } from "@/ui/icons";
 import { PeopleAltOutlined } from "@/ui/icons";
 import { PublicOutlined } from "@/ui/icons";
 import { Box } from "@/ui/primitives";
-import { Button } from "@/ui/buttons";
 import { Card } from "@/ui/cards";
 import { CardActionArea } from "@/ui/primitives";
 import { Chip } from "@/ui/feedback";
-import { IconButton } from "@/ui/buttons";
 import { Stack } from "@/ui/primitives";
-import { Tooltip } from "@/ui/feedback";
 import { Typography } from "@/ui/primitives";
 import { Link } from "react-router-dom";
 import type { BooklistSummary, BooklistVisibility, BrowseBook, CategorySummary } from "../domain/types";
@@ -30,10 +27,7 @@ export function CoverMosaic({ books, label, compact = false }: { books: BrowseBo
         gap: `${tokens.spacing[2]}px`,
         aspectRatio: compact ? "4 / 3" : "1 / 1",
         minHeight: 0,
-        p: `${tokens.spacing[3]}px`,
         bgcolor: "background.paper",
-        border: 1,
-        borderColor: "divider",
         borderRadius: `${tokens.radius.xl}px`,
         overflow: "hidden",
       }}
@@ -46,7 +40,7 @@ export function CoverMosaic({ books, label, compact = false }: { books: BrowseBo
           alt=""
           loading="lazy"
           decoding="async"
-          sx={{ width: "100%", height: "100%", minHeight: 0, objectFit: "cover", borderRadius: `${tokens.radius.sm}px`, boxShadow: tokens.shadow.cover }}
+          sx={{ width: "100%", height: "100%", minHeight: 0, objectFit: "cover", borderRadius: `${tokens.radius.sm}px` }}
         />
       )) : (
         <Stack sx={{ gridColumn: "1 / -1", gridRow: "1 / -1", alignItems: "center", justifyContent: "center", color: "text.disabled" }}>
@@ -71,7 +65,7 @@ export function CategoryCard({ category }: { category: CategorySummary }) {
             <Typography variant="h4" component="h2">{category.name}</Typography>
             <Typography variant="caption" color="text.secondary" sx={{ whiteSpace: "nowrap" }}>{category.bookCount} 本</Typography>
           </Stack>
-          <Typography color="text.secondary" sx={{ display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", minHeight: "3.3em" }}>
+          <Typography color="text.secondary" sx={{ display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", height: `${tokens.typography.lineHeight.body * 2}em`, lineHeight: tokens.typography.lineHeight.body }}>
             {category.description || "等待馆藏慢慢填满这个分类。"}
           </Typography>
         </Stack>
@@ -91,23 +85,20 @@ export function VisibilityChip({ visibility, size = "small" }: { visibility: Boo
 
 export function BooklistCard({ booklist }: { booklist: BooklistSummary }) {
   return (
-    <Card sx={{ width: "100%", maxWidth: { xs: "none", sm: 292 }, bgcolor: "transparent", overflow: "visible" }}>
+    <Card variant="borderless" sx={{ "&.ant-card": { boxShadow: "none" }, width: "100%", maxWidth: { xs: "none", sm: tokens.spacing[24] * 3 }, bgcolor: "transparent", overflow: "visible" }}>
       <CardActionArea
         component={Link}
         to={`/booklists/${booklist.id}`}
         sx={{ display: "block", borderRadius: `${tokens.radius.xl}px`, textAlign: "left", "&:hover": { opacity: 1 } }}
       >
         <CoverMosaic books={booklist.previewBooks} label={`${booklist.title}书单封面`} />
-        <Stack sx={{ pt: `${tokens.spacing[4]}px`, gap: `${tokens.spacing[2]}px` }}>
-          <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "flex-start", gap: `${tokens.spacing[3]}px` }}>
-            <Typography variant="h5" component="h3">{booklist.title}</Typography>
-            <VisibilityChip visibility={booklist.visibility} />
-          </Stack>
-          <Typography color="text.secondary" sx={{ display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", minHeight: "3.3em" }}>
+        <Stack sx={{ pt: `${tokens.spacing[4]}px`, gap: `${tokens.spacing[1]}px` }}>
+          <Typography variant="h5" component="h3" noWrap title={booklist.title}>{booklist.title}</Typography>
+          <Typography color="text.secondary" noWrap title={booklist.description || undefined}>
             {booklist.description || "创建者还没有写下这份书单的说明。"}
           </Typography>
           <Typography variant="caption" color="text.secondary">
-            {booklist.kind === "OFFICIAL" ? "官方书单" : `由 ${booklist.ownerDisplayName} 创建`} · {booklist.bookCount} 本
+            {booklist.ownerDisplayName ? `由 ${booklist.ownerDisplayName} 创建` : "共享书单"} · {booklist.bookCount} 本
           </Typography>
         </Stack>
       </CardActionArea>
@@ -120,28 +111,8 @@ export function BrowseBookCard({ book, onAdd, onRemove }: {
   onAdd?: (book: BrowseBook) => void;
   onRemove?: (book: BrowseBook) => void;
 }) {
-  return (
-    <Card sx={{ bgcolor: "transparent", overflow: "visible", contentVisibility: "auto", containIntrinsicSize: "420px" }}>
-      <CardActionArea
-        component={book.available ? Link : "div"}
-        to={book.available ? `/reader/${book.id}` : undefined}
-        disabled={!book.available}
-        sx={{ borderRadius: `${tokens.radius.lg}px`, overflow: "hidden", "&:hover": { opacity: 1 } }}
-      >
-        <Box component="img" src={book.coverUrl} alt={`${book.title}封面`} loading="lazy" decoding="async" sx={{ width: "100%", aspectRatio: "2 / 3", display: "block", objectFit: "cover", bgcolor: "background.paper", boxShadow: tokens.shadow.cover, opacity: book.available ? 1 : 0.62 }} />
-      </CardActionArea>
-      <Stack direction="row" spacing={1} sx={{ alignItems: "flex-start", justifyContent: "space-between", mt: `${tokens.spacing[3]}px` }}>
-        <Box sx={{ minWidth: 0 }}>
-          <Typography variant="h6" noWrap title={book.title}>{book.title}</Typography>
-          <Typography variant="body2" color="text.secondary" noWrap>{book.author}</Typography>
-          {!book.available ? <Typography variant="caption" color="warning.main">文件暂不可读</Typography> : null}
-        </Box>
-        <Stack direction="row" sx={{ flexShrink: 0 }}>
-          {onAdd ? <Tooltip title="加入书单"><IconButton size="small" aria-label={`将 ${book.title} 加入书单`} onClick={() => onAdd(book)}><AddRounded fontSize="small" /></IconButton></Tooltip> : null}
-          {onRemove ? <Button size="small" color="error" onClick={() => onRemove(book)} sx={{ minWidth: 0, px: 1 }}>移出</Button> : null}
-          {!onAdd && !onRemove && book.available ? <Tooltip title="开始阅读"><IconButton component={Link} to={`/reader/${book.id}`} size="small" aria-label={`阅读 ${book.title}`}><MenuBookRounded fontSize="small" /></IconButton></Tooltip> : null}
-        </Stack>
-      </Stack>
-    </Card>
-  );
+  return <BookCardPresentation book={book} actions={[
+    ...(onAdd ? [{ label: "加入书单", icon: <AddRounded />, onClick: () => onAdd(book) }] : []),
+    ...(onRemove ? [{ label: "移出", danger: true, onClick: () => onRemove(book) }] : []),
+  ]} />;
 }

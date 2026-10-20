@@ -98,12 +98,12 @@ export const tokens = {
   },
   "radius": {
     "none": 0,
-    "xs": 4,
-    "sm": 6,
-    "md": 8,
-    "lg": 12,
-    "xl": 16,
-    "2xl": 24,
+    "xs": 7.416408,
+    "sm": 7.416408,
+    "md": 7.416408,
+    "lg": 7.416408,
+    "xl": 7.416408,
+    "2xl": 7.416408,
     "pill": 9999,
     "full": 9999
   },
@@ -180,6 +180,14 @@ export const tokens = {
     "readerPagePadding": 48,
     "readerViewportBottom": 24,
     "readerControlHeight": 56,
-    "readerColumnLimit": 20
+    "readerColumnLimit": 20,
+    "breakpointWide": 1920,
+    "bookCardMinWidth": 224,
+    "annotationCardMinWidth": 448,
+    "wideScreenReferenceWidth": 1920,
+    "wideScreenScaleRange": 7680,
+    "menuMinWidth": 180,
+    "menuItemHeight": 36,
+    "menuIconSize": 18
   }
 } as const;

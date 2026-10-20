@@ -34,6 +34,18 @@ public class AnnotationRepository {
                 """, userId, bookId).map(this::map);
     }
 
+    public List<Annotation> search(UUID userId, UUID bookId, String query) {
+        // Apply ownership and text matching before limiting results, so older
+        // private notes are searchable without exposing another reader's data.
+        return dsl.fetch("""
+                select a.*, b.title as book_title, b.primary_author as book_author
+                  from annotations a join books b on b.id = a.book_id
+                 where a.user_id = ? and (?::uuid is null or a.book_id = ?)
+                   and position(lower(?) in lower(concat_ws(' ', b.title, b.primary_author, a.quote, a.note))) > 0
+                 order by a.updated_at desc, a.id desc limit 500
+                """, userId, bookId, bookId, query).map(this::map);
+    }
+
     public AnnotationBookPage listBooks(UUID userId, String query, String cursor, int requestedLimit) {
         int limit = Math.max(1, Math.min(100, requestedLimit));
         AnnotationBookCursor decoded = AnnotationBookCursor.decode(cursor);

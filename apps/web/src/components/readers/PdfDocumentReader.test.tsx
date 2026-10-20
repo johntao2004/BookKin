@@ -26,22 +26,13 @@ describe("PdfReadingClipFrame", () => {
     expect(frame).toContainElement(screen.getByText("下一虚拟页"));
   });
 
-  it("uses a two-page reading surface at the 1327px review viewport", async () => {
-    const reviewViewportWidth = 1327;
-    const addEventListener = vi.fn();
-    const removeEventListener = vi.fn();
-    vi.spyOn(window, "matchMedia").mockImplementation((query) => {
-      const minimumWidth = Number(query.match(/min-width:\s*(\d+)px/u)?.[1] ?? Number.POSITIVE_INFINITY);
-      return {
-        matches: reviewViewportWidth >= minimumWidth,
-        media: query,
-        onchange: null,
-        addListener: vi.fn(),
-        removeListener: vi.fn(),
-        addEventListener,
-        removeEventListener,
-        dispatchEvent: vi.fn(),
-      };
+  it("derives the PDF spread from the measured reading surface", async () => {
+    const widthDescriptor = Object.getOwnPropertyDescriptor(HTMLElement.prototype, "clientWidth");
+    Object.defineProperty(HTMLElement.prototype, "clientWidth", {
+      configurable: true,
+      get() {
+        return this.classList?.contains("reader-page-turn-surface") ? tokens.layout.breakpointTablet : 0;
+      },
     });
     vi.mocked(getDocument).mockReturnValue({
       promise: new Promise(() => undefined),
@@ -64,11 +55,11 @@ describe("PdfReadingClipFrame", () => {
     const frame = container.querySelector(".pdf-reading-clip-frame");
     const readingSurface = container.querySelector(".reader-page-turn-surface");
     const pagination = screen.getByRole("navigation", { name: "PDF 翻页" });
-    expect(window.matchMedia).toHaveBeenCalledWith(`(min-width: ${tokens.layout.breakpointTablet}px)`);
+    await waitFor(() => expect(readingSurface).toHaveAttribute("data-reader-spread", "true"));
     await waitFor(() => expect(frame?.parentElement).toHaveStyle({ width: "100%", maxWidth: "none" }));
     expect(readingSurface?.nextElementSibling).toBe(pagination);
-    expect(addEventListener).toHaveBeenCalledWith("change", expect.any(Function));
-    expect(removeEventListener).not.toHaveBeenCalled();
+    if (widthDescriptor) Object.defineProperty(HTMLElement.prototype, "clientWidth", widthDescriptor);
+    else Reflect.deleteProperty(HTMLElement.prototype, "clientWidth");
   });
 
   it("uses the bottom navigation as the only generated PDF page label", async () => {

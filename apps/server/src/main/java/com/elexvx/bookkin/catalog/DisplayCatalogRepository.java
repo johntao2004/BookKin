@@ -93,6 +93,13 @@ public class DisplayCatalogRepository {
         return insert(bookId, actorId);
     }
 
+    public boolean unpublish(UUID bookId) {
+        lockCatalog();
+        int deleted = dsl.execute("delete from display_catalog_entries where catalog_id = 1 and book_id = ?", bookId);
+        if (deleted > 0) bumpRevision();
+        return deleted > 0;
+    }
+
     public boolean remove(UUID bookId, long expectedRevision) {
         lockAndCheckRevision(expectedRevision);
         int deleted = dsl.execute("delete from display_catalog_entries where catalog_id = 1 and book_id = ?", bookId);

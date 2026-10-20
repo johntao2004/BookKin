@@ -8,6 +8,9 @@ import {MeshoptDecoder} from '../../apps/web/node_modules/three/examples/jsm/lib
 const ROOT=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../..');
 const OUT=path.join(ROOT,'apps/web/public/assets/hogwarts-library');
 await fs.mkdir(OUT,{recursive:true});
+const sceneConfig=JSON.parse(await fs.readFile(path.join(OUT,'scene-config.json'),'utf8'));
+const heightScale=sceneConfig.verticalLayout?.heightScale??1;
+const galleryY=sceneConfig.dimensions.galleryY;
 const SOURCE=path.resolve(process.argv[2]??path.join(ROOT,'scripts/hogwarts-library/deliverables/architecture-uncompressed.glb'));
 const source=await fs.readFile(SOURCE),jl=source.readUInt32LE(12),original=JSON.parse(source.toString('utf8',20,20+jl)),bin=source.subarray(28+jl);
 const sha=b=>crypto.createHash('sha256').update(b).digest('hex');
@@ -16,31 +19,29 @@ function view(id){const v=original.bufferViews[id];return bin.subarray(v.byteOff
 function accessor(id){const a=original.accessors[id],v=view(a.bufferView);assert.equal(a.byteOffset??0,0);return {a,bytes:v};}
 function fineRegion(cx,cy,cz,min,max,material){
  if(max[1]<.08)return 'core-floor';
- if(min[1]>5.7&&max[1]<6.24&&(Math.abs(cx)>8.5||Math.abs(cz)>15))return 'core-gallery-floor';
- if((min[0]>14.74||max[0]<-14.74)||(min[2]>17.84||max[2]<-17.84))return 'core-enclosure';
- if(min[1]>=13.5&&Math.abs(cx)<9.1)return 'core-main-vault';
- if(material==='Stone • carved pale scholar')return `scholar-${cx<0?'left':'right'}-${Math.round(cz/5)*5}`;
- if(material==='Bronze • end niche scholar')return 'a-end-bronze-pair';
- if(Math.abs(cx)<1.4&&Math.abs(cz+11.7)<1.4&&cy>.08&&cy<3.2)return 'globe';
- if(cy<8&&Math.hypot(Math.abs(cx)-6.8,cz+13.5)<2.6)return `stair-${cx<0?'left':'right'}`;
- if(cy>=5.75&&cy<7.9&&Math.abs(cx)>8.1&&Math.abs(cx)<9.3)return 'core-gallery-guards';
+ if(min[1]>5.7*heightScale&&max[1]<6.24*heightScale&&(Math.abs(cx)>8.5||Math.abs(cz)>15))return 'core-gallery-floor';
+ if((min[0]>14.74||max[0]<-14.74)||(min[2]>19.84||max[2]<-19.84))return 'core-enclosure';
+ if(min[1]>=13.5*heightScale&&Math.abs(cx)<9.1)return 'core-main-vault';
+ if(Math.abs(cx)<3.9&&13.5<cz&&cz<16.0&&cy<galleryY+2)return 'b-end';
+ if(Math.abs(cx)<1.4&&Math.abs(cz+15.0)<1.4&&cy>galleryY+.08&&cy<galleryY+3.2)return 'globe';
+ if(cy<galleryY+1.8&&Object.values(sceneConfig.stairs).some(stair=>Math.hypot(cx-stair.center.x,cz-stair.center.z)<stair.outerRadius+.6))return `stair-${cx<0?'left':'right'}`;
+ if(cy>=galleryY-.45&&cy<galleryY+1.7&&Math.abs(cx)>8.1&&Math.abs(cx)<9.3)return 'core-gallery-guards';
  if(cz<-15.3)return 'a-end';
  if(cz>15.3)return 'b-end';
  if(Math.abs(cx)>8.2)return `bay-${cx<0?'left':'right'}-${Math.max(0,Math.min(5,Math.floor((cz+15)/5)))}`;
- if(cy>=6)return 'central-lighting';
+ if(cy>=6*heightScale)return 'central-lighting';
  return cz<0?'central-furniture-south':'central-furniture-north';
 }
 function region(cx,cy,cz,min,max,material){
  const id=fineRegion(cx,cy,cz,min,max,material);
  if(id.startsWith('core-'))return 'core';
- if(id.startsWith('bay-')||id.startsWith('scholar-')){
+ if(id.startsWith('bay-')){
   // A few source triangles cross many bays; retain them whole in structural core.
   if(max[2]-min[2]>6)return 'core';
   const sector=Math.max(0,Math.min(2,Math.floor((cz+15)/10)));
   return `sector-${cx<0?'left':'right'}-${sector}`;
  }
  if(id.startsWith('stair-'))return `sector-${cx<0?'left':'right'}-0`;
- if(id==='a-end-bronze-pair')return 'a-end';
  return id;
 }
 
@@ -103,7 +104,7 @@ const bankBytes=Buffer.from(JSON.stringify(bank));await fs.writeFile(path.join(O
 const startup=new Set(['core','a-end','sector-left-2','sector-right-2','globe','central-furniture-north','central-furniture-south','central-lighting']);
 const materialCapacityLimits=original.materials.map((m,id)=>({name:m.name,vertices:0,indices:0}));
 for(const part of parts.values())for(const p of part.primitives){materialCapacityLimits[p.material].vertices+=p.attributes.POSITION.count;materialCapacityLimits[p.material].indices+=p.indices.length;}
-const manifest={materialCapacityLimits,version:1,revision:'20261009-walk-clearance-r4',
+const manifest={materialCapacityLimits,version:1,revision:sceneConfig.revision,
  source:{sha256:report.sourceSha256,bytes:report.sourceBytes,triangles:total},
  materialsUrl:`/assets/hogwarts-library/materials.gltf?v=${sha(bankBytes).slice(0,16)}`,
  chunks:inventory.map(m=>({id:m.name,url:`/assets/hogwarts-library/modules/${m.name}.glb?v=${m.sha256.slice(0,16)}`,

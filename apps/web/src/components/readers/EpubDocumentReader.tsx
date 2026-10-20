@@ -1,11 +1,10 @@
-import { ArrowBackIosNewRounded } from "@/ui/icons";
-import { ArrowForwardIosRounded } from "@/ui/icons";
+import { NavigateBeforeRounded } from "@/ui/icons";
+import { NavigateNextRounded } from "@/ui/icons";
 import { Alert } from "@/ui/feedback";
 import { Box } from "@/ui/primitives";
 import { CircularProgress } from "@/ui/feedback";
 import { IconButton } from "@/ui/buttons";
 import { Stack } from "@/ui/primitives";
-import { Tooltip } from "@/ui/feedback";
 import { Typography } from "@/ui/primitives";
 import ePub, { type Book, type Contents, type NavItem, type Rendition } from "epubjs";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -14,10 +13,10 @@ import type { Annotation } from "../../domain/types";
 import { tokens } from "../../theme/generated-tokens";
 import { readerWidthSx } from "../PageHeader";
 import { applyEpubInlineAnnotation, clearEpubInlineAnnotations, EPUB_INLINE_ANNOTATION_CLASS, findEpubTextRange } from "./epub-annotations";
-import { READER_CONTENT_HEIGHT } from "./reader-layout";
 import { isEditableReaderTarget, isReaderSwipe } from "./reader-navigation";
 import { PageTurnShade } from "./PageTurnShade";
 import { readerSelectionFromRect, type ReaderSelection, type TocItem } from "./types";
+import { useReaderPageLayout } from "./use-reader-page-layout";
 import { usePageTurnTransition } from "./use-page-turn-transition";
 
 interface Props {
@@ -48,13 +47,15 @@ export default function EpubDocumentReader({ bookId, annotations, theme, fontSiz
   const [loading, setLoading] = useState(true);
   const [renditionReady, setRenditionReady] = useState(false);
   const [renderedViewRevision, setRenderedViewRevision] = useState(0);
-  const [wideSpread, setWideSpread] = useState(false);
+  const [readingProgress, setReadingProgress] = useState(0);
   const [error, setError] = useState("");
   const initialTargetRef = useRef(target);
   const currentLocatorRef = useRef<string | undefined>(target);
   const gestureCleanupsRef = useRef(new Map<Document, () => void>());
   const touchStartXRef = useRef<number | null>(null);
   const pageSurfaceRef = useRef<HTMLDivElement | null>(null);
+  const pageLayout = useReaderPageLayout(pageSurfaceRef);
+  const wideSpread = pageLayout?.spread ?? false;
   const annotationRevision = useMemo(
     () => annotations.map((annotation) => `${annotation.id}:${annotation.updatedAt ?? annotation.createdAt}:${annotation.style}:${annotation.color ?? ""}`).join(","),
     [annotations],
@@ -73,15 +74,6 @@ export default function EpubDocumentReader({ bookId, annotations, theme, fontSiz
     if (!renditionRef.current) return;
     void turnPage("NEXT", async () => { await renditionRef.current?.next(); });
   }, [turnPage]);
-
-  useEffect(() => {
-    if (typeof window.matchMedia !== "function") return;
-    const mediaQuery = window.matchMedia(`(min-width: ${tokens.layout.breakpointTablet}px)`);
-    const update = () => setWideSpread(mediaQuery.matches);
-    update();
-    mediaQuery.addEventListener("change", update);
-    return () => mediaQuery.removeEventListener("change", update);
-  }, []);
 
   const installReaderFont = (contents: Contents) => {
     const document = contents.document;
@@ -136,7 +128,13 @@ export default function EpubDocumentReader({ bookId, annotations, theme, fontSiz
         background: `${theme.background} !important`,
         "font-family": `${fontFamily} !important`,
         "line-height": "1.9 !important",
-        padding: "0 5% !important",
+        padding: `0 ${tokens.spacing[5]}px !important`,
+        "box-sizing": "border-box !important",
+      },
+      "p, h1, h2, h3, blockquote": {
+        "max-width": `${tokens.layout.readingMax}px !important`,
+        "margin-left": "auto !important",
+        "margin-right": "auto !important",
       },
       a: { color: `${tokens.color.semantic.primary} !important` },
       "::selection": { background: `${tokens.color.semantic.primarySoft} !important` },
@@ -164,8 +162,8 @@ export default function EpubDocumentReader({ bookId, annotations, theme, fontSiz
         width: "100%",
         height: "100%",
         flow: "paginated",
-        spread: "auto",
-        minSpreadWidth: tokens.layout.breakpointTablet,
+        spread: "none",
+        minSpreadWidth: 1,
         allowScriptedContent: false,
       });
       renditionRef.current = rendition;
@@ -190,6 +188,7 @@ export default function EpubDocumentReader({ bookId, annotations, theme, fontSiz
           // Keep the rendition-provided percentage when a malformed CFI cannot be measured.
         }
         const progress = Math.max(0, Math.min(1, measuredProgress));
+        setReadingProgress(progress);
         onPosition(location.start.cfi, progress);
         window.clearTimeout(saveTimer.current);
         saveTimer.current = window.setTimeout(() => {
@@ -276,6 +275,16 @@ export default function EpubDocumentReader({ bookId, annotations, theme, fontSiz
   }, [fontFamily, fontSize, fontSourceUrl, theme.background, theme.foreground]);
 
   useEffect(() => {
+    const rendition = renditionRef.current;
+    const host = hostRef.current;
+    if (!rendition || !host || !renditionReady) return;
+    const locator = currentLocatorRef.current;
+    rendition.spread(wideSpread ? "always" : "none", 1);
+    rendition.resize(host.clientWidth, host.clientHeight);
+    if (locator) void rendition.display(locator).catch(() => undefined);
+  }, [renditionReady, wideSpread]);
+
+  useEffect(() => {
     const host = hostRef.current;
     const rendition = renditionRef.current;
     if (!host || !rendition || typeof ResizeObserver === "undefined") return;
@@ -326,17 +335,20 @@ export default function EpubDocumentReader({ bookId, annotations, theme, fontSiz
     if (target) void renditionRef.current?.display(target);
   }, [target]);
 
-  if (error) return <Stack sx={{ minHeight: READER_CONTENT_HEIGHT, alignItems: "center", justifyContent: "center", p: 3 }}><Alert severity="error">{error}</Alert></Stack>;
+  if (error) return <Stack sx={{ height: "100%", alignItems: "center", justifyContent: "center", p: 3 }}><Alert severity="error">{error}</Alert></Stack>;
 
   return (
-    <Box className="reader-viewport" sx={{ position: "relative", height: READER_CONTENT_HEIGHT, minHeight: 0, overflow: "hidden", bgcolor: theme.background }}>
+    <Box className="reader-viewport" sx={{ position: "relative", height: "100%", minHeight: 0, display: "flex", flexDirection: "column", overflow: "hidden", bgcolor: theme.background }}>
       {loading && <Stack spacing={1.5} sx={{ position: "absolute", inset: 0, zIndex: 2, alignItems: "center", justifyContent: "center", bgcolor: theme.background }}><CircularProgress size={30} /><Typography sx={{ color: theme.muted }}>正在排版 EPUB…</Typography></Stack>}
-      <Box ref={pageSurfaceRef} className="reader-page-turn-surface" sx={{ position: "relative", ...readerWidthSx, height: "100%", overflow: "hidden", bgcolor: theme.background, backfaceVisibility: "hidden", transformStyle: "preserve-3d", willChange: turning ? "transform, opacity, filter, clip-path" : "auto" }}>
+      <Box ref={pageSurfaceRef} className="reader-page-turn-surface" data-reader-spread={wideSpread} sx={{ position: "relative", ...readerWidthSx, flex: "1 1 auto", minHeight: 0, overflow: "hidden", bgcolor: theme.background, backfaceVisibility: "hidden", transformStyle: "preserve-3d", willChange: turning ? "transform, opacity, filter, clip-path" : "auto" }}>
         <Box ref={hostRef} sx={{ width: "100%", height: "100%", overflow: "hidden", "& iframe": { border: 0 } }} />
         <PageTurnShade />
       </Box>
-      <Tooltip title="上一页"><span><IconButton aria-label="EPUB 上一页" disabled={loading || turning} onClick={goPrevious} sx={{ position: "absolute", left: { xs: 4, sm: 16 }, top: "50%", transform: "translateY(-50%)", bgcolor: theme.background, color: theme.foreground, boxShadow: tokens.shadow.popover, "&:hover": { bgcolor: theme.background } }}><ArrowBackIosNewRounded /></IconButton></span></Tooltip>
-      <Tooltip title="下一页"><span><IconButton aria-label="EPUB 下一页" disabled={loading || turning} onClick={goNext} sx={{ position: "absolute", right: { xs: 4, sm: 16 }, top: "50%", transform: "translateY(-50%)", bgcolor: theme.background, color: theme.foreground, boxShadow: tokens.shadow.popover, "&:hover": { bgcolor: theme.background } }}><ArrowForwardIosRounded /></IconButton></span></Tooltip>
+      <Stack component="nav" aria-label="EPUB 翻页" direction="row" spacing={1} sx={{ ...readerWidthSx, flex: `0 0 ${tokens.layout.readerControlHeight}px`, minHeight: tokens.layout.readerControlHeight, alignItems: "center", justifyContent: "center", overflowX: "auto", borderTop: 1, borderColor: "divider", bgcolor: theme.background, color: theme.foreground }}>
+        <IconButton color="inherit" aria-label="EPUB 上一页" disabled={loading || turning} onClick={goPrevious} sx={{ width: tokens.layout.touchTarget, height: tokens.layout.touchTarget }}><NavigateBeforeRounded /></IconButton>
+        <Typography variant="caption" sx={{ minWidth: 0, flex: "1 1 auto", textAlign: "center", whiteSpace: "nowrap", color: theme.muted }}>已读 {Math.round(readingProgress * 100)}% · 左右滑动翻页</Typography>
+        <IconButton color="inherit" aria-label="EPUB 下一页" disabled={loading || turning} onClick={goNext} sx={{ width: tokens.layout.touchTarget, height: tokens.layout.touchTarget }}><NavigateNextRounded /></IconButton>
+      </Stack>
     </Box>
   );
 }

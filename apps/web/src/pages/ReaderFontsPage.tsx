@@ -1,10 +1,9 @@
+import { EmptyState } from "../ui/empty-state";
 import { PageContainer } from "../components/PageHeader";
 import { CloudUploadOutlined } from "@/ui/icons";
 import { Alert } from "@/ui/feedback";
 import { Box, useMediaQuery } from "@/ui/primitives";
 import { Button } from "@/ui/buttons";
-import { Card } from "@/ui/cards";
-import { CardContent } from "@/ui/primitives";
 import { Chip } from "@/ui/feedback";
 import { CircularProgress } from "@/ui/feedback";
 import { FormControl } from "@/ui/primitives";
@@ -83,9 +82,9 @@ export function ReaderFontsPage() {
     <PageContainer>
       {fonts.filter((font) => font.source === "CUSTOM" && font.contentUrl).map((font) => <style key={font.id}>{`@font-face { font-family: "${font.familyName}"; src: url("${font.contentUrl}") format("${font.format?.toLowerCase() ?? "woff2"}"); font-display: swap; }`}</style>)}
 
-      <Stack className="bk-form-section" sx={{ mb: 4 }}>
+      <Stack className="bk-form-section" sx={{ width: "100%", minWidth: 0, maxWidth: "none", mb: `${tokens.spacing[6]}px` }}>
         <Stack spacing={2}>
-          <Typography variant="h5">上传自定义字体</Typography>
+          <Typography variant="subtitle1" component="h3">上传自定义字体</Typography>
           <Box className={`bk-reader-font-upload-grid${isWideFontUpload ? " bk-reader-font-upload-grid--wide" : ""}`}>
             <TextField className="bk-reader-font-upload-name" label="展示名称（可选）" value={displayName} onChange={(event: any) => setDisplayName(event.target.value)} fullWidth />
             <FormControl className="bk-reader-font-upload-kind" fullWidth>
@@ -105,11 +104,19 @@ export function ReaderFontsPage() {
         </Stack>
       </Stack>
 
+      {fontsQuery.isSuccess && fonts.length === 0 && <EmptyState title="暂无阅读字体" />}
       {fontsQuery.isError && <Alert severity="error" sx={{ mb: 3 }}>无法读取字体列表，请刷新后重试。</Alert>}
-      <Stack spacing={2}>
+      <Stack
+        sx={{
+          width: "100%",
+          minWidth: 0,
+          display: "flex",
+          gap: `${tokens.spacing[4]}px`,
+        }}
+      >
         {fonts.map((font) => (
-          <Card key={font.id} variant="outlined" sx={{ borderRadius: `${tokens.radius.xl}px`, opacity: font.status === "ENABLED" ? 1 : 0.62 }}>
-            <CardContent sx={{ p: { xs: 2.5, sm: 3 } }}>
+          <Box className="bk-settings-row" key={font.id} sx={{ width: "100%", minWidth: 0, opacity: font.status === "ENABLED" ? 1 : 0.62 }}>
+            <Box sx={{ py: 3 }}>
               <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ alignItems: { sm: "center" } }}>
                 <Box sx={{ minWidth: 0, flex: 1 }}>
                   <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap", gap: 0.75 }}><Typography variant="h5" sx={{ fontFamily: readerFontFamily(font) }}>{font.displayName}</Typography><Chip size="small" label={font.kind === "SERIF" ? "衬线" : "无衬线"} /><Chip size="small" variant="outlined" label={font.source === "PRESET" ? "预设" : "自定义"} color={font.status === "ENABLED" ? "success" : "default"} /></Stack>
@@ -129,8 +136,8 @@ export function ReaderFontsPage() {
                   }}
                 />
               </Stack>
-            </CardContent>
-          </Card>
+            </Box>
+          </Box>
         ))}
       </Stack>
       <Snackbar open={Boolean(error)} autoHideDuration={5000} onClose={() => setError("")}><Alert severity="error" onClose={() => setError("")}>{error}</Alert></Snackbar>

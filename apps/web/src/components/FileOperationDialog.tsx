@@ -121,7 +121,7 @@ export function FileOperationDialog({ book, type, onClose, onCompleted }: FileOp
           {type === "TRASH"
             ? "请确认是否将这本书移入回收站。"
             : type === "MOVE" ? "选择目标书库，校验通过后确认移动。"
-            : "先由服务端计算真实路径、指纹、空间和冲突；确认后才会排入 Worker。"}
+            : "先检查文件位置、可用空间和名称冲突，确认预览后再执行。"}
         </Typography>
       </DialogTitle>
       <DialogContent>
@@ -180,7 +180,7 @@ export function FileOperationDialog({ book, type, onClose, onCompleted }: FileOp
                 <Alert severity="info">文件保留 30 天，可从回收站恢复；阅读记录和笔记不会删除。</Alert>
               )}
               {preview?.conflicts.map((conflict) => <Alert key={`${conflict.code}-${conflict.path}`} severity="error" icon={<ErrorOutlined />}>{conflict.message}</Alert>)}
-              {!loading && error && <Button variant="text" startIcon={<RefreshRounded />} onClick={createPreview}>重试</Button>}
+              {!loading && error && <Button variant="outlined" startIcon={<RefreshRounded />} onClick={createPreview}>重试</Button>}
             </Stack>
           ) : !preview ? (
             <Button variant="outlined" startIcon={loading ? <CircularProgress size={18} /> : <GppGoodOutlined />} onClick={createPreview} disabled={loading || (type === "RENAME" && !targetPath.trim())}>
@@ -199,7 +199,7 @@ export function FileOperationDialog({ book, type, onClose, onCompleted }: FileOp
               <PathRow label="空间需求" value={preview.requiredBytes ? `${(preview.requiredBytes / 1024 / 1024).toFixed(1)} MB` : "无需额外空间"} />
               {preview.warnings.map((warning) => <Alert key={warning} severity="warning" icon={<WarningAmberRounded />}>{warning}</Alert>)}
               {preview.conflicts.map((conflict) => <Alert key={`${conflict.code}-${conflict.path}`} severity="error" icon={<ErrorOutlined />}>{conflict.message}<br />{conflict.path}</Alert>)}
-              <Button variant="text" startIcon={<RefreshRounded />} onClick={createPreview}>重新预览</Button>
+              <Button variant="outlined" startIcon={<RefreshRounded />} onClick={createPreview}>重新预览</Button>
             </Stack>
           )}
           {error && <Alert severity="error">{error}</Alert>}

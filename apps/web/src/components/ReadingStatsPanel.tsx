@@ -52,12 +52,12 @@ export function ReadingStatsPanel({ stats, loading, error }: {
         flexDirection: "column",
       }}
     >
-      <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "flex-start", gap: `${tokens.spacing[3]}px` }}>
+      <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: `${tokens.spacing[3]}px` }}>
         <OverviewCardHeader id="reading-time-title" icon={<AccessTimeRounded />}>本周阅读时长</OverviewCardHeader>
         {stats && <Typography variant="caption" color="text.secondary" sx={{ whiteSpace: "nowrap" }}>{formatDateRange(stats.weekStart, stats.weekEnd)}</Typography>}
       </Stack>
 
-      <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "flex-end", gap: `${tokens.spacing[4]}px`, mt: `${tokens.spacing[4]}px` }}>
+      <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: `${tokens.spacing[4]}px`, mt: `${tokens.spacing[4]}px` }}>
         {loading ? <Skeleton.Input active size="small" /> : <Typography variant="h4">{formatDuration(stats?.totalSeconds ?? 0)}</Typography>}
         <Typography variant="caption" color="text.secondary" sx={{ textAlign: "right" }}>
           {formatWeeklyComparison(stats?.totalSeconds ?? 0, stats?.previousWeekSeconds ?? 0)}

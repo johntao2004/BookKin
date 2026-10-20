@@ -31,12 +31,14 @@ import org.springframework.http.MediaType;
 @PreAuthorize("hasAnyRole('OWNER','ADMIN')")
 public class MetadataController {
     private final BookMetadataRepository metadata;
+    private final MetadataEditingService editing;
     private final BookRepository books;
     private final FileOperationService fileOperations;
     private final BookCoverService covers;
 
-    public MetadataController(BookMetadataRepository metadata, BookRepository books, FileOperationService fileOperations, BookCoverService covers) {
+    public MetadataController(BookMetadataRepository metadata, BookRepository books, FileOperationService fileOperations, BookCoverService covers, MetadataEditingService editing) {
         this.metadata = metadata;
+        this.editing = editing;
         this.books = books;
         this.fileOperations = fileOperations;
         this.covers = covers;
@@ -50,9 +52,9 @@ public class MetadataController {
     @PatchMapping("/{id}/metadata")
     MetadataResult update(@PathVariable UUID id, @Valid @RequestBody MetadataRequest input, Principal principal) {
         metadata.find(id).orElseThrow(() -> ApiException.notFound("BOOK_NOT_FOUND", "未找到这本书。"));
-        metadata.update(id, new MetadataPatch(input.title(), input.subtitle(), input.authors(), input.translators(),
+        editing.update(id, new MetadataPatch(input.title(), input.subtitle(), input.authors(), input.translators(),
                 input.language(), input.publisher(), input.publishedDate(), input.isbn(), input.description(), input.series(),
-                input.seriesIndex(), input.tags(), input.subjectCodes(), input.manualFields()));
+                input.seriesIndex(), input.tags(), input.subjectCodes(), input.manualFields()), input.publiclyVisible(), principal);
         Preview preview = null;
         if (input.writeBack()) {
             var file = input.bookFileId() == null ? books.findPreferredFile(id).orElseThrow() : books.findFile(input.bookFileId()).orElseThrow();
@@ -76,7 +78,7 @@ public class MetadataController {
                                   @Size(max = 20_000) String description, @Size(max = 500) String series,
                                   BigDecimal seriesIndex, List<@Size(max = 200) String> tags,
                                   @Size(max = 4) List<@Size(max = 32) String> subjectCodes,
-                                  String[] manualFields, boolean writeBack, UUID bookFileId, String expectedFingerprint) {
+                                  String[] manualFields, boolean writeBack, UUID bookFileId, String expectedFingerprint, Boolean publiclyVisible) {
         public MetadataRequest {
             if (manualFields == null) {
                 List<String> supplied = new ArrayList<>();

@@ -63,7 +63,8 @@ describe("AnnotationsPage", () => {
     vi.mocked(api.listAnnotationBooks).mockResolvedValueOnce({ items: [] });
     render(<TestProviders initialPath={initialPath}><Routes><Route path="/annotations" element={<AnnotationsPage />} /></Routes></TestProviders>);
 
-    expect(await screen.findByRole("heading", { name: "无书目" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "暂无阅读笔记" })).toBeInTheDocument();
+    expect(screen.queryByText("无书目")).not.toBeInTheDocument();
     expect(screen.queryByText("在阅读器中选择文字，即可划线并写下想法。")).not.toBeInTheDocument();
     expect(screen.queryByText("换一个书名或作者关键词试试。")).not.toBeInTheDocument();
   });
@@ -72,7 +73,8 @@ describe("AnnotationsPage", () => {
     vi.mocked(api.listAnnotations).mockResolvedValueOnce([]);
     render(<TestProviders initialPath={`/annotations?bookId=${bookId}`}><Routes><Route path="/annotations" element={<AnnotationsPage />} /></Routes></TestProviders>);
 
-    expect(await screen.findByRole("heading", { name: "无书目", level: 4 })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "暂无阅读笔记", level: 4 })).toBeInTheDocument();
+    expect(screen.queryByText("无书目")).not.toBeInTheDocument();
     expect(screen.queryByText("这本书还没有阅读笔记或划线。")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "回到书中" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "导出 Word" })).toBeInTheDocument();

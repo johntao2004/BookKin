@@ -33,11 +33,6 @@ export function AccessDeniedPage({ reason, returnTo }: { reason: AccessDeniedRea
         <PageTitle>
           {authenticationRequired ? "这间书房暂未为你开门" : "这把钥匙打不开这一页"}
         </PageTitle>
-        <Typography sx={{ maxWidth: tokens.layout.readingMax, color: "text.secondary" }}>
-          {authenticationRequired
-            ? "请先登录，再继续访问这项私人书库功能。"
-            : "当前账户没有访问此页面所需的权限。如需使用，请联系书库主人或管理员。"}
-        </Typography>
         <Stack direction={{ xs: "column", sm: "row" }} sx={{ width: { xs: "100%", sm: "auto" }, gap: `${tokens.spacing[3]}px`, pt: `${tokens.spacing[3]}px` }}>
           {authenticationRequired ? (
             <Button component={Link} to="/login" state={{ from: returnTo }} variant="contained" size="large">

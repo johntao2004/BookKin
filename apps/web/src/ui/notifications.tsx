@@ -4,6 +4,8 @@ import { createContext, useContext, useEffect, useId, useRef, type PropsWithChil
 type NoticeApi = ReturnType<typeof notification.useNotification>[0];
 const NoticeContext = createContext<NoticeApi | null>(null);
 
+export function useFeedback() { return useContext(NoticeContext); }
+
 export function FeedbackProvider({ children }: PropsWithChildren) {
   const [api, holder] = notification.useNotification({ placement: "topRight" });
   return <NoticeContext.Provider value={api}>{holder}{children}</NoticeContext.Provider>;

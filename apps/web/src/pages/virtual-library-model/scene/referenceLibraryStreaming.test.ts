@@ -5,6 +5,7 @@ import { GLTFLoader, type GLTF } from 'three/addons/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 import { createReferenceLibraryStreaming, createReferenceMaterialPool, validateReferenceLibraryManifest,
   type ReferenceLibraryChunk, type ReferenceLibraryManifest, type ReferenceLibraryStreaming } from './referenceLibraryStreaming';
+import { REFERENCE_LIBRARY, REFERENCE_LIBRARY_ASSET_REVISION } from '../hogwartsLibraryLayout';
 
 const blank = {asset: {version: '2.0'}, scene: 0, scenes: [{nodes: []}]};
 const encoded = new TextEncoder().encode(JSON.stringify(blank));
@@ -53,7 +54,15 @@ afterEach(async () => {
 
 describe('reference library module streaming', () => {
   it('validates the real local manifest, bounds, version and cache-busting namespace', () => {
-    validateReferenceLibraryManifest(JSON.parse(readFileSync('public/assets/hogwarts-library/library-manifest.json', 'utf8')));
+    const actual = JSON.parse(readFileSync('public/assets/hogwarts-library/library-manifest.json', 'utf8'));
+    validateReferenceLibraryManifest(actual);
+    expect(actual.revision).toBe(REFERENCE_LIBRARY_ASSET_REVISION);
+    expect(REFERENCE_LIBRARY.manifestUrl).toBe(
+      `/assets/hogwarts-library/library-manifest.json?v=${REFERENCE_LIBRARY_ASSET_REVISION}`,
+    );
+    expect(REFERENCE_LIBRARY.configUrl).toBe(
+      `/assets/hogwarts-library/scene-config.json?v=${REFERENCE_LIBRARY_ASSET_REVISION}`,
+    );
     const good = manifest([chunk('core')]);
     expect(() => validateReferenceLibraryManifest(good)).not.toThrow();
     for (const url of ['https://other.example/core.glb', '../../outside.glb', 'modules/core.glb?token=secret',
@@ -223,7 +232,7 @@ describe('reference library module streaming', () => {
       fallbackResidencyLocked: !multiDraw, shadowRequiredModules: 13});
     expect(diagnostics.residentTriangles).toBe(actual.chunks.reduce((sum, chunk) => sum + chunk.triangles, 0));
     expect(diagnostics.batching.residentTriangles).toBe(diagnostics.residentTriangles);
-    expect(diagnostics.batching.batchCount).toBe(28);
+    expect(diagnostics.batching.batchCount).toBe(actual.materialCapacityLimits!.length);
     settings.parent.traverse(object => {
       if (object instanceof THREE.Mesh) expect([object.castShadow, object.receiveShadow]).toEqual([true, true]);
     });
@@ -341,8 +350,10 @@ describe('canonical reference material ownership', () => {
     }
     expect(manifest.chunks).toHaveLength(13);
     expect(primitiveCount).toBe(manifest.chunks.reduce((sum, chunk) => sum + chunk.primitives, 0));
-    expect(primitiveCount).toBe(140);
-    expect(variants.size).toBe(28);
+    expect(variants.size).toBe(manifest.materialCapacityLimits!.length);
+    expect(manifest.materialCapacityLimits!.map(material => material.name)).toEqual(
+      expect.arrayContaining(['Glass • cool window pane', 'Glass • warm window pane']),
+    );
     await pool.dispose();
   });
 

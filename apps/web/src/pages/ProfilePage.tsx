@@ -7,6 +7,7 @@ import { FormActions, PageContainer, PageHeader } from "../components/PageHeader
 import { Stack, Typography } from "../ui/primitives";
 import { Button } from "../ui/buttons";
 import { RecoveryEmailPage } from "./RecoveryEmailPage";
+import { tokens } from "../theme/generated-tokens";
 
 export function ProfilePage() {
   const { user, updateProfile } = useAuth();
@@ -26,7 +27,7 @@ export function ProfilePage() {
   const role = { OWNER: "主人", ADMIN: "管理员", MEMBER: "成员" }[user.role];
   return <PageContainer>
     <PageHeader eyebrow="PROFILE" title="个人信息" />
-    <Stack spacing={3}>
+    <Stack spacing={3} sx={{ maxWidth: tokens.layout.readingMax, minWidth: 0 }}>
       <Stack component="section" className="bk-form-section" spacing={2} aria-label="账户资料">
         <Typography component="h2" variant="h4">账户资料</Typography>
         <Typography>账户角色：{role}</Typography>
@@ -36,7 +37,7 @@ export function ProfilePage() {
           <TextField label="当前密码（确认资料修改）" type="password" autoComplete="current-password" value={password} required disabled={busy} onChange={(e: React.ChangeEvent<HTMLInputElement>)=>setPassword(e.target.value)} />
           {error && <Alert severity="error">{error}</Alert>}
           {saved && <Alert severity="success">账户资料已保存。</Alert>}
-          <FormActions><Button type="submit" variant="contained" disabled={busy}>{busy ? "正在保存…" : "保存账户资料"}</Button></FormActions>
+          <FormActions><Button type="submit" variant="contained" disabled={busy} sx={{ width: { xs: "100%", sm: "auto" } }}>{busy ? "正在保存…" : "保存账户资料"}</Button></FormActions>
         </Stack>
       </Stack>
       <RecoveryEmailPage />

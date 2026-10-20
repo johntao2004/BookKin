@@ -198,7 +198,7 @@ describe("virtual library shelf layout", () => {
     expect(previewOffset.dot(cameraDirection)).toBeCloseTo(BOOK_INSPECTION_LAYOUT.desktopForwardOffset);
     expect(previewOffset.dot(cameraRight)).toBeCloseTo(-BOOK_INSPECTION_LAYOUT.desktopSideOffset);
     expect(coverNormal.distanceTo(previewToCamera)).toBeLessThan(0.00001);
-    expect(BOOK_INSPECTION_LAYOUT.desktopPreviewScale).toBe(1.8);
+    expect(BOOK_INSPECTION_LAYOUT.desktopPreviewScale).toBe(3.0);
     expect(transform.scale.toArray()).toEqual(
       shelfScale.clone().multiplyScalar(BOOK_INSPECTION_LAYOUT.desktopPreviewScale).toArray(),
     );

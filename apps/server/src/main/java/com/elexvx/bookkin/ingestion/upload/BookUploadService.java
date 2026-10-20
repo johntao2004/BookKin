@@ -162,7 +162,7 @@ public class BookUploadService {
         MetadataDraft normalized = new MetadataDraft(requested.title().strip(), blank(requested.subtitle()), clean(requested.authors()),
                 clean(requested.translators()), blank(requested.language()), blank(requested.publisher()), blank(requested.publishedDate()),
                 blank(requested.isbn()), blank(requested.description()), blank(requested.series()), requested.seriesIndex(), clean(requested.tags()),
-                upload.draftMetadata().pageCount(), upload.draftMetadata().wordCount(), sources, target);
+                upload.draftMetadata().pageCount(), upload.draftMetadata().wordCount(), sources, target, requested.publiclyVisible());
         uploads.updateDraft(id, normalized);
         audit.record(actor, "BOOK_UPLOAD_METADATA_EDITED", "BOOK_UPLOAD", id.toString(), upload.originalFilename(), target,
                 upload.fingerprint(), upload.fingerprint(), "SUCCEEDED", "{}");
@@ -176,7 +176,7 @@ public class BookUploadService {
         try {
             var result = enrichment.enrich(upload.draftMetadata(), aiSettings.effective().enabled(), null, false);
             uploads.ready(id, upload.encrypted(), upload.drmProtected(), upload.digitallySigned(), upload.detectedMetadata(),
-                    result.draft(), result.candidates(), upload.coverCacheKey(), upload.selectedCoverSource(),
+                    result.draft().withPubliclyVisible(upload.draftMetadata().publiclyVisible()), result.candidates(), upload.coverCacheKey(), upload.selectedCoverSource(),
                     upload.similarBookIds().toArray(UUID[]::new));
         } catch (Exception exception) {
             uploads.resetReady(id, "ENRICHMENT_FAILED", "在线补全暂时不可用，本地识别结果仍可继续使用。");
@@ -194,7 +194,7 @@ public class BookUploadService {
         try {
             var result = enrichment.enrich(upload.draftMetadata(), true, providerId, true);
             uploads.ready(id, upload.encrypted(), upload.drmProtected(), upload.digitallySigned(), upload.detectedMetadata(),
-                    result.draft(), result.candidates(), upload.coverCacheKey(), upload.selectedCoverSource(),
+                    result.draft().withPubliclyVisible(upload.draftMetadata().publiclyVisible()), result.candidates(), upload.coverCacheKey(), upload.selectedCoverSource(),
                     upload.similarBookIds().toArray(UUID[]::new));
             audit.record(actor, "BOOK_UPLOAD_AI_MATCHED", "BOOK_UPLOAD", id.toString(), upload.originalFilename(), null,
                     upload.fingerprint(), upload.fingerprint(), "SUCCEEDED", "{\"providerId\":\"" + safeAudit(providerId) + "\"}");
@@ -234,7 +234,7 @@ public class BookUploadService {
         }
         var current = owned(id, actor);
         if (current.status() == BookUploadStatus.SUCCEEDED && idempotencyKey.equals(current.idempotencyKey())) {
-            if (publishToDisplay && current.committedBookId() != null) displayCatalog.publish(current.committedBookId(), actor);
+            // A replay must not undo a later per-book visibility change.
             return current.view();
         }
         var upload = uploads.beginCommit(id, actor, idempotencyKey);

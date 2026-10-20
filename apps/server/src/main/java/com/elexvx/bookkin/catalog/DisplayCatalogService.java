@@ -67,6 +67,14 @@ public class DisplayCatalogService {
         return display.publish(bookId, actorId);
     }
 
+    @Transactional
+    public void setVisibility(UUID bookId, boolean visible, Principal principal) {
+        BookKinUser actor = actor(principal);
+        if (!books.exists(bookId)) throw ApiException.notFound("BOOK_NOT_FOUND", "未找到这本书。");
+        if (visible) publish(bookId, actor.id());
+        else display.unpublish(bookId);
+    }
+
     private BookKinUser actor(Principal principal) {
         if (principal == null) throw ApiException.forbidden("AUTH_REQUIRED", "请先登录。");
         return users.findByUsername(principal.getName()).orElseThrow();

@@ -9,7 +9,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { api } from "../api/client";
 import type { Annotation } from "../domain/types";
 import { tokens } from "../theme/generated-tokens";
-import { EMPTY_CATALOG_TITLE } from "../ui/empty-state-copy";
+import { EMPTY_ANNOTATIONS_TITLE } from "../ui/empty-state-copy";
 import { OverviewCardHeader } from "./OverviewCardHeader";
 import { OverviewEmptyState } from "./OverviewEmptyState";
 
@@ -68,7 +68,7 @@ export function RecentAnnotationsPanel({ embedded = false }: { embedded?: boolea
         </Stack>
       ) : recentAnnotations.length === 0 ? (
         <OverviewEmptyState
-          title={EMPTY_CATALOG_TITLE}
+          title={EMPTY_ANNOTATIONS_TITLE}
         />
       ) : (
         <Box sx={embedded ? { display: "flex", flex: 1, flexDirection: "column", minHeight: 0, mt: `${tokens.spacing[4]}px` } : { mt: `${tokens.spacing[4]}px` }}>

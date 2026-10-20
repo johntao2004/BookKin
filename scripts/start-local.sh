@@ -126,6 +126,7 @@ if [[ "$API_READY" != true ]]; then
   exit 1
 fi
 
+echo "$API_PORT" > "$REPO_ROOT/.local/api-port"
 echo "API ready at $API_HEALTH_URL (PID $API_PID); Worker ready (PID $WORKER_PID)."
 echo "Immutable runtime snapshot: $RUNTIME_JAR"
 echo "Keep this process running; press Ctrl+C to stop API and Worker."

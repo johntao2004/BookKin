@@ -1,0 +1,366 @@
+{
+  "revision": "20261020-gallery-pier-joinery-r36",
+  "current": {
+    "sourceSha256": "0752e975067afbfed1cb17fe0675b762134b910ff0a05da92cd808efeb599a17",
+    "raisedStonePatchTriangles": {
+      "-10.5": 0,
+      "-4.6": 0,
+      "4.6": 0,
+      "10.5": 0
+    },
+    "probes": 74,
+    "failures": [],
+    "passed": true
+  },
+  "baseline": {
+    "sourceSha256": "7ae39499b432bc4ba1db056e6dc952202537b209d2d7340c0f5136ae68763f21",
+    "raisedStonePatchTriangles": {
+      "-10.5": 10,
+      "-4.6": 8,
+      "4.6": 8,
+      "10.5": 10
+    },
+    "probes": 74,
+    "failures": [
+      {
+        "kind": "continuous-wall",
+        "x": -11.1,
+        "y": 10,
+        "passed": false
+      },
+      {
+        "kind": "continuous-wall",
+        "x": -11.1,
+        "y": 13.8,
+        "passed": false
+      },
+      {
+        "kind": "continuous-wall",
+        "x": -11.1,
+        "y": 15.4,
+        "passed": false
+      },
+      {
+        "kind": "continuous-wall",
+        "x": -10.5,
+        "y": 10,
+        "passed": false
+      },
+      {
+        "kind": "continuous-wall",
+        "x": -10.5,
+        "y": 13.8,
+        "passed": false
+      },
+      {
+        "kind": "continuous-wall",
+        "x": -10.5,
+        "y": 15.4,
+        "passed": false
+      },
+      {
+        "kind": "continuous-wall",
+        "x": -9.9,
+        "y": 10,
+        "passed": false
+      },
+      {
+        "kind": "continuous-wall",
+        "x": -9.9,
+        "y": 13.8,
+        "passed": false
+      },
+      {
+        "kind": "continuous-wall",
+        "x": -9.9,
+        "y": 15.4,
+        "passed": false
+      },
+      {
+        "kind": "continuous-wall",
+        "x": -5.199999999999999,
+        "y": 10,
+        "passed": false
+      },
+      {
+        "kind": "continuous-wall",
+        "x": -5.199999999999999,
+        "y": 13.8,
+        "passed": false
+      },
+      {
+        "kind": "continuous-wall",
+        "x": -5.199999999999999,
+        "y": 15.4,
+        "passed": false
+      },
+      {
+        "kind": "continuous-wall",
+        "x": -4.6,
+        "y": 10,
+        "passed": false
+      },
+      {
+        "kind": "continuous-wall",
+        "x": -4.6,
+        "y": 13.8,
+        "passed": false
+      },
+      {
+        "kind": "continuous-wall",
+        "x": -4.6,
+        "y": 15.4,
+        "passed": false
+      },
+      {
+        "kind": "continuous-wall",
+        "x": -3.9999999999999996,
+        "y": 10,
+        "passed": false
+      },
+      {
+        "kind": "continuous-wall",
+        "x": -3.9999999999999996,
+        "y": 13.8,
+        "passed": false
+      },
+      {
+        "kind": "continuous-wall",
+        "x": -3.9999999999999996,
+        "y": 15.4,
+        "passed": false
+      },
+      {
+        "kind": "continuous-wall",
+        "x": 3.9999999999999996,
+        "y": 10,
+        "passed": false
+      },
+      {
+        "kind": "continuous-wall",
+        "x": 3.9999999999999996,
+        "y": 13.8,
+        "passed": false
+      },
+      {
+        "kind": "continuous-wall",
+        "x": 3.9999999999999996,
+        "y": 15.4,
+        "passed": false
+      },
+      {
+        "kind": "continuous-wall",
+        "x": 4.6,
+        "y": 10,
+        "passed": false
+      },
+      {
+        "kind": "continuous-wall",
+        "x": 4.6,
+        "y": 13.8,
+        "passed": false
+      },
+      {
+        "kind": "continuous-wall",
+        "x": 4.6,
+        "y": 15.4,
+        "passed": false
+      },
+      {
+        "kind": "continuous-wall",
+        "x": 5.199999999999999,
+        "y": 10,
+        "passed": false
+      },
+      {
+        "kind": "continuous-wall",
+        "x": 5.199999999999999,
+        "y": 13.8,
+        "passed": false
+      },
+      {
+        "kind": "continuous-wall",
+        "x": 5.199999999999999,
+        "y": 15.4,
+        "passed": false
+      },
+      {
+        "kind": "continuous-wall",
+        "x": 9.9,
+        "y": 10,
+        "passed": false
+      },
+      {
+        "kind": "continuous-wall",
+        "x": 9.9,
+        "y": 13.8,
+        "passed": false
+      },
+      {
+        "kind": "continuous-wall",
+        "x": 9.9,
+        "y": 15.4,
+        "passed": false
+      },
+      {
+        "kind": "continuous-wall",
+        "x": 10.5,
+        "y": 10,
+        "passed": false
+      },
+      {
+        "kind": "continuous-wall",
+        "x": 10.5,
+        "y": 13.8,
+        "passed": false
+      },
+      {
+        "kind": "continuous-wall",
+        "x": 10.5,
+        "y": 15.4,
+        "passed": false
+      },
+      {
+        "kind": "continuous-wall",
+        "x": 11.1,
+        "y": 10,
+        "passed": false
+      },
+      {
+        "kind": "continuous-wall",
+        "x": 11.1,
+        "y": 13.8,
+        "passed": false
+      },
+      {
+        "kind": "continuous-wall",
+        "x": 11.1,
+        "y": 15.4,
+        "passed": false
+      },
+      {
+        "kind": "inset-timber-rib",
+        "x": -9.08,
+        "end": -1,
+        "passed": false
+      },
+      {
+        "kind": "inset-timber-rib",
+        "x": -12,
+        "end": -1,
+        "passed": false
+      },
+      {
+        "kind": "inset-timber-rib",
+        "x": -14.65,
+        "end": -1,
+        "passed": false
+      },
+      {
+        "kind": "inset-timber-rib",
+        "x": -17.1,
+        "end": -1,
+        "passed": false
+      },
+      {
+        "kind": "inset-timber-rib",
+        "x": -19.78,
+        "end": -1,
+        "passed": false
+      },
+      {
+        "kind": "inset-timber-rib",
+        "x": 9.08,
+        "end": -1,
+        "passed": false
+      },
+      {
+        "kind": "inset-timber-rib",
+        "x": 12,
+        "end": -1,
+        "passed": false
+      },
+      {
+        "kind": "inset-timber-rib",
+        "x": 14.65,
+        "end": -1,
+        "passed": false
+      },
+      {
+        "kind": "inset-timber-rib",
+        "x": 17.1,
+        "end": -1,
+        "passed": false
+      },
+      {
+        "kind": "inset-timber-rib",
+        "x": 19.78,
+        "end": -1,
+        "passed": false
+      },
+      {
+        "kind": "inset-timber-rib",
+        "x": -9.08,
+        "end": 1,
+        "passed": false
+      },
+      {
+        "kind": "inset-timber-rib",
+        "x": -12,
+        "end": 1,
+        "passed": false
+      },
+      {
+        "kind": "inset-timber-rib",
+        "x": -14.65,
+        "end": 1,
+        "passed": false
+      },
+      {
+        "kind": "inset-timber-rib",
+        "x": -17.1,
+        "end": 1,
+        "passed": false
+      },
+      {
+        "kind": "inset-timber-rib",
+        "x": -19.78,
+        "end": 1,
+        "passed": false
+      },
+      {
+        "kind": "inset-timber-rib",
+        "x": 9.08,
+        "end": 1,
+        "passed": false
+      },
+      {
+        "kind": "inset-timber-rib",
+        "x": 12,
+        "end": 1,
+        "passed": false
+      },
+      {
+        "kind": "inset-timber-rib",
+        "x": 14.65,
+        "end": 1,
+        "passed": false
+      },
+      {
+        "kind": "inset-timber-rib",
+        "x": 17.1,
+        "end": 1,
+        "passed": false
+      },
+      {
+        "kind": "inset-timber-rib",
+        "x": 19.78,
+        "end": 1,
+        "passed": false
+      }
+    ],
+    "passed": false
+  },
+  "passed": true,
+  "scope": "Actual exported wall/soffit geometry; browser evidence is separate."
+}

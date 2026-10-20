@@ -30,8 +30,14 @@ class AuthenticationBoundaryTest {
     @Configuration
     @EnableWebSecurity
     @EnableWebMvc
-    @Import({SecurityConfig.class, RecoveryController.class, PasswordPolicyController.class})
+    @Import({SecurityConfig.class, RecoveryController.class, PasswordPolicyController.class, SessionLifecycleController.class})
     static class Config {
+        @Bean SessionLifecycleService sessionLifecycle() {
+            var service=mock(SessionLifecycleService.class);
+            org.mockito.Mockito.when(service.status(org.mockito.ArgumentMatchers.any())).thenReturn(new SessionLifecycleService.Status(Long.MAX_VALUE,false,System.currentTimeMillis()));
+            return service;
+        }
+        @Bean SessionLifetimeFilter sessionLifetimeFilter(SessionLifecycleService service) {return new SessionLifetimeFilter(service);}
         @Bean PasswordPolicyService passwordPolicy() { return mock(PasswordPolicyService.class); }
         @Bean MailService mail() { return mock(MailService.class); }
         @Bean RecoveryService recovery() { return mock(RecoveryService.class); }
@@ -76,6 +82,13 @@ class AuthenticationBoundaryTest {
         mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/api/v1/users/password-policy")
             .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user("owner").roles("OWNER"))
             .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf()).contentType("application/json").content(json.replace(":16",":6"))).andExpect(status().isBadRequest());
+    }
+    @Test void activeSessionsAreManagementOnlyAndSessionPolicyIsOwnerOnly() throws Exception {
+        mvc.perform(get("/api/v1/users/active-sessions")).andExpect(status().isUnauthorized());
+        mvc.perform(get("/api/v1/users/active-sessions").with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user("member").roles("MEMBER"))).andExpect(status().isForbidden());
+        for(String role:new String[]{"OWNER","ADMIN"}) mvc.perform(get("/api/v1/users/active-sessions").with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user("manager").roles(role))).andExpect(status().isOk());
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/api/v1/users/session-policy").with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user("admin").roles("ADMIN")).with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf()).contentType("application/json").content("{\"maxMinutes\":60}")).andExpect(status().isForbidden());
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/api/v1/users/session-policy").with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user("owner").roles("OWNER")).with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf()).contentType("application/json").content("{\"maxMinutes\":1}")).andExpect(status().isBadRequest());
     }
     @Test void csrfBootstrapRemainsPublic() throws Exception {
         mvc.perform(get("/api/v1/auth/csrf")).andExpect(status().isOk());

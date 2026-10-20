@@ -1,0 +1,692 @@
+{
+  "geometry": "/Users/johntao/.codex/worktrees/remote-main-preview/BookKin/scripts/hogwarts-library/deliverables/architecture-uncompressed.glb",
+  "config": "/Users/johntao/.codex/worktrees/remote-main-preview/BookKin/apps/web/public/assets/hogwarts-library/scene-config.json",
+  "sourceSha256": "c656b8200eb46fc4d80da7d3780f314a29cad5838660307f3d64ce349469a8fa",
+  "sourceBytes": 94307460,
+  "revision": "20261019-guard-joinery-r25",
+  "targetRevision": "20261019-guard-joinery-r25",
+  "contract": {
+    "count": 12,
+    "centerAbsX": 8.8,
+    "springY": 4.68,
+    "innerHalf": 2.13,
+    "innerRise": 1.8119999999999998,
+    "paintThickness": 0.065,
+    "paintRiseThickness": 0.078,
+    "woodThickness": 0.2,
+    "woodRiseThickness": 0.24,
+    "heightScale": 1.2,
+    "segments": 64,
+    "depth": 0.7
+  },
+  "samples": {
+    "primary": {
+      "total": 2700,
+      "xOffsets": [
+        -0.29,
+        -0.17,
+        0.0,
+        0.17,
+        0.29
+      ],
+      "anglesPerFace": 45,
+      "archCount": 12,
+      "firstHits": {
+        "Paint • blue gray vault": 2532,
+        "Paint • faded ivory inlay": 168
+      },
+      "blueCoverage": {
+        "minimum": 0.8444444444444444,
+        "mean": 0.9377777777777776,
+        "threshold": 0.8
+      },
+      "ellipseDistanceTolerance": 0.016,
+      "ellipseErrorMaxAbs": 0.0006219203371626847
+    },
+    "oblique": {
+      "total": 96,
+      "originXOffsets": [
+        -0.65,
+        0.65
+      ],
+      "targetXOffsets": [
+        -0.2,
+        0.2
+      ],
+      "firstHits": {
+        "Paint • blue gray vault": 48,
+        "Paint • faded ivory inlay": 48
+      }
+    },
+    "arches": {
+      "-1/-12.5": {
+        "primaryTotal": 225,
+        "primaryFirstHits": {
+          "Paint • blue gray vault": 211,
+          "Paint • faded ivory inlay": 14
+        },
+        "faceBlueCoverage": {
+          "-0.29": 1.0,
+          "-0.17": 0.8444444444444444,
+          "+0.00": 1.0,
+          "+0.17": 0.8444444444444444,
+          "+0.29": 1.0
+        },
+        "ellipseErrorMaxAbs": 0.0006219203371626847,
+        "obliqueTotal": 8,
+        "obliqueFirstHits": {
+          "Paint • blue gray vault": 4,
+          "Paint • faded ivory inlay": 4
+        }
+      },
+      "-1/-7.5": {
+        "primaryTotal": 225,
+        "primaryFirstHits": {
+          "Paint • blue gray vault": 211,
+          "Paint • faded ivory inlay": 14
+        },
+        "faceBlueCoverage": {
+          "-0.29": 1.0,
+          "-0.17": 0.8444444444444444,
+          "+0.00": 1.0,
+          "+0.17": 0.8444444444444444,
+          "+0.29": 1.0
+        },
+        "ellipseErrorMaxAbs": 0.0006219203371622406,
+        "obliqueTotal": 8,
+        "obliqueFirstHits": {
+          "Paint • blue gray vault": 4,
+          "Paint • faded ivory inlay": 4
+        }
+      },
+      "-1/-2.5": {
+        "primaryTotal": 225,
+        "primaryFirstHits": {
+          "Paint • blue gray vault": 211,
+          "Paint • faded ivory inlay": 14
+        },
+        "faceBlueCoverage": {
+          "-0.29": 1.0,
+          "-0.17": 0.8444444444444444,
+          "+0.00": 1.0,
+          "+0.17": 0.8444444444444444,
+          "+0.29": 1.0
+        },
+        "ellipseErrorMaxAbs": 0.0006216943821559795,
+        "obliqueTotal": 8,
+        "obliqueFirstHits": {
+          "Paint • blue gray vault": 4,
+          "Paint • faded ivory inlay": 4
+        }
+      },
+      "-1/2.5": {
+        "primaryTotal": 225,
+        "primaryFirstHits": {
+          "Paint • blue gray vault": 211,
+          "Paint • faded ivory inlay": 14
+        },
+        "faceBlueCoverage": {
+          "-0.29": 1.0,
+          "-0.17": 0.8444444444444444,
+          "+0.00": 1.0,
+          "+0.17": 0.8444444444444444,
+          "+0.29": 1.0
+        },
+        "ellipseErrorMaxAbs": 0.0006216943821559795,
+        "obliqueTotal": 8,
+        "obliqueFirstHits": {
+          "Paint • blue gray vault": 4,
+          "Paint • faded ivory inlay": 4
+        }
+      },
+      "-1/7.5": {
+        "primaryTotal": 225,
+        "primaryFirstHits": {
+          "Paint • blue gray vault": 211,
+          "Paint • faded ivory inlay": 14
+        },
+        "faceBlueCoverage": {
+          "-0.29": 1.0,
+          "-0.17": 0.8444444444444444,
+          "+0.00": 1.0,
+          "+0.17": 0.8444444444444444,
+          "+0.29": 1.0
+        },
+        "ellipseErrorMaxAbs": 0.0006219203371626847,
+        "obliqueTotal": 8,
+        "obliqueFirstHits": {
+          "Paint • blue gray vault": 4,
+          "Paint • faded ivory inlay": 4
+        }
+      },
+      "-1/12.5": {
+        "primaryTotal": 225,
+        "primaryFirstHits": {
+          "Paint • blue gray vault": 211,
+          "Paint • faded ivory inlay": 14
+        },
+        "faceBlueCoverage": {
+          "-0.29": 1.0,
+          "-0.17": 0.8444444444444444,
+          "+0.00": 1.0,
+          "+0.17": 0.8444444444444444,
+          "+0.29": 1.0
+        },
+        "ellipseErrorMaxAbs": 0.0006219203371626847,
+        "obliqueTotal": 8,
+        "obliqueFirstHits": {
+          "Paint • blue gray vault": 4,
+          "Paint • faded ivory inlay": 4
+        }
+      },
+      "+1/-12.5": {
+        "primaryTotal": 225,
+        "primaryFirstHits": {
+          "Paint • blue gray vault": 211,
+          "Paint • faded ivory inlay": 14
+        },
+        "faceBlueCoverage": {
+          "-0.29": 1.0,
+          "-0.17": 0.8444444444444444,
+          "+0.00": 1.0,
+          "+0.17": 0.8444444444444444,
+          "+0.29": 1.0
+        },
+        "ellipseErrorMaxAbs": 0.0006219203371626847,
+        "obliqueTotal": 8,
+        "obliqueFirstHits": {
+          "Paint • blue gray vault": 4,
+          "Paint • faded ivory inlay": 4
+        }
+      },
+      "+1/-7.5": {
+        "primaryTotal": 225,
+        "primaryFirstHits": {
+          "Paint • blue gray vault": 211,
+          "Paint • faded ivory inlay": 14
+        },
+        "faceBlueCoverage": {
+          "-0.29": 1.0,
+          "-0.17": 0.8444444444444444,
+          "+0.00": 1.0,
+          "+0.17": 0.8444444444444444,
+          "+0.29": 1.0
+        },
+        "ellipseErrorMaxAbs": 0.0006219203371626847,
+        "obliqueTotal": 8,
+        "obliqueFirstHits": {
+          "Paint • blue gray vault": 4,
+          "Paint • faded ivory inlay": 4
+        }
+      },
+      "+1/-2.5": {
+        "primaryTotal": 225,
+        "primaryFirstHits": {
+          "Paint • blue gray vault": 211,
+          "Paint • faded ivory inlay": 14
+        },
+        "faceBlueCoverage": {
+          "-0.29": 1.0,
+          "-0.17": 0.8444444444444444,
+          "+0.00": 1.0,
+          "+0.17": 0.8444444444444444,
+          "+0.29": 1.0
+        },
+        "ellipseErrorMaxAbs": 0.0006216943821559795,
+        "obliqueTotal": 8,
+        "obliqueFirstHits": {
+          "Paint • blue gray vault": 4,
+          "Paint • faded ivory inlay": 4
+        }
+      },
+      "+1/2.5": {
+        "primaryTotal": 225,
+        "primaryFirstHits": {
+          "Paint • blue gray vault": 211,
+          "Paint • faded ivory inlay": 14
+        },
+        "faceBlueCoverage": {
+          "-0.29": 1.0,
+          "-0.17": 0.8444444444444444,
+          "+0.00": 1.0,
+          "+0.17": 0.8444444444444444,
+          "+0.29": 1.0
+        },
+        "ellipseErrorMaxAbs": 0.0006216943821559795,
+        "obliqueTotal": 8,
+        "obliqueFirstHits": {
+          "Paint • blue gray vault": 4,
+          "Paint • faded ivory inlay": 4
+        }
+      },
+      "+1/7.5": {
+        "primaryTotal": 225,
+        "primaryFirstHits": {
+          "Paint • blue gray vault": 211,
+          "Paint • faded ivory inlay": 14
+        },
+        "faceBlueCoverage": {
+          "-0.29": 1.0,
+          "-0.17": 0.8444444444444444,
+          "+0.00": 1.0,
+          "+0.17": 0.8444444444444444,
+          "+0.29": 1.0
+        },
+        "ellipseErrorMaxAbs": 0.0006219203371622406,
+        "obliqueTotal": 8,
+        "obliqueFirstHits": {
+          "Paint • blue gray vault": 4,
+          "Paint • faded ivory inlay": 4
+        }
+      },
+      "+1/12.5": {
+        "primaryTotal": 225,
+        "primaryFirstHits": {
+          "Paint • blue gray vault": 211,
+          "Paint • faded ivory inlay": 14
+        },
+        "faceBlueCoverage": {
+          "-0.29": 1.0,
+          "-0.17": 0.8444444444444444,
+          "+0.00": 1.0,
+          "+0.17": 0.8444444444444444,
+          "+0.29": 1.0
+        },
+        "ellipseErrorMaxAbs": 0.0006219203371626847,
+        "obliqueTotal": 8,
+        "obliqueFirstHits": {
+          "Paint • blue gray vault": 4,
+          "Paint • faded ivory inlay": 4
+        }
+      }
+    }
+  },
+  "geometryChecks": {
+    "-1/-12.5": {
+      "triangles": 11720,
+      "materials": {
+        "Brass • aged edge": 1768,
+        "Oak • edge highlight": 894,
+        "Oak • rubbed midtone": 3788,
+        "Paint • blue gray vault": 516,
+        "Paint • faded ivory inlay": 1932,
+        "Paint • teal border": 1032,
+        "Walnut • deep recess": 1790
+      },
+      "segmentVertices": {
+        "blue inner ellipse": 65,
+        "blue outer ellipse": 65,
+        "wood inner ellipse": 65,
+        "wood/spandrel ringouter ellipse": 65
+      },
+      "blueDepth": [
+        -9.149999618530273,
+        -8.449999809265137
+      ],
+      "tealRanges": {
+        "-0.37": [
+          -9.1899995803833,
+          -9.149999618530273
+        ],
+        "+0.37": [
+          -8.449999809265137,
+          -8.40999984741211
+        ]
+      }
+    },
+    "-1/-7.5": {
+      "triangles": 11688,
+      "materials": {
+        "Brass • aged edge": 1768,
+        "Oak • edge highlight": 894,
+        "Oak • rubbed midtone": 3760,
+        "Paint • blue gray vault": 516,
+        "Paint • faded ivory inlay": 1932,
+        "Paint • teal border": 1032,
+        "Walnut • deep recess": 1786
+      },
+      "segmentVertices": {
+        "blue inner ellipse": 65,
+        "blue outer ellipse": 65,
+        "wood inner ellipse": 65,
+        "wood/spandrel ringouter ellipse": 65
+      },
+      "blueDepth": [
+        -9.149999618530273,
+        -8.449999809265137
+      ],
+      "tealRanges": {
+        "-0.37": [
+          -9.1899995803833,
+          -9.149999618530273
+        ],
+        "+0.37": [
+          -8.449999809265137,
+          -8.40999984741211
+        ]
+      }
+    },
+    "-1/-2.5": {
+      "triangles": 11688,
+      "materials": {
+        "Brass • aged edge": 1768,
+        "Oak • edge highlight": 894,
+        "Oak • rubbed midtone": 3760,
+        "Paint • blue gray vault": 516,
+        "Paint • faded ivory inlay": 1932,
+        "Paint • teal border": 1032,
+        "Walnut • deep recess": 1786
+      },
+      "segmentVertices": {
+        "blue inner ellipse": 65,
+        "blue outer ellipse": 65,
+        "wood inner ellipse": 65,
+        "wood/spandrel ringouter ellipse": 65
+      },
+      "blueDepth": [
+        -9.149999618530273,
+        -8.449999809265137
+      ],
+      "tealRanges": {
+        "-0.37": [
+          -9.1899995803833,
+          -9.149999618530273
+        ],
+        "+0.37": [
+          -8.449999809265137,
+          -8.40999984741211
+        ]
+      }
+    },
+    "-1/2.5": {
+      "triangles": 11688,
+      "materials": {
+        "Brass • aged edge": 1768,
+        "Oak • edge highlight": 894,
+        "Oak • rubbed midtone": 3760,
+        "Paint • blue gray vault": 516,
+        "Paint • faded ivory inlay": 1932,
+        "Paint • teal border": 1032,
+        "Walnut • deep recess": 1786
+      },
+      "segmentVertices": {
+        "blue inner ellipse": 65,
+        "blue outer ellipse": 65,
+        "wood inner ellipse": 65,
+        "wood/spandrel ringouter ellipse": 65
+      },
+      "blueDepth": [
+        -9.149999618530273,
+        -8.449999809265137
+      ],
+      "tealRanges": {
+        "-0.37": [
+          -9.1899995803833,
+          -9.149999618530273
+        ],
+        "+0.37": [
+          -8.449999809265137,
+          -8.40999984741211
+        ]
+      }
+    },
+    "-1/7.5": {
+      "triangles": 11688,
+      "materials": {
+        "Brass • aged edge": 1768,
+        "Oak • edge highlight": 894,
+        "Oak • rubbed midtone": 3760,
+        "Paint • blue gray vault": 516,
+        "Paint • faded ivory inlay": 1932,
+        "Paint • teal border": 1032,
+        "Walnut • deep recess": 1786
+      },
+      "segmentVertices": {
+        "blue inner ellipse": 65,
+        "blue outer ellipse": 65,
+        "wood inner ellipse": 65,
+        "wood/spandrel ringouter ellipse": 65
+      },
+      "blueDepth": [
+        -9.149999618530273,
+        -8.449999809265137
+      ],
+      "tealRanges": {
+        "-0.37": [
+          -9.1899995803833,
+          -9.149999618530273
+        ],
+        "+0.37": [
+          -8.449999809265137,
+          -8.40999984741211
+        ]
+      }
+    },
+    "-1/12.5": {
+      "triangles": 11688,
+      "materials": {
+        "Brass • aged edge": 1768,
+        "Oak • edge highlight": 894,
+        "Oak • rubbed midtone": 3760,
+        "Paint • blue gray vault": 516,
+        "Paint • faded ivory inlay": 1932,
+        "Paint • teal border": 1032,
+        "Walnut • deep recess": 1786
+      },
+      "segmentVertices": {
+        "blue inner ellipse": 65,
+        "blue outer ellipse": 65,
+        "wood inner ellipse": 65,
+        "wood/spandrel ringouter ellipse": 65
+      },
+      "blueDepth": [
+        -9.149999618530273,
+        -8.449999809265137
+      ],
+      "tealRanges": {
+        "-0.37": [
+          -9.1899995803833,
+          -9.149999618530273
+        ],
+        "+0.37": [
+          -8.449999809265137,
+          -8.40999984741211
+        ]
+      }
+    },
+    "+1/-12.5": {
+      "triangles": 11720,
+      "materials": {
+        "Brass • aged edge": 1768,
+        "Oak • edge highlight": 894,
+        "Oak • rubbed midtone": 3788,
+        "Paint • blue gray vault": 516,
+        "Paint • faded ivory inlay": 1932,
+        "Paint • teal border": 1032,
+        "Walnut • deep recess": 1790
+      },
+      "segmentVertices": {
+        "blue inner ellipse": 65,
+        "blue outer ellipse": 65,
+        "wood inner ellipse": 65,
+        "wood/spandrel ringouter ellipse": 65
+      },
+      "blueDepth": [
+        8.449999809265137,
+        9.149999618530273
+      ],
+      "tealRanges": {
+        "-0.37": [
+          8.40999984741211,
+          8.449999809265137
+        ],
+        "+0.37": [
+          9.149999618530273,
+          9.1899995803833
+        ]
+      }
+    },
+    "+1/-7.5": {
+      "triangles": 11688,
+      "materials": {
+        "Brass • aged edge": 1768,
+        "Oak • edge highlight": 894,
+        "Oak • rubbed midtone": 3760,
+        "Paint • blue gray vault": 516,
+        "Paint • faded ivory inlay": 1932,
+        "Paint • teal border": 1032,
+        "Walnut • deep recess": 1786
+      },
+      "segmentVertices": {
+        "blue inner ellipse": 65,
+        "blue outer ellipse": 65,
+        "wood inner ellipse": 65,
+        "wood/spandrel ringouter ellipse": 65
+      },
+      "blueDepth": [
+        8.449999809265137,
+        9.149999618530273
+      ],
+      "tealRanges": {
+        "-0.37": [
+          8.40999984741211,
+          8.449999809265137
+        ],
+        "+0.37": [
+          9.149999618530273,
+          9.1899995803833
+        ]
+      }
+    },
+    "+1/-2.5": {
+      "triangles": 11688,
+      "materials": {
+        "Brass • aged edge": 1768,
+        "Oak • edge highlight": 894,
+        "Oak • rubbed midtone": 3760,
+        "Paint • blue gray vault": 516,
+        "Paint • faded ivory inlay": 1932,
+        "Paint • teal border": 1032,
+        "Walnut • deep recess": 1786
+      },
+      "segmentVertices": {
+        "blue inner ellipse": 65,
+        "blue outer ellipse": 65,
+        "wood inner ellipse": 65,
+        "wood/spandrel ringouter ellipse": 65
+      },
+      "blueDepth": [
+        8.449999809265137,
+        9.149999618530273
+      ],
+      "tealRanges": {
+        "-0.37": [
+          8.40999984741211,
+          8.449999809265137
+        ],
+        "+0.37": [
+          9.149999618530273,
+          9.1899995803833
+        ]
+      }
+    },
+    "+1/2.5": {
+      "triangles": 11688,
+      "materials": {
+        "Brass • aged edge": 1768,
+        "Oak • edge highlight": 894,
+        "Oak • rubbed midtone": 3760,
+        "Paint • blue gray vault": 516,
+        "Paint • faded ivory inlay": 1932,
+        "Paint • teal border": 1032,
+        "Walnut • deep recess": 1786
+      },
+      "segmentVertices": {
+        "blue inner ellipse": 65,
+        "blue outer ellipse": 65,
+        "wood inner ellipse": 65,
+        "wood/spandrel ringouter ellipse": 65
+      },
+      "blueDepth": [
+        8.449999809265137,
+        9.149999618530273
+      ],
+      "tealRanges": {
+        "-0.37": [
+          8.40999984741211,
+          8.449999809265137
+        ],
+        "+0.37": [
+          9.149999618530273,
+          9.1899995803833
+        ]
+      }
+    },
+    "+1/7.5": {
+      "triangles": 11688,
+      "materials": {
+        "Brass • aged edge": 1768,
+        "Oak • edge highlight": 894,
+        "Oak • rubbed midtone": 3760,
+        "Paint • blue gray vault": 516,
+        "Paint • faded ivory inlay": 1932,
+        "Paint • teal border": 1032,
+        "Walnut • deep recess": 1786
+      },
+      "segmentVertices": {
+        "blue inner ellipse": 65,
+        "blue outer ellipse": 65,
+        "wood inner ellipse": 65,
+        "wood/spandrel ringouter ellipse": 65
+      },
+      "blueDepth": [
+        8.449999809265137,
+        9.149999618530273
+      ],
+      "tealRanges": {
+        "-0.37": [
+          8.40999984741211,
+          8.449999809265137
+        ],
+        "+0.37": [
+          9.149999618530273,
+          9.1899995803833
+        ]
+      }
+    },
+    "+1/12.5": {
+      "triangles": 11688,
+      "materials": {
+        "Brass • aged edge": 1768,
+        "Oak • edge highlight": 894,
+        "Oak • rubbed midtone": 3760,
+        "Paint • blue gray vault": 516,
+        "Paint • faded ivory inlay": 1932,
+        "Paint • teal border": 1032,
+        "Walnut • deep recess": 1786
+      },
+      "segmentVertices": {
+        "blue inner ellipse": 65,
+        "blue outer ellipse": 65,
+        "wood inner ellipse": 65,
+        "wood/spandrel ringouter ellipse": 65
+      },
+      "blueDepth": [
+        8.449999809265137,
+        9.149999618530273
+      ],
+      "tealRanges": {
+        "-0.37": [
+          8.40999984741211,
+          8.449999809265137
+        ],
+        "+0.37": [
+          9.149999618530273,
+          9.1899995803833
+        ]
+      }
+    }
+  },
+  "failures": [],
+  "passed": true
+}

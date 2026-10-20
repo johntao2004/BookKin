@@ -1,5 +1,8 @@
+import { EmptyState } from "../ui/empty-state";
+import { RevokeSessionsDialog } from "../components/RevokeSessionsDialog";
 import { DataTable, TableAction } from "@/ui/antd";
 import { AddRounded } from "@/ui/icons";
+import { IconButton } from "@/ui/buttons";
 import { ContentCopyRounded } from "@/ui/icons";
 import { LockResetRounded } from "@/ui/icons";
 import { LogoutRounded } from "@/ui/icons";
@@ -24,7 +27,7 @@ import { Switch } from "@/ui/forms";
 import { TextField } from "@/ui/forms";
 import { Typography } from "@/ui/primitives";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState, useContext, type FormEvent } from "react";
+import { useState, useContext, useEffect, type FormEvent } from "react";
 import { api } from "../api/client";
 import { useAuth } from "../auth/AuthContext";
 import { ActionToolbar, EmbeddedSettingsContext, PageContainer, PageHeader } from "../components/PageHeader";
@@ -32,6 +35,7 @@ import type { ManagedUser, SessionUser, UserRole } from "../domain/types";
 import { tokens } from "../theme/generated-tokens";
 
 const roleLabels: Record<UserRole, string> = { OWNER: "主人", ADMIN: "管理员", MEMBER: "成员" };
+const dialogViewportMaxHeight = `calc(100dvh - ${tokens.spacing[6]}px)`;
 
 export function UsersPage() {
   const embedded = useContext(EmbeddedSettingsContext);
@@ -41,6 +45,7 @@ export function UsersPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [credentials, setCredentials] = useState<{ username: string; temporaryPassword: string } | null>(null);
   const [notice, setNotice] = useState("");
+  const [revokeTarget, setRevokeTarget] = useState<ManagedUser | null>(null);
 
   const toggle = async (user: ManagedUser) => {
     try {
@@ -60,10 +65,6 @@ export function UsersPage() {
     } catch (reason) { setNotice(reason instanceof Error ? reason.message : "重置失败"); }
   };
 
-  const revokeSessions = async (user: ManagedUser) => {
-    try { await api.revokeUserSessions(user.id); setNotice(`${user.displayName}的登录会话已撤销`); }
-    catch (reason) { setNotice(reason instanceof Error ? reason.message : "撤销失败"); }
-  };
 
   return (
     <PageContainer>
@@ -78,36 +79,38 @@ export function UsersPage() {
           <Box sx={{ display: { xs: "none", sm: "block" } }}>
             <DataTable<ManagedUser>
               aria-label="用户列表"
+              locale={{ emptyText: <EmptyState compact title="暂无用户" /> }}
               rowKey="id"
               size="middle"
               pagination={false}
               dataSource={usersQuery.data ?? []}
               scroll={{ x: tokens.spacing[24] * 10 }}
               columns={[
-                { title: "用户", key: "identity", render: (_, user) => <UserIdentity user={user} sessionUser={sessionUser} /> },
+                { title: "用户", key: "identity", width: tokens.spacing[24] * 2.5, render: (_, user) => <UserIdentity user={user} sessionUser={sessionUser} /> },
                 { title: "角色", key: "role", width: tokens.spacing[24] * 1.25, render: (_, user) => <UserRoleChip user={user} /> },
                 { title: "状态", key: "status", width: tokens.spacing[24] * 1.5, render: (_, user) => <UserStatus user={user} /> },
                 { title: "最后登录", dataIndex: "lastLoginAt", width: tokens.spacing[24] * 2.5, render: (value) => formatLastLogin(value) },
                 { title: "启用", key: "enabled", width: tokens.spacing[24], render: (_, user) => (
                   <Switch checked={user.status === "ACTIVE"} disabled={!canToggleAccount(user, sessionUser)} onChange={() => void toggle(user)} slotProps={{ input: { "aria-label": `${user.status === "ACTIVE" ? "停用" : "启用"}${user.displayName}` } }} />
                 ) },
-                { title: "账户操作", key: "actions", width: tokens.spacing[24] * 2, render: (_, user) => canManageAccountActions(user, sessionUser) ? (
+                { title: "账户操作", key: "actions", width: tokens.spacing[24] * 2.5, render: (_, user) => canManageAccountActions(user, sessionUser) ? (
                   <Stack direction="row" spacing={2}>
                     <TableAction onClick={() => void resetPassword(user)}>临时密码</TableAction>
-                    <TableAction onClick={() => void revokeSessions(user)}>退出设备</TableAction>
+                    <TableAction onClick={() => setRevokeTarget(user)}>退出全部会话</TableAction>
                   </Stack>
                 ) : "—" },
               ]}
             />
           </Box>
           <Stack component="section" aria-label="移动端用户列表" spacing={2} sx={{ display: { xs: "flex", sm: "none" } }}>
+            {usersQuery.isSuccess && usersQuery.data.length === 0 && <EmptyState compact title="暂无用户" />}
             {(usersQuery.data ?? []).map((user) => (
               <UserCard
                 key={user.id}
                 user={user}
                 sessionUser={sessionUser}
                 onResetPassword={resetPassword}
-                onRevokeSessions={revokeSessions}
+                onRevokeSessions={async user => { setRevokeTarget(user); }}
                 onToggle={toggle}
               />
             ))}
@@ -125,6 +128,7 @@ export function UsersPage() {
           setCreateOpen(false);
         }}
       />
+      <RevokeSessionsDialog target={revokeTarget} onClose={() => setRevokeTarget(null)} onRevoked={() => {setNotice("已通知在线设备保存阅读数据并退出全部会话");void client.invalidateQueries({queryKey:["active-sessions"]});}} />
       <CredentialsDialog value={credentials} onClose={() => setCredentials(null)} />
       <Snackbar open={Boolean(notice)} autoHideDuration={4000} onClose={() => setNotice("")} message={notice} />
     </PageContainer>
@@ -144,11 +148,12 @@ function UserCard({ user, sessionUser, onResetPassword, onRevokeSessions, onTogg
         <UserIdentity user={user} sessionUser={sessionUser} />
         <UserRoleChip user={user} />
       </Stack>
-      <Stack divider={<Divider flexItem />} spacing={1.5} sx={{ mt: `${tokens.spacing[4]}px` }}>
+      <Stack spacing={1.5} sx={{ mt: `${tokens.spacing[4]}px` }}>
         <Stack direction="row" spacing={2} sx={{ alignItems: "center", justifyContent: "space-between" }}>
           <Typography variant="caption" color="text.secondary">状态</Typography>
           <UserStatus user={user} />
         </Stack>
+        <Divider flexItem />
         <Stack direction="row" spacing={2} sx={{ alignItems: "flex-start", justifyContent: "space-between" }}>
           <Typography variant="caption" color="text.secondary">最后登录</Typography>
           <Typography variant="body2" color="text.secondary" sx={{ textAlign: "right" }}>{formatLastLogin(user.lastLoginAt)}</Typography>
@@ -158,7 +163,7 @@ function UserCard({ user, sessionUser, onResetPassword, onRevokeSessions, onTogg
         {canManageAccountActions(user, sessionUser) && (
           <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ width: "100%" }}>
             <Button size="small" startIcon={<LockResetRounded />} onClick={() => void onResetPassword(user)} sx={{ width: { xs: "100%", sm: "auto" } }}>临时密码</Button>
-            <Button size="small" startIcon={<LogoutRounded />} onClick={() => void onRevokeSessions(user)} sx={{ width: { xs: "100%", sm: "auto" } }}>退出设备</Button>
+            <Button size="small" startIcon={<LogoutRounded />} onClick={() => void onRevokeSessions(user)} sx={{ width: { xs: "100%", sm: "auto" } }}>退出全部会话</Button>
           </Stack>
         )}
         <Stack direction="row" spacing={1} sx={{ alignItems: "center", justifyContent: "space-between" }}>
@@ -223,40 +228,42 @@ function CreateUserDialog({ open, allowAdmin, onClose, onCreated }: {
   };
   return (
     <Dialog open={open} onClose={loading ? undefined : onClose} fullWidth maxWidth="sm">
-      <Stack component="form" onSubmit={submit}>
-        <DialogTitle><Typography variant="h4" component="span">创建家庭账户</Typography></DialogTitle>
-        <DialogContent><Stack spacing={2.5} sx={{ pt: 1 }}>
+      <Stack component="form" onSubmit={submit} sx={{ maxHeight: dialogViewportMaxHeight, minHeight: 0 }}>
+        <DialogTitle sx={{ flexShrink: 0 }}><Typography variant="h4" component="span">创建家庭账户</Typography></DialogTitle>
+        <DialogContent sx={{ minHeight: 0, overflowY: "auto" }}><Stack spacing={2.5} sx={{ pt: 1 }}>
           <TextField label="显示名称" value={form.displayName} onChange={(event: any) => setForm({ ...form, displayName: event.target.value })} required autoFocus />
           <TextField label="用户名" value={form.username} onChange={(event: any) => setForm({ ...form, username: event.target.value.toLowerCase().replace(/[^a-z0-9._-]/g, "") })} helperText="仅使用小写字母、数字、点、下划线或短横线。" required />
           <FormControl><InputLabel id="new-user-role">角色</InputLabel><Select labelId="new-user-role" label="角色" value={form.role} onChange={(event: any) => setForm({ ...form, role: event.target.value as "ADMIN" | "MEMBER" })}><MenuItem value="MEMBER">成员 · 只读藏书</MenuItem>{allowAdmin && <MenuItem value="ADMIN">管理员 · 可管理书库</MenuItem>}</Select></FormControl>
           {error && <Alert severity="error">{error}</Alert>}
         </Stack></DialogContent>
-        <DialogActions sx={{ p: 3 }}><Button onClick={onClose} color="inherit">取消</Button><Button type="submit" variant="contained" disabled={loading}>{loading ? "正在创建…" : "创建并生成临时密码"}</Button></DialogActions>
+        <DialogActions sx={{ flexShrink: 0, flexWrap: "wrap", p: { xs: 2, sm: 3 } }}><Button onClick={onClose} color="inherit" sx={{ width: { xs: "100%", sm: "auto" } }}>取消</Button><Button type="submit" variant="contained" disabled={loading} sx={{ width: { xs: "100%", sm: "auto" } }}>{loading ? "正在创建…" : "创建并生成临时密码"}</Button></DialogActions>
       </Stack>
     </Dialog>
   );
 }
 
-function CredentialsDialog({ value, onClose }: { value: { username: string; temporaryPassword: string } | null; onClose: () => void }) {
+export function CredentialsDialog({ value, onClose }: { value: { username: string; temporaryPassword: string } | null; onClose: () => void }) {
   const [copied, setCopied] = useState(false);
   const [copyError, setCopyError] = useState("");
+  useEffect(() => { setCopied(false); setCopyError(""); }, [value]);
   const copy = async () => {
     if (!value) return;
     setCopyError("");
     try {
       if (!navigator.clipboard?.writeText) throw new Error("CLIPBOARD_UNAVAILABLE");
-      await navigator.clipboard.writeText(`BookKin用户名：${value.username}\n临时密码：${value.temporaryPassword}`);
+      await navigator.clipboard.writeText(value.temporaryPassword);
       setCopied(true);
     } catch {
-      setCopyError("当前浏览器无法自动复制，请选择上方登录信息手动复制。");
+      setCopyError("当前浏览器无法自动复制，请选中临时密码手动复制。");
     }
   };
   return (
     <Dialog open={Boolean(value)} onClose={onClose} fullWidth maxWidth="sm">
-      <DialogTitle><Typography variant="h4" component="span">只显示这一次</Typography></DialogTitle>
-      <DialogContent><Alert severity="warning" sx={{ mb: 3 }}>临时密码不会再次显示。请通过可信渠道交给该成员。</Alert><Stack spacing={2}><TextField label="用户名" value={value?.username ?? ""} slotProps={{ input: { readOnly: true } }} /><TextField label="临时密码" value={value?.temporaryPassword ?? ""} slotProps={{ input: { readOnly: true } }} /></Stack></DialogContent>
-      {copyError && <Alert severity="info">{copyError}</Alert>}
-      <DialogActions sx={{ p: 3 }}><Button onClick={onClose} color="inherit">完成</Button><Button variant="contained" startIcon={<ContentCopyRounded />} onClick={copy}>{copied ? "已复制" : "复制登录信息"}</Button></DialogActions>
+      <Stack sx={{ maxHeight: dialogViewportMaxHeight, minHeight: 0 }}>
+        <DialogTitle sx={{ flexShrink: 0 }}><Typography variant="h4" component="span">只显示这一次</Typography></DialogTitle>
+        <DialogContent sx={{ minHeight: 0, overflowY: "auto" }}><Alert severity="warning" sx={{ mb: 3 }}>临时密码不会再次显示。请通过可信渠道交给该成员。</Alert><Stack spacing={2}><Box><Typography variant="body2" color="text.secondary">用户名</Typography><Typography sx={{ mt: 1, overflowWrap: "anywhere" }}>{value?.username}</Typography></Box><TextField label="临时密码" value={value?.temporaryPassword ?? ""} slotProps={{ input: { readOnly: true, endAdornment: <IconButton aria-label={copied ? "已复制临时密码" : "复制临时密码"} onClick={() => void copy()}><ContentCopyRounded /></IconButton> } }} /></Stack>{copyError && <Alert severity="info" sx={{ mt: 3 }}>{copyError}</Alert>}</DialogContent>
+        <DialogActions sx={{ flexShrink: 0, flexWrap: "wrap", p: { xs: 2, sm: 3 } }}><Button variant="contained" onClick={onClose} sx={{ width: { xs: "100%", sm: "auto" } }}>完成</Button></DialogActions>
+      </Stack>
     </Dialog>
   );
 }

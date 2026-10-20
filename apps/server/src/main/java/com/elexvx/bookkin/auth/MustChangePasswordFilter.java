@@ -31,7 +31,7 @@ public class MustChangePasswordFilter extends OncePerRequestFilter {
             chain.doFilter(request, response);
             return;
         }
-        boolean passwordRoute = path.equals("/api/v1/auth/password-policy") || path.equals("/api/v1/auth/password") || path.equals("/api/v1/auth/session")
+        boolean passwordRoute = ("GET".equals(request.getMethod()) && path.equals("/api/v1/site-settings")) || path.equals("/api/v1/auth/session-status") || path.equals("/api/v1/auth/password-policy") || path.equals("/api/v1/auth/password") || path.equals("/api/v1/auth/session")
                 || path.equals("/api/v1/auth/logout") || path.equals("/api/v1/auth/csrf")
                 || path.equals("/api/v1/auth/recovery/request") || path.equals("/api/v1/auth/recovery/verify")
                 || path.equals("/api/v1/auth/recovery/reset") || path.equals("/change-password") || path.startsWith("/assets/");

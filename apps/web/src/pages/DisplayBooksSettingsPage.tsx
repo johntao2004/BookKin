@@ -1,3 +1,4 @@
+import { EmptyState } from "../ui/empty-state";
 import { Link } from "react-router-dom";
 import { AddRounded } from "@/ui/icons";
 import { ArrowDownwardRounded } from "@/ui/icons";
@@ -5,10 +6,9 @@ import { ArrowUpwardRounded } from "@/ui/icons";
 import { CloudUploadOutlined } from "@/ui/icons";
 import { DeleteOutlineRounded } from "@/ui/icons";
 import { DragIndicatorRounded } from "@/ui/icons";
-import { RefreshRounded } from "@/ui/icons";
 import { Alert } from "@/ui/feedback";
 import { Box } from "@/ui/primitives";
-import { Button } from "@/ui/buttons";
+import { Button, RefreshButton } from "@/ui/buttons";
 import { Chip } from "@/ui/feedback";
 import { CircularProgress } from "@/ui/feedback";
 import { Dialog } from "@/ui/overlays";
@@ -34,7 +34,6 @@ import { useAuth } from "../auth/AuthContext";
 import { BookUploadDialog } from "../components/BookUploadDialog";
 import { PageContainer, PageHeader } from "../components/PageHeader";
 import { tokens } from "../theme/generated-tokens";
-import { EMPTY_CATALOG_TITLE } from "../ui/empty-state-copy";
 
 export function DisplayBooksSettingsPage() {
   const { user } = useAuth();
@@ -130,7 +129,7 @@ export function DisplayBooksSettingsPage() {
       <PageHeader
         eyebrow="DISPLAY BOOKS"
         title="管理首页书目"
-        action={<Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", justifyContent: "flex-end" }}><Button component={Link} to="/library">返回首页</Button><Button startIcon={<RefreshRounded />} onClick={refresh} disabled={displayQuery.isFetching}>刷新</Button>{canUpload && <Button variant="contained" startIcon={<CloudUploadOutlined />} onClick={() => setUploadOpen(true)}>上传并展示</Button>}</Stack>}
+        action={<Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", justifyContent: "flex-end" }}><Button component={Link} to="/library">返回首页</Button><RefreshButton onClick={refresh} disabled={displayQuery.isFetching}>刷新</RefreshButton>{canUpload && <Button variant="contained" startIcon={<CloudUploadOutlined />} onClick={() => setUploadOpen(true)}>上传并展示</Button>}</Stack>}
       />
       {displayQuery.isError ? <Alert severity="error" action={<Button color="inherit" onClick={refresh}>重试</Button>}>公共书单暂时无法读取。</Alert> : null}
       <Stack spacing={2} component="section" aria-labelledby="display-order-heading">
@@ -144,16 +143,16 @@ export function DisplayBooksSettingsPage() {
             <Button variant="contained" startIcon={<AddRounded />} onClick={openAddDialog} disabled={displayQuery.isPending || Boolean(busyId)}>新增</Button>
           </Stack>
         </Stack>
-        {displayQuery.isPending ? <Stack sx={{ alignItems: "center", py: 8 }}><CircularProgress /></Stack> : orderedIds.length === 0 ? <Typography color="text.secondary">{EMPTY_CATALOG_TITLE}</Typography> : (
+        {displayQuery.isPending ? <Stack sx={{ alignItems: "center", py: 8 }}><CircularProgress /></Stack> : orderedIds.length === 0 ? <EmptyState compact title="暂无公开展示书籍" /> : (
           <List aria-label="当前展示书目，可拖动排序" sx={{ bgcolor: "background.paper", border: 1, borderColor: "divider", borderRadius: `${tokens.radius.lg}px`, p: 0, overflow: "hidden" }}>
             {orderedIds.map((id, index) => {
               const book = displayedById.get(id);
               if (!book) return null;
-              return <ListItem key={id} divider={index < orderedIds.length - 1} draggable onDragStart={(event: any) => event.dataTransfer.setData("text/display-book", id)} onDragOver={(event: any) => event.preventDefault()} onDrop={(event: any) => { event.preventDefault(); if (busyId) return; const from = orderedIds.indexOf(event.dataTransfer.getData("text/display-book")); if (from >= 0 && from !== index) { const next = [...orderedIds]; next.splice(index, 0, ...next.splice(from, 1)); setOrderedIds(next); setBusyId("order"); void (async () => { try { const result = await api.reorderDisplayBooks(next, revision); setOrderedIds(result.items.map((book) => book.id)); setRevision(result.revision); } catch (error) { await displayQuery.refetch(); setNotice(errorMessage(error)); } finally { setBusyId(null); } })(); } }} sx={{ gap: `${tokens.spacing[2]}px`, py: `${tokens.spacing[3]}px`, px: { xs: `${tokens.spacing[2]}px`, sm: `${tokens.spacing[4]}px` } }}>
+              return <ListItem key={id} divider={index < orderedIds.length - 1} draggable onDragStart={(event: any) => event.dataTransfer.setData("text/display-book", id)} onDragOver={(event: any) => event.preventDefault()} onDrop={(event: any) => { event.preventDefault(); if (busyId) return; const from = orderedIds.indexOf(event.dataTransfer.getData("text/display-book")); if (from >= 0 && from !== index) { const next = [...orderedIds]; next.splice(index, 0, ...next.splice(from, 1)); setOrderedIds(next); setBusyId("order"); void (async () => { try { const result = await api.reorderDisplayBooks(next, revision); setOrderedIds(result.items.map((book) => book.id)); setRevision(result.revision); } catch (error) { await displayQuery.refetch(); setNotice(errorMessage(error)); } finally { setBusyId(null); } })(); } }} sx={{ gap: `${tokens.spacing[2]}px`, py: `${tokens.spacing[3]}px`, px: { xs: `${tokens.spacing[2]}px`, sm: `${tokens.spacing[4]}px` }, "& > .bk-list-item-content": { display: { xs: "grid", sm: "flex" }, gridTemplateColumns: "auto auto minmax(0, 1fr)", gap: `${tokens.spacing[2]}px` } }}>
                 <ListItemIcon sx={{ minWidth: tokens.spacing[8], color: "text.disabled", cursor: "grab" }}><DragIndicatorRounded aria-label={`拖动 ${book.title}`} /></ListItemIcon>
                 <Box component="img" src={book.coverUrl} alt="" sx={{ width: tokens.spacing[12], aspectRatio: "2 / 3", objectFit: "cover", borderRadius: `${tokens.radius.sm}px`, flexShrink: 0 }} />
                 <ListItemText primary={book.title} secondary={<>{book.author}{!book.available && " · 文件暂不可用"}</>} sx={{ minWidth: 0, ml: `${tokens.spacing[2]}px` }} />
-                <Stack direction="row" spacing={0.25}>
+                <Stack direction="row" spacing={0.25} sx={{ gridColumn: { xs: "1 / -1", sm: "auto" }, justifySelf: "end", flexShrink: 0 }}>
                   <Tooltip title="上移"><span><IconButton aria-label={`上移 ${book.title}`} disabled={index === 0 || Boolean(busyId)} onClick={() => void move(index, -1)}><ArrowUpwardRounded fontSize="small" /></IconButton></span></Tooltip>
                   <Tooltip title="下移"><span><IconButton aria-label={`下移 ${book.title}`} disabled={index === orderedIds.length - 1 || Boolean(busyId)} onClick={() => void move(index, 1)}><ArrowDownwardRounded fontSize="small" /></IconButton></span></Tooltip>
                   <Tooltip title="移出展示"><span><IconButton color="error" aria-label={`移出 ${book.title}`} disabled={busyId === id} onClick={() => void remove(id)}><DeleteOutlineRounded fontSize="small" /></IconButton></span></Tooltip>
@@ -178,7 +177,7 @@ export function DisplayBooksSettingsPage() {
                 </ListItemButton>
               ))}
             </List>
-          ) : <Typography color="text.secondary" sx={{ mt: `${tokens.spacing[4]}px` }}>{EMPTY_CATALOG_TITLE}</Typography>}
+          ) : <EmptyState compact title="暂无可添加的公开书籍" />}
         </DialogContent>
         <DialogActions>
           <Button onClick={closeAddDialog} disabled={Boolean(busyId)}>取消</Button>

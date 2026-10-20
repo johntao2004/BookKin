@@ -14,20 +14,18 @@ import { TextField } from "@/ui/forms";
 import { Typography } from "@/ui/primitives";
 import { useEffect, useState } from "react";
 import { api } from "../api/client";
-import type { BooklistDetail, BooklistKind, BooklistVisibility } from "../domain/types";
+import type { BooklistDetail, BooklistVisibility } from "../domain/types";
 import { tokens } from "../theme/generated-tokens";
 
-export function BooklistFormDialog({ open, initial, canCreateOfficial, onClose, onSaved, onDeleted }: {
+export function BooklistFormDialog({ open, initial, onClose, onSaved, onDeleted }: {
   open: boolean;
   initial?: BooklistDetail | null;
-  canCreateOfficial: boolean;
   onClose: () => void;
   onSaved: (booklist: BooklistDetail, message: string) => void;
   onDeleted?: (message: string) => void;
 }) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [kind, setKind] = useState<BooklistKind>("PERSONAL");
   const [visibility, setVisibility] = useState<BooklistVisibility>("PRIVATE");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -37,7 +35,6 @@ export function BooklistFormDialog({ open, initial, canCreateOfficial, onClose, 
     if (!open) return;
     setTitle(initial?.title ?? "");
     setDescription(initial?.description ?? "");
-    setKind(initial?.kind ?? "PERSONAL");
     setVisibility(initial?.visibility ?? "PRIVATE");
     setError("");
     setConfirmDelete(false);
@@ -50,7 +47,7 @@ export function BooklistFormDialog({ open, initial, canCreateOfficial, onClose, 
     try {
       const result = initial
         ? await api.updateBooklist(initial.id, { title, description, visibility, revision: initial.revision })
-        : await api.createBooklist({ title, description, kind, visibility });
+        : await api.createBooklist({ title, description, kind: "PERSONAL", visibility });
       onSaved(result, initial ? "书单资料已更新" : "书单已创建");
     } catch (reason) {
       setError(errorMessage(reason));
@@ -83,15 +80,6 @@ export function BooklistFormDialog({ open, initial, canCreateOfficial, onClose, 
             {error ? <Alert severity="error">{error}</Alert> : null}
             <TextField autoFocus label="书单名称" value={title} onChange={(event: any) => setTitle(event.target.value)} slotProps={{ htmlInput: { maxLength: 240 } }} />
             <TextField label="书单说明" value={description} onChange={(event: any) => setDescription(event.target.value)} multiline minRows={4} slotProps={{ htmlInput: { maxLength: 4000 } }} />
-            {!initial && canCreateOfficial ? (
-              <FormControl>
-                <InputLabel id="booklist-kind-label">书单类型</InputLabel>
-                <Select labelId="booklist-kind-label" label="书单类型" value={kind} onChange={(event: any) => setKind(event.target.value as BooklistKind)}>
-                  <MenuItem value="PERSONAL">个人书单</MenuItem>
-                  <MenuItem value="OFFICIAL">官方书单</MenuItem>
-                </Select>
-              </FormControl>
-            ) : null}
             <FormControl>
               <InputLabel id="booklist-visibility-label">谁可以看</InputLabel>
               <Select labelId="booklist-visibility-label" label="谁可以看" value={visibility} onChange={(event: any) => setVisibility(event.target.value as BooklistVisibility)}>
@@ -101,10 +89,10 @@ export function BooklistFormDialog({ open, initial, canCreateOfficial, onClose, 
               </Select>
             </FormControl>
             {visibility === "PUBLIC" ? <Alert severity="info">公开书单只能包含已经进入公共书目池的书籍。</Alert> : null}
-            {initial && onDeleted ? <Button color="error" startIcon={<DeleteOutlineRounded />} onClick={() => setConfirmDelete(true)} sx={{ alignSelf: "flex-start" }}>删除书单</Button> : null}
           </Stack>
         </DialogContent>
         <DialogActions>
+          {initial && onDeleted ? <Button color="error" startIcon={<DeleteOutlineRounded />} disabled={busy} onClick={() => setConfirmDelete(true)} sx={{ mr: "auto" }}>删除书单</Button> : null}
           <Button onClick={onClose} disabled={busy}>取消</Button>
           <Button variant="contained" onClick={() => void save()} disabled={!title.trim() || busy}>{initial ? "保存" : "创建书单"}</Button>
         </DialogActions>

@@ -18,8 +18,20 @@ public final class BookUploadModels {
             String title, String subtitle, List<String> authors, List<String> translators, String language,
             String publisher, String publishedDate, String isbn, String description, String series,
             BigDecimal seriesIndex, List<String> tags, Integer pageCount, Long wordCount,
-            Map<String, MetadataSource> sources, String targetPath) {
+            Map<String, MetadataSource> sources, String targetPath, Boolean publiclyVisible) {
+        public MetadataDraft(String title, String subtitle, List<String> authors, List<String> translators, String language,
+                             String publisher, String publishedDate, String isbn, String description, String series,
+                             BigDecimal seriesIndex, List<String> tags, Integer pageCount, Long wordCount,
+                             Map<String, MetadataSource> sources, String targetPath) {
+            this(title, subtitle, authors, translators, language, publisher, publishedDate, isbn, description, series,
+                    seriesIndex, tags, pageCount, wordCount, sources, targetPath, true);
+        }
+        public MetadataDraft withPubliclyVisible(Boolean value) {
+            return new MetadataDraft(title, subtitle, authors, translators, language, publisher, publishedDate, isbn,
+                    description, series, seriesIndex, tags, pageCount, wordCount, sources, targetPath, value);
+        }
         public MetadataDraft {
+            publiclyVisible = publiclyVisible == null ? true : publiclyVisible;
             authors = clean(authors);
             translators = clean(translators);
             tags = clean(tags);

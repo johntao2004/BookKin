@@ -1,3 +1,4 @@
+import { EmptyStateIllustration } from "../ui/empty-state";
 import { Box } from "@/ui/primitives";
 import { Stack } from "@/ui/primitives";
 import { Typography } from "@/ui/primitives";
@@ -18,12 +19,14 @@ export function OverviewEmptyState({
   return (
     <Stack
       sx={{
+        gap: `${tokens.spacing[3]}px`,
         minHeight: `${tokens.spacing[20]}px`,
         alignItems: "flex-start",
         justifyContent: "flex-start",
         mt: `${tokens.spacing[4]}px`,
       }}
     >
+      <EmptyStateIllustration compact />
       <Box>
         <Typography id={titleId} variant="h4">{title}</Typography>
         {description != null ? (

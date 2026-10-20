@@ -5,6 +5,11 @@ import { TestProviders } from "../test/TestProviders";
 import { ReaderPage } from "./ReaderPage";
 import { readerSelectionFromRect } from "../components/readers/types";
 
+function openNotesDrawer() {
+  fireEvent.click(screen.getByRole("button", { name: "更多阅读操作" }));
+  fireEvent.click(screen.getByRole("menuitem", { name: "本书笔记" }));
+}
+
 describe("ReaderPage", () => {
   beforeEach(() => {
     localStorage.clear();
@@ -84,7 +89,7 @@ describe("ReaderPage", () => {
     await waitFor(() => expect(screen.getByText("高亮和笔记已私人同步")).toBeInTheDocument());
     await waitFor(() => expect(screen.queryByRole("dialog", { name: "高亮并写笔记" })).not.toBeInTheDocument());
     expect(screen.getByText("河面先暗了一层", { selector: "mark" })).toHaveAttribute("data-highlight-color", "PINK");
-    fireEvent.click(screen.getByRole("button", { name: "打开笔记" }));
+    openNotesDrawer();
     expect(await screen.findByText("高亮笔记")).toBeInTheDocument();
     expect(await screen.findByText("“河面先暗了一层”")).toBeInTheDocument();
     expect(screen.getByText("记住这层暮色。")).toBeInTheDocument();
@@ -106,7 +111,7 @@ describe("ReaderPage", () => {
 
     await waitFor(() => expect(screen.getByText("下划线已私人同步")).toBeInTheDocument());
     expect(screen.getByText("木桨在水里划出细长的纹路", { selector: "mark" })).toHaveStyle({ textDecoration: "underline" });
-    fireEvent.click(screen.getByRole("button", { name: "打开笔记" }));
+    openNotesDrawer();
     expect(await screen.findByText("下划线")).toBeInTheDocument();
   });
 

@@ -9,8 +9,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 class SpaForwardControllerTest {
     @ParameterizedTest
-    @ValueSource(strings = {"/", "/setup", "/login", "/change-password", "/library", "/library/all", "/library/uploads/example",
-            "/categories", "/categories/example", "/booklists", "/booklists/example", "/virtual-library",
+    @ValueSource(strings = {"/", "/recover", "/forgot-password", "/articles", "/articles/example", "/vault", "/profile", "/setup", "/login", "/change-password", "/library", "/library/all", "/library/uploads/example", "/library/books/example/edit",
+            "/categories", "/categories/example", "/booklists", "/booklists/example", "/virtual-library", "/knowledge-graph",
             "/settings", "/settings/display-books", "/annotations", "/recycle-bin", "/reader/example",
             "/admin/users", "/admin/file-operations", "/admin/recycle-bin", "/admin/library-roots", "/admin/reader-fonts"})
     void directPageRequestsForwardToSpa(String path) throws Exception {

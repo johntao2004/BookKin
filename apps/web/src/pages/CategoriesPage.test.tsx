@@ -28,8 +28,8 @@ describe("CategoriesPage", () => {
     render(<TestProviders initialPath="/categories"><AppShell><CategoriesPage /></AppShell></TestProviders>);
 
     expect(await screen.findByRole("heading", { name: "分类" })).toBeInTheDocument();
-    expect(await screen.findByRole("heading", { name: "文学与叙事" })).toBeInTheDocument();
-    expect(screen.getByRole("group", { name: "分类筛选" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "文学与叙事" })).not.toBeInTheDocument();
+    expect(await screen.findByRole("group", { name: "分类筛选" })).toBeInTheDocument();
     expect(screen.getByRole("group", { name: "格式筛选" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /^文学与叙事，\d+ 本$/ })).toHaveAttribute("aria-pressed", "true");
     expect(screen.queryByRole("button", { name: "管理分类" })).not.toBeInTheDocument();
@@ -40,7 +40,7 @@ describe("CategoriesPage", () => {
     vi.spyOn(api, "listCategories").mockResolvedValue({ items: [], editable: true });
     render(<TestProviders initialPath="/categories"><CategoriesPage /></TestProviders>);
 
-    expect(await screen.findByRole("heading", { name: "无书目" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "暂无分类" })).toBeInTheDocument();
     expect(screen.queryByText(/创建第一个分类|管理员整理完成/)).not.toBeInTheDocument();
     const createButton = screen.getByRole("button", { name: "创建分类" });
     expect(screen.getAllByRole("button", { name: "创建分类" })).toHaveLength(1);
@@ -95,7 +95,7 @@ describe("CategoriesPage", () => {
 
     expect(screen.getByRole("button", { name: "管理分类" })).toBeDisabled();
     expect(screen.queryByRole("button", { name: "创建分类" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("heading", { name: "无书目" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "暂无分类" })).not.toBeInTheDocument();
   });
 
   it("分类读取失败时保留禁用的管理入口", async () => {
@@ -122,25 +122,25 @@ describe("CategoriesPage", () => {
     vi.spyOn(api, "listCategoryBooks").mockResolvedValue({ items: [] });
     render(<TestProviders initialPath="/categories?category=category-test&q=不存在"><CategoriesPage /></TestProviders>);
 
-    expect(await screen.findByRole("heading", { name: "无书目" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "未找到匹配的书籍" })).toBeInTheDocument();
     expect(screen.queryByText(/换个关键词|可以整理本分类/)).not.toBeInTheDocument();
-    expect(screen.getByText("保留分类简介")).toBeInTheDocument();
+    expect(screen.queryByText("保留分类简介")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "清除筛选" })).toBeInTheDocument();
   });
 
-  it("可切换分类并在当前分类内搜索书目", async () => {
+  it("可切换分类并从顶部进入全局搜索", async () => {
     sessionStorage.setItem("bookkin-demo-session", JSON.stringify(owner));
-    render(<TestProviders initialPath="/categories"><AppShell><CategoriesPage /></AppShell></TestProviders>);
+    render(<TestProviders initialPath="/categories"><AppShell><CategoriesPage /><RouteSearch /></AppShell></TestProviders>);
 
     const readingCategory = await screen.findByRole("button", { name: /^阅读生活，\d+ 本$/ });
     fireEvent.click(readingCategory);
 
     await waitFor(() => expect(readingCategory).toHaveAttribute("aria-pressed", "true"));
-    expect(await screen.findByRole("heading", { name: "阅读生活" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "阅读生活" })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "展开搜索" }));
-    fireEvent.change(screen.getByRole("textbox", { name: "搜索当前分类" }), { target: { value: "慢读手册" } });
+    fireEvent.change(screen.getByRole("textbox", { name: "搜索书籍、笔记、书单" }), { target: { value: "慢读手册" } });
     expect(await screen.findByText("慢读手册")).toBeInTheDocument();
-    expect(await screen.findByText("1 本匹配")).toBeInTheDocument();
+    expect(screen.queryByText("1 本匹配")).not.toBeInTheDocument();
   });
 
   it("主人在分类页唯一位置进入管理，并看到安全删除提示", async () => {

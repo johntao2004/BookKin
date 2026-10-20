@@ -23,3 +23,18 @@ it("automatically uploads on LAN HTTP and confirms into a persistent editor rout
   fireEvent.click(screen.getByRole('button', { name: '确定' }));
   expect(screen.getByText('/library/uploads/upload-test')).toBeInTheDocument();
 });
+
+it('lets the upload surface open the picker by click or keyboard without extra divider or subtitle', async () => {
+  vi.spyOn(api, 'listLibraryRoots').mockResolvedValue([{ id: 'root', name: '主书库', status: 'ONLINE', canWrite: true, canStage: true } as any]);
+  vi.spyOn(api, 'listBookUploads').mockResolvedValue([]);
+  render(<TestProviders><BookUploadDialog open onClose={vi.fn()} onCompleted={vi.fn()} /></TestProviders>);
+  const surface = await screen.findByRole('button', { name: '点击或拖入 EPUB 或 PDF' });
+  await waitFor(() => expect(surface).toHaveAttribute('aria-disabled', 'false'));
+  const picker = vi.spyOn(document.querySelector('input[type="file"]') as HTMLInputElement, 'click');
+  fireEvent.click(surface);
+  fireEvent.keyDown(surface, {key: 'Enter'});
+  fireEvent.keyDown(surface, {key: ' '});
+  expect(picker).toHaveBeenCalledTimes(3);
+  expect(screen.queryByText('选择或拖入文件即可自动上传。')).not.toBeInTheDocument();
+  expect(document.querySelector('.bk-dialog-content')).not.toHaveStyle({borderTop: '1px solid var(--color-border)'});
+});

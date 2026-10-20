@@ -35,5 +35,12 @@ export {
 
 export { AntTable as DataTable };
 export function TableAction(props: ComponentProps<typeof AntButton>) {
-  return <AntButton {...props} type="link" size="small" style={{ padding: 0, height: "auto" }} />;
+  return <AntButton {...props} type="default" size="small" />;
 }
+
+// Native controls for composed exploration surfaces.
+export { default as _AntAlert } from "antd/es/alert";
+export { default as _AntButton } from "antd/es/button";
+export { default as Empty } from "antd/es/empty";
+export { default as Pagination } from "antd/es/pagination";
+export { default as Tag } from "antd/es/tag";

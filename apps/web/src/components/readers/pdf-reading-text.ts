@@ -80,6 +80,15 @@ function buildLines(items: unknown[]): ReadingLine[] {
 function reflowParagraphs(lines: ReadingLine[]): string[] {
   if (lines.length === 0) return [];
 
+  // PDF line spacing is independent of font size (e.g. 12pt text on 28pt
+  // baselines). Learn the page's regular spacing instead of splitting each line.
+  const gaps = lines.slice(1).flatMap((line, index) => {
+    const previous = lines[index];
+    const gap = Math.abs(previous.y - line.y);
+    const sameScale = Math.max(previous.height, line.height) / Math.max(1, Math.min(previous.height, line.height)) <= 1.35;
+    return sameScale && gap > Math.max(previous.height, line.height) * 0.55 ? [gap] : [];
+  }).sort((a, b) => a - b);
+  const regularGap = gaps.length >= 3 ? gaps[Math.floor((gaps.length - 1) / 2)] : 0;
   const paragraphs: string[] = [];
   let paragraph = lines[0].text;
   for (let index = 1; index < lines.length; index += 1) {
@@ -90,7 +99,8 @@ function reflowParagraphs(lines: ReadingLine[]): string[] {
     const fontScaleChanged = Math.max(previous.height, line.height) / Math.max(1, Math.min(previous.height, line.height)) > 1.35;
     const visiblyIndented = line.x - previous.x > referenceHeight * 1.15;
     const startsFootnote = Boolean(parseFootnote(line.text));
-    const startsParagraph = startsFootnote || fontScaleChanged || visiblyIndented || verticalGap > referenceHeight * 1.65;
+    const startsListItem = /^(?:\d+[.)、]|[（(]\d+[)）]|[•●▪-]\s)/u.test(line.text);
+    const startsParagraph = startsFootnote || startsListItem || fontScaleChanged || visiblyIndented || verticalGap > Math.max(referenceHeight * 1.65, regularGap * 1.25);
 
     if (startsParagraph) {
       paragraphs.push(paragraph.trim());

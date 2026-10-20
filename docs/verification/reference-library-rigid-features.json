@@ -1,0 +1,41 @@
+{
+  "passed": true,
+  "baselineSha256": "a53569ec865dca1af047b298dd7b85853baf59fc47af7eb71bf08afae8e272eb",
+  "sourceSha256": "c656b8200eb46fc4d80da7d3780f314a29cad5838660307f3d64ce349469a8fa",
+  "method": "Actual exported GLB material-space coordinates; unique samples after rigid anchor translation",
+  "features": [
+    {
+      "feature": "globe surface",
+      "uniqueSpatialSamples": 6183,
+      "rigidYTranslation": 0,
+      "maximumExtentError": 0.0,
+      "coordinatesEqualAtTolerance": 1e-05,
+      "passed": true
+    },
+    {
+      "feature": "reading desk surfaces and lamps",
+      "uniqueSpatialSamples": 1464,
+      "rigidYTranslation": 0,
+      "maximumExtentError": 0.0,
+      "coordinatesEqualAtTolerance": 1e-05,
+      "passed": true
+    },
+    {
+      "feature": "four gallery paintings",
+      "uniqueSpatialSamples": 16,
+      "rigidYTranslation": 1.9600000000000002,
+      "maximumExtentError": 4.768371573149466e-07,
+      "coordinatesEqualAtTolerance": 1e-05,
+      "passed": true
+    },
+    {
+      "feature": "central portrait",
+      "uniqueSpatialSamples": 4,
+      "rigidYTranslation": 2.0,
+      "maximumExtentError": 4.76837158203125e-07,
+      "coordinatesEqualAtTolerance": 1e-05,
+      "passed": true
+    }
+  ],
+  "removedSculptureMaterialsAbsent": true
+}

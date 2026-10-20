@@ -15,7 +15,7 @@ import { useEffect, useRef, useState } from "react";
 import { api } from "../api/client";
 import type { Book } from "../domain/types";
 import { tokens } from "../theme/generated-tokens";
-import { cropCover } from "./BookUploadDialog";
+import { useCoverCrop } from "./CoverCropDialog";
 
 const maximumCoverBytes = 20 * 1024 * 1024;
 const acceptedCoverTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
@@ -25,6 +25,7 @@ export function CoverUploadDialog({ book, onClose, onCompleted }: {
   onClose: () => void;
   onCompleted: (message: string) => void;
 }) {
+  const { requestCrop, cropDialog } = useCoverCrop();
   const input = useRef<HTMLInputElement>(null);
   const [cover, setCover] = useState<Blob | null>(null);
   const [previewUrl, setPreviewUrl] = useState("");
@@ -59,7 +60,8 @@ export function CoverUploadDialog({ book, onClose, onCompleted }: {
     }
     setPreparing(true);
     try {
-      setCover(await cropCover(file));
+      const blob = await requestCrop(file);
+      if (blob) setCover(blob);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "无法处理这张封面。");
     } finally {
@@ -101,6 +103,7 @@ export function CoverUploadDialog({ book, onClose, onCompleted }: {
 
   return (
     <Dialog open={Boolean(book)} onClose={busy || preparing ? undefined : onClose} fullWidth maxWidth="sm">
+      {cropDialog}
       <DialogTitle><Typography variant="h4" component="span">更换封面</Typography></DialogTitle>
       <DialogContent>
         {book && (
@@ -124,7 +127,6 @@ export function CoverUploadDialog({ book, onClose, onCompleted }: {
                   <Typography variant="h6">{book.title}</Typography>
                   <Typography variant="body2" color="text.secondary">{book.author}</Typography>
                 </Box>
-                <Typography variant="body2" color="text.secondary">选择一张竖版图片，系统会自动居中裁切为 2:3。支持 JPEG、PNG、WebP，最大 20 MB。</Typography>
                 <Button
                   variant="outlined"
                   startIcon={preparing ? <CircularProgress size={18} /> : <ImageOutlined />}

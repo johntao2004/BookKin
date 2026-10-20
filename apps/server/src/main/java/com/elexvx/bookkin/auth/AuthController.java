@@ -132,6 +132,8 @@ public class AuthController {
 
     private void authenticateAndSave(String username, String password, HttpServletRequest request, HttpServletResponse response) {
         var authentication = authenticationManager.authenticate(UsernamePasswordAuthenticationToken.unauthenticated(username, password));
+        var previous = request.getSession(false);
+        if (previous != null) previous.invalidate();
         request.getSession(true);
         request.changeSessionId();
         var context = SecurityContextHolder.createEmptyContext();

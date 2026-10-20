@@ -1,7 +1,9 @@
+import { pendingPosition, persistPosition, replayPositions, trackSessionSave } from "../auth/session-save";
 import { randomId } from "../utils/random-id";
 import { demoBooks, demoRecycleBin, demoUsers } from "../data/demo";
 import type {
   Book,
+  BookKnowledge,
   BooklistDetail,
   BooklistKind,
   BooklistList,
@@ -70,7 +72,20 @@ async function ensureCsrfToken(signal?: AbortSignal): Promise<string> {
   return csrfToken;
 }
 
-async function request<T>(path: string, init: RequestInit = {}, options: { timeoutMs?: number } = {}): Promise<T> {
+// A failed feature endpoint is not proof that the session itself expired.
+// Missing routes and upstream error handlers can also return an unexpected 401.
+let sessionExpiryCheck: Promise<boolean> | undefined;
+function confirmSessionExpired(): Promise<boolean> {
+  if (!sessionExpiryCheck) {
+    sessionExpiryCheck = fetch("/api/v1/auth/session", {
+      credentials: "include", signal: AbortSignal.timeout(AUTH_TIMEOUT_MS),
+    }).then(response => response.status === 401).catch(() => false)
+      .finally(() => { sessionExpiryCheck = undefined; });
+  }
+  return sessionExpiryCheck;
+}
+
+export async function request<T>(path: string, init: RequestInit = {}, options: { timeoutMs?: number } = {}): Promise<T> {
   const method = (init.method ?? "GET").toUpperCase();
   const needsCsrf = !["GET", "HEAD", "OPTIONS"].includes(method);
   const timeoutMs = options.timeoutMs ?? (path.startsWith("/mail/") || path.startsWith("/auth/recovery") ? 30000 : path.startsWith("/auth/") ? AUTH_TIMEOUT_MS : undefined);
@@ -98,7 +113,7 @@ async function request<T>(path: string, init: RequestInit = {}, options: { timeo
       response = await send(requestCsrfToken);
     }
     if (!response.ok) {
-      if (response.status === 401 && !["/auth/login", "/auth/session"].includes(path)) {
+      if (response.status === 401 && !["/auth/login", "/auth/session"].includes(path) && await confirmSessionExpired()) {
         window.dispatchEvent(new Event("bookkin:session-expired"));
       }
       throw await responseError(response);
@@ -346,6 +361,10 @@ const libraryRoots: LibraryRoot[] = [
   },
 ];
 
+export interface SiteSettings { name: string; tagline: string; description: string; keywords: string; publicUrl: string; allowIndexing: boolean; icpNumber: string; policeNumber: string; copyright: string; contactEmail: string; }
+export const DEFAULT_SITE_SETTINGS: SiteSettings = {name:"BookKin",tagline:"电子图书馆",description:"你的 NAS 私人电子图书馆",keywords:"",publicUrl:"",allowIndexing:false,icpNumber:"",policeNumber:"",copyright:"",contactEmail:""};
+let demoSiteSettings = {...DEFAULT_SITE_SETTINGS};
+
 export interface PasswordPolicy { minLength: number; requireUppercase: boolean; requireLowercase: boolean; requireDigit: boolean; requireSpecial: boolean; }
 let demoPasswordPolicy: PasswordPolicy = {minLength:12, requireUppercase:false, requireLowercase:false, requireDigit:false, requireSpecial:false};
 export interface MailSettings {
@@ -353,6 +372,11 @@ export interface MailSettings {
   password: string; sender: string; publicUrl: string; passwordConfigured: boolean;
 }
 export const api = {
+  siteSettings: async (): Promise<SiteSettings> => demoMode ? {...demoSiteSettings} : request("/site-settings"),
+  async saveSiteSettings(input: SiteSettings): Promise<SiteSettings> {
+    if (demoMode) {demoSiteSettings={...input}; return {...input};}
+    return request("/site-settings", {method:"PUT",body:JSON.stringify(input)});
+  },
   passwordPolicy: async (): Promise<PasswordPolicy> => demoMode ? {...demoPasswordPolicy} : request("/auth/password-policy"),
   savePasswordPolicy: async (input: PasswordPolicy): Promise<PasswordPolicy> => {
     if (demoMode) {demoPasswordPolicy={...input}; return {...input};}
@@ -368,6 +392,14 @@ export const api = {
   resetPassword: (token: string, password: string) => request<void>("/auth/recovery/reset", {method: "POST", body: JSON.stringify({token, password})}),
   isDemo: demoMode,
 
+  async sessionStatus(): Promise<{ expiresAt: number; revocationRequested: boolean; serverTime: number }> {
+    if (demoMode) return { expiresAt: Date.now()+86400000, revocationRequested:false, serverTime:Date.now() };
+    return request("/auth/session-status");
+  },
+  async activeSessions(): Promise<ActiveSession[]> { if(demoMode) return []; return request("/users/active-sessions"); },
+  async sessionPolicy(): Promise<{maxMinutes:number}> { if(demoMode) return {maxMinutes:1440}; return request("/users/session-policy"); },
+  async saveSessionPolicy(maxMinutes:number): Promise<{maxMinutes:number}> { return request("/users/session-policy",{method:"PUT",body:JSON.stringify({maxMinutes})}); },
+  async replayReadingProgress() { if(!demoMode) await replayPositions(entry=>request(`/books/${entry.bookId}/position`,{method:"PUT",body:JSON.stringify({locator:entry.locator,progress:entry.progress,deviceId:"web"})})); },
   async getSession(): Promise<SessionUser | null> {
     if (demoMode) return null;
     try {
@@ -802,6 +834,8 @@ export const api = {
   },
 
   async getReadingPosition(bookId: string): Promise<ReadingPosition | null> {
+    const checkpoint = pendingPosition(bookId);
+    if(checkpoint) return {bookId,locator:checkpoint.locator,progress:checkpoint.progress,deviceId:"web",updatedAt:new Date().toISOString()};
     if (!demoMode) return (await request<ReadingPosition | undefined>(`/books/${bookId}/position`)) ?? null;
     await pause(40);
     return readingPositions.get(bookId) ?? null;
@@ -809,10 +843,10 @@ export const api = {
 
   async saveReadingPosition(bookId: string, locator: string, progress: number): Promise<ReadingPosition> {
     const normalizedProgress = Math.max(0, Math.min(1, progress));
-    if (!demoMode) return request(`/books/${bookId}/position`, {
+    if (!demoMode) return persistPosition(bookId, locator, normalizedProgress, () => request<ReadingPosition>(`/books/${bookId}/position`, {
       method: "PUT",
       body: JSON.stringify({ locator, progress: normalizedProgress, deviceId: "web" }),
-    });
+    }));
     const position: ReadingPosition = {
       bookId,
       locator,
@@ -832,10 +866,10 @@ export const api = {
 
   async recordReadingTime(bookId: string, seconds: number): Promise<WeeklyReadingStats> {
     const normalizedSeconds = Math.max(1, Math.min(60, Math.round(seconds)));
-    if (!demoMode) return request(`/books/${bookId}/reading-time`, {
+    if (!demoMode) return trackSessionSave(request<WeeklyReadingStats>(`/books/${bookId}/reading-time`, {
       method: "POST",
       body: JSON.stringify({ seconds: normalizedSeconds }),
-    });
+    }));
     const date = localDateKey(new Date());
     readingTimeDaily.set(date, Math.min(86_400, (readingTimeDaily.get(date) ?? 0) + normalizedSeconds));
     return demoWeeklyReadingStats();
@@ -860,6 +894,7 @@ export const api = {
       tags: book.tags,
       subjectCodes: book.subjectCodes ?? [],
       sources: {},
+      publiclyVisible: displayBookIds.includes(bookId),
     };
   },
 
@@ -877,6 +912,10 @@ export const api = {
       tags: input.tags,
       subjectCodes: input.subjectCodes ?? [],
     } : candidate);
+    if (input.publiclyVisible !== undefined) {
+      displayBookIds = input.publiclyVisible ? [...new Set([...displayBookIds, book.id])] : displayBookIds.filter(id => id !== book.id);
+      displayRevision++;
+    }
     const metadata: BookMetadata = { id: book.id, ...input };
     return {
       metadata,
@@ -1051,8 +1090,8 @@ export const api = {
     return request("/auth/register",{method:"POST",body:JSON.stringify(input)});
   },
 
-  async listLoginLogs(page: number): Promise<{ items: { id: string; actorId: string | null; subjectId: string; outcome: string; ip: string | null; occurredAt: string }[]; total: number }> {
-    return request(`/users/login-logs?page=${page}&size=20`);
+  async listLoginLogs(page: number, size = 20): Promise<{ items: { id: string; actorId: string | null; subjectId: string; outcome: string; ip: string | null; occurredAt: string }[]; total: number }> {
+    return request(`/users/login-logs?page=${page}&size=${size}`);
   },
 
   async listLibraryRoots(): Promise<LibraryRoot[]> {
@@ -1125,6 +1164,16 @@ export const api = {
     });
   },
 
+  async listBookKnowledge(signal?: AbortSignal): Promise<BookKnowledge[]> {
+    if (demoMode) return [];
+    return request<{ items: BookKnowledge[] }>("/knowledge", { signal }).then(result => result.items);
+  },
+
+  async generateBookKnowledge(bookId: string): Promise<BookKnowledge[]> {
+    if (demoMode) throw new Error("演示模式不生成正文知识点，请连接真实书库服务。");
+    return request<{ items: BookKnowledge[] }>(`/knowledge/books/${encodeURIComponent(bookId)}/generate`, { method: "POST" }, { timeoutMs: 240000 }).then(result => result.items);
+  },
+
   async listAiProviders(): Promise<AiProviderInfo[]> {
     return request<{ items: AiProviderInfo[] }>("/ai/providers").then((result) => result.items);
   },
@@ -1155,7 +1204,7 @@ export const api = {
     return request(`/book-uploads/${uploadId}/cover-selection`, { method: "POST", body: JSON.stringify({ candidateId }) });
   },
 
-  async commitBookUpload(uploadId: string, publishToDisplay = false): Promise<BookUpload> {
+  async commitBookUpload(uploadId: string, publishToDisplay = true): Promise<BookUpload> {
     return request(`/book-uploads/${uploadId}/commit`, {
       method: "POST",
       headers: { "Idempotency-Key": `upload:${uploadId}` },
@@ -1258,10 +1307,15 @@ export const api = {
     return operation;
   },
 
-  async listAnnotations(bookId?: string): Promise<Annotation[]> {
-    if (!demoMode) return request<{ items: Annotation[] }>(`/annotations${bookId ? `?bookId=${encodeURIComponent(bookId)}` : ""}`).then((result) => result.items);
+  async listAnnotations(bookId?: string, query?: string): Promise<Annotation[]> {
+    if (!demoMode) {
+      const params = new URLSearchParams();
+      if (bookId) params.set("bookId", bookId);
+      if (query?.trim()) params.set("q", query.trim());
+      return request<{ items: Annotation[] }>(`/annotations${params.size ? `?${params}` : ""}`).then(result => result.items);
+    }
     await pause(100);
-    return annotations.filter((annotation) => !bookId || annotation.bookId === bookId);
+    return annotations.filter((annotation) => (!bookId || annotation.bookId === bookId) && (!query?.trim() || [annotation.bookTitle, annotation.bookAuthor, annotation.quote, annotation.note].join(" ").toLocaleLowerCase().includes(query.trim().toLocaleLowerCase())));
   },
 
   async listAnnotationBooks(input: { q?: string; cursor?: string; limit?: number } = {}): Promise<AnnotationBookPage> {
@@ -1322,7 +1376,7 @@ export const api = {
     if (!demoMode) {
       const { bookTitle, ...payload } = input;
       void bookTitle;
-      return request("/annotations", { method: "POST", body: JSON.stringify(payload) });
+      return trackSessionSave(request<Annotation>("/annotations", { method: "POST", body: JSON.stringify(payload) }));
     }
     await pause(100);
     const now = new Date().toISOString();
@@ -1342,3 +1396,5 @@ export const api = {
     annotations = annotations.filter((annotation) => annotation.id !== id);
   },
 };
+
+export interface ActiveSession { id:string; userId:string; username:string; displayName:string; role:string; createdAt:string; lastAccessAt:string; expiresAt:string; current:boolean; ending:boolean }

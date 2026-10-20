@@ -1,0 +1,20 @@
+{
+  "runtime": {
+    "architecture": "20261020-end-vault-junction-r34",
+    "camera": {
+      "pitch": "-0.1277",
+      "x": "10.012",
+      "y": "14.180",
+      "yaw": "0.2000",
+      "z": "-16.324"
+    },
+    "failedModules": 0,
+    "phase": "ready"
+  },
+  "consoleErrors": [],
+  "checks": [
+    "original stepped wall cut removed",
+    "continuous projected timber ribs visible",
+    "front and oblique close views"
+  ]
+}

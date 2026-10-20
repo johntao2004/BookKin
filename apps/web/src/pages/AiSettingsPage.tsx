@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Alert } from "@/ui/feedback";
 import { Box } from "@/ui/primitives";
-import { Button } from "@/ui/buttons";
+import { SaveButton } from "@/ui/buttons";
 import { Checkbox } from "@/ui/forms";
 import { CircularProgress } from "@/ui/feedback";
 import { FormControl } from "@/ui/primitives";
@@ -134,18 +134,18 @@ export function AiSettingsPage() {
   return <PageContainer>
     {message && <Alert severity="success" sx={{ mb: 2 }}>{message}</Alert>}
     {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-    <Stack spacing={2.5}>
+    <Stack spacing={3}>
       <SettingsPanel
         title="匹配策略"
         description="AI 只接收解析出的结构化书目信息，不会上传 EPUB/PDF 原文。"
-        footer={<Button variant="contained" disabled={busy} onClick={() => void save("strategy")}>{busy ? "保存中…" : "保存匹配策略"}</Button>}
+        footer={<SaveButton disabled={busy} onClick={() => void save("strategy")}>{busy ? "保存中…" : "保存匹配策略"}</SaveButton>}
       >
         <Stack spacing={1.5}>
           <FormControlLabel control={<Switch checked={draft.enabled} onChange={(_, checked) => update("enabled", checked)} />} label={<SettingLabel title="启用 AI 书目匹配" description="关闭后不会调用任何 AI 平台，普通本地和在线书目识别仍可使用。" />} />
           <FormControlLabel control={<Switch checked={draft.autoMatch} disabled={!draft.enabled} onChange={(_, checked) => update("autoMatch", checked)} />} label={<SettingLabel title="入库时自动查找未匹配书目" description="常规来源没有强 ISBN 或书名/作者匹配时，自动请求已启用的平台。" />} />
-          <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ pt: 0.5 }}>
-            <TextField label="最多候选数" type="number" value={draft.maxCandidates} slotProps={{ htmlInput: { min: 1, max: 10 } }} onChange={(event) => update("maxCandidates", clampNumber(event.target.value, 1, 10, 4))} sx={{ maxWidth: 220 }} />
-            <TextField label="平台超时（秒）" type="number" value={draft.timeoutSeconds} slotProps={{ htmlInput: { min: 5, max: 120 } }} onChange={(event) => update("timeoutSeconds", clampNumber(event.target.value, 5, 120, 20))} sx={{ maxWidth: 220 }} />
+          <Stack sx={{ display: "grid", gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))" }, gap: `${tokens.spacing[4]}px`, pt: `${tokens.spacing[1]}px` }}>
+            <TextField fullWidth label="最多候选数" type="number" value={draft.maxCandidates} slotProps={{ htmlInput: { min: 1, max: 10 } }} onChange={(event) => update("maxCandidates", clampNumber(event.target.value, 1, 10, 4))} />
+            <TextField fullWidth label="平台超时（秒）" type="number" value={draft.timeoutSeconds} slotProps={{ htmlInput: { min: 5, max: 120 } }} onChange={(event) => update("timeoutSeconds", clampNumber(event.target.value, 5, 120, 20))} />
           </Stack>
         </Stack>
       </SettingsPanel>
@@ -153,9 +153,9 @@ export function AiSettingsPage() {
       <SettingsPanel
         title="AI 平台"
         description="选择要使用的厂商，配置模型和接口后保存。"
-        footer={<Button variant="contained" disabled={busy} onClick={() => void save("provider")}>{busy ? "保存中…" : "保存 AI 平台"}</Button>}
+        footer={<SaveButton disabled={busy} onClick={() => void save("provider")}>{busy ? "保存中…" : "保存 AI 平台"}</SaveButton>}
       >
-        <Stack spacing={2} sx={{ width: "100%", maxWidth: 420 }}>
+        <Stack spacing={2} sx={{ width: "100%", maxWidth: "none" }}>
           <FormControl fullWidth>
             <InputLabel id="ai-provider-select-label">选择厂商</InputLabel>
             <Select labelId="ai-provider-select-label" label="选择厂商" value={selectedProvider?.id ?? ""} disabled={busy} onChange={(event) => setSelectedProviderId(event.target.value)}>
@@ -175,7 +175,7 @@ function ProviderPanel({ provider, status, disabled, onChange }: { provider: AiP
     <ModelField provider={provider} disabled={disabled} onChange={onChange} />
     <TextField fullWidth label="接口地址" value={provider.baseUrl} disabled={disabled} onChange={(event) => onChange({ baseUrl: event.target.value })} />
     <Stack spacing={1.5}>
-      <TextField fullWidth type="password" label="API 密钥" value={provider.apiKey ?? ""} disabled={disabled} onChange={(event) => onChange({ apiKey: event.target.value, clearApiKey: false })} placeholder={status?.apiKeyConfigured ? "已配置，留空保持不变" : "请输入 API 密钥"} helperText={status?.apiKeyConfigured ? "服务端已保存密钥；留空不会覆盖。" : undefined} autoComplete="new-password" />
+      <TextField fullWidth type="password" label="API 密钥" value={provider.apiKey ?? ""} disabled={disabled} onChange={(event) => onChange({ apiKey: event.target.value, clearApiKey: false })} placeholder={status?.apiKeyConfigured ? "已配置，留空保持不变" : "请输入 API 密钥"} helperText={status?.apiKeyConfigured ? "密钥已保存，留空保持不变。" : undefined} autoComplete="new-password" />
       {status?.apiKeyConfigured && <FormControlLabel control={<Checkbox checked={provider.clearApiKey} disabled={disabled} onChange={(event) => onChange({ clearApiKey: event.target.checked, apiKey: "" })} />} label="清除密钥" />}
     </Stack>
   </Stack>;
@@ -207,9 +207,9 @@ function ModelField({ provider, disabled, onChange }: { provider: AiProviderSett
 
 function SettingsPanel({ title, description, children, footer }: { title: string; description: string; children: ReactNode; footer?: ReactNode }) {
   return <Stack spacing={1.5} className="bk-form-section">
-    <Box><Typography variant="h4">{title}</Typography><Typography color="text.secondary" sx={{ mt: 0.5 }}>{description}</Typography></Box>
+    <Box><Typography variant="subtitle1" component="h3">{title}</Typography><Typography color="text.secondary" sx={{ mt: 0.5 }}>{description}</Typography></Box>
     {children}
-    {footer && <Stack sx={{ alignItems: "flex-end", pt: tokens.spacing.sm, borderTop: 1, borderColor: "divider" }}><ActionToolbar>{footer}</ActionToolbar></Stack>}
+    {footer && <Stack sx={{ alignItems: "flex-end", pt: `${tokens.spacing[4]}px`, borderTop: 1, borderColor: "divider" }}><ActionToolbar>{footer}</ActionToolbar></Stack>}
   </Stack>;
 }
 

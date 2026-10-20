@@ -24,6 +24,7 @@ import { BookCatalogEmptyState } from "../components/BookCatalogEmptyState";
 import { annotationColorBackground, annotationColorHex } from "../domain/annotation-colors";
 import type { Annotation, AnnotationBookSummary, AnnotationStyle } from "../domain/types";
 import { tokens } from "../theme/generated-tokens";
+import { EMPTY_READING_NOTES_TITLE } from "../ui/empty-state-copy";
 
 export function AnnotationsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -58,10 +59,10 @@ function AnnotationBooks({ onOpen }: { onOpen: (bookId: string) => void }) {
     <PageContainer>
       <PageHeader eyebrow="READING NOTES" title="阅读笔记" />
       {query.isPending ? <Loading /> : query.isError ? <Alert severity="error">无法读取阅读笔记书目</Alert> : books.length === 0 ? (
-        <BookCatalogEmptyState />
+        <BookCatalogEmptyState title={EMPTY_READING_NOTES_TITLE} />
       ) : (
         <>
-          <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "repeat(2, minmax(0, 1fr))", lg: "repeat(3, minmax(0, 1fr))" }, gap: 2.5 }}>
+          <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "repeat(2, minmax(0, 1fr))", lg: "repeat(3, minmax(0, 1fr))", xl: `repeat(auto-fill, minmax(min(100%, ${tokens.layout.annotationCardMinWidth}px), 1fr))` }, gap: 2.5 }}>
             {books.map((book) => <AnnotationBookCard key={book.bookId} book={book} onOpen={() => onOpen(book.bookId)} />)}
           </Box>
           {query.hasNextPage && <Stack sx={{ alignItems: "center", mt: 4 }}><Button variant="outlined" disabled={query.isFetchingNextPage} onClick={() => void query.fetchNextPage()}>{query.isFetchingNextPage ? "正在展开…" : "加载更多书籍"}</Button></Stack>}
@@ -76,11 +77,11 @@ function AnnotationBookCard({ book, onOpen }: { book: AnnotationBookSummary; onO
     <Card variant="outlined" sx={{ overflow: "hidden", transition: "transform 150ms ease, box-shadow 150ms ease", "&:hover": { transform: "translateY(-2px)", boxShadow: tokens.shadow.cover } }}>
       <CardActionArea onClick={onOpen} aria-label={`查看《${book.bookTitle}》的阅读笔记`} sx={{ height: "100%", alignItems: "stretch" }}>
         <Stack direction="row" sx={{ minHeight: 188 }}>
-          <Box sx={{ width: 126, flexShrink: 0, bgcolor: "primary.light", position: "relative", overflow: "hidden" }}>
+          <Box sx={{ width: { xs: tokens.spacing[24], sm: 126 }, flexShrink: 0, bgcolor: "primary.light", position: "relative", overflow: "hidden" }}>
             <Box component="img" src={book.coverUrl} alt={`${book.bookTitle}封面`} sx={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
           </Box>
-          <CardContent sx={{ minWidth: 0, flex: 1, p: 2.5, display: "flex", flexDirection: "column" }}>
-            <Typography variant="h4" sx={{ mb: 0.5 }} noWrap>{book.bookTitle}</Typography>
+          <CardContent sx={{ minWidth: 0, flex: 1, p: { xs: 2, sm: 2.5 }, display: "flex", flexDirection: "column" }}>
+            <Typography variant="h4" title={book.bookTitle} sx={{ mb: 0.5, fontSize: { xs: tokens.typography.fontSize.title, sm: tokens.typography.fontSize.headingSm } }} noWrap>{book.bookTitle}</Typography>
             <Typography variant="body2" color="text.secondary" noWrap>{book.bookAuthor}</Typography>
             <Stack direction="row" useFlexGap sx={{ mt: 2, flexWrap: "wrap", gap: 0.75 }}>
               <Chip size="small" label={`${book.annotationCount} 条批注`} />
@@ -122,7 +123,7 @@ function BookAnnotations({ bookId, onBack }: { bookId: string; onBack: () => voi
 
   return (
     <PageContainer>
-      <Button color="inherit" startIcon={<ArrowBackRounded />} onClick={onBack} sx={{ mb: 2, px: 0 }}>全部阅读笔记书籍</Button>
+      <Button color="inherit" startIcon={<ArrowBackRounded />} onClick={onBack} sx={{ mb: 2 }}>全部阅读笔记书籍</Button>
       <Stack direction={{ xs: "column", md: "row" }} sx={{ justifyContent: "space-between", alignItems: { xs: "flex-start", md: "flex-end" }, gap: 3, mb: 4 }}>
         <Stack direction="row" spacing={2.5} sx={{ alignItems: "center", minWidth: 0 }}>
           <Box component="img" src={book.coverUrl} alt={`${book.title}封面`} sx={{ width: 82, height: 116, objectFit: "cover", borderRadius: 1.5, boxShadow: tokens.shadow.cover }} />
@@ -132,14 +133,14 @@ function BookAnnotations({ bookId, onBack }: { bookId: string; onBack: () => voi
           </Box>
         </Stack>
         <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ width: { xs: "100%", md: "auto" } }}>
-          <Button variant="text" startIcon={<MenuBookOutlined />} onClick={() => navigate(`/reader/${bookId}`)}>回到书中</Button>
+          <Button variant="outlined" startIcon={<MenuBookOutlined />} onClick={() => navigate(`/reader/${bookId}`)}>回到书中</Button>
           <Button variant="outlined" startIcon={<DescriptionOutlined />} disabled={Boolean(exporting)} onClick={() => void exportFile("DOCX")}>{exporting === "DOCX" ? "正在生成…" : "导出 Word"}</Button>
           <Button variant="outlined" startIcon={<GridOnRounded />} disabled={Boolean(exporting)} onClick={() => void exportFile("XLSX")}>{exporting === "XLSX" ? "正在生成…" : "导出 Excel"}</Button>
         </Stack>
       </Stack>
 
       {annotations.length === 0 ? (
-        <BookCatalogEmptyState />
+        <BookCatalogEmptyState title={EMPTY_READING_NOTES_TITLE} />
       ) : (
         <Stack spacing={2}>
           {annotations.map((annotation, index) => <AnnotationEntry key={annotation.id} annotation={annotation} index={annotations.length - index} />)}
@@ -175,7 +176,7 @@ function AnnotationEntry({ annotation, index }: { annotation: Annotation; index:
 
 function quoteStyle(annotation: Annotation): SxProps<Theme> {
   const style = annotation.style;
-  if (style === "HIGHLIGHT") return { bgcolor: annotationColorBackground(annotation.color), borderRadius: "2px", boxDecorationBreak: "clone" };
+  if (style === "HIGHLIGHT") return { bgcolor: annotationColorBackground(annotation.color), borderRadius: "var(--radius-md)", boxDecorationBreak: "clone" };
   if (style === "UNDERLINE") return { textDecoration: "underline", textDecorationColor: annotationColorHex(annotation.color), textDecorationThickness: "3px", textUnderlineOffset: "4px", textDecorationSkipInk: "none", boxDecorationBreak: "clone" };
   return { fontWeight: 700, boxDecorationBreak: "clone" };
 }

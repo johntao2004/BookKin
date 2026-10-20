@@ -1,0 +1,18 @@
+{
+  "revision": "20261020-gallery-pier-joinery-r36",
+  "passed": true,
+  "failures": [],
+  "sourceSha256": "0752e975067afbfed1cb17fe0675b762134b910ff0a05da92cd808efeb599a17",
+  "baselineSha256": "006150d142eeac8dfdea1a350926a6499917f788694b04e85834b849970dcd11",
+  "retiredScreenTimberTriangles": {
+    "A": 0,
+    "B": 0
+  },
+  "baselineTimberTriangles": {
+    "A": 7148,
+    "B": 3620
+  },
+  "retiredColliders": [],
+  "artworkAndGroundProbes": 735,
+  "scope": "Exported geometry and collision descriptors; browser checked separately."
+}

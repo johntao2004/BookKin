@@ -1,0 +1,452 @@
+{
+  "revision": "20261020-open-upper-balcony-r31",
+  "current": {
+    "passed": true,
+    "samples": 132,
+    "failures": [],
+    "sourceSha256": "efcc1ad93cc3c0b1da24eabc487ea6ccaf5c7b45dc78ebb05b04409714ab4e51"
+  },
+  "baseline": {
+    "passed": false,
+    "samples": 132,
+    "failures": [
+      {
+        "kind": "deck",
+        "point": [
+          -3.7,
+          7.4399999999999995,
+          -14.8
+        ],
+        "passed": false
+      },
+      {
+        "kind": "deck",
+        "point": [
+          -3.7,
+          7.4399999999999995,
+          -14
+        ],
+        "passed": false
+      },
+      {
+        "kind": "deck",
+        "point": [
+          -3.7,
+          7.4399999999999995,
+          -13.75
+        ],
+        "passed": false
+      },
+      {
+        "kind": "deck",
+        "point": [
+          -2,
+          7.4399999999999995,
+          -14.8
+        ],
+        "passed": false
+      },
+      {
+        "kind": "deck",
+        "point": [
+          -2,
+          7.4399999999999995,
+          -14
+        ],
+        "passed": false
+      },
+      {
+        "kind": "deck",
+        "point": [
+          -2,
+          7.4399999999999995,
+          -13.75
+        ],
+        "passed": false
+      },
+      {
+        "kind": "deck",
+        "point": [
+          0,
+          7.4399999999999995,
+          -14.8
+        ],
+        "passed": false
+      },
+      {
+        "kind": "deck",
+        "point": [
+          0,
+          7.4399999999999995,
+          -14
+        ],
+        "passed": false
+      },
+      {
+        "kind": "deck",
+        "point": [
+          0,
+          7.4399999999999995,
+          -13.75
+        ],
+        "passed": false
+      },
+      {
+        "kind": "deck",
+        "point": [
+          2,
+          7.4399999999999995,
+          -14.8
+        ],
+        "passed": false
+      },
+      {
+        "kind": "deck",
+        "point": [
+          2,
+          7.4399999999999995,
+          -14
+        ],
+        "passed": false
+      },
+      {
+        "kind": "deck",
+        "point": [
+          2,
+          7.4399999999999995,
+          -13.75
+        ],
+        "passed": false
+      },
+      {
+        "kind": "deck",
+        "point": [
+          3.7,
+          7.4399999999999995,
+          -14.8
+        ],
+        "passed": false
+      },
+      {
+        "kind": "deck",
+        "point": [
+          3.7,
+          7.4399999999999995,
+          -14
+        ],
+        "passed": false
+      },
+      {
+        "kind": "deck",
+        "point": [
+          3.7,
+          7.4399999999999995,
+          -13.75
+        ],
+        "passed": false
+      },
+      {
+        "kind": "wood-handrail",
+        "side": -1,
+        "radius": 0.36,
+        "t": 0.075,
+        "passed": false
+      },
+      {
+        "kind": "wood-handrail",
+        "side": -1,
+        "radius": 0.36,
+        "t": 0.25,
+        "passed": false
+      },
+      {
+        "kind": "wood-handrail",
+        "side": -1,
+        "radius": 0.36,
+        "t": 0.475,
+        "passed": false
+      },
+      {
+        "kind": "wood-handrail",
+        "side": -1,
+        "radius": 0.36,
+        "t": 0.675,
+        "passed": false
+      },
+      {
+        "kind": "wood-handrail",
+        "side": -1,
+        "radius": 0.36,
+        "t": 0.9,
+        "passed": false
+      },
+      {
+        "kind": "baluster-rail-joint",
+        "side": -1,
+        "radius": 0.36,
+        "step": 3,
+        "passed": false
+      },
+      {
+        "kind": "baluster-rail-joint",
+        "side": -1,
+        "radius": 0.36,
+        "step": 10,
+        "passed": false
+      },
+      {
+        "kind": "baluster-rail-joint",
+        "side": -1,
+        "radius": 0.36,
+        "step": 19,
+        "passed": false
+      },
+      {
+        "kind": "baluster-rail-joint",
+        "side": -1,
+        "radius": 0.36,
+        "step": 27,
+        "passed": false
+      },
+      {
+        "kind": "baluster-rail-joint",
+        "side": -1,
+        "radius": 0.36,
+        "step": 36,
+        "passed": false
+      },
+      {
+        "kind": "exit-crossing",
+        "side": -1,
+        "point": [
+          -4.6,
+          7.9399999999999995,
+          -15.600000000000001
+        ],
+        "passed": false
+      },
+      {
+        "kind": "exit-crossing",
+        "side": -1,
+        "point": [
+          -4.6,
+          8.44,
+          -15.600000000000001
+        ],
+        "passed": false
+      },
+      {
+        "kind": "exit-crossing",
+        "side": -1,
+        "point": [
+          -4.6,
+          7.9399999999999995,
+          -14.9
+        ],
+        "passed": false
+      },
+      {
+        "kind": "exit-crossing",
+        "side": -1,
+        "point": [
+          -4.6,
+          8.44,
+          -14.9
+        ],
+        "passed": false
+      },
+      {
+        "kind": "exit-crossing",
+        "side": -1,
+        "point": [
+          -4.6,
+          7.9399999999999995,
+          -14.0
+        ],
+        "passed": false
+      },
+      {
+        "kind": "exit-crossing",
+        "side": -1,
+        "point": [
+          -4.6,
+          7.9399999999999995,
+          -13.7
+        ],
+        "passed": false
+      },
+      {
+        "kind": "exit-crossing",
+        "side": -1,
+        "point": [
+          -4.6,
+          8.44,
+          -14.0
+        ],
+        "passed": false
+      },
+      {
+        "kind": "exit-crossing",
+        "side": -1,
+        "point": [
+          -4.6,
+          8.44,
+          -13.7
+        ],
+        "passed": false
+      },
+      {
+        "kind": "wood-handrail",
+        "side": 1,
+        "radius": 0.36,
+        "t": 0.075,
+        "passed": false
+      },
+      {
+        "kind": "wood-handrail",
+        "side": 1,
+        "radius": 0.36,
+        "t": 0.25,
+        "passed": false
+      },
+      {
+        "kind": "wood-handrail",
+        "side": 1,
+        "radius": 0.36,
+        "t": 0.475,
+        "passed": false
+      },
+      {
+        "kind": "wood-handrail",
+        "side": 1,
+        "radius": 0.36,
+        "t": 0.675,
+        "passed": false
+      },
+      {
+        "kind": "wood-handrail",
+        "side": 1,
+        "radius": 0.36,
+        "t": 0.9,
+        "passed": false
+      },
+      {
+        "kind": "baluster-rail-joint",
+        "side": 1,
+        "radius": 0.36,
+        "step": 3,
+        "passed": false
+      },
+      {
+        "kind": "baluster-rail-joint",
+        "side": 1,
+        "radius": 0.36,
+        "step": 10,
+        "passed": false
+      },
+      {
+        "kind": "baluster-rail-joint",
+        "side": 1,
+        "radius": 0.36,
+        "step": 19,
+        "passed": false
+      },
+      {
+        "kind": "baluster-rail-joint",
+        "side": 1,
+        "radius": 0.36,
+        "step": 27,
+        "passed": false
+      },
+      {
+        "kind": "baluster-rail-joint",
+        "side": 1,
+        "radius": 0.36,
+        "step": 36,
+        "passed": false
+      },
+      {
+        "kind": "exit-crossing",
+        "side": 1,
+        "point": [
+          4.6,
+          7.9399999999999995,
+          -15.600000000000001
+        ],
+        "passed": false
+      },
+      {
+        "kind": "exit-crossing",
+        "side": 1,
+        "point": [
+          4.6,
+          8.44,
+          -15.600000000000001
+        ],
+        "passed": false
+      },
+      {
+        "kind": "exit-crossing",
+        "side": 1,
+        "point": [
+          4.6,
+          7.9399999999999995,
+          -14.9
+        ],
+        "passed": false
+      },
+      {
+        "kind": "exit-crossing",
+        "side": 1,
+        "point": [
+          4.6,
+          8.44,
+          -14.9
+        ],
+        "passed": false
+      },
+      {
+        "kind": "exit-crossing",
+        "side": 1,
+        "point": [
+          4.6,
+          7.9399999999999995,
+          -14.0
+        ],
+        "passed": false
+      },
+      {
+        "kind": "exit-crossing",
+        "side": 1,
+        "point": [
+          4.6,
+          7.9399999999999995,
+          -13.7
+        ],
+        "passed": false
+      },
+      {
+        "kind": "exit-crossing",
+        "side": 1,
+        "point": [
+          4.6,
+          8.44,
+          -14.0
+        ],
+        "passed": false
+      },
+      {
+        "kind": "exit-crossing",
+        "side": 1,
+        "point": [
+          4.6,
+          8.44,
+          -13.7
+        ],
+        "passed": false
+      }
+    ],
+    "sourceSha256": "006150d142eeac8dfdea1a350926a6499917f788694b04e85834b849970dcd11"
+  },
+  "passed": true
+}

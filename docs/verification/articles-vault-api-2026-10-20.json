@@ -1,0 +1,29 @@
+{
+  "objects": [
+    {
+      "format": "EPUB",
+      "seconds": 36,
+      "notes": 1,
+      "ciphertextOnly": true
+    },
+    {
+      "format": "PDF",
+      "seconds": 49,
+      "notes": 1,
+      "ciphertextOnly": true
+    }
+  ],
+  "ordinaryReadingRows": [
+    "0",
+    "0",
+    "0"
+  ],
+  "anonymousStatus": 401,
+  "isolation": {
+    "foreignListCount": 0,
+    "foreignChunkStatus": 404,
+    "foreignWriteStatus": 409,
+    "memberArticleImportStatus": 403,
+    "publicArticlesStatus": 200
+  }
+}

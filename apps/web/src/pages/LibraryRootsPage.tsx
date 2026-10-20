@@ -1,3 +1,4 @@
+import { EmptyState } from "../ui/empty-state";
 import { useState } from "react";
 import { Dialog, DialogTitle, DialogContent, DialogActions } from "@/ui/overlays";
 import { TextField } from "@/ui/forms";
@@ -5,13 +6,12 @@ import { randomId } from "../utils/random-id";
 import { CheckCircleOutlineRounded } from "@/ui/icons";
 import { ErrorOutlineRounded } from "@/ui/icons";
 import { FolderOutlined } from "@/ui/icons";
-import { RefreshRounded } from "@/ui/icons";
 import { StorageRounded } from "@/ui/icons";
 import { SyncRounded } from "@/ui/icons";
 import { WarningAmberRounded } from "@/ui/icons";
 import { Alert } from "@/ui/feedback";
 import { Box } from "@/ui/primitives";
-import { Button } from "@/ui/buttons";
+import { Button, RefreshButton } from "@/ui/buttons";
 import { Chip } from "@/ui/feedback";
 import { CircularProgress } from "@/ui/feedback";
 import { Divider } from "@/ui/feedback";
@@ -43,8 +43,8 @@ export function LibraryRootsPage() {
   return (
     <PageContainer>
       <Stack sx={{ mb: 3 }}><ActionToolbar>
+        <RefreshButton disabled={busy} onClick={() => perform(async () => { await api.checkLibraryRoots(); await query.refetch(); })}>重新检查</RefreshButton>
         <Button variant="contained" onClick={() => { setOpen(true); setPreview(null); setError(""); setKey(randomId()); }}>新增书库</Button>
-        <Button startIcon={<RefreshRounded />} variant="outlined" disabled={busy} onClick={() => perform(async () => { await api.checkLibraryRoots(); await query.refetch(); })}>重新检查</Button>
       </ActionToolbar></Stack>
       {error && !open && <Alert severity="error">{error}</Alert>}
       <Dialog open={open} onClose={() => { if (!busy) setOpen(false); }} maxWidth="sm" fullWidth>
@@ -69,7 +69,7 @@ export function LibraryRootsPage() {
 
       {degraded.length > 0 && (
         <Alert severity="warning" sx={{ mb: 3 }}>
-          {degraded.map((root) => root.name).join("、")} 当前不可写。浏览和阅读仍可用，但重命名、移动、删除和写回会被预览接口阻止。
+          {degraded.map((root) => root.name).join("、")} 当前不可写。浏览和阅读仍可用，暂时无法重命名、移动、删除或保存文件修改。
         </Alert>
       )}
 
@@ -79,12 +79,11 @@ export function LibraryRootsPage() {
         <Alert severity="error">无法读取书库根目录状态。</Alert>
       ) : roots.length === 0 ? (
         <Stack spacing={1} sx={{ py: 12, alignItems: "center", textAlign: "center" }}>
-          <StorageRounded sx={{ fontSize: 46, color: "text.disabled" }} />
-          <Typography variant="h4">尚未配置书库</Typography>
+          <EmptyState title="尚未配置书库" padded={false} />
           <Typography color="text.secondary">点击新增书库，检查并添加已挂载的目录。</Typography>
         </Stack>
       ) : (
-        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: roots.length === 1 ? "1fr" : "repeat(2, minmax(0, 1fr))" }, gap: 3 }}>
+        <Box className="bk-settings-list">
           {roots.map((root) => <RootCard key={root.id} root={root} />)}
         </Box>
       )}
@@ -99,8 +98,8 @@ function RootCard({ root }: { root: LibraryRoot }) {
   const statusColor = unavailable ? "error" : writable ? "success" : "warning";
   const statusLabel = unavailable ? (root.status === "OFFLINE" ? "离线" : "不可读") : writable ? "可读可写" : "只读";
   return (
-    <Stack sx={{ bgcolor: "background.paper", border: 1, borderColor: "divider", borderRadius: 3, overflow: "hidden" }}>
-      <Stack direction="row" sx={{ px: `${tokens.spacing[6]}px`, py: `${tokens.spacing[4]}px`, alignItems: "flex-start", gap: 2 }}>
+    <Stack className="bk-settings-row">
+      <Stack direction="row" sx={{ px: 0, py: `${tokens.spacing[4]}px`, alignItems: "flex-start", gap: 2 }}>
         <Box sx={{ width: 48, height: 48, borderRadius: 2, bgcolor: "background.default", display: "grid", placeItems: "center", color: "primary.main", flexShrink: 0 }}><StorageRounded /></Box>
         <Box sx={{ flex: 1, minWidth: 0 }}>
           <Stack direction={{ xs: "column", sm: "row" }} sx={{ alignItems: { sm: "center" }, justifyContent: "space-between", gap: 1 }}>
@@ -121,7 +120,7 @@ function RootCard({ root }: { root: LibraryRoot }) {
         </Box>
       </Stack>
       <Divider sx={{ m: 0 }} />
-      <Stack direction={{ xs: "column", sm: "row" }} sx={{ px: `${tokens.spacing[6]}px`, py: `${tokens.spacing[3]}px`, justifyContent: "space-between", gap: 1.5, color: "text.secondary" }}>
+      <Stack direction={{ xs: "column", sm: "row" }} sx={{ px: 0, py: `${tokens.spacing[3]}px`, justifyContent: "space-between", gap: 1.5, color: "text.secondary" }}>
         <Typography variant="body2">可用空间 <Box component="span" sx={{ color: "text.primary", fontWeight: 700 }}>{formatBytes(root.freeBytes)}</Box></Typography>
         <Stack direction="row" spacing={0.75} sx={{ alignItems: "center" }}><SyncRounded fontSize="small" /><Typography variant="body2">上次扫描 {formatDate(root.lastScanAt)}</Typography></Stack>
       </Stack>

@@ -1,6 +1,6 @@
+import { EmptyState } from "../ui/empty-state";
 import { Alert } from "@/ui/feedback";
-import { RefreshRounded } from "@/ui/icons";
-import { Button } from "@/ui/buttons";
+import { RefreshButton } from "@/ui/buttons";
 import { Chip } from "@/ui/feedback";
 import { CircularProgress } from "@/ui/feedback";
 import { Stack } from "@/ui/primitives";
@@ -58,13 +58,13 @@ export function FileOperationsPage() {
 
   return (
     <PageContainer>
-      <Stack sx={{ mb: 2 }}><ActionToolbar><Button startIcon={<RefreshRounded />} variant="outlined" onClick={() => query.refetch()}>刷新</Button></ActionToolbar></Stack>
+      <Stack sx={{ mb: 2 }}><ActionToolbar><RefreshButton onClick={() => query.refetch()} disabled={query.isFetching}>刷新</RefreshButton></ActionToolbar></Stack>
 
       {query.isError ? <Alert severity="error">无法读取操作日志，请刷新重试。</Alert> : query.isPending ? (
         <Stack sx={{ py: `${tokens.spacing[20]}px`, alignItems: "center" }}><CircularProgress /></Stack>
       ) : (query.data ?? []).length === 0 ? (
         <Stack spacing={tokens.spacing[1] / tokens.meta.baseUnit} sx={{ py: `${tokens.spacing[24]}px`, alignItems: "center" }}>
-          <Typography variant="h4">暂无操作日志</Typography>
+          <EmptyState title="暂无操作日志" padded={false} />
           <Typography color="text.secondary">从藏书卡片的更多菜单发起安全预览。</Typography>
         </Stack>
       ) : (
@@ -81,7 +81,7 @@ export function FileOperationsPage() {
             <TableHead>
               <TableRow sx={{ bgcolor: "background.default" }}>
                 <TableCell sx={{ width: "19%" }}>任务</TableCell>
-                <TableCell>文件变更</TableCell>
+                <TableCell>书籍</TableCell>
                 <TableCell sx={{ width: "15%" }}>状态</TableCell>
                 <TableCell align="right" sx={{ width: "17%" }}>时间</TableCell>
               </TableRow>
@@ -92,7 +92,7 @@ export function FileOperationsPage() {
                 const stage = operation.status === "RUNNING" && operation.stage
                   ? runningStageLabels[operation.stage] ?? "正在处理"
                   : undefined;
-                const hasDistinctTarget = operation.targetPath && operation.targetPath !== operation.sourcePath;
+                const bookName = operation.sourcePath.split(/[\\/]/).filter(Boolean).at(-1)?.replace(/\.(epub|pdf)$/i, "") || "未知书籍";
 
                 return (
                   <TableRow key={operation.id} hover>
@@ -102,26 +102,9 @@ export function FileOperationsPage() {
                       </Typography>
                     </TableCell>
                     <TableCell sx={{ minWidth: 0 }}>
-                      <Typography variant="body2" title={operation.sourcePath} sx={{ overflowWrap: "anywhere" }}>
-                        {operation.sourcePath}
+                      <Typography variant="body2" sx={{ overflowWrap: "anywhere" }}>
+                        {bookName}
                       </Typography>
-                      {hasDistinctTarget && (
-                        <Stack
-                          direction="row"
-                          spacing={tokens.spacing[2] / tokens.meta.baseUnit}
-                          sx={{ mt: `${tokens.spacing[1]}px`, alignItems: "baseline", color: "text.secondary" }}
-                        >
-                          <Typography component="span" variant="caption" aria-hidden="true">→</Typography>
-                          <Typography
-                            component="span"
-                            variant="caption"
-                            title={operation.targetPath}
-                            sx={{ overflowWrap: "anywhere" }}
-                          >
-                            {operation.targetPath}
-                          </Typography>
-                        </Stack>
-                      )}
                     </TableCell>
                     <TableCell>
                       <Stack spacing={tokens.spacing[1] / tokens.meta.baseUnit} sx={{ alignItems: "flex-start" }}>

@@ -56,7 +56,7 @@ export function PageTitle({
   className?: string;
   id?: string;
 }) {
-  return <Typography id={id} className={className} variant="h3" component="h1" color={color}>{children}</Typography>;
+  return <Typography id={id} className={className} variant="h3" component="h1" color={color} sx={{ fontSize: { xs: tokens.typography.fontSize.headingSm, sm: tokens.typography.fontSize.heading }, overflowWrap: "anywhere" }}>{children}</Typography>;
 }
 
 export function PageHeader({
@@ -78,7 +78,9 @@ export function PageHeader({
       <Stack
         direction={{ xs: "column", sm: "row" }}
         sx={{
+          minWidth: 0,
           alignItems: { xs: "stretch", sm: "center" },
+          flexWrap: "wrap",
           justifyContent: "space-between",
           gap: embedded ? 2 : 3,
         }}
@@ -96,7 +98,7 @@ export function PageHeader({
 }
 
 export function ActionToolbar({ children }: { children: ReactNode }) {
-  return <Stack className="bk-action-toolbar" direction="row" sx={{ width: { xs: "100%", sm: "auto" }, justifyContent: { xs: "flex-start", sm: "flex-end" }, alignItems: "center", flexWrap: "wrap", gap: 1.5 }}>{children}</Stack>;
+  return <Stack className="bk-action-toolbar" direction="row" sx={{ minWidth: 0, maxWidth: "100%", width: { xs: "100%", sm: "auto" }, justifyContent: "flex-end", alignItems: "center", flexWrap: "wrap", gap: 1.5 }}>{children}</Stack>;
 }
 
 export function FormActions({ children }: { children: ReactNode }) {

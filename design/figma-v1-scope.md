@@ -46,3 +46,17 @@
 ### 2026-09-09 表单表面色同步
 
 已读取远端表面色变量并新增 `color/surface/input`（VariableID:12:2，引用 surface/soft）和 `color/surface/card`（VariableID:12:3，引用 surface/default）。代码新增 surfaceInput，并分别处理纸张、明亮、夜间主题；本次仅同步基础变量，未宣称所有 Figma 页面和主题模式完成重建。
+
+### 2026-10-18 大屏布局变量核对
+
+- 代码新增 `layout.breakpointWide`（1920）、`layout.bookCardMinWidth`（224）、`layout.annotationCardMinWidth`（448），已重新生成 TypeScript/CSS Token。
+- 本轮通过 Figma API 实时只读核对关联文件：5 个集合、75 个变量，未发现名称包含 layout、width、breakpoint、reading 或 card/min 的布局变量；本轮未新增远端变量，不声称已同步 Figma。
+- 普通页面代表验收视口扩展为 3840×2160、5120×2880，并保留 1440、1024、390 的布局回归。
+
+- 2026-10-19：新增 `layout.wideScreenReferenceWidth`（1920）与 `layout.wideScreenScaleRange`（7680），普通页面采用温和整体缩放（4K 125%、5K 约 142%）。重新生成代码 Token，并再次实时只读核对 Figma：5 个集合、75 个变量，没有对应 layout/scale 变量；未修改远端变量。
+
+### 2026-10-20 统一黄金分割圆角
+
+- 用户确认所有矩形 UI 使用固定 7.416408px（12px / φ），不随卡片大小变化；功能性圆形保留。
+- `radius.xs/sm/md/lg/xl/2xl` 已统一并生成 CSS/TypeScript；兼容旧数字 sx 的共享转换也统一到该半径。
+- Figma 实时核对并同步现有 `radius/sm`、`radius/md`、`radius/lg`、`radius/xl`、`radius/2xl` 五个变量，远端浮点读回约 7.416408；`radius/none` 和 `radius/pill` 保留原值。远端原本没有 `radius/xs`，本轮未创建。

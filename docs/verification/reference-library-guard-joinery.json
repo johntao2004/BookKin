@@ -1,0 +1,1415 @@
+{
+  "revision": "20261019-guard-joinery-r25",
+  "configSha256": "7533063816c4f0c7852c9e20ee2877ddd1bb1df5c2bc3a2b1eb8db8b0b5a0576",
+  "contract": "one structural newel per vertex; .12 spindle width; .30 uniform straight handrail width; inset spindle centers clear of newels",
+  "current": {
+    "sourceSha256": "c656b8200eb46fc4d80da7d3780f314a29cad5838660307f3d64ce349469a8fa",
+    "samples": [
+      {
+        "guard": "aperture--1",
+        "kind": "spindle",
+        "point": {
+          "x": -8.62,
+          "z": -11.63625
+        },
+        "width": 0.11999963352263465,
+        "newelDistance": 0.23625000000000007,
+        "passed": true
+      },
+      {
+        "guard": "aperture--1",
+        "kind": "spindle",
+        "point": {
+          "x": -8.62,
+          "z": -11.86875
+        },
+        "width": 0.11999966387290295,
+        "newelDistance": 0.46875,
+        "passed": true
+      },
+      {
+        "guard": "aperture--1",
+        "kind": "spindle",
+        "point": {
+          "x": -8.62,
+          "z": -12.10125
+        },
+        "width": 0.1199996942231712,
+        "newelDistance": 0.7012499999999999,
+        "passed": true
+      },
+      {
+        "guard": "aperture--1",
+        "kind": "spindle",
+        "point": {
+          "x": -8.62,
+          "z": -12.33375
+        },
+        "width": 0.11999972457343944,
+        "newelDistance": 0.9337499999999999,
+        "passed": true
+      },
+      {
+        "guard": "aperture--1",
+        "kind": "spindle",
+        "point": {
+          "x": -8.62,
+          "z": -12.56625
+        },
+        "width": 0.11999975492370774,
+        "newelDistance": 0.9337499999999999,
+        "passed": true
+      },
+      {
+        "guard": "aperture--1",
+        "kind": "spindle",
+        "point": {
+          "x": -8.62,
+          "z": -12.79875
+        },
+        "width": 0.11999978527326816,
+        "newelDistance": 0.7012499999999999,
+        "passed": true
+      },
+      {
+        "guard": "aperture--1",
+        "kind": "spindle",
+        "point": {
+          "x": -8.62,
+          "z": -13.03125
+        },
+        "width": 0.11999981562491058,
+        "newelDistance": 0.46875,
+        "passed": true
+      },
+      {
+        "guard": "aperture--1",
+        "kind": "spindle",
+        "point": {
+          "x": -8.62,
+          "z": -13.26375
+        },
+        "width": 0.11999978527326816,
+        "newelDistance": 0.23625000000000007,
+        "passed": true
+      },
+      {
+        "guard": "aperture--1",
+        "kind": "handrail",
+        "t": 0.25,
+        "width": 0.2999989013693207,
+        "passed": true
+      },
+      {
+        "guard": "aperture--1",
+        "kind": "handrail",
+        "t": 0.5,
+        "width": 0.2999989013693207,
+        "passed": true
+      },
+      {
+        "guard": "aperture--1",
+        "kind": "handrail",
+        "t": 0.75,
+        "width": 0.2999989013693207,
+        "passed": true
+      },
+      {
+        "guard": "aperture--1",
+        "kind": "spindle",
+        "point": {
+          "x": -8.376,
+          "z": -13.5
+        },
+        "width": 0.12000060840799426,
+        "newelDistance": 0.24399999999999977,
+        "passed": true
+      },
+      {
+        "guard": "aperture--1",
+        "kind": "spindle",
+        "point": {
+          "x": -8.128,
+          "z": -13.5
+        },
+        "width": 0.12000066608554538,
+        "newelDistance": 0.4919999999999991,
+        "passed": true
+      },
+      {
+        "guard": "aperture--1",
+        "kind": "spindle",
+        "point": {
+          "x": -7.88,
+          "z": -13.5
+        },
+        "width": 0.12000072376242699,
+        "newelDistance": 0.7399999999999993,
+        "passed": true
+      },
+      {
+        "guard": "aperture--1",
+        "kind": "spindle",
+        "point": {
+          "x": -7.632,
+          "z": -13.5
+        },
+        "width": 0.12000075715393627,
+        "newelDistance": 0.9879999999999995,
+        "passed": true
+      },
+      {
+        "guard": "aperture--1",
+        "kind": "spindle",
+        "point": {
+          "x": -7.384,
+          "z": -13.5
+        },
+        "width": 0.120000699476638,
+        "newelDistance": 1.2359999999999989,
+        "passed": true
+      },
+      {
+        "guard": "aperture--1",
+        "kind": "spindle",
+        "point": {
+          "x": -7.135999999999999,
+          "z": -13.5
+        },
+        "width": 0.12000070706594684,
+        "newelDistance": 1.2359999999999989,
+        "passed": true
+      },
+      {
+        "guard": "aperture--1",
+        "kind": "spindle",
+        "point": {
+          "x": -6.888,
+          "z": -13.5
+        },
+        "width": 0.12000076474265864,
+        "newelDistance": 0.9879999999999995,
+        "passed": true
+      },
+      {
+        "guard": "aperture--1",
+        "kind": "spindle",
+        "point": {
+          "x": -6.640000000000001,
+          "z": -13.5
+        },
+        "width": 0.12000071617311775,
+        "newelDistance": 0.7400000000000002,
+        "passed": true
+      },
+      {
+        "guard": "aperture--1",
+        "kind": "spindle",
+        "point": {
+          "x": -6.392,
+          "z": -13.5
+        },
+        "width": 0.12000069036946737,
+        "newelDistance": 0.492,
+        "passed": true
+      },
+      {
+        "guard": "aperture--1",
+        "kind": "spindle",
+        "point": {
+          "x": -6.144,
+          "z": -13.5
+        },
+        "width": 0.12000074804746907,
+        "newelDistance": 0.24399999999999977,
+        "passed": true
+      },
+      {
+        "guard": "aperture--1",
+        "kind": "handrail",
+        "t": 0.25,
+        "width": 0.2999989013693208,
+        "passed": true
+      },
+      {
+        "guard": "aperture--1",
+        "kind": "handrail",
+        "t": 0.5,
+        "width": 0.2999989013693208,
+        "passed": true
+      },
+      {
+        "guard": "aperture--1",
+        "kind": "handrail",
+        "t": 0.75,
+        "width": 0.2999989013693208,
+        "passed": true
+      },
+      {
+        "guard": "aperture-1",
+        "kind": "spindle",
+        "point": {
+          "x": 8.62,
+          "z": -11.63625
+        },
+        "width": 0.11999963352263471,
+        "newelDistance": 0.23625000000000007,
+        "passed": true
+      },
+      {
+        "guard": "aperture-1",
+        "kind": "spindle",
+        "point": {
+          "x": 8.62,
+          "z": -11.86875
+        },
+        "width": 0.11999966387290295,
+        "newelDistance": 0.46875,
+        "passed": true
+      },
+      {
+        "guard": "aperture-1",
+        "kind": "spindle",
+        "point": {
+          "x": 8.62,
+          "z": -12.10125
+        },
+        "width": 0.11999969422317125,
+        "newelDistance": 0.7012499999999999,
+        "passed": true
+      },
+      {
+        "guard": "aperture-1",
+        "kind": "spindle",
+        "point": {
+          "x": 8.62,
+          "z": -12.33375
+        },
+        "width": 0.11999972457343949,
+        "newelDistance": 0.9337499999999999,
+        "passed": true
+      },
+      {
+        "guard": "aperture-1",
+        "kind": "spindle",
+        "point": {
+          "x": 8.62,
+          "z": -12.56625
+        },
+        "width": 0.11999975492370774,
+        "newelDistance": 0.9337499999999999,
+        "passed": true
+      },
+      {
+        "guard": "aperture-1",
+        "kind": "spindle",
+        "point": {
+          "x": 8.62,
+          "z": -12.79875
+        },
+        "width": 0.11999978527326816,
+        "newelDistance": 0.7012499999999999,
+        "passed": true
+      },
+      {
+        "guard": "aperture-1",
+        "kind": "spindle",
+        "point": {
+          "x": 8.62,
+          "z": -13.03125
+        },
+        "width": 0.11999981562491058,
+        "newelDistance": 0.46875,
+        "passed": true
+      },
+      {
+        "guard": "aperture-1",
+        "kind": "spindle",
+        "point": {
+          "x": 8.62,
+          "z": -13.26375
+        },
+        "width": 0.11999978527326816,
+        "newelDistance": 0.23625000000000007,
+        "passed": true
+      },
+      {
+        "guard": "aperture-1",
+        "kind": "handrail",
+        "t": 0.25,
+        "width": 0.2999989013693208,
+        "passed": true
+      },
+      {
+        "guard": "aperture-1",
+        "kind": "handrail",
+        "t": 0.5,
+        "width": 0.2999989013693208,
+        "passed": true
+      },
+      {
+        "guard": "aperture-1",
+        "kind": "handrail",
+        "t": 0.75,
+        "width": 0.2999989013693208,
+        "passed": true
+      },
+      {
+        "guard": "aperture-1",
+        "kind": "spindle",
+        "point": {
+          "x": 8.376,
+          "z": -13.5
+        },
+        "width": 0.12000060840799426,
+        "newelDistance": 0.24399999999999977,
+        "passed": true
+      },
+      {
+        "guard": "aperture-1",
+        "kind": "spindle",
+        "point": {
+          "x": 8.128,
+          "z": -13.5
+        },
+        "width": 0.12000066608554538,
+        "newelDistance": 0.4919999999999991,
+        "passed": true
+      },
+      {
+        "guard": "aperture-1",
+        "kind": "spindle",
+        "point": {
+          "x": 7.88,
+          "z": -13.5
+        },
+        "width": 0.12000072376242699,
+        "newelDistance": 0.7399999999999993,
+        "passed": true
+      },
+      {
+        "guard": "aperture-1",
+        "kind": "spindle",
+        "point": {
+          "x": 7.632,
+          "z": -13.5
+        },
+        "width": 0.12000075715393627,
+        "newelDistance": 0.9879999999999995,
+        "passed": true
+      },
+      {
+        "guard": "aperture-1",
+        "kind": "spindle",
+        "point": {
+          "x": 7.384,
+          "z": -13.5
+        },
+        "width": 0.120000699476638,
+        "newelDistance": 1.2359999999999989,
+        "passed": true
+      },
+      {
+        "guard": "aperture-1",
+        "kind": "spindle",
+        "point": {
+          "x": 7.135999999999999,
+          "z": -13.5
+        },
+        "width": 0.12000070706594684,
+        "newelDistance": 1.2359999999999989,
+        "passed": true
+      },
+      {
+        "guard": "aperture-1",
+        "kind": "spindle",
+        "point": {
+          "x": 6.888,
+          "z": -13.5
+        },
+        "width": 0.12000076474265864,
+        "newelDistance": 0.9879999999999995,
+        "passed": true
+      },
+      {
+        "guard": "aperture-1",
+        "kind": "spindle",
+        "point": {
+          "x": 6.640000000000001,
+          "z": -13.5
+        },
+        "width": 0.12000071617311775,
+        "newelDistance": 0.7400000000000002,
+        "passed": true
+      },
+      {
+        "guard": "aperture-1",
+        "kind": "spindle",
+        "point": {
+          "x": 6.392,
+          "z": -13.5
+        },
+        "width": 0.12000069036946737,
+        "newelDistance": 0.492,
+        "passed": true
+      },
+      {
+        "guard": "aperture-1",
+        "kind": "spindle",
+        "point": {
+          "x": 6.144,
+          "z": -13.5
+        },
+        "width": 0.12000074804746907,
+        "newelDistance": 0.24399999999999977,
+        "passed": true
+      },
+      {
+        "guard": "aperture-1",
+        "kind": "handrail",
+        "t": 0.25,
+        "width": 0.2999989013693208,
+        "passed": true
+      },
+      {
+        "guard": "aperture-1",
+        "kind": "handrail",
+        "t": 0.5,
+        "width": 0.2999989013693208,
+        "passed": true
+      },
+      {
+        "guard": "aperture-1",
+        "kind": "handrail",
+        "t": 0.75,
+        "width": 0.2999989013693208,
+        "passed": true
+      },
+      {
+        "guard": "landing--1-1",
+        "kind": "spindle",
+        "point": {
+          "x": -3.9200000000000004,
+          "z": -15.36375
+        },
+        "width": 0.11999987193479367,
+        "newelDistance": 0.23625000000000007,
+        "passed": true
+      },
+      {
+        "guard": "landing--1-1",
+        "kind": "spindle",
+        "point": {
+          "x": -3.9200000000000004,
+          "z": -15.13125
+        },
+        "width": 0.11999990228585422,
+        "newelDistance": 0.46875,
+        "passed": true
+      },
+      {
+        "guard": "landing--1-1",
+        "kind": "spindle",
+        "point": {
+          "x": -3.9200000000000004,
+          "z": -14.89875
+        },
+        "width": 0.11999993263691466,
+        "newelDistance": 0.7012499999999999,
+        "passed": true
+      },
+      {
+        "guard": "landing--1-1",
+        "kind": "spindle",
+        "point": {
+          "x": -3.9200000000000004,
+          "z": -14.66625
+        },
+        "width": 0.11999996298797505,
+        "newelDistance": 0.9337499999999999,
+        "passed": true
+      },
+      {
+        "guard": "landing--1-1",
+        "kind": "spindle",
+        "point": {
+          "x": -3.9200000000000004,
+          "z": -14.43375
+        },
+        "width": 0.1199999933390355,
+        "newelDistance": 0.9337499999999999,
+        "passed": true
+      },
+      {
+        "guard": "landing--1-1",
+        "kind": "spindle",
+        "point": {
+          "x": -3.9200000000000004,
+          "z": -14.20125
+        },
+        "width": 0.12000002368938806,
+        "newelDistance": 0.7012499999999999,
+        "passed": true
+      },
+      {
+        "guard": "landing--1-1",
+        "kind": "spindle",
+        "point": {
+          "x": -3.9200000000000004,
+          "z": -13.96875
+        },
+        "width": 0.12000005404182268,
+        "newelDistance": 0.46875,
+        "passed": true
+      },
+      {
+        "guard": "landing--1-1",
+        "kind": "spindle",
+        "point": {
+          "x": -3.9200000000000004,
+          "z": -13.73625
+        },
+        "width": 0.12000002369008278,
+        "newelDistance": 0.23625000000000007,
+        "passed": true
+      },
+      {
+        "guard": "landing--1-1",
+        "kind": "handrail",
+        "t": 0.25,
+        "width": 0.2999998550383019,
+        "passed": true
+      },
+      {
+        "guard": "landing--1-1",
+        "kind": "handrail",
+        "t": 0.5,
+        "width": 0.2999998550383019,
+        "passed": true
+      },
+      {
+        "guard": "landing--1-1",
+        "kind": "handrail",
+        "t": 0.75,
+        "width": 0.2999998550383019,
+        "passed": true
+      },
+      {
+        "guard": "landing-1-0",
+        "kind": "spindle",
+        "point": {
+          "x": 3.9200000000000004,
+          "z": -15.36375
+        },
+        "width": 0.11999987193548844,
+        "newelDistance": 0.23625000000000007,
+        "passed": true
+      },
+      {
+        "guard": "landing-1-0",
+        "kind": "spindle",
+        "point": {
+          "x": 3.9200000000000004,
+          "z": -15.13125
+        },
+        "width": 0.11999990228654889,
+        "newelDistance": 0.46875,
+        "passed": true
+      },
+      {
+        "guard": "landing-1-0",
+        "kind": "spindle",
+        "point": {
+          "x": 3.9200000000000004,
+          "z": -14.89875
+        },
+        "width": 0.11999993263760933,
+        "newelDistance": 0.7012499999999999,
+        "passed": true
+      },
+      {
+        "guard": "landing-1-0",
+        "kind": "spindle",
+        "point": {
+          "x": 3.9200000000000004,
+          "z": -14.66625
+        },
+        "width": 0.11999996298866977,
+        "newelDistance": 0.9337499999999999,
+        "passed": true
+      },
+      {
+        "guard": "landing-1-0",
+        "kind": "spindle",
+        "point": {
+          "x": 3.9200000000000004,
+          "z": -14.43375
+        },
+        "width": 0.11999999333973022,
+        "newelDistance": 0.9337499999999999,
+        "passed": true
+      },
+      {
+        "guard": "landing-1-0",
+        "kind": "spindle",
+        "point": {
+          "x": 3.9200000000000004,
+          "z": -14.20125
+        },
+        "width": 0.12000002369008278,
+        "newelDistance": 0.7012499999999999,
+        "passed": true
+      },
+      {
+        "guard": "landing-1-0",
+        "kind": "spindle",
+        "point": {
+          "x": 3.9200000000000004,
+          "z": -13.96875
+        },
+        "width": 0.12000005404182268,
+        "newelDistance": 0.46875,
+        "passed": true
+      },
+      {
+        "guard": "landing-1-0",
+        "kind": "spindle",
+        "point": {
+          "x": 3.9200000000000004,
+          "z": -13.73625
+        },
+        "width": 0.12000002368938806,
+        "newelDistance": 0.23625000000000007,
+        "passed": true
+      },
+      {
+        "guard": "landing-1-0",
+        "kind": "handrail",
+        "t": 0.25,
+        "width": 0.2999998550383019,
+        "passed": true
+      },
+      {
+        "guard": "landing-1-0",
+        "kind": "handrail",
+        "t": 0.5,
+        "width": 0.2999998550383019,
+        "passed": true
+      },
+      {
+        "guard": "landing-1-0",
+        "kind": "handrail",
+        "t": 0.75,
+        "width": 0.2999998550383019,
+        "passed": true
+      }
+    ],
+    "passed": true
+  },
+  "baseline": {
+    "sourceSha256": "d1f8a1442a8346a48d37a91c0b33cf97c48318641a5366c13e2e05cb1bd529b3",
+    "samples": [
+      {
+        "guard": "aperture--1",
+        "kind": "spindle",
+        "point": {
+          "x": -8.62,
+          "z": -11.63625
+        },
+        "width": null,
+        "newelDistance": 0.23625000000000007,
+        "passed": false
+      },
+      {
+        "guard": "aperture--1",
+        "kind": "spindle",
+        "point": {
+          "x": -8.62,
+          "z": -11.86875
+        },
+        "width": null,
+        "newelDistance": 0.46875,
+        "passed": false
+      },
+      {
+        "guard": "aperture--1",
+        "kind": "spindle",
+        "point": {
+          "x": -8.62,
+          "z": -12.10125
+        },
+        "width": null,
+        "newelDistance": 0.7012499999999999,
+        "passed": false
+      },
+      {
+        "guard": "aperture--1",
+        "kind": "spindle",
+        "point": {
+          "x": -8.62,
+          "z": -12.33375
+        },
+        "width": null,
+        "newelDistance": 0.9337499999999999,
+        "passed": false
+      },
+      {
+        "guard": "aperture--1",
+        "kind": "spindle",
+        "point": {
+          "x": -8.62,
+          "z": -12.56625
+        },
+        "width": null,
+        "newelDistance": 0.9337499999999999,
+        "passed": false
+      },
+      {
+        "guard": "aperture--1",
+        "kind": "spindle",
+        "point": {
+          "x": -8.62,
+          "z": -12.79875
+        },
+        "width": null,
+        "newelDistance": 0.7012499999999999,
+        "passed": false
+      },
+      {
+        "guard": "aperture--1",
+        "kind": "spindle",
+        "point": {
+          "x": -8.62,
+          "z": -13.03125
+        },
+        "width": null,
+        "newelDistance": 0.46875,
+        "passed": false
+      },
+      {
+        "guard": "aperture--1",
+        "kind": "spindle",
+        "point": {
+          "x": -8.62,
+          "z": -13.26375
+        },
+        "width": null,
+        "newelDistance": 0.23625000000000007,
+        "passed": false
+      },
+      {
+        "guard": "aperture--1",
+        "kind": "handrail",
+        "t": 0.25,
+        "width": null,
+        "passed": false
+      },
+      {
+        "guard": "aperture--1",
+        "kind": "handrail",
+        "t": 0.5,
+        "width": null,
+        "passed": false
+      },
+      {
+        "guard": "aperture--1",
+        "kind": "handrail",
+        "t": 0.75,
+        "width": null,
+        "passed": false
+      },
+      {
+        "guard": "aperture--1",
+        "kind": "spindle",
+        "point": {
+          "x": -8.376,
+          "z": -13.5
+        },
+        "width": null,
+        "newelDistance": 0.24399999999999977,
+        "passed": false
+      },
+      {
+        "guard": "aperture--1",
+        "kind": "spindle",
+        "point": {
+          "x": -8.128,
+          "z": -13.5
+        },
+        "width": null,
+        "newelDistance": 0.4919999999999991,
+        "passed": false
+      },
+      {
+        "guard": "aperture--1",
+        "kind": "spindle",
+        "point": {
+          "x": -7.88,
+          "z": -13.5
+        },
+        "width": 0.13705972643969094,
+        "newelDistance": 0.7399999999999993,
+        "passed": false
+      },
+      {
+        "guard": "aperture--1",
+        "kind": "spindle",
+        "point": {
+          "x": -7.632,
+          "z": -13.5
+        },
+        "width": 0.17564690120410298,
+        "newelDistance": 0.9879999999999995,
+        "passed": false
+      },
+      {
+        "guard": "aperture--1",
+        "kind": "spindle",
+        "point": {
+          "x": -7.384,
+          "z": -13.5
+        },
+        "width": 0.16707215445718648,
+        "newelDistance": 1.2359999999999989,
+        "passed": false
+      },
+      {
+        "guard": "aperture--1",
+        "kind": "spindle",
+        "point": {
+          "x": -7.135999999999999,
+          "z": -13.5
+        },
+        "width": 0.10506018963720298,
+        "newelDistance": 1.2359999999999989,
+        "passed": false
+      },
+      {
+        "guard": "aperture--1",
+        "kind": "spindle",
+        "point": {
+          "x": -6.888,
+          "z": -13.5
+        },
+        "width": null,
+        "newelDistance": 0.9879999999999995,
+        "passed": false
+      },
+      {
+        "guard": "aperture--1",
+        "kind": "spindle",
+        "point": {
+          "x": -6.640000000000001,
+          "z": -13.5
+        },
+        "width": null,
+        "newelDistance": 0.7400000000000002,
+        "passed": false
+      },
+      {
+        "guard": "aperture--1",
+        "kind": "spindle",
+        "point": {
+          "x": -6.392,
+          "z": -13.5
+        },
+        "width": 0.012020686266766112,
+        "newelDistance": 0.492,
+        "passed": false
+      },
+      {
+        "guard": "aperture--1",
+        "kind": "spindle",
+        "point": {
+          "x": -6.144,
+          "z": -13.5
+        },
+        "width": 0.15596808131931544,
+        "newelDistance": 0.24399999999999977,
+        "passed": false
+      },
+      {
+        "guard": "aperture--1",
+        "kind": "handrail",
+        "t": 0.25,
+        "width": 0.2679991353377431,
+        "passed": false
+      },
+      {
+        "guard": "aperture--1",
+        "kind": "handrail",
+        "t": 0.5,
+        "width": 0.2679991353377431,
+        "passed": false
+      },
+      {
+        "guard": "aperture--1",
+        "kind": "handrail",
+        "t": 0.75,
+        "width": 0.2679991353377431,
+        "passed": false
+      },
+      {
+        "guard": "aperture-1",
+        "kind": "spindle",
+        "point": {
+          "x": 8.62,
+          "z": -11.63625
+        },
+        "width": null,
+        "newelDistance": 0.23625000000000007,
+        "passed": false
+      },
+      {
+        "guard": "aperture-1",
+        "kind": "spindle",
+        "point": {
+          "x": 8.62,
+          "z": -11.86875
+        },
+        "width": null,
+        "newelDistance": 0.46875,
+        "passed": false
+      },
+      {
+        "guard": "aperture-1",
+        "kind": "spindle",
+        "point": {
+          "x": 8.62,
+          "z": -12.10125
+        },
+        "width": null,
+        "newelDistance": 0.7012499999999999,
+        "passed": false
+      },
+      {
+        "guard": "aperture-1",
+        "kind": "spindle",
+        "point": {
+          "x": 8.62,
+          "z": -12.33375
+        },
+        "width": null,
+        "newelDistance": 0.9337499999999999,
+        "passed": false
+      },
+      {
+        "guard": "aperture-1",
+        "kind": "spindle",
+        "point": {
+          "x": 8.62,
+          "z": -12.56625
+        },
+        "width": null,
+        "newelDistance": 0.9337499999999999,
+        "passed": false
+      },
+      {
+        "guard": "aperture-1",
+        "kind": "spindle",
+        "point": {
+          "x": 8.62,
+          "z": -12.79875
+        },
+        "width": null,
+        "newelDistance": 0.7012499999999999,
+        "passed": false
+      },
+      {
+        "guard": "aperture-1",
+        "kind": "spindle",
+        "point": {
+          "x": 8.62,
+          "z": -13.03125
+        },
+        "width": null,
+        "newelDistance": 0.46875,
+        "passed": false
+      },
+      {
+        "guard": "aperture-1",
+        "kind": "spindle",
+        "point": {
+          "x": 8.62,
+          "z": -13.26375
+        },
+        "width": null,
+        "newelDistance": 0.23625000000000007,
+        "passed": false
+      },
+      {
+        "guard": "aperture-1",
+        "kind": "handrail",
+        "t": 0.25,
+        "width": null,
+        "passed": false
+      },
+      {
+        "guard": "aperture-1",
+        "kind": "handrail",
+        "t": 0.5,
+        "width": null,
+        "passed": false
+      },
+      {
+        "guard": "aperture-1",
+        "kind": "handrail",
+        "t": 0.75,
+        "width": null,
+        "passed": false
+      },
+      {
+        "guard": "aperture-1",
+        "kind": "spindle",
+        "point": {
+          "x": 8.376,
+          "z": -13.5
+        },
+        "width": null,
+        "newelDistance": 0.24399999999999977,
+        "passed": false
+      },
+      {
+        "guard": "aperture-1",
+        "kind": "spindle",
+        "point": {
+          "x": 8.128,
+          "z": -13.5
+        },
+        "width": null,
+        "newelDistance": 0.4919999999999991,
+        "passed": false
+      },
+      {
+        "guard": "aperture-1",
+        "kind": "spindle",
+        "point": {
+          "x": 7.88,
+          "z": -13.5
+        },
+        "width": 0.13705972643969094,
+        "newelDistance": 0.7399999999999993,
+        "passed": false
+      },
+      {
+        "guard": "aperture-1",
+        "kind": "spindle",
+        "point": {
+          "x": 7.632,
+          "z": -13.5
+        },
+        "width": 0.17564690120410298,
+        "newelDistance": 0.9879999999999995,
+        "passed": false
+      },
+      {
+        "guard": "aperture-1",
+        "kind": "spindle",
+        "point": {
+          "x": 7.384,
+          "z": -13.5
+        },
+        "width": 0.16707215445718648,
+        "newelDistance": 1.2359999999999989,
+        "passed": false
+      },
+      {
+        "guard": "aperture-1",
+        "kind": "spindle",
+        "point": {
+          "x": 7.135999999999999,
+          "z": -13.5
+        },
+        "width": 0.10506018963720298,
+        "newelDistance": 1.2359999999999989,
+        "passed": false
+      },
+      {
+        "guard": "aperture-1",
+        "kind": "spindle",
+        "point": {
+          "x": 6.888,
+          "z": -13.5
+        },
+        "width": null,
+        "newelDistance": 0.9879999999999995,
+        "passed": false
+      },
+      {
+        "guard": "aperture-1",
+        "kind": "spindle",
+        "point": {
+          "x": 6.640000000000001,
+          "z": -13.5
+        },
+        "width": null,
+        "newelDistance": 0.7400000000000002,
+        "passed": false
+      },
+      {
+        "guard": "aperture-1",
+        "kind": "spindle",
+        "point": {
+          "x": 6.392,
+          "z": -13.5
+        },
+        "width": 0.012020686266766112,
+        "newelDistance": 0.492,
+        "passed": false
+      },
+      {
+        "guard": "aperture-1",
+        "kind": "spindle",
+        "point": {
+          "x": 6.144,
+          "z": -13.5
+        },
+        "width": 0.15596808131931544,
+        "newelDistance": 0.24399999999999977,
+        "passed": false
+      },
+      {
+        "guard": "aperture-1",
+        "kind": "handrail",
+        "t": 0.25,
+        "width": 0.2679991353377431,
+        "passed": false
+      },
+      {
+        "guard": "aperture-1",
+        "kind": "handrail",
+        "t": 0.5,
+        "width": 0.2679991353377431,
+        "passed": false
+      },
+      {
+        "guard": "aperture-1",
+        "kind": "handrail",
+        "t": 0.75,
+        "width": 0.2679991353377431,
+        "passed": false
+      },
+      {
+        "guard": "landing--1-1",
+        "kind": "spindle",
+        "point": {
+          "x": -3.9200000000000004,
+          "z": -15.36375
+        },
+        "width": 0.12228743603757108,
+        "newelDistance": 0.23625000000000007,
+        "passed": false
+      },
+      {
+        "guard": "landing--1-1",
+        "kind": "spindle",
+        "point": {
+          "x": -3.9200000000000004,
+          "z": -15.13125
+        },
+        "width": null,
+        "newelDistance": 0.46875,
+        "passed": false
+      },
+      {
+        "guard": "landing--1-1",
+        "kind": "spindle",
+        "point": {
+          "x": -3.9200000000000004,
+          "z": -14.89875
+        },
+        "width": null,
+        "newelDistance": 0.7012499999999999,
+        "passed": false
+      },
+      {
+        "guard": "landing--1-1",
+        "kind": "spindle",
+        "point": {
+          "x": -3.9200000000000004,
+          "z": -14.66625
+        },
+        "width": 0.16477070606081096,
+        "newelDistance": 0.9337499999999999,
+        "passed": false
+      },
+      {
+        "guard": "landing--1-1",
+        "kind": "spindle",
+        "point": {
+          "x": -3.9200000000000004,
+          "z": -14.43375
+        },
+        "width": 0.1647703275108504,
+        "newelDistance": 0.9337499999999999,
+        "passed": false
+      },
+      {
+        "guard": "landing--1-1",
+        "kind": "spindle",
+        "point": {
+          "x": -3.9200000000000004,
+          "z": -14.20125
+        },
+        "width": null,
+        "newelDistance": 0.7012499999999999,
+        "passed": false
+      },
+      {
+        "guard": "landing--1-1",
+        "kind": "spindle",
+        "point": {
+          "x": -3.9200000000000004,
+          "z": -13.96875
+        },
+        "width": null,
+        "newelDistance": 0.46875,
+        "passed": false
+      },
+      {
+        "guard": "landing--1-1",
+        "kind": "spindle",
+        "point": {
+          "x": -3.9200000000000004,
+          "z": -13.73625
+        },
+        "width": 0.12228766816010084,
+        "newelDistance": 0.23625000000000007,
+        "passed": false
+      },
+      {
+        "guard": "landing--1-1",
+        "kind": "handrail",
+        "t": 0.25,
+        "width": 0.2679995803796137,
+        "passed": false
+      },
+      {
+        "guard": "landing--1-1",
+        "kind": "handrail",
+        "t": 0.5,
+        "width": 0.2679995803796137,
+        "passed": false
+      },
+      {
+        "guard": "landing--1-1",
+        "kind": "handrail",
+        "t": 0.75,
+        "width": 0.2679995803796137,
+        "passed": false
+      },
+      {
+        "guard": "landing-1-0",
+        "kind": "spindle",
+        "point": {
+          "x": 3.9200000000000004,
+          "z": -15.36375
+        },
+        "width": 0.12228740197866506,
+        "newelDistance": 0.23625000000000007,
+        "passed": false
+      },
+      {
+        "guard": "landing-1-0",
+        "kind": "spindle",
+        "point": {
+          "x": 3.9200000000000004,
+          "z": -15.13125
+        },
+        "width": null,
+        "newelDistance": 0.46875,
+        "passed": false
+      },
+      {
+        "guard": "landing-1-0",
+        "kind": "spindle",
+        "point": {
+          "x": 3.9200000000000004,
+          "z": -14.89875
+        },
+        "width": null,
+        "newelDistance": 0.7012499999999999,
+        "passed": false
+      },
+      {
+        "guard": "landing-1-0",
+        "kind": "spindle",
+        "point": {
+          "x": 3.9200000000000004,
+          "z": -14.66625
+        },
+        "width": 0.16477063415859572,
+        "newelDistance": 0.9337499999999999,
+        "passed": false
+      },
+      {
+        "guard": "landing-1-0",
+        "kind": "spindle",
+        "point": {
+          "x": 3.9200000000000004,
+          "z": -14.43375
+        },
+        "width": 0.1647703994130657,
+        "newelDistance": 0.9337499999999999,
+        "passed": false
+      },
+      {
+        "guard": "landing-1-0",
+        "kind": "spindle",
+        "point": {
+          "x": 3.9200000000000004,
+          "z": -14.20125
+        },
+        "width": null,
+        "newelDistance": 0.7012499999999999,
+        "passed": false
+      },
+      {
+        "guard": "landing-1-0",
+        "kind": "spindle",
+        "point": {
+          "x": 3.9200000000000004,
+          "z": -13.96875
+        },
+        "width": null,
+        "newelDistance": 0.46875,
+        "passed": false
+      },
+      {
+        "guard": "landing-1-0",
+        "kind": "spindle",
+        "point": {
+          "x": 3.9200000000000004,
+          "z": -13.73625
+        },
+        "width": 0.12228770221900692,
+        "newelDistance": 0.23625000000000007,
+        "passed": false
+      },
+      {
+        "guard": "landing-1-0",
+        "kind": "handrail",
+        "t": 0.25,
+        "width": 0.2679995803796137,
+        "passed": false
+      },
+      {
+        "guard": "landing-1-0",
+        "kind": "handrail",
+        "t": 0.5,
+        "width": 0.2679995803796137,
+        "passed": false
+      },
+      {
+        "guard": "landing-1-0",
+        "kind": "handrail",
+        "t": 0.75,
+        "width": 0.2679995803796137,
+        "passed": false
+      }
+    ],
+    "passed": false
+  },
+  "negativeControlRejectsR24": true,
+  "passed": true
+}

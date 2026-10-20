@@ -10,7 +10,10 @@ const savedWebPort = await readFile(path.join(root, '.local/preview-port'), 'utf
 const webPort = process.env.BOOKKIN_WEB_PORT ?? savedWebPort.trim();
 if (!/^\d+$/.test(webPort) || Number(webPort) < 1 || Number(webPort) > 65535) throw new Error('Invalid BOOKKIN_WEB_PORT');
 process.env.BOOKKIN_WEB_PORT = webPort;
-const apiPort = process.env.BOOKKIN_API_PORT ?? '8080';
+const savedApiPort = await readFile(path.join(root, '.local/api-port'), 'utf8').catch(() => '8080');
+const apiPort = process.env.BOOKKIN_API_PORT ?? savedApiPort.trim();
+if (!/^\d+$/.test(apiPort) || Number(apiPort) < 1 || Number(apiPort) > 65535) throw new Error('Invalid BOOKKIN_API_PORT');
+process.env.BOOKKIN_API_PORT = apiPort;
 const services = [
   { name: 'backend-supervisor', args: ['start:local'], url: `http://127.0.0.1:${apiPort}/actuator/health`, identity: 'start:local' },
   { name: 'web-supervisor', args: ['dev'], url: `http://127.0.0.1:${webPort}/api/v1/auth/csrf`, identity: 'dev' },

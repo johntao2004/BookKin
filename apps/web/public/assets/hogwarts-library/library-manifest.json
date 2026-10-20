@@ -7,68 +7,83 @@
     },
     {
       "name": "Stone • pale slate",
-      "vertices": 12000,
-      "indices": 27000
+      "vertices": 18224,
+      "indices": 41004
     },
     {
       "name": "Stone • dark slate",
-      "vertices": 8000,
-      "indices": 18000
+      "vertices": 12152,
+      "indices": 27342
     },
     {
       "name": "Stone • moss slate",
-      "vertices": 10000,
-      "indices": 18000
+      "vertices": 15184,
+      "indices": 27330
     },
     {
       "name": "Oak • rubbed midtone",
-      "vertices": 646748,
-      "indices": 1400034
-    },
-    {
-      "name": "Stone • warm ashlar",
-      "vertices": 40444,
-      "indices": 92232
-    },
-    {
-      "name": "Glass • pale window",
-      "vertices": 576,
-      "indices": 864
-    },
-    {
-      "name": "Brass • aged edge",
-      "vertices": 269300,
-      "indices": 723648
+      "vertices": 541946,
+      "indices": 1197648
     },
     {
       "name": "Walnut • deep recess",
-      "vertices": 160824,
-      "indices": 351438
+      "vertices": 141429,
+      "indices": 305226
     },
     {
-      "name": "Stone • carved pale scholar",
-      "vertices": 370948,
-      "indices": 800463
+      "name": "Stone • warm ashlar",
+      "vertices": 124178,
+      "indices": 365904
+    },
+    {
+      "name": "Glass • cool window pane",
+      "vertices": 1272,
+      "indices": 2448
+    },
+    {
+      "name": "Glass • pale window",
+      "vertices": 4854,
+      "indices": 11016
+    },
+    {
+      "name": "Glass • warm window pane",
+      "vertices": 384,
+      "indices": 576
+    },
+    {
+      "name": "Iron • blue black",
+      "vertices": 187635,
+      "indices": 432576
+    },
+    {
+      "name": "Brass • aged edge",
+      "vertices": 294519,
+      "indices": 768456
     },
     {
       "name": "Oak • edge highlight",
-      "vertices": 183718,
-      "indices": 312324
+      "vertices": 227939,
+      "indices": 378162
     },
     {
       "name": "Paint • blue gray vault",
-      "vertices": 6328,
-      "indices": 11376
+      "vertices": 15704,
+      "indices": 28440
     },
     {
       "name": "Paint • teal border",
-      "vertices": 16028,
-      "indices": 28152
+      "vertices": 33024,
+      "indices": 58968
     },
     {
       "name": "Paint • faded ivory inlay",
-      "vertices": 210933,
-      "indices": 378000
+      "vertices": 494026,
+      "indices": 869400
+    },
+    {
+      "name": "Canvas • gallery paintings",
+      "vertices": 16,
+      "indices": 24
     },
     {
       "name": "Canvas • dark green",
@@ -81,44 +96,29 @@
       "indices": 6
     },
     {
-      "name": "Paint • end recess",
-      "vertices": 1214,
-      "indices": 1593
+      "name": "Canvas • lower gallery paintings",
+      "vertices": 16,
+      "indices": 24
     },
     {
-      "name": "Canvas • robe umber",
-      "vertices": 256,
-      "indices": 432
-    },
-    {
-      "name": "Canvas • ochre silhouette",
-      "vertices": 146,
-      "indices": 288
-    },
-    {
-      "name": "Bronze • end niche scholar",
-      "vertices": 45050,
-      "indices": 98541
-    },
-    {
-      "name": "Iron • blue black",
-      "vertices": 55359,
-      "indices": 188424
+      "name": "Canvas • lower portrait study",
+      "vertices": 4,
+      "indices": 6
     },
     {
       "name": "Leather • desk inset",
-      "vertices": 648,
-      "indices": 972
+      "vertices": 48,
+      "indices": 72
     },
     {
       "name": "Glass • green shade",
-      "vertices": 7848,
-      "indices": 20736
+      "vertices": 1744,
+      "indices": 4608
     },
     {
       "name": "Light • candle",
-      "vertices": 24976,
-      "indices": 61416
+      "vertices": 22568,
+      "indices": 56208
     },
     {
       "name": "Globe • parchment",
@@ -131,89 +131,84 @@
       "indices": 20670
     },
     {
-      "name": "Iron • rubbed silver",
-      "vertices": 22966,
-      "indices": 64080
-    },
-    {
       "name": "Paper • ivory candle",
-      "vertices": 14690,
+      "vertices": 14256,
       "indices": 30096
     }
   ],
   "version": 1,
-  "revision": "20261009-walk-clearance-r4",
+  "revision": "20261020-terminal-arches-r42",
   "source": {
-    "sha256": "7a892bba063d3ceef2f009233c1956662914c1f1f790b98b7701415b83513aef",
-    "bytes": 91106260,
-    "triangles": 1554611
+    "sha256": "a6a95221d1a7807c32f0bacad8dfc4ab0faace3f1ce947c7aacda479b3ee1ef1",
+    "bytes": 96570784,
+    "triangles": 1547086
   },
-  "materialsUrl": "/assets/hogwarts-library/materials.gltf?v=1465c76247fca7da",
+  "materialsUrl": "/assets/hogwarts-library/materials.gltf?v=0ed89b5bb2fcf510",
   "chunks": [
     {
       "id": "core",
-      "url": "/assets/hogwarts-library/modules/core.glb?v=034b2c2536e94ab5",
-      "bytes": 9345908,
-      "sha256": "034b2c2536e94ab5fcc82974369e36f94666fcd11ba239a7cf586fb749b4809d",
-      "triangles": 357598,
-      "primitives": 17,
-      "decodedGeometryBytes": 17395776,
+      "url": "/assets/hogwarts-library/modules/core.glb?v=70f31d629c8fe9d1",
+      "bytes": 21306452,
+      "sha256": "70f31d629c8fe9d197f43aa57f519c456f1a88e22c594c1d063d3a823ef88666",
+      "triangles": 742485,
+      "primitives": 18,
+      "decodedGeometryBytes": 41404100,
       "bounds": {
         "min": [
-          -15.300000190734863,
-          -0.36000001430511475,
-          -18.399999618530273
+          -20.299999237060547,
+          -0.4320000112056732,
+          -20.399999618530273
         ],
         "max": [
-          15.300000190734863,
-          19,
-          18.399999618530273
+          20.299999237060547,
+          22.799999237060547,
+          20.489999771118164
         ]
       },
       "core": true,
       "startup": true
     },
     {
-      "id": "sector-left-0",
-      "url": "/assets/hogwarts-library/modules/sector-left-0.glb?v=d61f3ccec80b34b0",
-      "bytes": 5302060,
-      "sha256": "d61f3ccec80b34b0b69371c30345c55425c5c10bc047a659171b0f9ff9d26c0b",
-      "triangles": 191752,
-      "primitives": 14,
-      "decodedGeometryBytes": 10200988,
+      "id": "sector-right-0",
+      "url": "/assets/hogwarts-library/modules/sector-right-0.glb?v=8b159e405ef3cd06",
+      "bytes": 3591648,
+      "sha256": "8b159e405ef3cd065f6455d26d1f62ee48a706ebe2ca574466e61621433d0cb7",
+      "triangles": 136030,
+      "primitives": 10,
+      "decodedGeometryBytes": 6819242,
       "bounds": {
         "min": [
-          -14.989999771118164,
-          -0.20999999344348907,
-          -16.008100509643555
+          3.259047746658325,
+          -0.25200000405311584,
+          -15.664999961853027
         ],
         "max": [
-          -2.6944031715393066,
-          14.789999961853027,
-          -3.140000104904175
+          20.079999923706055,
+          17.74799919128418,
+          -4.335000038146973
         ]
       },
       "core": false,
       "startup": false
     },
     {
-      "id": "sector-right-0",
-      "url": "/assets/hogwarts-library/modules/sector-right-0.glb?v=266e95e87d7139c1",
-      "bytes": 5208628,
-      "sha256": "266e95e87d7139c1b0c8497eb5d73969573b305dd91ab2f6e5c02d131566591c",
-      "triangles": 187873,
-      "primitives": 14,
-      "decodedGeometryBytes": 10013596,
+      "id": "sector-left-0",
+      "url": "/assets/hogwarts-library/modules/sector-left-0.glb?v=d00a4220cafceaf5",
+      "bytes": 3585848,
+      "sha256": "d00a4220cafceaf5a5f619e3472ee6b8fc694ef9858ee03f4ae380974b7d8c84",
+      "triangles": 136032,
+      "primitives": 10,
+      "decodedGeometryBytes": 6818210,
       "bounds": {
         "min": [
-          2.790273427963257,
-          -0.20999999344348907,
-          -16.002599716186523
+          -20.079999923706055,
+          -0.25200000405311584,
+          -15.664999961853027
         ],
         "max": [
-          14.989999771118164,
-          14.789999961853027,
-          -3.140000104904175
+          -3.2300527095794678,
+          17.74799919128418,
+          -4.335000038146973
         ]
       },
       "core": false,
@@ -221,21 +216,21 @@
     },
     {
       "id": "sector-left-2",
-      "url": "/assets/hogwarts-library/modules/sector-left-2.glb?v=f1315607bc64d5a4",
-      "bytes": 4404588,
-      "sha256": "f1315607bc64d5a49e8292e1b8ce98fb1aabf7cd475f269eaf88c1388e9ef5a2",
-      "triangles": 149818,
-      "primitives": 15,
-      "decodedGeometryBytes": 7930140,
+      "url": "/assets/hogwarts-library/modules/sector-left-2.glb?v=6b67140ec4ba8f7f",
+      "bytes": 2674408,
+      "sha256": "6b67140ec4ba8f7fd706d4bb0b0e086ef193ab42a806c60c391a5a568e61ef42",
+      "triangles": 88823,
+      "primitives": 10,
+      "decodedGeometryBytes": 4868266,
       "bounds": {
         "min": [
-          -14.989999771118164,
-          0.017999999225139618,
-          3.140000104904175
+          -20.079999923706055,
+          0.02160000056028366,
+          4.335000038146973
         ],
         "max": [
-          -7.907323837280273,
-          14.789999961853027,
+          -8.16450023651123,
+          17.74799919128418,
           15.664999961853027
         ]
       },
@@ -244,21 +239,21 @@
     },
     {
       "id": "sector-right-2",
-      "url": "/assets/hogwarts-library/modules/sector-right-2.glb?v=a907e06cc4c2c9f8",
-      "bytes": 4300476,
-      "sha256": "a907e06cc4c2c9f82f64aae7ae79c5911759635d3cf4902cdbd72b3128fb9315",
-      "triangles": 147811,
-      "primitives": 15,
-      "decodedGeometryBytes": 7825650,
+      "url": "/assets/hogwarts-library/modules/sector-right-2.glb?v=08626329f58013f2",
+      "bytes": 2644888,
+      "sha256": "08626329f58013f2315946320977c5cc22df51b64cab8c4835d177e67b795227",
+      "triangles": 88821,
+      "primitives": 10,
+      "decodedGeometryBytes": 4867070,
       "bounds": {
         "min": [
-          7.907323837280273,
-          0.017999999225139618,
-          3.140000104904175
+          8.16450023651123,
+          0.02160000056028366,
+          4.335000038146973
         ],
         "max": [
-          14.989999771118164,
-          14.789999961853027,
+          20.079999923706055,
+          17.74799919128418,
           15.664999961853027
         ]
       },
@@ -267,22 +262,22 @@
     },
     {
       "id": "sector-left-1",
-      "url": "/assets/hogwarts-library/modules/sector-left-1.glb?v=cc24021b50b4c43e",
-      "bytes": 4121180,
-      "sha256": "cc24021b50b4c43ec450dbb3e262f8291ebedb1362b45246c77254c79916778e",
-      "triangles": 137465,
-      "primitives": 15,
-      "decodedGeometryBytes": 7255254,
+      "url": "/assets/hogwarts-library/modules/sector-left-1.glb?v=96641d59b9027ccb",
+      "bytes": 2538660,
+      "sha256": "96641d59b9027ccb6bc8526ce2f176f068177b634eb1b2e9144e4224bb0a0ccf",
+      "triangles": 83412,
+      "primitives": 10,
+      "decodedGeometryBytes": 4523352,
       "bounds": {
         "min": [
-          -14.989999771118164,
-          0.017999999225139618,
-          -6.860000133514404
+          -20.079999923706055,
+          0.02160000056028366,
+          -5.664999961853027
         ],
         "max": [
-          -7.907323837280273,
-          14.789999961853027,
-          6.860000133514404
+          -8.16450023651123,
+          17.74799919128418,
+          5.664999961853027
         ]
       },
       "core": false,
@@ -290,22 +285,45 @@
     },
     {
       "id": "sector-right-1",
-      "url": "/assets/hogwarts-library/modules/sector-right-1.glb?v=81cd4920c6265cd3",
-      "bytes": 4068136,
-      "sha256": "81cd4920c6265cd3d34e72dd736d584f2853d3a055d64f988f5078a9a89e3591",
-      "triangles": 136102,
-      "primitives": 15,
-      "decodedGeometryBytes": 7205796,
+      "url": "/assets/hogwarts-library/modules/sector-right-1.glb?v=1492d650563fd4cb",
+      "bytes": 2525140,
+      "sha256": "1492d650563fd4cbf04be0c3a7d194b8be372a94c343dbdf5c42100fa2ed82b8",
+      "triangles": 83412,
+      "primitives": 10,
+      "decodedGeometryBytes": 4519992,
       "bounds": {
         "min": [
-          7.907323837280273,
-          0.017999999225139618,
-          -6.860000133514404
+          8.16450023651123,
+          0.02160000056028366,
+          -5.664999961853027
         ],
         "max": [
-          14.989999771118164,
-          14.789999961853027,
-          6.860000133514404
+          20.079999923706055,
+          17.74799919128418,
+          5.664999961853027
+        ]
+      },
+      "core": false,
+      "startup": false
+    },
+    {
+      "id": "b-end",
+      "url": "/assets/hogwarts-library/modules/b-end.glb?v=5d7e60d94804c68e",
+      "bytes": 2177396,
+      "sha256": "5d7e60d94804c68ee45d87657ea69c8d976978f3f19ed6a65f838258749f0621",
+      "triangles": 72226,
+      "primitives": 7,
+      "decodedGeometryBytes": 3794412,
+      "bounds": {
+        "min": [
+          -20.079999923706055,
+          0.02160000056028366,
+          13.420000076293945
+        ],
+        "max": [
+          20.079999923706055,
+          20.916000366210938,
+          20.204999923706055
         ]
       },
       "core": false,
@@ -313,114 +331,22 @@
     },
     {
       "id": "a-end",
-      "url": "/assets/hogwarts-library/modules/a-end.glb?v=190446e1eef29de1",
-      "bytes": 2973808,
-      "sha256": "190446e1eef29de141691c7d7da0dca39179e04805d9c06c51fdd388d70ae9b4",
-      "triangles": 100749,
-      "primitives": 10,
-      "decodedGeometryBytes": 5722620,
+      "url": "/assets/hogwarts-library/modules/a-end.glb?v=304b5f24f45e5447",
+      "bytes": 1718868,
+      "sha256": "304b5f24f45e544707f96913ccad809bd342ae3e060b0e11b7931eb6d7160416",
+      "triangles": 53294,
+      "primitives": 12,
+      "decodedGeometryBytes": 3120756,
       "bounds": {
         "min": [
-          -14.831999778747559,
-          0.017999999225139618,
-          -18.062000274658203
+          -20.079999923706055,
+          0.02160000056028366,
+          -20.204999923706055
         ],
         "max": [
-          14.831999778747559,
-          13.880000114440918,
-          -15.191200256347656
-        ]
-      },
-      "core": false,
-      "startup": true
-    },
-    {
-      "id": "b-end",
-      "url": "/assets/hogwarts-library/modules/b-end.glb?v=5bc0da936dc626a1",
-      "bytes": 2081096,
-      "sha256": "5bc0da936dc626a10a82059815f89a1713fa34082693e68a5b4afbad1a65811b",
-      "triangles": 71852,
-      "primitives": 4,
-      "decodedGeometryBytes": 3941716,
-      "bounds": {
-        "min": [
-          -14.831999778747559,
-          0.017999999225139618,
-          14.5
-        ],
-        "max": [
-          14.831999778747559,
-          17.43000030517578,
-          18.019500732421875
-        ]
-      },
-      "core": false,
-      "startup": false
-    },
-    {
-      "id": "central-furniture-north",
-      "url": "/assets/hogwarts-library/modules/central-furniture-north.glb?v=396ed1a08d4e559c",
-      "bytes": 613212,
-      "sha256": "396ed1a08d4e559c441ffafcb090b32d43705d60a0268667b674a32a717cda21",
-      "triangles": 20910,
-      "primitives": 6,
-      "decodedGeometryBytes": 1025364,
-      "bounds": {
-        "min": [
-          -8.329999923706055,
-          0,
-          -1.0499999523162842
-        ],
-        "max": [
-          8.329999923706055,
-          6.536399841308594,
-          15.869999885559082
-        ]
-      },
-      "core": false,
-      "startup": true
-    },
-    {
-      "id": "globe",
-      "url": "/assets/hogwarts-library/modules/globe.glb?v=ef1b41374734c65b",
-      "bytes": 579024,
-      "sha256": "ef1b41374734c65bc732ac14fb65e6825644ca9a9979d1508f3bef90ceb19211",
-      "triangles": 26482,
-      "primitives": 4,
-      "decodedGeometryBytes": 860972,
-      "bounds": {
-        "min": [
-          -1.0850000381469727,
-          0.07999999821186066,
-          -12.78499984741211
-        ],
-        "max": [
-          1.0849498510360718,
-          2.5108442306518555,
-          -10.61500072479248
-        ]
-      },
-      "core": false,
-      "startup": true
-    },
-    {
-      "id": "central-furniture-south",
-      "url": "/assets/hogwarts-library/modules/central-furniture-south.glb?v=6752b1465fe844dc",
-      "bytes": 366036,
-      "sha256": "6752b1465fe844dc9488cd11e384bc6e7b3664f8a5e5e2c590ff874439fdf8d3",
-      "triangles": 12342,
-      "primitives": 6,
-      "decodedGeometryBytes": 609540,
-      "bounds": {
-        "min": [
-          -8.329999923706055,
-          0,
-          -15.210100173950195
-        ],
-        "max": [
-          8.329999923706055,
-          6.536399841308594,
-          0.5965999960899353
+          20.079999923706055,
+          17.711999893188477,
+          -15.176774978637695
         ]
       },
       "core": false,
@@ -428,22 +354,91 @@
     },
     {
       "id": "central-lighting",
-      "url": "/assets/hogwarts-library/modules/central-lighting.glb?v=9cce1f6cc07d27bd",
-      "bytes": 350780,
-      "sha256": "9cce1f6cc07d27bd1997cba3c4eb3f4283e30daaac73074decb5700a3b8d989b",
-      "triangles": 13857,
-      "primitives": 5,
-      "decodedGeometryBytes": 553286,
+      "url": "/assets/hogwarts-library/modules/central-lighting.glb?v=bd518a8d377cc10e",
+      "bytes": 664360,
+      "sha256": "bd518a8d377cc10eb717ac48efa5b5eebfba6118f3e1aabd331d9be9c8ddff40",
+      "triangles": 23554,
+      "primitives": 7,
+      "decodedGeometryBytes": 1045900,
       "bounds": {
         "min": [
           -8.21780014038086,
-          5.739999771118164,
+          7.007999897003174,
           -15.620800018310547
         ],
         "max": [
           8.21780014038086,
-          18.579999923706055,
-          15.649999618530273
+          22.29599952697754,
+          15.620800018310547
+        ]
+      },
+      "core": false,
+      "startup": true
+    },
+    {
+      "id": "globe",
+      "url": "/assets/hogwarts-library/modules/globe.glb?v=866702b93b03c779",
+      "bytes": 578396,
+      "sha256": "866702b93b03c7793d80189ff82a1821d043e1515a5664a24dddcf543af43961",
+      "triangles": 26524,
+      "primitives": 5,
+      "decodedGeometryBytes": 865512,
+      "bounds": {
+        "min": [
+          -3.8949999809265137,
+          7.465000152587891,
+          -16.08500099182129
+        ],
+        "max": [
+          3.8949999809265137,
+          9.950843811035156,
+          -13.59000015258789
+        ]
+      },
+      "core": false,
+      "startup": true
+    },
+    {
+      "id": "central-furniture-south",
+      "url": "/assets/hogwarts-library/modules/central-furniture-south.glb?v=919cb63e79a92ad2",
+      "bytes": 219644,
+      "sha256": "919cb63e79a92ad22e57f31067729e91745bd4c9e142fe94f08087ca386b6245",
+      "triangles": 7549,
+      "primitives": 6,
+      "decodedGeometryBytes": 362638,
+      "bounds": {
+        "min": [
+          -8.430000305175781,
+          0,
+          -15.600000381469727
+        ],
+        "max": [
+          8.430000305175781,
+          7.440000057220459,
+          0.5965999960899353
+        ]
+      },
+      "core": false,
+      "startup": true
+    },
+    {
+      "id": "central-furniture-north",
+      "url": "/assets/hogwarts-library/modules/central-furniture-north.glb?v=a90cf128528ca3eb",
+      "bytes": 150060,
+      "sha256": "a90cf128528ca3eb9f276571846682f6d320c3a42216f3c4d82af17446707b51",
+      "triangles": 4924,
+      "primitives": 6,
+      "decodedGeometryBytes": 234024,
+      "bounds": {
+        "min": [
+          -8.430000305175781,
+          0,
+          -1.0499999523162842
+        ],
+        "max": [
+          8.430000305175781,
+          7.211999893188477,
+          15.596599578857422
         ]
       },
       "core": false,
@@ -488,41 +483,48 @@
     },
     {
       "id": 5,
-      "name": "r2-aged-metal-normal",
-      "bytes": 257993,
-      "sha256": "553ae191491a44bf09e3b998a4f4607f4dc3fd2092dcb26f0f912a236cc8d220",
-      "uri": "textures/553ae191491a44bf09e3b998a4f4607f4dc3fd2092dcb26f0f912a236cc8d220.png"
-    },
-    {
-      "id": 6,
-      "name": "r2-aged-metal-roughness",
-      "bytes": 171044,
-      "sha256": "611ae3d9ed1da7df42ac45d6c5d7df874f328095cfdcc97ba25002d7b9f89351",
-      "uri": "textures/611ae3d9ed1da7df42ac45d6c5d7df874f328095cfdcc97ba25002d7b9f89351.png"
-    },
-    {
-      "id": 7,
       "name": "r2-walnut-normal",
       "bytes": 779924,
       "sha256": "c94f806ce0ca35090df1a189eb76101c6a77ff142a162add2eb17947e8845cf6",
       "uri": "textures/c94f806ce0ca35090df1a189eb76101c6a77ff142a162add2eb17947e8845cf6.png"
     },
     {
-      "id": 8,
+      "id": 6,
       "name": "r2-walnut-albedo",
       "bytes": 189018,
       "sha256": "f8087c5e70f36d92ef383792947072f5e2f1697815e5932d223f55f7bd760c3b",
       "uri": "textures/f8087c5e70f36d92ef383792947072f5e2f1697815e5932d223f55f7bd760c3b.png"
     },
     {
-      "id": 9,
+      "id": 7,
       "name": "r2-walnut-roughness",
       "bytes": 632119,
       "sha256": "f15c507fb00b7c8c166f6d47652b6f6fb6a695c93569ef3db76bcd169e5551a0",
       "uri": "textures/f15c507fb00b7c8c166f6d47652b6f6fb6a695c93569ef3db76bcd169e5551a0.png"
     },
     {
+      "id": 8,
+      "name": "r2-aged-metal-normal",
+      "bytes": 257993,
+      "sha256": "553ae191491a44bf09e3b998a4f4607f4dc3fd2092dcb26f0f912a236cc8d220",
+      "uri": "textures/553ae191491a44bf09e3b998a4f4607f4dc3fd2092dcb26f0f912a236cc8d220.png"
+    },
+    {
+      "id": 9,
+      "name": "r2-aged-metal-roughness",
+      "bytes": 171044,
+      "sha256": "611ae3d9ed1da7df42ac45d6c5d7df874f328095cfdcc97ba25002d7b9f89351",
+      "uri": "textures/611ae3d9ed1da7df42ac45d6c5d7df874f328095cfdcc97ba25002d7b9f89351.png"
+    },
+    {
       "id": 10,
+      "name": "gallery-paintings-original-r7",
+      "bytes": 3320272,
+      "sha256": "7a4e9dbd3354887ca5b232789b198e9c0840077b08d3e93908cf8a5fafcfb2ac",
+      "uri": "textures/7a4e9dbd3354887ca5b232789b198e9c0840077b08d3e93908cf8a5fafcfb2ac.png"
+    },
+    {
+      "id": 11,
       "name": "portrait-scholar-generated-r2",
       "bytes": 2338425,
       "sha256": "df0f8ee9d62a4d735c097bbc1f6bf1b3e500e01f35e17fa0703f8a6cc5d8fedd",

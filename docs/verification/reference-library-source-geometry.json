@@ -1,25 +1,35 @@
 {
   "file": "architecture-uncompressed.glb",
-  "bytes": 91106260,
-  "sha256": "7a892bba063d3ceef2f009233c1956662914c1f1f790b98b7701415b83513aef",
-  "meshes": 28,
-  "materials": 28,
-  "materialPrimitives": 28,
-  "actualGltfVertices": 2106304,
-  "actualGltfTriangles": 1554611,
+  "bytes": 93567980,
+  "sha256": "ff7d2c6a277e720243acf25049355e9b11cb9f1cf6a754c3662504beb397e64a",
+  "sourceSha256": "ff7d2c6a277e720243acf25049355e9b11cb9f1cf6a754c3662504beb397e64a",
+  "configSha256": "f8908d564e8550ad980e21b41bc1879ec199b699754eb96aea465a9b6e35efa5",
+  "revision": "20261020-lower-gallery-r27",
+  "verticalScale": 1.2,
+  "walkingContract": {
+    "eyeY": 1.78,
+    "bodyRadius": 0.3
+  },
+  "sourceColliderCount": 1344,
+  "runtimeColliderCount": 1424,
+  "meshes": 27,
+  "materials": 27,
+  "materialPrimitives": 27,
+  "actualGltfVertices": 2083583,
+  "actualGltfTriangles": 1478268,
   "bounds": {
     "min": [
-      -15.300000190734863,
-      -0.36000001430511475,
-      -18.399999618530273
+      -20.299999237060547,
+      -0.4320000112056732,
+      -20.399999618530273
     ],
     "max": [
-      15.300000190734863,
-      19,
-      18.399999618530273
+      20.299999237060547,
+      22.799999237060547,
+      20.489999771118164
     ]
   },
-  "embeddedImages": 11,
+  "embeddedImages": 12,
   "externalImageUris": [],
   "finiteAttributes": true,
   "noExportedLightsOrCameras": true,
@@ -27,34 +37,65 @@
   "zeroAreaTriangles": 0,
   "globeLandMaterialPrimitives": 1,
   "visibleFeatureMaterials": {
-    "Stone \u2022 carved pale scholar": {
-      "vertices": 368295,
+    "Canvas \u2022 gallery paintings": {
+      "vertices": 16,
+      "primitives": 1,
       "min": [
-        -8.374600410461426,
-        5.299799919128418,
-        -15.505596160888672
+        -12.300000190734863,
+        9.359999656677246,
+        -19.65399932861328
       ],
       "max": [
-        8.374600410461426,
-        6.847799777984619,
-        15.416357040405273
+        12.300000190734863,
+        14.15999984741211,
+        -19.65399932861328
       ]
     },
-    "Bronze \u2022 end niche scholar": {
-      "vertices": 45050,
+    "Canvas \u2022 reference portrait study": {
+      "vertices": 4,
+      "primitives": 1,
       "min": [
-        -4.294259071350098,
-        6.616049766540527,
-        -17.463350296020508
+        -1.3278000354766846,
+        8.680000305175781,
+        -19.65399932861328
       ],
       "max": [
-        4.456705570220947,
-        9.239049911499023,
-        -16.670351028442383
+        1.3278000354766846,
+        15.319999694824219,
+        -19.65399932861328
+      ]
+    },
+    "Canvas \u2022 lower gallery paintings": {
+      "vertices": 16,
+      "primitives": 1,
+      "min": [
+        -7.150000095367432,
+        1.7599999904632568,
+        -19.524999618530273
+      ],
+      "max": [
+        7.150000095367432,
+        3.759999990463257,
+        -19.524999618530273
+      ]
+    },
+    "Canvas \u2022 lower portrait study": {
+      "vertices": 4,
+      "primitives": 1,
+      "min": [
+        -0.75,
+        0.8849999904632568,
+        -19.524999618530273
+      ],
+      "max": [
+        0.75,
+        4.635000228881836,
+        -19.524999618530273
       ]
     },
     "Globe \u2022 parchment": {
       "vertices": 3098,
+      "primitives": 1,
       "min": [
         -0.8199999928474426,
         0.75,
@@ -68,6 +109,7 @@
     },
     "Globe \u2022 land": {
       "vertices": 8789,
+      "primitives": 1,
       "min": [
         -0.8065099716186523,
         0.8925612568855286,
@@ -80,6 +122,13 @@
       ]
     }
   },
-  "globeLandMinimumTriangleRadius": 0.8264648925668343,
-  "globeBaseSphereRadius": 0.82
+  "bookHeight": 0.48,
+  "shelfFaces": 336,
+  "mainChandelierCablePhysicalStartY": 15.68,
+  "mainChandelierCableShellStartY": 18.255,
+  "mainChandelierCableEndY": 22.295999999999996,
+  "globeLandMinimumTriangleRadius": 0.8264648925668345,
+  "globeBaseSphereRadius": 0.82,
+  "passed": true,
+  "failures": []
 }

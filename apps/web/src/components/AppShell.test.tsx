@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, useLocation } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { api } from "../api/client";
 import { AppShell } from "./AppShell";
@@ -17,6 +17,11 @@ vi.mock("../pages/VirtualLibraryExperience", () => ({
   VirtualLibraryExperience: () => null,
 }));
 
+function RouteProbe() {
+  const location = useLocation();
+  return <output data-testid="search-route">{location.pathname}{location.search}</output>;
+}
+
 function renderShell(initialPath: string) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
@@ -25,7 +30,7 @@ function renderShell(initialPath: string) {
     <QueryClientProvider client={queryClient}>
       <MemoryRouter initialEntries={[initialPath]}>
         <BookKinThemeProvider>
-          <AppShell><div>正文</div></AppShell>
+          <AppShell><div>正文</div><RouteProbe /></AppShell>
         </BookKinThemeProvider>
       </MemoryRouter>
     </QueryClientProvider>,
@@ -47,22 +52,34 @@ describe("AppShell", () => {
   it("opens search on hover and preserves the query after Escape or blur", () => {
     renderShell("/library");
     const trigger = screen.getByRole("button", { name: "展开搜索" });
-    expect(screen.queryByRole("textbox", { name: "搜索展示书目" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("textbox", { name: "搜索书籍、笔记、书单" })).not.toBeInTheDocument();
     fireEvent.mouseEnter(trigger);
-    const input = screen.getByRole("textbox", { name: "搜索展示书目" });
+    const input = screen.getByRole("textbox", { name: "搜索书籍、笔记、书单" });
     expect(input).toHaveFocus();
     fireEvent.change(input, { target: { value: "文学" } });
     fireEvent.mouseLeave(trigger.parentElement!);
     expect(trigger).toHaveAttribute("aria-expanded", "false");
     fireEvent.mouseEnter(trigger);
-    const reopenedInput = screen.getByRole("textbox", { name: "搜索展示书目" });
+    const reopenedInput = screen.getByRole("textbox", { name: "搜索书籍、笔记、书单" });
     fireEvent.keyDown(reopenedInput, { key: "Escape" });
     expect(trigger).toHaveFocus();
     expect(trigger).toHaveAttribute("aria-expanded", "false");
     fireEvent.click(trigger);
-    expect(screen.getByRole("textbox", { name: "搜索展示书目" })).toHaveValue("文学");
-    fireEvent.blur(screen.getByRole("textbox", { name: "搜索展示书目" }));
+    expect(screen.getByRole("textbox", { name: "搜索书籍、笔记、书单" })).toHaveValue("文学");
+    fireEvent.blur(screen.getByRole("textbox", { name: "搜索书籍、笔记、书单" }));
     expect(trigger).toHaveAttribute("aria-expanded", "false");
+  });
+
+  it("submits global search without changing local filters or submitting IME composition", () => {
+    renderShell("/categories?format=PDF");
+    fireEvent.click(screen.getByRole("button", { name: "展开搜索" }));
+    const input = screen.getByRole("textbox", { name: "搜索书籍、笔记、书单" });
+    fireEvent.change(input, { target: { value: "文学" } });
+    expect(screen.getByTestId("search-route")).toHaveTextContent("/categories?format=PDF");
+    fireEvent.keyDown(input, { key: "Enter", isComposing: true });
+    expect(screen.getByTestId("search-route")).toHaveTextContent("/categories?format=PDF");
+    fireEvent.keyDown(input, { key: "Enter" });
+    expect(screen.getByTestId("search-route")).toHaveTextContent(`/search?q=${encodeURIComponent("文学")}`);
   });
 
   it("keeps the global navigation above reader routes", () => {
@@ -81,7 +98,7 @@ describe("AppShell", () => {
     expect(screen.getByRole("navigation", { name: "全站导航" })).toBeInTheDocument();
     const wordmark = screen.getByRole("link", { name: "BookKin" });
     expect(wordmark).toBeInTheDocument();
-    expect(wordmark.previousElementSibling).toBeNull();
+    expect(wordmark.previousElementSibling).toHaveAccessibleName("打开导航");
     expect(screen.getByRole("link", { name: "分类" })).toHaveAttribute("href", "/categories");
     expect(screen.getByRole("link", { name: "书单" })).toHaveAttribute("href", "/booklists");
     expect(screen.getByRole("link", { name: "藏书库" })).toHaveAttribute("href", "/library/all");
@@ -90,9 +107,24 @@ describe("AppShell", () => {
     expect(screen.queryByText("已同步")).not.toBeInTheDocument();
   });
 
+  it("keeps search, theme, and account controls reachable in the phone header", () => {
+    renderShell("/library");
+    const search = screen.getByRole("button", { name: "展开搜索" });
+    const theme = screen.getByRole("button", { name: "切换全站主题" });
+    const account = screen.getByRole("button", { name: "账户菜单" });
+    const precedes = (first: Element, second: Element) => Boolean(first.compareDocumentPosition(second) & Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(precedes(search, theme)).toBe(true);
+    expect(precedes(theme, account)).toBe(true);
+    fireEvent.click(search);
+
+    const input = screen.getByRole("textbox", { name: "搜索书籍、笔记、书单" });
+    expect(input).toHaveFocus();
+
+  });
+
   it("keeps management pages in the account menu instead of the main drawer", async () => {
     renderShell("/library");
-    const managementLabels = ["用户管理", "设置"];
+    const managementLabels = ["设置"];
 
     fireEvent.click(screen.getByRole("button", { name: "打开导航" }));
     const drawer = screen.getByRole("navigation", { name: "移动端导航" });
@@ -101,9 +133,12 @@ describe("AppShell", () => {
     expect(within(drawer).queryByText("展示书目设置")).not.toBeInTheDocument();
     expect(within(drawer).getAllByRole("button").map((button) => button.textContent)).toEqual([
       "首页",
+      "文章收藏",
+      "禁书区",
       "藏书库",
       "分类",
       "书单",
+      "知识图谱",
       "阅读笔记",
       "虚拟书库",
     ]);
@@ -111,6 +146,7 @@ describe("AppShell", () => {
     fireEvent.click(within(drawer).getByText("首页"));
     fireEvent.click(await screen.findByRole("button", { name: "账户菜单" }));
     const accountMenu = screen.getByRole("menu");
+    expect(within(accountMenu).queryByRole("menuitem", { name: "用户管理" })).not.toBeInTheDocument();
     for (const label of managementLabels) expect(within(accountMenu).getByRole("menuitem", { name: label })).toBeInTheDocument();
     expect(within(accountMenu).queryByRole("menuitem", { name: "展示书目设置" })).not.toBeInTheDocument();
   });

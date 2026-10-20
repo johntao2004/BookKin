@@ -48,8 +48,11 @@ public class AnnotationController {
     }
 
     @GetMapping
-    AnnotationList list(@RequestParam(required = false) UUID bookId, Principal principal) {
-        return new AnnotationList(annotations.list(userId(principal), bookId));
+    AnnotationList list(@RequestParam(required = false) UUID bookId,
+                        @RequestParam(required = false) String q, Principal principal) {
+        return new AnnotationList(q == null || q.isBlank()
+                ? annotations.list(userId(principal), bookId)
+                : annotations.search(userId(principal), bookId, q.trim()));
     }
 
     @GetMapping("/books")

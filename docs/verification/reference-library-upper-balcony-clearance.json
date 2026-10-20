@@ -1,0 +1,28 @@
+{
+  "revision": "20261020-open-upper-balcony-r31",
+  "removedScreen": {
+    "before": {
+      "triangles": 12560,
+      "sha256": "008485540e43e60638be92d6c78ff371d7d42ebad4551238a7fa4b9a00652360"
+    },
+    "after": {
+      "triangles": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    }
+  },
+  "retained": {
+    "balcony": {
+      "triangles": 7816,
+      "sha256": "caf389b3e801bf5afb4c6d247520de3bdf182975949d32d17631e04563a94a4a"
+    },
+    "rear-wall": {
+      "triangles": 4,
+      "sha256": "e6ab5fefe4d4a0ddcbbe3fb119bb5a06ffc17a062228c0716d07a01eeb092745"
+    },
+    "paired-stairs": {
+      "triangles": 170996,
+      "sha256": "74892a961f62fdfee558c9f2100bad9ac7ed83ed9f8f44e9bb6aed00f7a92aba"
+    }
+  },
+  "passed": true
+}

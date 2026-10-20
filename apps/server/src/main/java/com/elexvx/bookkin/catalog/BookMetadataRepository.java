@@ -33,7 +33,7 @@ public class BookMetadataRepository {
 
     public Optional<BookMetadata> find(UUID bookId) {
         return dsl.fetchOptional("""
-                select b.*, s.name as series_name,
+                select b.*, s.name as series_name, exists(select 1 from display_catalog_entries e where e.catalog_id = 1 and e.book_id = b.id) as publicly_visible,
                        coalesce(array(select t.name from book_tags bt join tags t on t.id = bt.tag_id where bt.book_id = b.id order by t.name), array[]::text[]) as tags,
                        coalesce(array(select a.name from book_authors ba join authors a on a.id = ba.author_id
                          where ba.book_id = b.id and ba.contributor_role = 'AUTHOR' order by ba.position), array[]::text[]) as authors,
@@ -55,7 +55,7 @@ public class BookMetadataRepository {
                     subjectCodes == null ? List.of() : Arrays.asList(subjectCodes),
                     record.get("cover_cache_key", String.class), "/api/v1/books/" + bookId + "/cover?v="
                             + record.get("updated_at", java.time.OffsetDateTime.class).toInstant().toEpochMilli(),
-                    sources(record.get("metadata_sources_text", String.class)));
+                    sources(record.get("metadata_sources_text", String.class)), record.get("publicly_visible", Boolean.class));
         });
     }
 
@@ -195,7 +195,15 @@ public class BookMetadataRepository {
     public record BookMetadata(UUID id, String title, String subtitle, List<String> authors, List<String> translators,
                                String language, String publisher, String publishedDate, String isbn, String description,
                                String series, BigDecimal seriesIndex, List<String> tags, List<String> subjectCodes, String coverCacheKey,
-                               String coverUrl, Map<String, String> sources) {
+                               String coverUrl, Map<String, String> sources, boolean publiclyVisible) {
+        public BookMetadata(UUID id, String title, String subtitle, List<String> authors, List<String> translators,
+                            String language, String publisher, String publishedDate, String isbn, String description,
+                            String series, BigDecimal seriesIndex, List<String> tags, List<String> subjectCodes, String coverCacheKey,
+                            String coverUrl, Map<String, String> sources) {
+            this(id, title, subtitle, authors, translators, language, publisher, publishedDate, isbn, description,
+                    series, seriesIndex, tags, subjectCodes, coverCacheKey, coverUrl, sources, false);
+        }
+
         public BookMetadata(UUID id, String title, String subtitle, List<String> authors, List<String> translators,
                             String language, String publisher, String publishedDate, String isbn, String description,
                             String series, BigDecimal seriesIndex, List<String> tags, String coverCacheKey,

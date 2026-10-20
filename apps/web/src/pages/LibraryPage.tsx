@@ -1,3 +1,4 @@
+import { BookGridSkeleton } from "../components/BookGridSkeleton";
 import { Skeleton } from "@/ui/antd";
 import { AutoAwesomeOutlined } from "@/ui/icons";
 import { BookmarkAddOutlined } from "@/ui/icons";
@@ -8,6 +9,7 @@ import { MenuBookRounded } from "@/ui/icons";
 import { CloudUploadOutlined } from "@/ui/icons";
 import { ScheduleRounded } from "@/ui/icons";
 import { Alert } from "@/ui/feedback";
+import { CircularProgress } from "@/ui/feedback";
 import { Box } from "@/ui/primitives";
 import { Button } from "@/ui/buttons";
 import { Chip } from "@/ui/feedback";
@@ -29,11 +31,11 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { api } from "../api/client";
 import { useAuth } from "../auth/AuthContext";
 import { BookCard } from "../components/BookCard";
+import { bookGridSx } from "../components/bookGrid";
 import { AddToBooklistDialog } from "../components/AddToBooklistDialog";
 import { BookUploadDialog } from "../components/BookUploadDialog";
 import { BookCatalogEmptyState } from "../components/BookCatalogEmptyState";
 import { FileOperationDialog } from "../components/FileOperationDialog";
-import { MetadataDialog } from "../components/MetadataDialog";
 import { OverviewCardHeader } from "../components/OverviewCardHeader";
 import { OverviewEmptyState } from "../components/OverviewEmptyState";
 import { flattenUniquePaginatedItems, PaginatedItemReveal } from "../components/PaginatedItemReveal";
@@ -54,10 +56,13 @@ export function LibraryPage() {
   const [params, setParams] = useSearchParams();
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
   const [operation, setOperation] = useState<{ book: Book; type: FileOperationType } | null>(null);
-  const [metadataBook, setMetadataBook] = useState<Book | null>(null);
+  const editMetadata = (book: Book) => navigate(`/library/books/${book.id}/edit`);
   const [booklistBook, setBooklistBook] = useState<Book | null>(null);
   const [uploadOpen, setUploadOpen] = useState(false);
   const [showBackToTop, setShowBackToTop] = useState(false);
+  const overviewStorageKey = `bookkin-library-overview:${user?.id ?? 'anonymous'}`;
+  const [overviewHidden, setOverviewHidden] = useState(() => { try { return localStorage.getItem(`bookkin-library-overview:${user?.id ?? 'anonymous'}`) === 'hidden'; } catch { return false; } });
+  const toggleOverview = () => setOverviewHidden(hidden => { const next = !hidden; try { localStorage.setItem(overviewStorageKey, next ? 'hidden' : 'visible'); } catch { /* Layout remains usable without storage. */ } return next; });
   const [notice, setNotice] = useState("");
   const query = params.get("q")?.trim().toLocaleLowerCase("zh-CN") ?? "";
   const deferredQuery = useDeferredValue(query);
@@ -78,7 +83,7 @@ export function LibraryPage() {
     getNextPageParam: (lastPage) => lastPage.nextCursor,
     refetchInterval: 15_000,
   });
-  const readingStatsQuery = useQuery({ queryKey: ["reading-stats", "weekly"], queryFn: api.getWeeklyReadingStats });
+  const readingStatsQuery = useQuery({ queryKey: ["reading-stats", "weekly"], queryFn: api.getWeeklyReadingStats, enabled: !overviewHidden });
   useEffect(() => {
     const updateBackToTopVisibility = () => {
       const nextVisible = window.scrollY > tokens.spacing[20];
@@ -123,9 +128,10 @@ export function LibraryPage() {
   return (
     <>
       <PageContainer>
-        <PageHeader eyebrow="LIBRARY" title="藏书库" />
+        <PageHeader eyebrow="LIBRARY" title="藏书库" action={<Button aria-expanded={!overviewHidden} aria-controls="library-overview" onClick={toggleOverview}>{overviewHidden ? "显示概览" : "隐藏概览"}</Button>} />
 
-        <Box
+        {!overviewHidden && <Box
+          id="library-overview"
           component="section"
           aria-label="书库概览"
           sx={{
@@ -133,15 +139,15 @@ export function LibraryPage() {
             gridTemplateColumns: {
               xs: "minmax(0, 1fr)",
               sm: "repeat(2, minmax(0, 1fr))",
+              lg: "repeat(4, minmax(0, 1fr))",
             },
-            // Keep the four overview cards on a shared two-row rhythm.  A
-            // fixed token-derived track prevents the compact empty states
-            // from collapsing while the featured cover and weekly chart set
-            // the height of the upper row.
+            // Keep equal card heights in the wide, single-row layout,
+            // including loading and empty states.
             gridAutoRows: `${tokens.spacing[24] * 3.5}px`,
             gap: { xs: `${tokens.spacing[4]}px`, sm: `${tokens.spacing[6]}px` },
             mb: { xs: `${tokens.spacing[6]}px`, md: `${tokens.spacing[8]}px` },
             alignItems: "stretch",
+            "& .bk-typography-h4": { fontSize: { xs: `${tokens.typography.fontSize.title}px`, sm: `${tokens.typography.fontSize.headingSm}px` } },
           }}
         >
           {booksQuery.isPending ? Array.from({ length: 4 }, (_, index) => (
@@ -171,27 +177,27 @@ export function LibraryPage() {
                 {featured ? <Box
                   sx={{
                     display: "grid",
-                    gridTemplateColumns: "minmax(0, 0.92fr) minmax(0, 1.08fr)",
+                    gridTemplateColumns: { xs: "minmax(0, 0.92fr) minmax(0, 1.08fr)", lg: `minmax(0, min(40%, ${tokens.spacing[20] * 2}px)) minmax(0, 1fr)` },
                     gap: { xs: `${tokens.spacing[4]}px`, md: `${tokens.spacing[6]}px` },
                     flex: 1,
                     minHeight: 0,
                     mt: `${tokens.spacing[4]}px`,
                   }}
                 >
-                  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", minWidth: 0, minHeight: 0, containerType: "size" }}>
+                  <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "flex-start", minWidth: 0, minHeight: 0, containerType: "size" }}>
                     <Box component="img" src={featured.coverUrl} alt={`${featured.title}封面`} loading="eager" decoding="async" fetchPriority="high" sx={{ display: "block", width: "min(100cqw, calc(100cqh * 2 / 3))", height: "auto", aspectRatio: "2 / 3", objectFit: "cover", borderRadius: `${tokens.radius.lg}px` }} />
                   </Box>
-                  <Stack sx={{ minWidth: 0, justifyContent: "center", alignItems: "flex-start" }}>
-                    <Typography id="featured-book-title" variant="h4" component="h3">{featured.title}</Typography>
+                  <Stack sx={{ minWidth: 0, minHeight: 0, alignItems: "stretch" }}>
+                    <Typography id="featured-book-title" variant="h4" component="h3" title={featured.title} sx={{ overflowWrap: "anywhere", display: "-webkit-box", WebkitBoxOrient: "vertical", WebkitLineClamp: 3, overflow: "hidden" }}>{featured.title}</Typography>
                     <Typography color="text.secondary" sx={{ mt: `${tokens.spacing[2]}px` }}>{featured.author}</Typography>
-                    <Stack direction="row" sx={{ flexWrap: "wrap", gap: `${tokens.spacing[3]}px`, mt: `${tokens.spacing[5]}px` }}>
-                      <Button variant="contained" startIcon={<MenuBookRounded />} onClick={() => navigate(`/reader/${featured.id}`)}>开始阅读</Button>
+                    <Stack direction="row" sx={{ flexWrap: "wrap", gap: `${tokens.spacing[3]}px`, mt: "auto", pt: `${tokens.spacing[4]}px` }}>
+                      <Button fullWidth variant="contained" startIcon={<MenuBookRounded />} onClick={() => navigate(`/reader/${featured.id}`)}>开始阅读</Button>
                     </Stack>
                   </Stack>
-                </Box> : <OverviewEmptyState titleId="featured-book-title" title={EMPTY_CATALOG_TITLE} />}
+                </Box> : <OverviewEmptyState titleId="featured-book-title" title="本周暂无新书" />}
               </Box>
 
-              <Box sx={{ minWidth: 0, gridColumn: { sm: 1 }, gridRow: { sm: 2 }, display: "flex", "& > *": { flex: 1 } }}>
+              <Box sx={{ minWidth: 0, gridColumn: { sm: 1, lg: 3 }, gridRow: { sm: 2, lg: 1 }, display: "flex", "& > *": { flex: 1 } }}>
                 <RecentAnnotationsPanel embedded />
               </Box>
           </>
@@ -204,8 +210,8 @@ export function LibraryPage() {
               component="article"
               aria-labelledby="currently-reading-title"
               sx={{
-                gridColumn: { sm: 2 },
-                gridRow: { sm: 2 },
+                gridColumn: { sm: 2, lg: 4 },
+                gridRow: { sm: 2, lg: 1 },
                 justifyContent: "flex-start",
                 p: { xs: `${tokens.spacing[6]}px`, lg: `${tokens.spacing[8]}px` },
                 bgcolor: "secondary.dark",
@@ -218,8 +224,8 @@ export function LibraryPage() {
               <OverviewCardHeader id="reading-progress-card-title" icon={<MenuBookRounded />} inverse>阅读进度</OverviewCardHeader>
               {reading ? (
                 <>
-                  <Stack sx={{ minWidth: 0, flex: 1, gap: `${tokens.spacing[3]}px`, mt: `${tokens.spacing[4]}px` }}>
-                    <Typography id="currently-reading-title" variant="h4">{reading.title}</Typography>
+                  <Stack sx={{ minWidth: 0, flex: 1, gap: `${tokens.spacing[2]}px`, mt: `${tokens.spacing[4]}px` }}>
+                    <Typography id="currently-reading-title" variant="h4" title={reading.title} sx={{ overflowWrap: "anywhere", display: "-webkit-box", WebkitBoxOrient: "vertical", WebkitLineClamp: 3, overflow: "hidden" }}>{reading.title}</Typography>
                     <Typography sx={{ opacity: 0.68 }}>{reading.author}</Typography>
                     <Box sx={{ mt: `${tokens.spacing[2]}px` }}>
                       <Box sx={{ height: `${tokens.spacing[1]}px`, bgcolor: "rgba(255,255,255,.18)", mb: `${tokens.spacing[2]}px`, borderRadius: `${tokens.radius.pill}px`, overflow: "hidden" }}>
@@ -232,9 +238,9 @@ export function LibraryPage() {
                     </Box>
                   </Stack>
                   <Button
-                    variant="contained"
+                    variant="outlined"
                     onClick={() => navigate(`/reader/${reading.id}`)}
-                    sx={{ mt: "auto", bgcolor: "background.paper", color: "text.primary", "&:hover": { bgcolor: "background.default" } }}
+                    sx={{ mt: "auto" }}
                   >
                     继续阅读
                   </Button>
@@ -250,7 +256,7 @@ export function LibraryPage() {
             </Stack>
           </>
           </>}
-        </Box>
+        </Box>}
 
         <Stack
           direction={{ xs: "column", sm: "row" }}
@@ -293,17 +299,15 @@ export function LibraryPage() {
         {query && <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>找到 {books.length} 本相关藏书</Typography>}
 
         {booksQuery.isPending ? (
-          <Box role="status" aria-label="正在加载藏书" sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2, minmax(0, 1fr))", md: "repeat(4, minmax(0, 1fr))" }, gap: 3 }}>
-            {Array.from({ length: 4 }, (_, index) => <Box key={index}><Box sx={{ aspectRatio: "2 / 3", bgcolor: "action.hover", borderRadius: `${tokens.radius.lg}px`, mb: 2 }} /><Skeleton active title={false} paragraph={{ rows: 2 }} /></Box>)}
-          </Box>
+          <BookGridSkeleton label="正在加载藏书" />
         ) : booksQuery.isError && !booksQuery.data ? (
-          <Alert severity="error">书库暂时无法读取，请检查 API 与 NAS 状态。</Alert>
+          <Alert severity="error">书库暂时无法读取，请检查网络与书库连接。</Alert>
         ) : books.length === 0 ? (
-          <BookCatalogEmptyState
-            action={query || format !== "ALL" ? <Button onClick={clearBookFilters}>清除筛选</Button> : undefined}
+          <BookCatalogEmptyState title={query || format !== "ALL" ? "未找到匹配的书籍" : EMPTY_CATALOG_TITLE}
+            action={query || format !== "ALL" ? <Button variant="outlined" onClick={clearBookFilters}>清除筛选</Button> : undefined}
           />
         ) : (
-          <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2, minmax(0, 1fr))", sm: "repeat(3, minmax(0, 1fr))", md: "repeat(4, minmax(0, 1fr))", lg: "repeat(6, minmax(0, 1fr))" }, gap: { xs: 2, sm: 3, md: 4 } }}>
+          <Box sx={bookGridSx}>
             {bookEntries.map(({ item: book, pageIndex, itemIndex }) => (
               <PaginatedItemReveal key={book.id} animate={pageIndex > 0} order={itemIndex}>
                 <BookCard
@@ -311,7 +315,7 @@ export function LibraryPage() {
                   onOpen={setSelectedBook}
                   onRead={(value) => navigate(`/reader/${value.id}`)}
                   onAddToBooklist={setBooklistBook}
-                  onEditMetadata={canManage ? setMetadataBook : undefined}
+                  onEditMetadata={canManage ? editMetadata : undefined}
                   onFileOperation={canManage ? (value, type) => setOperation({ book: value, type }) : undefined}
                 />
               </PaginatedItemReveal>
@@ -321,10 +325,7 @@ export function LibraryPage() {
         {(booksQuery.hasNextPage || booksQuery.isFetchingNextPage) && !booksQuery.isFetchNextPageError && (
           <Stack ref={triggerRef} role="status" aria-live="polite" sx={{ minHeight: 96, alignItems: "center", justifyContent: "center", mt: 3 }}>
             {booksQuery.isFetchingNextPage ? (
-              <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", color: "text.secondary" }}>
-                <Skeleton active title={false} paragraph={{ rows: 2 }} />
-                <Typography variant="body2">正在展开更多藏书…</Typography>
-              </Stack>
+              <CircularProgress aria-label="正在加载更多藏书" />
             ) : automaticLoadingSupported ? (
               <Typography variant="caption" color="text.disabled">继续向下浏览，将自动加载更多藏书</Typography>
             ) : (
@@ -353,7 +354,7 @@ export function LibraryPage() {
         onRead={(book) => navigate(`/reader/${book.id}`)}
         onAddToBooklist={(book) => { setSelectedBook(null); setBooklistBook(book); }}
         onOperation={(book, type) => { setSelectedBook(null); setOperation({ book, type }); }}
-        onEditMetadata={(book) => { setSelectedBook(null); setMetadataBook(book); }}
+        onEditMetadata={(book) => { setSelectedBook(null); editMetadata(book); }}
       />
       <AddToBooklistDialog
         open={Boolean(booklistBook)}
@@ -367,13 +368,6 @@ export function LibraryPage() {
         type={operation?.type ?? null}
         onClose={() => setOperation(null)}
         onCompleted={(result) => { setNotice(result.status === "SUCCEEDED" ? `任务已完成：${result.stage ?? result.status}` : "文件任务已提交，可在文件任务页查看进度"); void queryClient.invalidateQueries({ queryKey: ["books"] }); void queryClient.invalidateQueries({ queryKey: ["recycle-bin"] }); }}
-      />
-      <MetadataDialog
-        book={metadataBook}
-        onClose={() => setMetadataBook(null)}
-        onSavedImmediately={setNotice}
-        onSaveFailed={setNotice}
-        onCompleted={(message) => { setNotice(message); void queryClient.invalidateQueries({ queryKey: ["books"] }); }}
       />
       <BookUploadDialog open={uploadOpen} onClose={() => setUploadOpen(false)} onCompleted={(message) => { setNotice(message); void queryClient.invalidateQueries({ queryKey: ["books"] }); }} />
       <Snackbar open={Boolean(notice)} autoHideDuration={4500} onClose={() => setNotice("")} message={notice} />
@@ -415,12 +409,6 @@ function BookDetailsDialog({ book, canManage, onClose, onRead, onOperation, onEd
       onClose={onClose}
       fullWidth
       maxWidth="md"
-      sx={{
-        width: { xs: `calc(100% - ${tokens.spacing[4]}px)`, sm: `calc(100% - ${tokens.spacing[12]}px)` },
-        maxWidth: { xs: "none", sm: `${tokens.layout.readingMax}px` },
-        maxHeight: { xs: `calc(100% - ${tokens.spacing[4]}px)`, sm: `calc(100% - ${tokens.spacing[12]}px)` },
-        m: { xs: `${tokens.spacing[2]}px`, sm: `${tokens.spacing[6]}px` },
-      }}
     >
       {book && (
         <>
@@ -448,7 +436,7 @@ function BookDetailsDialog({ book, canManage, onClose, onRead, onOperation, onEd
               </Stack>
             )}
             <Box sx={{ display: { xs: "none", sm: "block" }, flex: 1 }} />
-            <Stack direction="row" spacing={1} sx={{ gridColumn: { xs: "1 / -1", sm: "auto" }, width: { xs: "100%", sm: "auto" } }}>
+            <Stack direction="row" spacing={1} sx={{ gridColumn: { xs: "1 / -1", sm: "auto" }, width: { xs: "100%", sm: "auto" }, minWidth: 0, flexWrap: "wrap" }}>
               <Button onClick={onClose} color="inherit" sx={{ flex: { xs: 1, sm: "initial" } }}>关闭</Button>
               <Button startIcon={<BookmarkAddOutlined />} onClick={() => onAddToBooklist(book)} sx={{ flex: { xs: 1, sm: "initial" } }}>加入书单</Button>
               <Button variant="contained" onClick={() => onRead(book)} sx={{ flex: { xs: 1, sm: "initial" } }}>开始阅读</Button>

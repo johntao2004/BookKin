@@ -1,0 +1,29 @@
+{
+  "revision": "20261020-lower-gallery-r27",
+  "sourceWorktree": "/Users/johntao/.codex/worktrees/remote-main-preview/BookKin",
+  "targetWorkspace": "/Users/johntao/Documents/GitHub/BookKin",
+  "legacyUnusedModelFilesRemoved": 23,
+  "scope": "r27 architecture assets, generator, editable source and runtime adapters; preserve existing frontend work through a three-way merge",
+  "moduleCount": 13,
+  "sourceSha256": "ff7d2c6a277e720243acf25049355e9b11cb9f1cf6a754c3662504beb397e64a",
+  "manifestSha256": "e12222992d129c6c07a31500ef30ef41670cd586ccf94ada80a8a59199d17f31",
+  "validation": {
+    "lint": true,
+    "typecheck": true,
+    "build": true,
+    "relatedTestFiles": 17,
+    "relatedTestsPassed": 165,
+    "exactTriangleMultiset": true
+  },
+  "historicalGitCommitsPreserved": true,
+  "browserVerification": {
+    "url": "http://127.0.0.1:4176/virtual-library",
+    "revision": "20261020-lower-gallery-r27",
+    "failedModules": 0,
+    "consoleErrors": 0,
+    "rightStairTraversal": "completed",
+    "cameraHeightAfterTraversal": 9.22,
+    "cameraCollision": "clear",
+    "screenshot": "library-r27-unified-2026-10-20.png"
+  }
+}

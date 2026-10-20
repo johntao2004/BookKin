@@ -16,7 +16,7 @@ export function RegisterPage() {
  const policy=useQuery({queryKey:["registration-status"],queryFn:api.registrationStatus,staleTime:0,refetchOnMount:"always",refetchOnWindowFocus:"always",refetchInterval:5000});
  const [busy,setBusy]=useState(false);const [error,setError]=useState("");
  if(user) return <Navigate to="/library" replace />;
- return <AuthFrame title="注册账户">
+ return <AuthFrame title="注册">
   {policy.isPending ? <Skeleton active /> : policy.isError ? <Alert severity="error">无法确认注册状态，请稍后重试。</Alert> : !policy.data.registrationEnabled ? <Alert severity="info">当前未开放注册。</Alert> :
   <Form layout="vertical" autoComplete="off" onFinish={async (values:{username:string;displayName:string;password:string}) => {
    setBusy(true);setError("");
@@ -30,7 +30,7 @@ export function RegisterPage() {
    <PasswordRequirements policy={passwordPolicy} value={passwordValue} />
    <Form.Item name="confirmation" label="确认密码" dependencies={["password"]} rules={[{required:true,message:"请再次输入密码"},({getFieldValue})=>({validator(_,value){return !value || getFieldValue("password")===value ? Promise.resolve() : Promise.reject(new Error("两次密码不一致"));}})]}><Input.Password autoComplete="new-password" /></Form.Item>
    {error && <Alert severity="error">{error}</Alert>}
-   <Button type="submit" variant="contained" disabled={busy}>{busy ? "正在注册…" : "注册"}</Button>
+   <Button type="submit" variant="contained" disabled={busy} sx={{width:{xs:"100%",sm:"auto"}}}>{busy ? "正在注册…" : "注册"}</Button>
   </Form>}
   <Typography sx={{mt:3}}><Link to="/login">返回登录</Link></Typography>
  </AuthFrame>;

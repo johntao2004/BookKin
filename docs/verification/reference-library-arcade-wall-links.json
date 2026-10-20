@@ -1,0 +1,462 @@
+{
+  "revision": "20261020-arcade-wall-links-r40",
+  "current": {
+    "sourceSha256": "9d858003e1271720f96f9ecebeb22c538d9551330e8d48dc3520feaf49fc25cc",
+    "probes": 74,
+    "failures": [],
+    "passed": true
+  },
+  "baseline": {
+    "sourceSha256": "c0bd528b05014b2b6e2b9aae047c0e30818b74c48efe44281d7a96b2cff8d0fd",
+    "probes": 74,
+    "failures": [
+      {
+        "side": -1,
+        "z": -19.8,
+        "y": 5.2,
+        "passed": false
+      },
+      {
+        "side": -1,
+        "z": -19.8,
+        "y": 6.0,
+        "passed": false
+      },
+      {
+        "side": -1,
+        "z": -19.8,
+        "y": 6.5,
+        "passed": false
+      },
+      {
+        "side": -1,
+        "z": -17.5,
+        "y": 5.2,
+        "passed": false
+      },
+      {
+        "side": -1,
+        "z": -17.5,
+        "y": 6.0,
+        "passed": false
+      },
+      {
+        "side": -1,
+        "z": -17.5,
+        "y": 6.5,
+        "passed": false
+      },
+      {
+        "side": -1,
+        "z": -15,
+        "y": 5.2,
+        "passed": false
+      },
+      {
+        "side": -1,
+        "z": -15,
+        "y": 6.0,
+        "passed": false
+      },
+      {
+        "side": -1,
+        "z": -15,
+        "y": 6.5,
+        "passed": false
+      },
+      {
+        "side": -1,
+        "z": -10,
+        "y": 5.2,
+        "passed": false
+      },
+      {
+        "side": -1,
+        "z": -10,
+        "y": 6.0,
+        "passed": false
+      },
+      {
+        "side": -1,
+        "z": -10,
+        "y": 6.5,
+        "passed": false
+      },
+      {
+        "side": -1,
+        "z": -5,
+        "y": 5.2,
+        "passed": false
+      },
+      {
+        "side": -1,
+        "z": -5,
+        "y": 6.0,
+        "passed": false
+      },
+      {
+        "side": -1,
+        "z": -5,
+        "y": 6.5,
+        "passed": false
+      },
+      {
+        "side": -1,
+        "z": 0,
+        "y": 5.2,
+        "passed": false
+      },
+      {
+        "side": -1,
+        "z": 0,
+        "y": 6.0,
+        "passed": false
+      },
+      {
+        "side": -1,
+        "z": 0,
+        "y": 6.5,
+        "passed": false
+      },
+      {
+        "side": -1,
+        "z": 5,
+        "y": 5.2,
+        "passed": false
+      },
+      {
+        "side": -1,
+        "z": 5,
+        "y": 6.0,
+        "passed": false
+      },
+      {
+        "side": -1,
+        "z": 5,
+        "y": 6.5,
+        "passed": false
+      },
+      {
+        "side": -1,
+        "z": 10,
+        "y": 5.2,
+        "passed": false
+      },
+      {
+        "side": -1,
+        "z": 10,
+        "y": 6.0,
+        "passed": false
+      },
+      {
+        "side": -1,
+        "z": 10,
+        "y": 6.5,
+        "passed": false
+      },
+      {
+        "side": -1,
+        "z": 15,
+        "y": 5.2,
+        "passed": false
+      },
+      {
+        "side": -1,
+        "z": 15,
+        "y": 6.0,
+        "passed": false
+      },
+      {
+        "side": -1,
+        "z": 15,
+        "y": 6.5,
+        "passed": false
+      },
+      {
+        "side": -1,
+        "z": 17.5,
+        "y": 5.2,
+        "passed": false
+      },
+      {
+        "side": -1,
+        "z": 17.5,
+        "y": 6.0,
+        "passed": false
+      },
+      {
+        "side": -1,
+        "z": 17.5,
+        "y": 6.5,
+        "passed": false
+      },
+      {
+        "side": -1,
+        "z": 19.8,
+        "y": 5.2,
+        "passed": false
+      },
+      {
+        "side": -1,
+        "z": 19.8,
+        "y": 6.0,
+        "passed": false
+      },
+      {
+        "side": -1,
+        "z": 19.8,
+        "y": 6.5,
+        "passed": false
+      },
+      {
+        "side": -1,
+        "z": -19.8,
+        "kind": "beam-to-wall",
+        "passed": false
+      },
+      {
+        "side": -1,
+        "z": -17.5,
+        "kind": "beam-to-wall",
+        "passed": false
+      },
+      {
+        "side": -1,
+        "z": 17.5,
+        "kind": "beam-to-wall",
+        "passed": false
+      },
+      {
+        "side": -1,
+        "z": 19.8,
+        "kind": "beam-to-wall",
+        "passed": false
+      },
+      {
+        "side": 1,
+        "z": -19.8,
+        "y": 5.2,
+        "passed": false
+      },
+      {
+        "side": 1,
+        "z": -19.8,
+        "y": 6.0,
+        "passed": false
+      },
+      {
+        "side": 1,
+        "z": -19.8,
+        "y": 6.5,
+        "passed": false
+      },
+      {
+        "side": 1,
+        "z": -17.5,
+        "y": 5.2,
+        "passed": false
+      },
+      {
+        "side": 1,
+        "z": -17.5,
+        "y": 6.0,
+        "passed": false
+      },
+      {
+        "side": 1,
+        "z": -17.5,
+        "y": 6.5,
+        "passed": false
+      },
+      {
+        "side": 1,
+        "z": -15,
+        "y": 5.2,
+        "passed": false
+      },
+      {
+        "side": 1,
+        "z": -15,
+        "y": 6.0,
+        "passed": false
+      },
+      {
+        "side": 1,
+        "z": -15,
+        "y": 6.5,
+        "passed": false
+      },
+      {
+        "side": 1,
+        "z": -10,
+        "y": 5.2,
+        "passed": false
+      },
+      {
+        "side": 1,
+        "z": -10,
+        "y": 6.0,
+        "passed": false
+      },
+      {
+        "side": 1,
+        "z": -10,
+        "y": 6.5,
+        "passed": false
+      },
+      {
+        "side": 1,
+        "z": -5,
+        "y": 5.2,
+        "passed": false
+      },
+      {
+        "side": 1,
+        "z": -5,
+        "y": 6.0,
+        "passed": false
+      },
+      {
+        "side": 1,
+        "z": -5,
+        "y": 6.5,
+        "passed": false
+      },
+      {
+        "side": 1,
+        "z": 0,
+        "y": 5.2,
+        "passed": false
+      },
+      {
+        "side": 1,
+        "z": 0,
+        "y": 6.0,
+        "passed": false
+      },
+      {
+        "side": 1,
+        "z": 0,
+        "y": 6.5,
+        "passed": false
+      },
+      {
+        "side": 1,
+        "z": 5,
+        "y": 5.2,
+        "passed": false
+      },
+      {
+        "side": 1,
+        "z": 5,
+        "y": 6.0,
+        "passed": false
+      },
+      {
+        "side": 1,
+        "z": 5,
+        "y": 6.5,
+        "passed": false
+      },
+      {
+        "side": 1,
+        "z": 10,
+        "y": 5.2,
+        "passed": false
+      },
+      {
+        "side": 1,
+        "z": 10,
+        "y": 6.0,
+        "passed": false
+      },
+      {
+        "side": 1,
+        "z": 10,
+        "y": 6.5,
+        "passed": false
+      },
+      {
+        "side": 1,
+        "z": 15,
+        "y": 5.2,
+        "passed": false
+      },
+      {
+        "side": 1,
+        "z": 15,
+        "y": 6.0,
+        "passed": false
+      },
+      {
+        "side": 1,
+        "z": 15,
+        "y": 6.5,
+        "passed": false
+      },
+      {
+        "side": 1,
+        "z": 17.5,
+        "y": 5.2,
+        "passed": false
+      },
+      {
+        "side": 1,
+        "z": 17.5,
+        "y": 6.0,
+        "passed": false
+      },
+      {
+        "side": 1,
+        "z": 17.5,
+        "y": 6.5,
+        "passed": false
+      },
+      {
+        "side": 1,
+        "z": 19.8,
+        "y": 5.2,
+        "passed": false
+      },
+      {
+        "side": 1,
+        "z": 19.8,
+        "y": 6.0,
+        "passed": false
+      },
+      {
+        "side": 1,
+        "z": 19.8,
+        "y": 6.5,
+        "passed": false
+      },
+      {
+        "side": 1,
+        "z": -19.8,
+        "kind": "beam-to-wall",
+        "passed": false
+      },
+      {
+        "side": 1,
+        "z": -17.5,
+        "kind": "beam-to-wall",
+        "passed": false
+      },
+      {
+        "side": 1,
+        "z": 17.5,
+        "kind": "beam-to-wall",
+        "passed": false
+      },
+      {
+        "side": 1,
+        "z": 19.8,
+        "kind": "beam-to-wall",
+        "passed": false
+      }
+    ],
+    "passed": false
+  },
+  "collisionCount": 18,
+  "passed": true
+}

@@ -13,12 +13,17 @@
     "test:sites": "node --test tests/sites-worker.test.mjs"
   },
   "dependencies": {
+    "@ant-design/graphs": "^2.1.1",
     "@ant-design/icons": "^6.3.4",
     "@antv/g2": "^5.4.8",
     "@tanstack/react-query": "5.101.4",
     "antd": "^6.6.2",
+    "dompurify": "^3.4.17",
     "epubjs": "0.3.93",
+    "hash-wasm": "^4.12.0",
     "html2canvas": "1.4.1",
+    "jszip": "^3.10.2",
+    "marked": "^18.1.1",
     "pdfjs-dist": "6.2.108",
     "react": "19.2.8",
     "react-dom": "19.2.8",

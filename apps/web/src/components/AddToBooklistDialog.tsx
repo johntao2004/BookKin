@@ -1,3 +1,4 @@
+import { EmptyState } from "../ui/empty-state";
 import { AddRounded } from "@/ui/icons";
 import { LibraryAddOutlined } from "@/ui/icons";
 import { Alert } from "@/ui/feedback";
@@ -18,7 +19,6 @@ import { useState } from "react";
 import { api } from "../api/client";
 import type { BooklistDetail } from "../domain/types";
 import { tokens } from "../theme/generated-tokens";
-import { EMPTY_CATALOG_TITLE } from "../ui/empty-state-copy";
 import { VisibilityChip } from "./CatalogDiscoveryCards";
 import { BooklistFormDialog } from "./BooklistFormDialog";
 
@@ -85,7 +85,7 @@ export function AddToBooklistDialog({ open, bookId, bookTitle, onClose, onComple
               </List>
             ) : (
               <Box sx={{ textAlign: "center", py: `${tokens.spacing[8]}px` }}>
-                <Typography variant="h5">{EMPTY_CATALOG_TITLE}</Typography>
+                <EmptyState compact title="暂无可加入的个人书单" />
               </Box>
             )}
             <Button variant={personalLists.length ? "outlined" : "contained"} startIcon={<AddRounded />} onClick={() => setCreateOpen(true)}>新建个人书单</Button>
@@ -95,7 +95,6 @@ export function AddToBooklistDialog({ open, bookId, bookTitle, onClose, onComple
       </Dialog>
       <BooklistFormDialog
         open={open && createOpen}
-        canCreateOfficial={false}
         onClose={() => setCreateOpen(false)}
         onSaved={(booklist, message) => void created(booklist, message)}
       />

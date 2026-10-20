@@ -14,6 +14,7 @@ vi.mock("../auth/AuthContext", async (importOriginal) => {
     RequireAuth: ({ children, roles }: any) => roles?.includes(authState.role) ? children : <p role="alert">权限不足</p>,
   };
 });
+vi.mock("./UserManagementPage", () => ({ UserManagementPage: () => <p>用户管理面板</p> }));
 vi.mock("./LibraryRootsPage", () => ({ LibraryRootsPage: () => <p>书库面板</p> }));
 vi.mock("./ReaderFontsPage", () => ({ ReaderFontsPage: () => <p>字体面板</p> }));
 vi.mock("./AiSettingsPage", () => ({ AiSettingsPage: () => <p>AI 面板</p> }));
@@ -36,7 +37,7 @@ function renderSettings(initialPath: string) {
       <Routes>
         <Route path="/settings" element={<><SettingsPage /><History /></>} />
         <Route path="/profile" element={<RouteProbe />} />
-        <Route path="/display-books" element={<RouteProbe />} />
+        <Route path="/library/all" element={<RouteProbe />} />
         <Route path="/admin/users" element={<RouteProbe />} />
       </Routes>
     </TestProviders>,
@@ -71,10 +72,10 @@ it("shows mail only to the owner and returns an admin mail hash to an allowed se
 
   authState.role = "ADMIN";
   renderSettings("/settings#mail");
-  expect(await screen.findByText("书库面板")).toBeInTheDocument();
+  expect(await screen.findByText("用户管理面板")).toBeInTheDocument();
   expect(screen.queryByRole("tab", { name: "邮件服务" })).not.toBeInTheDocument();
   expect(screen.queryByText("邮件面板")).not.toBeInTheDocument();
-  await waitFor(() => expect(screen.getByText("#library-roots")).toBeInTheDocument());
+  await waitFor(() => expect(screen.getByText("#users")).toBeInTheDocument());
   expect(screen.getByRole("tab", { name: "AI 书目匹配" })).toBeInTheDocument();
 });
 
@@ -87,10 +88,20 @@ it("redirects members to personal information without mounting settings panels",
 
 it.each([
   ["#recovery-email", "/profile"],
-  ["#users", "/admin/users"],
-  ["#file-operations", "/admin/users#operations"],
-  ["#display-books", "/display-books"],
+  ["#display-books", "/library/all"],
 ])("preserves legacy settings route %s -> %s", async (legacyHash, destination) => {
   renderSettings(`/settings${legacyHash}`);
   await waitFor(() => expect(screen.getByTestId("destination")).toHaveTextContent(destination));
+});
+
+it("places user management first and selects it by default", async () => {
+  renderSettings("/settings");
+  expect(await screen.findByText("用户管理面板")).toBeInTheDocument();
+  expect(screen.getAllByRole("tab")[0]).toHaveTextContent("用户管理");
+  expect(screen.getByText("#users")).toBeInTheDocument();
+});
+it.each(["#users", "#users/operations", "#users/logins", "#users/security", "#file-operations"])("opens user management for %s", async hash => {
+  renderSettings(`/settings${hash}`);
+  expect(await screen.findByText("用户管理面板")).toBeInTheDocument();
+  expect(screen.getByRole("tab", { name: "用户管理" })).toHaveAttribute("aria-selected", "true");
 });

@@ -1,0 +1,148 @@
+{
+  "current": {
+    "sourceSha256": "a6a95221d1a7807c32f0bacad8dfc4ab0faace3f1ce947c7aacda479b3ee1ef1",
+    "probes": 25,
+    "failures": [],
+    "passed": true
+  },
+  "baseline": {
+    "sourceSha256": "9d858003e1271720f96f9ecebeb22c538d9551330e8d48dc3520feaf49fc25cc",
+    "probes": 25,
+    "failures": [
+      {
+        "kind": "open-arch",
+        "side": -1,
+        "end": -1,
+        "y": 5.2,
+        "passed": false
+      },
+      {
+        "kind": "open-arch",
+        "side": -1,
+        "end": -1,
+        "y": 6.0,
+        "passed": false
+      },
+      {
+        "kind": "curved-soffit",
+        "side": -1,
+        "end": -1,
+        "passed": false
+      },
+      {
+        "kind": "open-arch",
+        "side": -1,
+        "end": 1,
+        "y": 5.2,
+        "passed": false
+      },
+      {
+        "kind": "open-arch",
+        "side": -1,
+        "end": 1,
+        "y": 6.0,
+        "passed": false
+      },
+      {
+        "kind": "curved-soffit",
+        "side": -1,
+        "end": 1,
+        "passed": false
+      },
+      {
+        "kind": "open-arch",
+        "side": 1,
+        "end": -1,
+        "y": 5.2,
+        "passed": false
+      },
+      {
+        "kind": "open-arch",
+        "side": 1,
+        "end": -1,
+        "y": 6.0,
+        "passed": false
+      },
+      {
+        "kind": "curved-soffit",
+        "side": 1,
+        "end": -1,
+        "passed": false
+      },
+      {
+        "kind": "open-arch",
+        "side": 1,
+        "end": 1,
+        "y": 5.2,
+        "passed": false
+      },
+      {
+        "kind": "open-arch",
+        "side": 1,
+        "end": 1,
+        "y": 6.0,
+        "passed": false
+      },
+      {
+        "kind": "curved-soffit",
+        "side": 1,
+        "end": 1,
+        "passed": false
+      },
+      {
+        "kind": "crosswalk-profile",
+        "end": -1,
+        "x": -8.1,
+        "passed": false
+      },
+      {
+        "kind": "crosswalk-profile",
+        "end": -1,
+        "x": -4,
+        "passed": false
+      },
+      {
+        "kind": "crosswalk-profile",
+        "end": -1,
+        "x": 4,
+        "passed": false
+      },
+      {
+        "kind": "crosswalk-profile",
+        "end": -1,
+        "x": 8.1,
+        "passed": false
+      },
+      {
+        "kind": "crosswalk-profile",
+        "end": 1,
+        "x": -8.1,
+        "passed": false
+      },
+      {
+        "kind": "crosswalk-profile",
+        "end": 1,
+        "x": -4,
+        "passed": false
+      },
+      {
+        "kind": "crosswalk-profile",
+        "end": 1,
+        "x": 4,
+        "passed": false
+      },
+      {
+        "kind": "crosswalk-profile",
+        "end": 1,
+        "x": 8.1,
+        "passed": false
+      },
+      {
+        "kind": "balcony-matching-profile",
+        "passed": false
+      }
+    ],
+    "passed": false
+  },
+  "passed": true
+}

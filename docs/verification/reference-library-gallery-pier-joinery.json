@@ -1,0 +1,157 @@
+{
+  "sourceSha256": "0752e975067afbfed1cb17fe0675b762134b910ff0a05da92cd808efeb599a17",
+  "probes": [
+    {
+      "side": -1,
+      "pierZ": -10,
+      "interiorSurfaceTriangles": 0,
+      "passed": true
+    },
+    {
+      "side": -1,
+      "pierZ": -5,
+      "interiorSurfaceTriangles": 0,
+      "passed": true
+    },
+    {
+      "side": -1,
+      "pierZ": 0,
+      "interiorSurfaceTriangles": 0,
+      "passed": true
+    },
+    {
+      "side": -1,
+      "pierZ": 5,
+      "interiorSurfaceTriangles": 0,
+      "passed": true
+    },
+    {
+      "side": -1,
+      "pierZ": 10,
+      "interiorSurfaceTriangles": 0,
+      "passed": true
+    },
+    {
+      "side": -1,
+      "pierZ": 15,
+      "interiorSurfaceTriangles": 0,
+      "passed": true
+    },
+    {
+      "side": 1,
+      "pierZ": -10,
+      "interiorSurfaceTriangles": 0,
+      "passed": true
+    },
+    {
+      "side": 1,
+      "pierZ": -5,
+      "interiorSurfaceTriangles": 0,
+      "passed": true
+    },
+    {
+      "side": 1,
+      "pierZ": 0,
+      "interiorSurfaceTriangles": 0,
+      "passed": true
+    },
+    {
+      "side": 1,
+      "pierZ": 5,
+      "interiorSurfaceTriangles": 0,
+      "passed": true
+    },
+    {
+      "side": 1,
+      "pierZ": 10,
+      "interiorSurfaceTriangles": 0,
+      "passed": true
+    },
+    {
+      "side": 1,
+      "pierZ": 15,
+      "interiorSurfaceTriangles": 0,
+      "passed": true
+    }
+  ],
+  "passed": true,
+  "baseline": {
+    "sourceSha256": "8e81762fd47e82eb7e1c7c46afa8d394572d972dcc64e5b1ed4817467b555956",
+    "probes": [
+      {
+        "side": -1,
+        "pierZ": -10,
+        "interiorSurfaceTriangles": 66,
+        "passed": false
+      },
+      {
+        "side": -1,
+        "pierZ": -5,
+        "interiorSurfaceTriangles": 66,
+        "passed": false
+      },
+      {
+        "side": -1,
+        "pierZ": 0,
+        "interiorSurfaceTriangles": 66,
+        "passed": false
+      },
+      {
+        "side": -1,
+        "pierZ": 5,
+        "interiorSurfaceTriangles": 66,
+        "passed": false
+      },
+      {
+        "side": -1,
+        "pierZ": 10,
+        "interiorSurfaceTriangles": 61,
+        "passed": false
+      },
+      {
+        "side": -1,
+        "pierZ": 15,
+        "interiorSurfaceTriangles": 49,
+        "passed": false
+      },
+      {
+        "side": 1,
+        "pierZ": -10,
+        "interiorSurfaceTriangles": 66,
+        "passed": false
+      },
+      {
+        "side": 1,
+        "pierZ": -5,
+        "interiorSurfaceTriangles": 66,
+        "passed": false
+      },
+      {
+        "side": 1,
+        "pierZ": 0,
+        "interiorSurfaceTriangles": 66,
+        "passed": false
+      },
+      {
+        "side": 1,
+        "pierZ": 5,
+        "interiorSurfaceTriangles": 66,
+        "passed": false
+      },
+      {
+        "side": 1,
+        "pierZ": 10,
+        "interiorSurfaceTriangles": 61,
+        "passed": false
+      },
+      {
+        "side": 1,
+        "pierZ": 15,
+        "interiorSurfaceTriangles": 49,
+        "passed": false
+      }
+    ],
+    "passed": false
+  },
+  "revision": "20261020-gallery-pier-joinery-r36"
+}

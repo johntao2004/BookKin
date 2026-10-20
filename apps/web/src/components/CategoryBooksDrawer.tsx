@@ -1,4 +1,4 @@
-import { CloseRounded } from "@/ui/icons";
+import { EmptyState } from "../ui/empty-state";
 import { SearchRounded } from "@/ui/icons";
 import { Alert } from "@/ui/feedback";
 import { Box } from "@/ui/primitives";
@@ -6,7 +6,6 @@ import { Button } from "@/ui/buttons";
 import { Checkbox } from "@/ui/forms";
 import { CircularProgress } from "@/ui/feedback";
 import { Drawer } from "@/ui/overlays";
-import { IconButton } from "@/ui/buttons";
 import { InputAdornment } from "@/ui/primitives";
 import { List } from "@/ui/primitives";
 import { ListItem } from "@/ui/primitives";
@@ -20,7 +19,6 @@ import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import { api } from "../api/client";
 import type { BrowseBook } from "../domain/types";
 import { tokens } from "../theme/generated-tokens";
-import { EMPTY_CATALOG_TITLE } from "../ui/empty-state-copy";
 
 export function CategoryBooksDrawer({ open, categoryId, categoryName, onClose }: {
   open: boolean;
@@ -105,19 +103,13 @@ export function CategoryBooksDrawer({ open, categoryId, categoryName, onClose }:
   return (
     <Drawer
       anchor="right"
+      title={`整理分类 · ${categoryName}`}
+      closeLabel="关闭整理分类"
       open={open}
       onClose={busy ? undefined : onClose}
       slotProps={{ paper: { sx: { width: { xs: "100%", sm: 520 }, maxWidth: "100vw" } } }}
     >
       <Stack sx={{ minHeight: "100%", p: { xs: `${tokens.spacing[4]}px`, sm: `${tokens.spacing[6]}px` }, gap: `${tokens.spacing[5]}px` }}>
-        <Stack direction="row" sx={{ alignItems: "flex-start", justifyContent: "space-between", gap: `${tokens.spacing[4]}px` }}>
-          <Box>
-            <Typography variant="overline" color="primary.main">整理分类</Typography>
-            <Typography variant="h3">{categoryName}</Typography>
-            <Typography color="text.secondary" sx={{ mt: `${tokens.spacing[1]}px` }}>勾选或取消藏书，变更只影响分类关系。</Typography>
-          </Box>
-          <IconButton aria-label="关闭整理分类" onClick={onClose} disabled={busy}><CloseRounded /></IconButton>
-        </Stack>
         <TextField
           fullWidth
           label="搜索书名或作者"
@@ -154,7 +146,7 @@ export function CategoryBooksDrawer({ open, categoryId, categoryName, onClose }:
               );
             })}
           </List>
-        ) : <Typography color="text.secondary">{EMPTY_CATALOG_TITLE}</Typography>}
+        ) : <EmptyState compact title="暂无可添加的书籍" />}
       </Stack>
     </Drawer>
   );

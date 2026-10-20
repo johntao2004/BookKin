@@ -1,3 +1,5 @@
+import { EMPTY_RECYCLE_BIN_TITLE } from "../ui/empty-state-copy";
+import { BookGridSkeleton } from "../components/BookGridSkeleton";
 import { DeleteForeverOutlined } from "@/ui/icons";
 import { RestoreFromTrashOutlined } from "@/ui/icons";
 import { Alert } from "@/ui/feedback";
@@ -19,6 +21,7 @@ import { useSearchParams } from "react-router-dom";
 import { api } from "../api/client";
 import { useAuth } from "../auth/AuthContext";
 import { BookCatalogEmptyState } from "../components/BookCatalogEmptyState";
+import { bookGridSx } from "../components/bookGrid";
 import { PageContainer, PageHeader } from "../components/PageHeader";
 import type { FileOperationPreview, RecycleBinEntry } from "../domain/types";
 import { tokens } from "../theme/generated-tokens";
@@ -77,13 +80,13 @@ export function RecycleBinPage() {
       <Alert severity="warning" sx={{ mb: 4 }}>条目会在这里保留 30 天。恢复时不会覆盖同路径的新文件；到期后自动清理，只有主人可以提前永久清理。</Alert>
 
       {query.isPending ? (
-        <Stack spacing={2} sx={{ py: 12, alignItems: "center" }}><CircularProgress /><Typography color="text.secondary">正在打开回收站…</Typography></Stack>
+        <BookGridSkeleton label="正在打开回收站" />
       ) : query.isError ? (
-        <Alert severity="error">回收站暂时无法读取，请检查 API 与 NAS 状态。</Alert>
+        <Alert severity="error">回收站暂时无法读取，请检查网络与书库连接。</Alert>
       ) : entries.length === 0 ? (
-        <BookCatalogEmptyState />
+        <BookCatalogEmptyState title={EMPTY_RECYCLE_BIN_TITLE} />
       ) : (
-        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2, minmax(0, 1fr))", sm: "repeat(3, minmax(0, 1fr))", md: "repeat(4, minmax(0, 1fr))", lg: "repeat(6, minmax(0, 1fr))" }, gap: { xs: 2, sm: 3, md: 4 } }}>
+        <Box sx={bookGridSx}>
           {entries.map((entry) => (
             <RecycleBookCard
               key={entry.id}

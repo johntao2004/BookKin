@@ -17,7 +17,7 @@ class DatabaseMigrationTest {
     @Test
     void migrationCreatesCatalogAndFileJournal() throws Exception {
         var flyway = Flyway.configure().dataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword()).load();
-        assertEquals(15, flyway.migrate().migrationsExecuted);
+        assertEquals(16, flyway.migrate().migrationsExecuted);
         try (var connection = POSTGRES.createConnection("");
              var statement = connection.createStatement();
              var result = statement.executeQuery("select count(*) from information_schema.tables where table_name in ('books','book_files','file_operations','recycle_bin_entries','annotations','book_uploads','book_cover_assets','metadata_lookup_cache','categories','book_categories','booklists','booklist_entries')")) {

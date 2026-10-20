@@ -1,6 +1,9 @@
+const ArticlesPage = lazy(() => import("./pages/ArticlesPage").then(m => ({default:m.ArticlesPage})));
+const ArticleReaderPage = lazy(() => import("./pages/ArticleReaderPage").then(m => ({default:m.ArticleReaderPage})));
+const VaultPage = lazy(() => import("./pages/VaultPage").then(m => ({default:m.VaultPage})));
+const SearchPage = lazy(() => import("./pages/SearchPage").then(m => ({ default: m.SearchPage })));
 const ProfilePage = lazy(() => import("./pages/ProfilePage").then(m => ({ default: m.ProfilePage })));
 const RegisterPage = lazy(() => import("./pages/RegisterPage").then(m => ({default:m.RegisterPage})));
-const DisplayBooksPage = lazy(() => import("./pages/DisplayBooksSettingsPage").then(m => ({ default: m.DisplayBooksSettingsPage })));
 import { Skeleton } from "@/ui/antd";
 import { PageContainer } from "./components/PageHeader";
 import { lazy, Suspense } from "react";
@@ -10,13 +13,14 @@ import { AppShell } from "./components/AppShell";
 
 const UsersPage = lazy(() => import("./pages/UserManagementPage").then(module => ({ default: module.UserManagementPage })));
 const SettingsPage = lazy(() => import("./pages/SettingsPage").then(module => ({ default: module.SettingsPage })));
-const UploadEditPage = lazy(() => import("./pages/UploadEditPage").then(module => ({ default: module.UploadEditPage })));
+const MetadataEditPage = lazy(() => import("./pages/MetadataEditPage").then(module => ({ default: module.MetadataEditPage })));
 const AnnotationsPage = lazy(() => import("./pages/AnnotationsPage").then((module) => ({ default: module.AnnotationsPage })));
 const ChangePasswordPage = lazy(() => import("./pages/ChangePasswordPage").then((module) => ({ default: module.ChangePasswordPage })));
 const CategoriesPage = lazy(() => import("./pages/CategoriesPage").then((module) => ({ default: module.CategoriesPage })));
 const CategoryDetailPage = lazy(() => import("./pages/CategoryDetailPage").then((module) => ({ default: module.CategoryDetailPage })));
 const BooklistsPage = lazy(() => import("./pages/BooklistsPage").then((module) => ({ default: module.BooklistsPage })));
 const BooklistDetailPage = lazy(() => import("./pages/BooklistDetailPage").then((module) => ({ default: module.BooklistDetailPage })));
+const KnowledgeGraphPage = lazy(() => import("./pages/KnowledgeGraphPage").then(module => ({ default: module.KnowledgeGraphPage })));
 const LibraryPage = lazy(() => import("./pages/LibraryPage").then((module) => ({ default: module.LibraryPage })));
 const PublicLibraryPage = lazy(() => import("./pages/PublicLibraryPage").then((module) => ({ default: module.PublicLibraryPage })));
 const RecoveryPage = lazy(() => import("./pages/RecoveryPage").then(m => ({default:m.RecoveryPage})));
@@ -46,7 +50,11 @@ export default function App() {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/change-password" element={<RequireAuth><ChangePasswordPage /></RequireAuth>} />
         <Route element={<PublicShell />}>
+          <Route path="/articles" element={<ArticlesPage />} />
+          <Route path="/articles/:articleId" element={<ArticleReaderPage />} />
+
           <Route path="/library" element={<PublicLibraryPage />} />
+          <Route path="/search" element={<SearchPage />} />
           <Route path="/categories" element={<CategoriesPage />} />
           <Route path="/categories/:categoryId" element={<CategoryDetailPage />} />
           <Route path="/booklists" element={<BooklistsPage />} />
@@ -54,13 +62,16 @@ export default function App() {
           <Route path="/reader/:bookId" element={<ReaderPage />} />
         </Route>
         <Route element={<ProtectedShell />}>
-          <Route path="/library/uploads/:uploadId" element={<RequireAuth roles={["OWNER", "ADMIN"]}><UploadEditPage /></RequireAuth>} />
+          <Route path="/library/books/:bookId/edit" element={<RequireAuth roles={["OWNER", "ADMIN"]}><MetadataEditPage /></RequireAuth>} />
+          <Route path="/library/uploads/:uploadId" element={<RequireAuth roles={["OWNER", "ADMIN"]}><MetadataEditPage /></RequireAuth>} />
+          <Route path="/vault" element={<VaultPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/library/all" element={<LibraryPage />} />
+          <Route path="/knowledge-graph" element={<KnowledgeGraphPage />} />
           <Route path="/virtual-library" element={<VirtualLibraryPage />} />
-          <Route path="/display-books" element={<DisplayBooksPage />} />
-          <Route path="/settings/display-books" element={<Navigate to="/display-books" replace />} />
+          <Route path="/display-books" element={<Navigate to="/library/all" replace />} />
+          <Route path="/settings/display-books" element={<Navigate to="/library/all" replace />} />
           <Route path="/recycle-bin" element={<RequireAuth roles={["OWNER", "ADMIN"]}><RecycleBinPage /></RequireAuth>} />
           <Route path="/annotations" element={<AnnotationsPage />} />
           <Route path="/admin/library-roots" element={<Navigate to="/settings#library-roots" replace />} />

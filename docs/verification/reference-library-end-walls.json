@@ -1,0 +1,122 @@
+{
+  "geometry": "/Users/johntao/.codex/worktrees/remote-main-preview/BookKin/scripts/hogwarts-library/deliverables/architecture-uncompressed.glb",
+  "config": "/Users/johntao/.codex/worktrees/remote-main-preview/BookKin/apps/web/public/assets/hogwarts-library/scene-config.json",
+  "revision": "20261020-lower-gallery-r27",
+  "verticalScale": 1.2,
+  "walkingContract": {
+    "eyeY": 1.78,
+    "bodyRadius": 0.3
+  },
+  "shelfFurniture": {
+    "lowerLecterns": 0,
+    "upperDeskChairSets": 0,
+    "attachedLamps": 0,
+    "colliders": 0,
+    "mainLongTables": 3,
+    "mainBenches": 6,
+    "passed": true
+  },
+  "artGallery": {
+    "end": "A",
+    "paintingCount": 5,
+    "sidePaintingCount": 4,
+    "removedBookcases": 4,
+    "obstructingStatues": 0,
+    "removedPilasters": 6,
+    "surroundCornices": 0,
+    "passed": true
+  },
+  "galleryRayProbes": {
+    "-10.5": [
+      -19.65399932861328,
+      "Canvas • gallery paintings"
+    ],
+    "-4.6": [
+      -19.65399932861328,
+      "Canvas • gallery paintings"
+    ],
+    "4.6": [
+      -19.65399932861328,
+      "Canvas • gallery paintings"
+    ],
+    "10.5": [
+      -19.65399932861328,
+      "Canvas • gallery paintings"
+    ]
+  },
+  "furnitureTriangleProbes": {
+    "upper--1--12.5": 0,
+    "upper--1--7.5": 0,
+    "upper--1--2.5": 0,
+    "upper--1-2.5": 0,
+    "upper--1-7.5": 0,
+    "upper--1-12.5": 0,
+    "upper-1--12.5": 0,
+    "upper-1--7.5": 0,
+    "upper-1--2.5": 0,
+    "upper-1-2.5": 0,
+    "upper-1-7.5": 0,
+    "upper-1-12.5": 0,
+    "lower--1--5": 0,
+    "lower--1-5": 0,
+    "lower--1-11": 0,
+    "lower-1--5": 0,
+    "lower-1-5": 0,
+    "lower-1-11": 0
+  },
+  "wallRayProbes": {
+    "endA-high": [
+      -19.272059531929106,
+      "Oak • rubbed midtone"
+    ],
+    "endA-cornice-bay": [
+      -20.0,
+      "Stone • warm ashlar"
+    ],
+    "endA-canvas": [
+      -19.65399932861328,
+      "Canvas • reference portrait study"
+    ],
+    "endA-arch--1.9-9.1": [
+      -19.149999618530273,
+      "Oak • rubbed midtone"
+    ],
+    "endA-arch--1.9-10.0": [
+      -19.149999618530273,
+      "Oak • rubbed midtone"
+    ],
+    "endA-arch--1.9-12.0": [
+      -19.149999618530273,
+      "Oak • rubbed midtone"
+    ],
+    "endA-arch-1.9-9.1": [
+      -19.149999618530273,
+      "Oak • rubbed midtone"
+    ],
+    "endA-arch-1.9-10.0": [
+      -19.149999618530273,
+      "Oak • rubbed midtone"
+    ],
+    "endA-arch-1.9-12.0": [
+      -19.149999618530273,
+      "Oak • rubbed midtone"
+    ],
+    "endB-panel": [
+      19.860000610351562,
+      "Walnut • deep recess"
+    ],
+    "endB-base": [
+      19.860000610351562,
+      "Walnut • deep recess"
+    ]
+  },
+  "requiredCollisions": [
+    "end-a-portrait-wall",
+    "end-b-picture-wall",
+    "balcony-floor"
+  ],
+  "passed": true,
+  "failures": [],
+  "sourceSha256": "ff7d2c6a277e720243acf25049355e9b11cb9f1cf6a754c3662504beb397e64a",
+  "configSha256": "f8908d564e8550ad980e21b41bc1879ec199b699754eb96aea465a9b6e35efa5"
+}

@@ -1,0 +1,89 @@
+{
+  "mobile320": {
+    "box": {
+      "bottom": 740,
+      "height": 740,
+      "left": 0,
+      "right": 320,
+      "top": 0,
+      "width": 320,
+      "x": 0,
+      "y": 0
+    },
+    "overflow": 0,
+    "save": {
+      "bottom": 724,
+      "height": 40,
+      "left": 166,
+      "right": 304,
+      "top": 684,
+      "width": 138,
+      "x": 166,
+      "y": 684
+    },
+    "width": 320
+  },
+  "mobile390": {
+    "box": {
+      "bottom": 844,
+      "height": 844,
+      "left": 0,
+      "right": 390,
+      "top": 0,
+      "width": 390,
+      "x": 0,
+      "y": 0
+    },
+    "pageWidth": 390,
+    "width": 390
+  },
+  "mobile430": {
+    "box": {
+      "bottom": 932,
+      "height": 932,
+      "left": 0,
+      "right": 430,
+      "top": 0,
+      "width": 430,
+      "x": 0,
+      "y": 0
+    },
+    "save": {
+      "bottom": 916,
+      "height": 40,
+      "left": 221,
+      "right": 414,
+      "top": 876,
+      "width": 193,
+      "x": 221,
+      "y": 876
+    },
+    "width": 430
+  },
+  "tablet768": {
+    "box": {
+      "bottom": 1024,
+      "height": 1024,
+      "left": 64,
+      "right": 768,
+      "top": 0,
+      "width": 704,
+      "x": 64,
+      "y": 0
+    },
+    "width": 768
+  },
+  "desktop1280": {
+    "box": {
+      "bottom": 900,
+      "height": 900,
+      "left": 576,
+      "right": 1280,
+      "top": 0,
+      "width": 704,
+      "x": 576,
+      "y": 0
+    },
+    "width": 1280
+  }
+}

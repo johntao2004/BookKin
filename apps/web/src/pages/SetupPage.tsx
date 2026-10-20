@@ -50,9 +50,9 @@ export function SetupPage() {
     return (
       <AuthFrame title="暂时无法确认初始化状态">
         <Alert severity="error">为了避免重复初始化，请先重试状态检查。</Alert>
-        <Stack direction="row" spacing={2} sx={{ mt: 3 }}>
-          <Button variant="contained" onClick={() => void setupStatus.refetch()}>重试</Button>
-          <Button component={Link} to="/login">返回登录</Button>
+        <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ mt: 3 }}>
+          <Button variant="contained" onClick={() => void setupStatus.refetch()} sx={{ width: { xs: "100%", sm: "auto" } }}>重试</Button>
+          <Button component={Link} to="/login" sx={{ width: { xs: "100%", sm: "auto" } }}>返回登录</Button>
         </Stack>
       </AuthFrame>
     );
@@ -61,7 +61,7 @@ export function SetupPage() {
   if (setupStatus.data.initialized) return <Navigate to={user ? "/library/all" : "/login"} replace />;
 
   return (
-    <AuthFrame title="建立第一把钥匙" description="主人是唯一可永久清理文件的账户。初始化只允许执行一次。">
+    <AuthFrame title="初始化">
       <Form form={formInstance} name="setup" layout="vertical" autoComplete="off" noValidate onFinish={submit} requiredMark validateTrigger="onBlur">
         <Form.Item label="昵称" name="displayName" rules={[{ required: true, whitespace: true, message: "请输入昵称" }]}>
           <Input autoComplete="off" size="large" />
@@ -78,7 +78,7 @@ export function SetupPage() {
         </Form.Item>
         <Stack spacing={2}>
           {error && <Alert severity="error">{error}</Alert>}
-          <Button type="submit" variant="contained" size="large" disabled={loading}>{loading ? "正在初始化…" : "创建主人账户"}</Button>
+          <Button type="submit" variant="contained" size="large" disabled={loading} sx={{ width: { xs: "100%", sm: "auto" } }}>{loading ? "正在初始化…" : "创建主人账户"}</Button>
         </Stack>
       </Form>
       <Typography variant="body2" color="text.secondary" sx={{ mt: 3 }}>已经初始化？<Link to="/login">返回登录</Link></Typography>

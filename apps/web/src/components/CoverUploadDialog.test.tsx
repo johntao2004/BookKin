@@ -5,8 +5,8 @@ import { demoBooks } from "../data/demo";
 import { TestProviders } from "../test/TestProviders";
 import { CoverUploadDialog } from "./CoverUploadDialog";
 
-vi.mock("./BookUploadDialog", () => ({
-  cropCover: vi.fn(async () => new Blob(["normalized-cover"], { type: "image/jpeg" })),
+vi.mock("./CoverCropDialog", () => ({
+  useCoverCrop: () => ({ requestCrop: vi.fn(async () => new Blob(["normalized-cover"], { type: "image/jpeg" })), cropDialog: null }),
 }));
 
 describe("CoverUploadDialog", () => {

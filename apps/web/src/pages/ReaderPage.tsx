@@ -1,10 +1,11 @@
+import { EmptyState } from "../ui/empty-state";
+import { registerSessionSaver } from "../auth/session-save";
 import { AutoStoriesRounded } from "@/ui/icons";
 import { CheckRounded } from "@/ui/icons";
 import { FontDownloadRounded } from "@/ui/icons";
 import { FormatBoldRounded } from "@/ui/icons";
 import { FormatSizeRounded } from "@/ui/icons";
 import { FormatUnderlinedRounded } from "@/ui/icons";
-import { MenuBookOutlined } from "@/ui/icons";
 import { NavigateBeforeRounded } from "@/ui/icons";
 import { NavigateNextRounded } from "@/ui/icons";
 import { NoteAddOutlined } from "@/ui/icons";
@@ -39,11 +40,13 @@ import { useLocation, useNavigate, useParams, useSearchParams } from "react-rout
 import { readReferenceReaderState } from './reference-library-view';
 import { api } from "../api/client";
 import { useAuth } from "../auth/AuthContext";
-import { READER_CONTENT_HEIGHT, READER_PAGE_HEIGHT, READER_SHELL_HEIGHT } from "../components/readers/reader-layout";
+import { READER_SHELL_HEIGHT, readerShellHeight } from "../components/readers/reader-layout";
 import { PageTurnShade } from "../components/readers/PageTurnShade";
 import { ReaderTopBar } from "../components/readers/ReaderTopBar";
 import { isEditableReaderTarget, isReaderSwipe } from "../components/readers/reader-navigation";
 import { readerSelectionFromRect, type ReaderSelection, type TocItem } from "../components/readers/types";
+import { useReaderPageLayout } from "../components/readers/use-reader-page-layout";
+import { useReaderVisibleHeight } from "../components/readers/use-reader-visible-height";
 import { usePageTurnTransition } from "../components/readers/use-page-turn-transition";
 import { readerWidthSx } from "../components/PageHeader";
 import { demoChapter } from "../data/demo";
@@ -110,6 +113,7 @@ export function ReaderPage() {
   const [bookmarkBusy, setBookmarkBusy] = useState(false);
   const [currentLocator, setCurrentLocator] = useState("epubcfi(/6/14!/4/2)");
   const [readerProgress, setReaderProgress] = useState<number | null>(null);
+  const visibleHeight = useReaderVisibleHeight();
   const currentFont = availableFonts.find((font) => font.id === readerSettings.fontId && font.status === "ENABLED") ?? PRESET_READER_FONTS[0];
   const currentTheme = bookKinThemeOptions[readerTheme].reader;
   const fontSize = readerSettings.fontSize;
@@ -129,6 +133,14 @@ export function ReaderPage() {
     localStorage.setItem(readerSettingsKey, JSON.stringify({ ...readerSettings, theme: readerTheme }));
   }, [readerSettings, readerSettingsKey, readerTheme]);
 
+  useEffect(() => {
+    if(!user || !bookId) return;
+    const key=`bookkin-note-draft:${user.id}:${bookId}`;
+    try { const draft=JSON.parse(localStorage.getItem(key) ?? "null"); if(draft?.selection) {setNote(draft.note ?? "");setSelection(draft.selection);setNoteComposerOpen(Boolean(draft.note));} } catch { /* Ignore damaged local drafts. */ }
+  },[user?.id,bookId]);
+  useEffect(() => {
+    if(user && bookId && selection) localStorage.setItem(`bookkin-note-draft:${user.id}:${bookId}`,JSON.stringify({note,selection}));
+  },[user,bookId,noteComposerOpen,note,selection]);
   const handleReaderSelection = useCallback((nextSelection: ReaderSelection) => {
     if (!user) return;
     setSelection(nextSelection);
@@ -155,6 +167,7 @@ export function ReaderPage() {
   };
 
   const closeSelection = () => {
+    if(user && bookId) localStorage.removeItem(`bookkin-note-draft:${user.id}:${bookId}`);
     setSelection(null);
     setNoteComposerOpen(false);
     setNote("");
@@ -225,7 +238,7 @@ export function ReaderPage() {
   const readerSubtitle = `${book.author} · ${privateBook && api.isDemo ? "第七章" : `${book.format} · ${guest ? "只读阅读" : `已读 ${progressPercent}%`}`}`;
 
   return (
-    <Box sx={{ height: READER_SHELL_HEIGHT, minHeight: 0, overflow: "hidden", bgcolor: "background.default", color: "text.primary", transition: "background-color 180ms ease" }}>
+    <Box data-reader-visible-height={visibleHeight || undefined} sx={{ height: readerShellHeight(visibleHeight), minHeight: 0, display: "flex", flexDirection: "column", overflow: "hidden", bgcolor: "background.default", color: "text.primary", transition: "background-color 180ms ease" }}>
       <ReaderTopBar
         title={book.title}
         subtitle={readerSubtitle}
@@ -243,13 +256,15 @@ export function ReaderPage() {
         onOpenNotes={() => setNotesOpen(true)}
       />
 
-      {!api.isDemo ? (
-        <Suspense fallback={<Stack sx={{ minHeight: READER_CONTENT_HEIGHT, alignItems: "center", justifyContent: "center" }}><CircularProgress /></Stack>}>
-          {book.format === "PDF"
-            ? <PdfDocumentReader bookId={bookId} annotations={annotations} theme={currentTheme} fontSize={fontSize} fontFamily={fontFamily} pageTurnEnabled={readerSettings.pageTurnEnabled} fontSourceUrl={!guest && currentFont.source === "CUSTOM" ? `/api/v1/reader-fonts/${currentFont.id}/content` : undefined} contentUrl={guest ? `/api/v1/display-books/${bookId}/content` : undefined} readOnly={guest} target={annotationTarget} onSelect={handleReaderSelection} onPosition={handlePosition} />
-            : <EpubDocumentReader bookId={bookId} annotations={annotations} theme={currentTheme} fontSize={fontSize} fontFamily={fontFamily} pageTurnEnabled={readerSettings.pageTurnEnabled} fontSourceUrl={!guest && currentFont.source === "CUSTOM" ? `/api/v1/reader-fonts/${currentFont.id}/content` : undefined} contentUrl={guest ? `/api/v1/display-books/${bookId}/content` : undefined} readOnly={guest} target={epubTarget} onNavigation={handleNavigation} onSelect={handleReaderSelection} onPosition={handlePosition} />}
-        </Suspense>
-      ) : <DemoPagedSurface bookTitle={book.title} format={book.format} theme={currentTheme} night={readerTheme === "NIGHT"} fontFamily={fontFamily} fontSize={fontSize} pageTurnEnabled={readerSettings.pageTurnEnabled} paragraphs={demoChapter} annotations={annotations} onMouseUp={captureSelection} />}
+      <Box sx={{ position: "relative", flex: "1 1 auto", minHeight: 0, overflow: "hidden" }}>
+        {!api.isDemo ? (
+          <Suspense fallback={<Stack sx={{ height: "100%", alignItems: "center", justifyContent: "center" }}><CircularProgress /></Stack>}>
+            {book.format === "PDF"
+              ? <PdfDocumentReader bookId={bookId} annotations={annotations} theme={currentTheme} fontSize={fontSize} fontFamily={fontFamily} pageTurnEnabled={readerSettings.pageTurnEnabled} fontSourceUrl={!guest && currentFont.source === "CUSTOM" ? `/api/v1/reader-fonts/${currentFont.id}/content` : undefined} contentUrl={guest ? `/api/v1/display-books/${bookId}/content` : undefined} readOnly={guest} target={annotationTarget} onSelect={handleReaderSelection} onPosition={handlePosition} />
+              : <EpubDocumentReader bookId={bookId} annotations={annotations} theme={currentTheme} fontSize={fontSize} fontFamily={fontFamily} pageTurnEnabled={readerSettings.pageTurnEnabled} fontSourceUrl={!guest && currentFont.source === "CUSTOM" ? `/api/v1/reader-fonts/${currentFont.id}/content` : undefined} contentUrl={guest ? `/api/v1/display-books/${bookId}/content` : undefined} readOnly={guest} target={epubTarget} onNavigation={handleNavigation} onSelect={handleReaderSelection} onPosition={handlePosition} />}
+          </Suspense>
+        ) : <DemoPagedSurface bookTitle={book.title} format={book.format} theme={currentTheme} night={readerTheme === "NIGHT"} fontFamily={fontFamily} fontSize={fontSize} pageTurnEnabled={readerSettings.pageTurnEnabled} paragraphs={demoChapter} annotations={annotations} onMouseUp={captureSelection} />}
+      </Box>
 
       <Popover
         open={Boolean(user && selection) && !noteComposerOpen}
@@ -266,7 +281,7 @@ export function ReaderPage() {
             <AnnotationToolButton label="下划线" icon={<FormatUnderlinedRounded fontSize="small" />} disabled={annotationBusy} onClick={() => void saveAnnotation("UNDERLINE")} />
             <AnnotationToolButton label="加粗" icon={<FormatBoldRounded fontSize="small" />} disabled={annotationBusy} onClick={() => void saveAnnotation("BOLD")} />
           </Stack>
-          <Divider />
+          <Divider sx={{ my: 0 }} />
           <AnnotationColorSwatches
             value={highlightColor}
             onChange={(color) => {
@@ -288,7 +303,7 @@ export function ReaderPage() {
       >
         <DialogTitle sx={{ pb: 1 }}>高亮并写笔记</DialogTitle>
         <DialogContent>
-          <Typography component="div" variant="body2" sx={{ mb: 2, color: currentTheme.foreground, fontFamily: tokens.typography.fontFamily.display, maxHeight: 86, overflow: "auto" }}><Box component="span" sx={{ bgcolor: annotationColorBackground(highlightColor), borderRadius: "2px", boxDecorationBreak: "clone" }}>“{selection?.quote}”</Box></Typography>
+          <Typography component="div" variant="body2" sx={{ mb: 2, color: currentTheme.foreground, fontFamily: tokens.typography.fontFamily.display, maxHeight: 86, overflow: "auto" }}><Box component="span" sx={{ bgcolor: annotationColorBackground(highlightColor), borderRadius: "var(--radius-md)", boxDecorationBreak: "clone" }}>“{selection?.quote}”</Box></Typography>
           <Typography variant="caption" color="text.secondary">高亮颜色</Typography>
           <AnnotationColorSwatches value={highlightColor} onChange={setHighlightColor} disabled={annotationBusy} compact />
           <TextField label="写下这段文字带来的想法" multiline minRows={3} fullWidth value={note} onChange={(event: any) => setNote(event.target.value)} autoFocus />
@@ -296,7 +311,7 @@ export function ReaderPage() {
         <DialogActions sx={{ px: 3, pb: 2.5, justifyContent: "space-between" }}><Button color="inherit" disabled={annotationBusy} onClick={() => { setNoteComposerOpen(false); setNote(""); }}>返回</Button><Button variant="contained" disabled={!note.trim() || annotationBusy} startIcon={<CheckRounded />} onClick={() => void saveAnnotation("HIGHLIGHT", true)}>保存笔记</Button></DialogActions>
       </Dialog>
 
-      <Menu anchorEl={settingsAnchor} open={Boolean(settingsAnchor)} onClose={() => setSettingsAnchor(null)} slotProps={{ paper: { sx: { width: { xs: "min(92vw, 360px)", sm: 360 }, maxHeight: "min(80dvh, 620px)", p: 1 } } }}>
+      <Menu anchorEl={settingsAnchor} open={Boolean(settingsAnchor)} onClose={() => setSettingsAnchor(null)} slotProps={{ paper: { sx: { width: { xs: `calc(100vw - ${tokens.spacing[6]}px)`, sm: 360 }, maxWidth: `calc(100vw - ${tokens.spacing[6]}px)`, maxHeight: `calc(100dvh - ${tokens.spacing[8]}px)`, overflowY: "auto", overscrollBehavior: "contain", p: 1 } } }}>
         <Box sx={{ px: 2, py: 1.5 }}>
           <Stack direction="row" spacing={1} sx={{ alignItems: "center", mb: 1 }}><FontDownloadRounded /><Typography sx={{ fontWeight: 700 }}>阅读设置</Typography></Stack>
           <Typography variant="caption" color="text.secondary">字体</Typography>
@@ -329,17 +344,15 @@ export function ReaderPage() {
         {(Object.keys(bookKinThemeOptions) as ReaderTheme[]).map((key) => <MenuItem key={key} selected={readerTheme === key} onClick={() => setBookKinTheme(key)}><Box sx={{ width: 24, height: 24, borderRadius: "50%", bgcolor: bookKinThemeOptions[key].reader.background, border: 1, borderColor: "divider", mr: 1.5 }} />{bookKinThemeOptions[key].label}{readerTheme === key && <CheckRounded sx={{ ml: "auto" }} />}</MenuItem>)}
       </Menu>
 
-      <Drawer anchor="right" open={notesOpen} onClose={() => setNotesOpen(false)}>
-        <Box role="complementary" sx={{ width: { xs: "min(92vw, 390px)", sm: 390 }, p: 3 }}>
-          <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", mb: 1 }}><MenuBookOutlined color="primary" /><Typography variant="h4">本书笔记</Typography></Stack>
+      <Drawer anchor="right" title="本书笔记" closeLabel="关闭本书笔记" open={notesOpen} onClose={() => setNotesOpen(false)} slotProps={{ paper: { sx: { width: { xs: `calc(100vw - ${tokens.spacing[6]}px)`, sm: 390 }, maxWidth: "100vw" } } }}>
+        <Box role="complementary" sx={{ width: "100%", maxWidth: "100%", height: "100%", overflowY: "auto", overscrollBehavior: "contain", p: { xs: 2, sm: 3 } }}>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>仅你可见 · {annotations.length} 条</Typography>
-          {annotations.length === 0 ? <Typography color="text.secondary" sx={{ py: 6, textAlign: "center" }}>选择正文中的一句话，开始第一条批注。</Typography> : <Stack divider={<Divider flexItem />} spacing={2}>{annotations.map((item) => <Box key={item.id} sx={{ pb: 2 }}><Chip size="small" label={annotationLabel(item)} sx={{ mb: 1.25 }} />{item.quote && <Typography sx={{ fontFamily: tokens.typography.fontFamily.display }}><Box component="span" sx={{ bgcolor: item.style === "HIGHLIGHT" ? annotationColorBackground(item.color) : "transparent", borderRadius: "2px", boxDecorationBreak: "clone" }}>“{item.quote}”</Box></Typography>}{item.note && <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>{item.note}</Typography>}</Box>)}</Stack>}
+          {annotations.length === 0 ? <EmptyState compact title="暂无批注" /> : <Stack divider={<Divider flexItem />} spacing={2}>{annotations.map((item) => <Box key={item.id} sx={{ pb: 2 }}><Chip size="small" label={annotationLabel(item)} sx={{ mb: 1.25 }} />{item.quote && <Typography sx={{ fontFamily: tokens.typography.fontFamily.display }}><Box component="span" sx={{ bgcolor: item.style === "HIGHLIGHT" ? annotationColorBackground(item.color) : "transparent", borderRadius: "var(--radius-md)", boxDecorationBreak: "clone" }}>“{item.quote}”</Box></Typography>}{item.note && <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>{item.note}</Typography>}</Box>)}</Stack>}
         </Box>
       </Drawer>
-      <Drawer anchor="left" open={tocOpen} onClose={() => setTocOpen(false)}>
-        <Box role="navigation" aria-label="书籍目录" sx={{ width: { xs: "min(90vw, 360px)", sm: 360 }, p: 2 }}>
-          <Typography variant="h4" sx={{ px: 2, pt: 1.5, pb: 2 }}>目录</Typography>
-          {tocItems.length === 0 ? <Typography color="text.secondary" sx={{ px: 2, py: 5 }}>这本书没有可用目录。</Typography> : <List disablePadding>{tocItems.map((item, index) => <ListItemButton key={`${item.href}-${index}`} onClick={() => { setEpubTarget(item.href); setTocOpen(false); }} sx={{ pl: 2 + Math.min(item.depth, 3) * 2 }}><ListItemText primary={item.label} /></ListItemButton>)}</List>}
+      <Drawer anchor="left" title="目录" closeLabel="关闭目录" open={tocOpen} onClose={() => setTocOpen(false)} slotProps={{ paper: { sx: { width: { xs: `calc(100vw - ${tokens.spacing[6]}px)`, sm: 360 }, maxWidth: "100vw" } } }}>
+        <Box role="navigation" aria-label="书籍目录" sx={{ width: "100%", maxWidth: "100%", height: "100%", overflowY: "auto", overscrollBehavior: "contain", p: 0 }}>
+          {tocItems.length === 0 ? <EmptyState compact title="暂无目录" /> : <List disablePadding>{tocItems.map((item, index) => <ListItemButton key={`${item.href}-${index}`} onClick={() => { setEpubTarget(item.href); setTocOpen(false); }} sx={{ pl: { xs: 2 + Math.min(item.depth, 3) * 2, sm: 3 + Math.min(item.depth, 3) * 2 }, pr: { xs: 2, sm: 3 } }}><ListItemText primary={item.label} /></ListItemButton>)}</List>}
         </Box>
       </Drawer>
       <Snackbar open={Boolean(notice)} autoHideDuration={3500} onClose={() => setNotice("")} message={notice} />
@@ -358,9 +371,10 @@ function useReadingTimeTracking(bookId: string, enabled: boolean) {
       const elapsedSeconds = Math.min(60, Math.floor((now - lastRecordedAt.current) / 1000));
       const active = includeElapsedBeforeLeaving || (document.visibilityState === "visible" && document.hasFocus());
       lastRecordedAt.current = now;
-      if (active && elapsedSeconds > 0) void api.recordReadingTime(bookId, elapsedSeconds).catch(() => undefined);
+      if (active && elapsedSeconds > 0) return api.recordReadingTime(bookId, elapsedSeconds).catch(() => undefined);
     };
-    const interval = window.setInterval(() => flush(), 30_000);
+    const unregister = registerSessionSaver(() => flush(true));
+    const interval = window.setInterval(() => { void flush(); }, 30_000);
     const handleBlur = () => flush(true);
     const handleVisibility = () => {
       if (document.visibilityState === "hidden") flush(true);
@@ -369,6 +383,7 @@ function useReadingTimeTracking(bookId: string, enabled: boolean) {
     window.addEventListener("blur", handleBlur);
     document.addEventListener("visibilitychange", handleVisibility);
     return () => {
+      unregister();
       window.clearInterval(interval);
       window.removeEventListener("blur", handleBlur);
       document.removeEventListener("visibilitychange", handleVisibility);
@@ -379,7 +394,7 @@ function useReadingTimeTracking(bookId: string, enabled: boolean) {
 
 function AnnotationToolButton({ label, icon, disabled, onClick }: { label: string; icon: React.ReactNode; disabled: boolean; onClick: () => void }) {
   return (
-    <ButtonBase aria-label={label} disabled={disabled} onClick={onClick} sx={{ minWidth: { xs: 68, sm: 76 }, minHeight: 52, px: 1, borderRadius: 1.5, flexDirection: "column", gap: 0.375, color: "inherit", "&:hover": { bgcolor: "action.hover" }, "&:focus-visible": { outline: "2px solid", outlineColor: "primary.main", outlineOffset: -2 } }}>
+    <ButtonBase className="reader-annotation-action" aria-label={label} disabled={disabled} onClick={onClick} sx={{ minWidth: { xs: 68, sm: 76 }, minHeight: 52, px: 1, borderRadius: 1.5, flexDirection: "column", gap: 0.375, color: "inherit", "&:hover": { bgcolor: "action.hover" }, "&:focus-visible": { outline: "2px solid", outlineColor: "primary.main", outlineOffset: -2 } }}>
       {icon}
       <Typography component="span" variant="caption" sx={{ lineHeight: 1.2, whiteSpace: "nowrap" }}>{label}</Typography>
     </ButtonBase>
@@ -393,6 +408,7 @@ function AnnotationColorSwatches({ value, onChange, disabled, compact = false, a
       {highlightColorPresets.map((preset) => (
         <Tooltip key={preset.value} title={applyImmediately ? `使用${preset.label}荧光笔高亮` : `${preset.label}荧光笔`}>
           <ButtonBase
+            className="reader-annotation-swatch"
             aria-label={applyImmediately ? `使用${preset.label}荧光笔高亮` : `选择${preset.label}荧光笔`}
             aria-pressed={applyImmediately ? undefined : value === preset.value}
             disabled={disabled}
@@ -448,7 +464,7 @@ function renderAnnotatedText(paragraph: string, annotations: Annotation[]) {
         sx={{
           color: "inherit",
           bgcolor: style === "HIGHLIGHT" ? annotationColorBackground(annotation.color) : "transparent",
-          borderRadius: style === "HIGHLIGHT" ? "2px" : 0,
+          borderRadius: style === "HIGHLIGHT" ? "var(--radius-md)" : 0,
           fontWeight: style === "BOLD" ? 700 : "inherit",
           textDecoration: style === "UNDERLINE" ? "underline" : "none",
           textDecorationColor: style === "UNDERLINE" ? annotationColorHex(annotation.color) : undefined,
@@ -471,11 +487,14 @@ function DemoPagedSurface({ bookTitle, format, theme, night, fontFamily, fontSiz
   const frameRef = useRef<HTMLDivElement | null>(null);
   const [pageIndex, setPageIndex] = useState(0);
   const [pageCount, setPageCount] = useState(1);
-  const [wideSpread, setWideSpread] = useState(false);
-  const [columnWidth, setColumnWidth] = useState<number | null>(null);
-  const [columnGap, setColumnGap] = useState<number>(tokens.layout.readerPageGap);
   const touchStartXRef = useRef<number | null>(null);
   const pageSurfaceRef = useRef<HTMLDivElement | null>(null);
+  const pageLayout = useReaderPageLayout(pageSurfaceRef);
+  const wideSpread = pageLayout?.spread ?? false;
+  const columnWidth = pageLayout?.columnWidth ?? null;
+  const columnGap = pageLayout?.columnGap ?? tokens.layout.readerPageGap;
+  const pageStride = pageLayout?.pageStride ?? 0;
+  const pagePadding = pageLayout?.pagePadding ?? tokens.spacing[5];
   const annotationRevision = useMemo(
     () => annotations.map((annotation) => `${annotation.id}:${annotation.updatedAt ?? annotation.createdAt}:${annotation.style}:${annotation.color ?? ""}`).join(","),
     [annotations],
@@ -486,36 +505,6 @@ function DemoPagedSurface({ bookTitle, format, theme, night, fontFamily, fontSiz
     pageTurnEnabled,
     { spread: wideSpread, snapshotKey: pageSnapshotKey },
   );
-
-  useEffect(() => {
-    if (typeof window.matchMedia !== "function") return;
-    const query = window.matchMedia(`(min-width: ${tokens.layout.breakpointTablet}px)`);
-    const update = () => setWideSpread(query.matches);
-    update();
-    query.addEventListener("change", update);
-    return () => query.removeEventListener("change", update);
-  }, []);
-
-  useEffect(() => {
-    const frame = frameRef.current;
-    if (!frame) return;
-    const visibleColumns = wideSpread ? 2 : 1;
-    const measureColumnWidth = () => {
-      const styles = window.getComputedStyle(frame);
-      const paddingRight = Number.parseFloat(styles.paddingRight) || 0;
-      const padding = (Number.parseFloat(styles.paddingLeft) || 0) + paddingRight;
-      const contentWidth = Math.max(1, frame.clientWidth - padding);
-      const nextGap = Math.max(tokens.layout.readerPageGap, paddingRight + tokens.spacing[2]);
-      const nextWidth = Math.max(1, Math.floor((contentWidth - (visibleColumns - 1) * nextGap) / visibleColumns));
-      setColumnGap((current) => current === nextGap ? current : nextGap);
-      setColumnWidth((current) => current === nextWidth ? current : nextWidth);
-    };
-    measureColumnWidth();
-    if (typeof ResizeObserver === "undefined") return;
-    const observer = new ResizeObserver(measureColumnWidth);
-    observer.observe(frame);
-    return () => observer.disconnect();
-  }, [wideSpread]);
 
   useEffect(() => {
     const frame = frameRef.current;
@@ -529,9 +518,7 @@ function DemoPagedSurface({ bookTitle, format, theme, night, fontFamily, fontSiz
     };
     const timer = window.setTimeout(measure, 0);
     return () => window.clearTimeout(timer);
-  }, [columnGap, columnWidth, fontFamily, fontSize, paragraphs, wideSpread]);
-
-  const pageStride = columnWidth === null ? 0 : (wideSpread ? 2 : 1) * (columnWidth + columnGap);
+  }, [columnGap, columnWidth, fontFamily, fontSize, pageLayout?.articleWidth, paragraphs, wideSpread]);
 
   const goPrevious = useCallback(() => {
     if (pageIndex > 0) void turnPage("PREVIOUS", () => setPageIndex((current) => Math.max(0, current - 1)));
@@ -568,19 +555,21 @@ function DemoPagedSurface({ bookTitle, format, theme, night, fontFamily, fontSiz
   };
 
   return (
-    <Stack className="reader-viewport" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} sx={{ height: READER_CONTENT_HEIGHT, minHeight: 0, overflow: "hidden", bgcolor: theme.background, color: theme.foreground }}>
-      <Stack direction="row" sx={{ flex: `0 0 ${tokens.layout.readerControlHeight}px`, minHeight: tokens.layout.readerControlHeight, alignItems: "center", justifyContent: "center", gap: 1, borderBottom: 1, borderColor: "divider" }}>
+    <Stack className="reader-viewport" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} sx={{ height: "100%", minHeight: 0, overflow: "hidden", bgcolor: theme.background, color: theme.foreground }}>
+      <Stack direction="row" sx={{ ...readerWidthSx, flex: `0 0 ${tokens.layout.readerControlHeight}px`, minHeight: tokens.layout.readerControlHeight, alignItems: "center", justifyContent: "center", gap: 1, overflowX: "auto", borderBottom: 1, borderColor: "divider" }}>
         <Button color="inherit" startIcon={<NavigateBeforeRounded />} disabled={turning || pageIndex <= 0} onClick={goPrevious}>上一页</Button>
-        <Typography variant="body2" sx={{ minWidth: 100, textAlign: "center", color: theme.muted }}>第 {pageIndex + 1} / {pageCount} 页</Typography>
+        <Typography variant="body2" sx={{ minWidth: 0, flex: "1 1 auto", textAlign: "center", whiteSpace: "nowrap", color: theme.muted }}>第 {pageIndex + 1} / {pageCount} 页</Typography>
         <Button color="inherit" endIcon={<NavigateNextRounded />} disabled={turning || pageIndex >= pageCount - 1} onClick={goNext}>下一页</Button>
       </Stack>
-      <Box ref={pageSurfaceRef} className="reader-page-turn-surface" sx={{ position: "relative", height: READER_PAGE_HEIGHT, minHeight: 0, ...readerWidthSx, overflow: "hidden", py: 2, bgcolor: theme.background, backfaceVisibility: "hidden", transformStyle: "preserve-3d", willChange: turning ? "transform, opacity, filter, clip-path" : "auto" }}>
-        <Box ref={frameRef} component="article" className="reader-paged-text" aria-label={`${format} 演示阅读正文`} onMouseUp={onMouseUp} onTouchEnd={onMouseUp} sx={{ height: "100%", width: "100%", overflow: "visible", transform: columnWidth === null ? `translateX(-${pageIndex * 100}%)` : `translateX(-${pageIndex * pageStride}px)`, transition: "none", columnCount: "auto", columnWidth: columnWidth === null ? "auto" : `${columnWidth}px`, columnGap: `${columnGap}px`, columnFill: "auto", direction: "ltr", writingMode: "horizontal-tb", textOrientation: "mixed", unicodeBidi: "normal", px: { xs: 2, sm: 4, md: 6 }, pt: 3, pb: 3, fontFamily, fontSize, lineHeight: 1.95, color: theme.foreground, background: theme.background, "& > *": { breakInside: "auto" }, "& h1, & h2": { breakInside: "avoid" } }}>
+      <Box ref={pageSurfaceRef} className="reader-page-turn-surface" data-reader-spread={wideSpread} sx={{ position: "relative", flex: "1 1 auto", height: "100%", minHeight: 0, ...readerWidthSx, overflow: "hidden", bgcolor: theme.background, backfaceVisibility: "hidden", transformStyle: "preserve-3d", willChange: turning ? "transform, opacity, filter, clip-path" : "auto" }}>
+        <Box sx={{ height: "100%", width: pageLayout ? `${pageLayout.articleWidth}px` : "100%", maxWidth: "100%", mx: "auto", overflow: "hidden" }}>
+        <Box ref={frameRef} component="article" className="reader-paged-text" aria-label={`${format} 阅读正文`} onMouseUp={onMouseUp} onTouchEnd={onMouseUp} sx={{ height: "100%", width: pageLayout ? `${pageLayout.articleWidth}px` : "100%", maxWidth: "100%", mx: "auto", overflow: "visible", transform: columnWidth === null ? `translateX(-${pageIndex * 100}%)` : `translateX(-${pageIndex * pageStride}px)`, transition: "none", columnCount: "auto", columnWidth: columnWidth === null ? "auto" : `${columnWidth}px`, columnGap: `${columnGap}px`, columnFill: "auto", direction: "ltr", writingMode: "horizontal-tb", textOrientation: "mixed", unicodeBidi: "normal", px: `${pagePadding}px`, pt: `${tokens.spacing[6]}px`, pb: `${tokens.spacing[6]}px`, fontFamily, fontSize, lineHeight: 1.95, color: theme.foreground, background: theme.background, "& > *": { breakInside: "auto" }, "& h1, & h2": { breakInside: "avoid" } }}>
           <Typography variant="overline" component="p" sx={{ color: theme.muted, letterSpacing: ".18em" }}>{format === "EPUB" ? "第七章" : bookTitle}</Typography>
           <Typography component="h1" variant="h2" color="inherit" sx={{ mt: 2, mb: 5, fontFamily: "inherit" }}>{format === "EPUB" ? "灯下" : "海岸与迁徙"}</Typography>
           {paragraphs.map((paragraph, index) => <Typography component="p" key={paragraph} sx={{ fontFamily: "inherit", fontSize: "inherit", lineHeight: 1.95, mb: "1.55em", textIndent: index === 0 ? 0 : "2em", "&::first-letter": index === 0 ? { float: "left", fontSize: "3.5em", lineHeight: 0.9, pr: 1.2, color: "primary.main" } : undefined }}>{renderAnnotatedText(paragraph, annotations)}</Typography>)}
           <Divider sx={{ borderColor: night ? "rgba(255,255,255,.14)" : "divider", my: 5 }} />
-          <Typography variant="caption" component="p" sx={{ textAlign: "center", color: theme.muted, breakInside: "avoid" }}>{format === "PDF" ? "文本层 · 未进行 OCR" : "本章结束"}</Typography>
+          {format !== "PDF" && <Typography variant="caption" component="p" sx={{ textAlign: "center", color: theme.muted, breakInside: "avoid" }}>本章结束</Typography>}
+        </Box>
         </Box>
         <PageTurnShade />
       </Box>

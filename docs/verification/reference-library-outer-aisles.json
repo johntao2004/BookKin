@@ -1,0 +1,114 @@
+{
+  "geometry": "/Users/johntao/.codex/worktrees/remote-main-preview/BookKin/scripts/hogwarts-library/deliverables/architecture-uncompressed.glb",
+  "config": "/Users/johntao/.codex/worktrees/remote-main-preview/BookKin/apps/web/public/assets/hogwarts-library/scene-config.json",
+  "revision": "20261019-guard-joinery-r25",
+  "parameters": {
+    "centerAbsX": 18.0,
+    "requiredNetWidth": 3.0,
+    "rayMax": 2.6,
+    "bodyRadius": 0.3,
+    "eyeY": 1.78,
+    "zRange": [
+      -18.0,
+      18.0
+    ]
+  },
+  "aisles": {
+    "lower": {
+      "left": {
+        "floorY": 0.0,
+        "centerAbsX": 18.0,
+        "floorSamples": 219,
+        "bodyClearBand": {
+          "xMin": -19.5,
+          "xMax": -16.5,
+          "physicalWidth": 3.0,
+          "continuousZRange": [
+            -18.0,
+            18.0
+          ]
+        },
+        "bodyMeshBlockers": 0,
+        "floorGaps": [],
+        "minNetWidth": 3.78,
+        "minClearanceIn": 1.88,
+        "minClearanceOut": 1.58,
+        "widthViolations": [],
+        "colliderBlockers": []
+      },
+      "right": {
+        "floorY": 0.0,
+        "centerAbsX": 18.0,
+        "floorSamples": 219,
+        "bodyClearBand": {
+          "xMin": 16.5,
+          "xMax": 19.5,
+          "physicalWidth": 3.0,
+          "continuousZRange": [
+            -18.0,
+            18.0
+          ]
+        },
+        "bodyMeshBlockers": 0,
+        "floorGaps": [],
+        "minNetWidth": 3.78,
+        "minClearanceIn": 1.88,
+        "minClearanceOut": 1.9,
+        "widthViolations": [],
+        "colliderBlockers": []
+      }
+    },
+    "upper": {
+      "left": {
+        "floorY": 7.4399999999999995,
+        "centerAbsX": 18.0,
+        "floorSamples": 219,
+        "bodyClearBand": {
+          "xMin": -19.5,
+          "xMax": -16.5,
+          "physicalWidth": 3.0,
+          "continuousZRange": [
+            -18.0,
+            18.0
+          ]
+        },
+        "bodyMeshBlockers": 0,
+        "floorGaps": [],
+        "minNetWidth": 3.6,
+        "minClearanceIn": 1.7,
+        "minClearanceOut": 1.9,
+        "widthViolations": [],
+        "colliderBlockers": [],
+        "roofSamples": 195,
+        "roofGaps": []
+      },
+      "right": {
+        "floorY": 7.4399999999999995,
+        "centerAbsX": 18.0,
+        "floorSamples": 219,
+        "bodyClearBand": {
+          "xMin": 16.5,
+          "xMax": 19.5,
+          "physicalWidth": 3.0,
+          "continuousZRange": [
+            -18.0,
+            18.0
+          ]
+        },
+        "bodyMeshBlockers": 0,
+        "floorGaps": [],
+        "minNetWidth": 3.6,
+        "minClearanceIn": 1.7,
+        "minClearanceOut": 1.9,
+        "widthViolations": [],
+        "colliderBlockers": [],
+        "roofSamples": 195,
+        "roofGaps": []
+      }
+    }
+  },
+  "passed": true,
+  "failures": [],
+  "sourceSha256": "c656b8200eb46fc4d80da7d3780f314a29cad5838660307f3d64ce349469a8fa",
+  "configSha256": "7533063816c4f0c7852c9e20ee2877ddd1bb1df5c2bc3a2b1eb8db8b0b5a0576"
+}

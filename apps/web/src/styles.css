@@ -25,7 +25,7 @@ body,
 }
 
 body {
-  min-width: 320px;
+  min-width: 0;
   overflow-x: hidden;
   background: var(--color-canvas);
   color: var(--color-text-primary);
@@ -140,8 +140,9 @@ html {
 }
 
 .bk-button-outlined:not(.ant-btn):hover {
-  border-color: var(--color-primary);
-  color: var(--color-primary);
+  background: var(--color-surface-soft);
+  border-color: var(--color-border-strong);
+  color: var(--color-text-primary);
 }
 
 .bk-button:not(.ant-btn):focus-visible {
@@ -156,6 +157,22 @@ html {
   flex-shrink: 0;
   line-height: 1;
   font-size: var(--typography-font-size-body);
+}
+
+/* Reader tools own their geometry rather than inheriting form-button chrome. */
+.reader-annotation-action.ant-btn {
+  flex: 1 0 auto;
+  height: auto;
+  padding-block: var(--spacing-2);
+}
+
+.reader-annotation-swatch.ant-btn {
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  flex: 0 0 auto;
+  aspect-ratio: 1;
+  border-radius: var(--radius-full);
 }
 
 .bk-icon-button {
@@ -408,8 +425,10 @@ html {
 }
 
 .bk-overlay {
-  max-height: min(80dvh, 620px);
+  max-height: min(calc(var(--app-viewport-height, 100dvh) - var(--spacing-4)), 620px);
+  max-width: calc(var(--app-viewport-width, 100vw) - var(--spacing-4));
   overflow: auto;
+  overscroll-behavior: contain;
 }
 
 .bk-dialog-title {
@@ -438,9 +457,14 @@ html {
 }
 
 .bk-table-container {
-  overflow-x: auto;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto !important;
+  overflow-y: hidden;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
+  overscroll-behavior-inline: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 .bk-table {
@@ -454,6 +478,7 @@ html {
   border-bottom: 1px solid var(--color-border);
   text-align: left;
   vertical-align: top;
+  overflow-wrap: anywhere;
 }
 
 .bk-table th {
@@ -466,7 +491,7 @@ html {
   align-items: center;
   gap: var(--spacing-1);
   margin-inline-end: 0;
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-md);
   padding: var(--spacing-xxs) var(--spacing-sm);
   font-size: var(--typography-font-size-caption);
   line-height: var(--typography-line-height-caption);
@@ -564,21 +589,34 @@ html {
 
 /* Keep modal controls reachable even on short and narrow viewports. */
 .bk-dialog.ant-modal {
-  max-width: calc(100vw - var(--spacing-4) * 2);
+  max-width: calc(var(--app-viewport-width, 100vw) - var(--spacing-4) * 2);
+  max-height: calc(var(--app-viewport-height, 100dvh) - var(--spacing-8) * 2);
   padding-bottom: 0;
+}
+.bk-dialog .ant-modal-container {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(var(--app-viewport-height, 100dvh) - var(--spacing-8) * 2);
+  min-height: 0;
+  overflow: hidden;
 }
 .bk-dialog .ant-modal-body {
   display: flex;
+  flex: 1 1 auto;
   flex-direction: column;
-  max-height: calc(100dvh - var(--spacing-8) * 2);
-  overflow: hidden;
+  min-height: 0;
+  max-height: inherit;
+  overflow: hidden !important;
 }
 .bk-dialog .bk-dialog-title,
 .bk-dialog .bk-dialog-actions { flex-shrink: 0; }
 .bk-dialog .bk-dialog-content {
+  flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
   overflow-wrap: anywhere;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* -------------------------------------------------------------------------
@@ -709,7 +747,7 @@ html {
   height: var(--layout-icon-button-size) !important;
   min-height: var(--layout-icon-button-size) !important;
   padding: 0 !important;
-  border-radius: var(--radius-full) !important;
+  border-radius: var(--radius-md) !important;
 }
 
 .ant-btn-icon-only:hover,
@@ -1001,10 +1039,11 @@ html {
   align-self: flex-start;
   height: fit-content;
   margin: 0;
-  padding: var(--spacing-xs);
-  background: var(--color-surface-card);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
+  padding: 0 var(--spacing-3) 0 0;
+  background: transparent;
+  border: 0;
+  border-right: 1px solid var(--color-border);
+  border-radius: 0;
 }
 
 .bk-settings-navigation--desktop.ant-tabs-left > .ant-tabs-nav::before,
@@ -1037,6 +1076,27 @@ html {
 .bk-settings-navigation--desktop.ant-tabs-left > div > .ant-tabs-body-holder {
   margin-left: 0;
   border-left: 0;
+}
+
+.bk-settings-panel .bk-form-section {
+  width: 100%;
+  min-width: 0;
+  gap: var(--spacing-4);
+  padding: var(--spacing-6) 0;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--color-border);
+  border-radius: 0;
+}
+
+.bk-settings-panel .bk-form-section > .bk-action-toolbar {
+  align-self: flex-end;
+}
+
+@media (max-width: 767px) {
+  .bk-settings-panel .bk-form-section {
+    padding: var(--spacing-4) 0;
+  }
 }
 
 .ant-table-wrapper,
@@ -1085,7 +1145,7 @@ html {
 
 .ant-tag,
 .bk-chip {
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-md);
   border-color: var(--color-border);
   background: var(--color-surface-card);
   color: var(--color-text-primary);
@@ -1191,6 +1251,67 @@ html {
 .ant-skeleton .ant-skeleton-title,
 .ant-skeleton .ant-skeleton-paragraph > li {
   background: var(--color-surface-soft);
+  border-radius: var(--radius-sm);
+}
+
+.bk-book-skeleton {
+  min-width: 0;
+}
+
+.bk-skeleton-block {
+  background: var(--color-surface-soft);
+  border-radius: var(--radius-sm);
+}
+
+.bk-skeleton-block,
+.ant-skeleton.ant-skeleton-active .ant-skeleton-title,
+.ant-skeleton.ant-skeleton-active .ant-skeleton-paragraph > li,
+.ant-skeleton.ant-skeleton-active .ant-skeleton-input,
+.ant-skeleton.ant-skeleton-active .ant-skeleton-button,
+.ant-skeleton.ant-skeleton-active .ant-skeleton-avatar,
+.ant-skeleton.ant-skeleton-active .ant-skeleton-image {
+  background: linear-gradient(90deg, var(--color-surface-soft) 25%, var(--color-surface-strong) 37%, var(--color-surface-soft) 63%);
+  background-size: 400% 100%;
+  animation: bk-skeleton-loading 1.4s ease infinite;
+}
+
+.bk-book-skeleton-cover {
+  aspect-ratio: 2 / 3;
+  border-radius: var(--radius-lg);
+}
+
+.bk-book-skeleton-metadata {
+  margin-top: var(--spacing-3);
+  display: grid;
+  grid-template-rows: calc(var(--typography-font-size-label) * var(--typography-line-height-title-sm)) calc(var(--typography-font-size-body-sm) * var(--typography-line-height-body));
+  align-items: center;
+}
+
+.bk-book-skeleton-title {
+  width: 80%;
+  height: var(--typography-font-size-label);
+}
+
+.bk-book-skeleton-author {
+  width: 56%;
+  height: var(--typography-font-size-body-sm);
+}
+
+@keyframes bk-skeleton-loading {
+  from { background-position: 100% 50%; }
+  to { background-position: 0 50%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bk-skeleton-block,
+  .ant-skeleton.ant-skeleton-active .ant-skeleton-title,
+  .ant-skeleton.ant-skeleton-active .ant-skeleton-paragraph > li,
+  .ant-skeleton.ant-skeleton-active .ant-skeleton-input,
+  .ant-skeleton.ant-skeleton-active .ant-skeleton-button,
+  .ant-skeleton.ant-skeleton-active .ant-skeleton-avatar,
+  .ant-skeleton.ant-skeleton-active .ant-skeleton-image {
+    animation: none;
+  }
 }
 
 @media (max-width: 767px) {
@@ -1216,15 +1337,21 @@ html {
   .ant-modal .ant-modal-footer {
     padding-inline: var(--spacing-lg);
   }
+
+  .bk-table th,
+  .bk-table td {
+    padding: var(--spacing-2) var(--spacing-3);
+  }
 }
 
 /* Keep editable controls distinct from their containing section. */
 .bk-form-section {
-  background: var(--color-surface-soft);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--color-border);
+  border-radius: 0;
   box-shadow: none;
-  padding: var(--spacing-6);
+  padding: var(--spacing-6) 0;
 }
 
 .bk-reader-font-upload-grid {
@@ -1276,4 +1403,87 @@ html {
 .bk-field-label, .bk-input-label {
   color: var(--color-text-primary);
   font-weight: var(--typography-font-weight-medium);
+}
+
+/* Shared compact action menus; preserve larger hit areas for touch input. */
+.bk-action-menu .bk-menu-item,
+.ant-dropdown-menu .ant-dropdown-menu-item,
+.ant-dropdown-menu .ant-dropdown-menu-submenu-title {
+  min-height: var(--layout-menu-item-height);
+  padding: var(--spacing-2) var(--spacing-3);
+  gap: var(--spacing-2);
+  font-size: var(--typography-font-size-body-sm);
+  line-height: var(--typography-line-height-ui);
+}
+
+.bk-action-menu .bk-menu-item > svg:first-child,
+.bk-action-menu .bk-menu-item > span:first-child,
+.bk-action-menu .bk-list-item-icon {
+  margin-inline: 0 !important;
+  margin-right: 0 !important;
+  min-width: 0;
+}
+
+.bk-action-menu .bk-menu-item svg,
+.ant-dropdown-menu .ant-dropdown-menu-item-icon {
+  width: var(--layout-menu-icon-size);
+  height: var(--layout-menu-icon-size);
+  font-size: var(--layout-menu-icon-size);
+  flex-shrink: 0;
+}
+
+/* Menu rows already provide the shared icon-to-label gap. */
+.ant-dropdown-menu .ant-dropdown-menu-item-icon {
+  margin-inline-end: 0 !important;
+}
+
+@media (pointer: coarse) {
+  .bk-action-menu .bk-menu-item,
+  .ant-dropdown-menu .ant-dropdown-menu-item,
+  .ant-dropdown-menu .ant-dropdown-menu-submenu-title {
+    min-height: var(--layout-touch-target);
+  }
+}
+
+/* Nested management tabs keep the underline, without the settings-nav fill. */
+.bk-settings-navigation .bk-user-management-tabs.ant-tabs .ant-tabs-tab,
+.bk-settings-navigation .bk-user-management-tabs.ant-tabs .ant-tabs-tab:hover {
+  background: transparent;
+}
+
+/* One alignment grid for every shared drawer header, content and footer. */
+.bk-drawer { --bk-drawer-gutter: var(--spacing-6); }
+.bk-drawer .ant-drawer-header {
+  padding: var(--spacing-4) var(--bk-drawer-gutter);
+}
+.bk-drawer .ant-drawer-header-title {
+  align-items: center;
+  gap: var(--spacing-3);
+  min-width: 0;
+}
+.bk-drawer .ant-drawer-title { min-width: 0; overflow-wrap: anywhere; }
+.bk-drawer .ant-drawer-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--layout-touch-target);
+  height: var(--layout-touch-target);
+  margin: 0;
+  padding: 0;
+  flex-shrink: 0;
+}
+.bk-drawer .ant-drawer-footer { padding: var(--spacing-4) var(--bk-drawer-gutter); }
+@media (max-width: 767px) { .bk-drawer { --bk-drawer-gutter: var(--spacing-4); } }
+
+.bk-settings-list {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+}
+.bk-settings-row {
+  width: 100%;
+  min-width: 0;
+  border-bottom: 1px solid var(--color-border);
+  border-radius: 0;
 }

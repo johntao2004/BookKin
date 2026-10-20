@@ -1,0 +1,468 @@
+{
+  "passed": true,
+  "queryBounds": [
+    [
+      -14.5,
+      7.3,
+      -20.12
+    ],
+    [
+      14.5,
+      16.3,
+      -18.9
+    ]
+  ],
+  "contract": {
+    "removedPilasterCentersX": [
+      -13.35,
+      -7.1,
+      -2.02,
+      2.02,
+      7.1,
+      13.35
+    ],
+    "absenceX": {
+      "abs2_02": "outward [2.12,2.55] preserving central frame",
+      "otherFour": "center +/-0.55"
+    },
+    "absenceY": [
+      7.55,
+      16.3
+    ],
+    "absenceZ": [
+      -19.98,
+      -19.0
+    ],
+    "timberRealAreaEpsilon": 1e-09,
+    "preservedFloorMaximumY": 7.5,
+    "preservedRoofBacking": "outer corners only, Walnut, y>=15 and z<=-19.60; no Oak exemptions",
+    "artworkViewsYawPitchDegrees": [
+      [
+        0,
+        0
+      ],
+      [
+        -25,
+        0
+      ],
+      [
+        25,
+        0
+      ],
+      [
+        -15,
+        -12
+      ],
+      [
+        15,
+        12
+      ]
+    ]
+  },
+  "limitations": [
+    "Baked uncompressed source GLB only; compressed runtime modules and browser lighting are not evaluated.",
+    "Absence zones clip real timber triangles to six bounded boxes (Y 7.55-16.3, Z -19.98 to -19.0, X centered +/-0.55 except the +/-2.02 outward frame-protected zones) and require zero clipped area above 1e-9; they are not a solid-volume or manufacturing proof and cover only these bounded footprints.",
+    "Canvas visibility samples a 7x9 grid inset 0.14 per artwork and five local views, 0.85 units in front; it does not prove every pixel or arbitrary camera angles.",
+    "Structural ground arcade and exterior wall preservation require the separate end-arcade and end-wall verifiers; this script only checks decorative absence and artwork visibility."
+  ],
+  "current": {
+    "source": "/Users/johntao/.codex/worktrees/remote-main-preview/BookKin/scripts/hogwarts-library/deliverables/architecture-uncompressed.glb",
+    "sourceSha256": "89c97b672ce582b0d2b490c33f426f0ab906c779d6424ba7b11ea42e437b4908",
+    "config": "/Users/johntao/.codex/worktrees/remote-main-preview/BookKin/apps/web/public/assets/hogwarts-library/scene-config.json",
+    "configSha256": "a48a105806b98b4f7767e2d951b683d61002f66f583b951a9c34d3df5bd960ba",
+    "revisionMetadata": "20261019-plain-exhibition-wall-r26",
+    "revisionUsedForAcceptance": false,
+    "boundedTriangleCount": 13688,
+    "absenceZones": [
+      {
+        "pierX": -13.35,
+        "bounds": [
+          [
+            -13.9,
+            7.55,
+            -19.98
+          ],
+          [
+            -12.8,
+            16.3,
+            -19.0
+          ]
+        ],
+        "timberTriangleCount": 0,
+        "preservedRoofBackingArea": 1.34010154,
+        "clippedSurfaceArea": 0.0,
+        "clear": true,
+        "materials": []
+      },
+      {
+        "pierX": -7.1,
+        "bounds": [
+          [
+            -7.65,
+            7.55,
+            -19.98
+          ],
+          [
+            -6.55,
+            16.3,
+            -19.0
+          ]
+        ],
+        "timberTriangleCount": 0,
+        "preservedRoofBackingArea": 0.0,
+        "clippedSurfaceArea": 0.0,
+        "clear": true,
+        "materials": []
+      },
+      {
+        "pierX": -2.02,
+        "bounds": [
+          [
+            -2.55,
+            7.55,
+            -19.98
+          ],
+          [
+            -2.12,
+            16.3,
+            -19.0
+          ]
+        ],
+        "timberTriangleCount": 0,
+        "preservedRoofBackingArea": 0.0,
+        "clippedSurfaceArea": 0.0,
+        "clear": true,
+        "materials": []
+      },
+      {
+        "pierX": 2.02,
+        "bounds": [
+          [
+            2.12,
+            7.55,
+            -19.98
+          ],
+          [
+            2.55,
+            16.3,
+            -19.0
+          ]
+        ],
+        "timberTriangleCount": 0,
+        "preservedRoofBackingArea": 0.0,
+        "clippedSurfaceArea": 0.0,
+        "clear": true,
+        "materials": []
+      },
+      {
+        "pierX": 7.1,
+        "bounds": [
+          [
+            6.55,
+            7.55,
+            -19.98
+          ],
+          [
+            7.65,
+            16.3,
+            -19.0
+          ]
+        ],
+        "timberTriangleCount": 0,
+        "preservedRoofBackingArea": 0.0,
+        "clippedSurfaceArea": 0.0,
+        "clear": true,
+        "materials": []
+      },
+      {
+        "pierX": 13.35,
+        "bounds": [
+          [
+            12.8,
+            7.55,
+            -19.98
+          ],
+          [
+            13.9,
+            16.3,
+            -19.0
+          ]
+        ],
+        "timberTriangleCount": 0,
+        "preservedRoofBackingArea": 1.34010154,
+        "clippedSurfaceArea": 0.0,
+        "clear": true,
+        "materials": []
+      }
+    ],
+    "artworkVisibility": [
+      {
+        "centerX": -10.5,
+        "centerY": 11.76,
+        "canvasSize": [
+          3.6,
+          4.8
+        ],
+        "probeCount": 315,
+        "failures": [],
+        "passed": true
+      },
+      {
+        "centerX": -4.6,
+        "centerY": 11.76,
+        "canvasSize": [
+          3.0,
+          4.0
+        ],
+        "probeCount": 315,
+        "failures": [],
+        "passed": true
+      },
+      {
+        "centerX": 0.0,
+        "centerY": 12.0,
+        "canvasSize": [
+          2.6556,
+          6.64
+        ],
+        "probeCount": 315,
+        "failures": [],
+        "passed": true
+      },
+      {
+        "centerX": 4.6,
+        "centerY": 11.76,
+        "canvasSize": [
+          3.0,
+          4.0
+        ],
+        "probeCount": 315,
+        "failures": [],
+        "passed": true
+      },
+      {
+        "centerX": 10.5,
+        "centerY": 11.76,
+        "canvasSize": [
+          3.6,
+          4.8
+        ],
+        "probeCount": 315,
+        "failures": [],
+        "passed": true
+      }
+    ],
+    "geometryPassed": true,
+    "failures": []
+  },
+  "negativeControl": {
+    "source": "/Users/johntao/.codex/worktrees/remote-main-preview/BookKin/.artifacts/model-clearance/pilasters-before-r26.glb",
+    "sourceSha256": "c656b8200eb46fc4d80da7d3780f314a29cad5838660307f3d64ce349469a8fa",
+    "config": "/Users/johntao/.codex/worktrees/remote-main-preview/BookKin/.artifacts/model-clearance/pilasters-before-r26.json",
+    "configSha256": "7533063816c4f0c7852c9e20ee2877ddd1bb1df5c2bc3a2b1eb8db8b0b5a0576",
+    "revisionMetadata": "20261019-guard-joinery-r25",
+    "revisionUsedForAcceptance": false,
+    "boundedTriangleCount": 22060,
+    "absenceZones": [
+      {
+        "pierX": -13.35,
+        "bounds": [
+          [
+            -13.9,
+            7.55,
+            -19.98
+          ],
+          [
+            -12.8,
+            16.3,
+            -19.0
+          ]
+        ],
+        "timberTriangleCount": 1008,
+        "preservedRoofBackingArea": 1.34010154,
+        "clippedSurfaceArea": 38.81603599,
+        "clear": false,
+        "materials": [
+          "Oak • rubbed midtone"
+        ]
+      },
+      {
+        "pierX": -7.1,
+        "bounds": [
+          [
+            -7.65,
+            7.55,
+            -19.98
+          ],
+          [
+            -6.55,
+            16.3,
+            -19.0
+          ]
+        ],
+        "timberTriangleCount": 1006,
+        "preservedRoofBackingArea": 0.0,
+        "clippedSurfaceArea": 38.81599592,
+        "clear": false,
+        "materials": [
+          "Oak • rubbed midtone"
+        ]
+      },
+      {
+        "pierX": -2.02,
+        "bounds": [
+          [
+            -2.55,
+            7.55,
+            -19.98
+          ],
+          [
+            -2.12,
+            16.3,
+            -19.0
+          ]
+        ],
+        "timberTriangleCount": 556,
+        "preservedRoofBackingArea": 0.0,
+        "clippedSurfaceArea": 14.63252435,
+        "clear": false,
+        "materials": [
+          "Oak • rubbed midtone"
+        ]
+      },
+      {
+        "pierX": 2.02,
+        "bounds": [
+          [
+            2.12,
+            7.55,
+            -19.98
+          ],
+          [
+            2.55,
+            16.3,
+            -19.0
+          ]
+        ],
+        "timberTriangleCount": 556,
+        "preservedRoofBackingArea": 0.0,
+        "clippedSurfaceArea": 14.63252435,
+        "clear": false,
+        "materials": [
+          "Oak • rubbed midtone"
+        ]
+      },
+      {
+        "pierX": 7.1,
+        "bounds": [
+          [
+            6.55,
+            7.55,
+            -19.98
+          ],
+          [
+            7.65,
+            16.3,
+            -19.0
+          ]
+        ],
+        "timberTriangleCount": 1006,
+        "preservedRoofBackingArea": 0.0,
+        "clippedSurfaceArea": 38.81599592,
+        "clear": false,
+        "materials": [
+          "Oak • rubbed midtone"
+        ]
+      },
+      {
+        "pierX": 13.35,
+        "bounds": [
+          [
+            12.8,
+            7.55,
+            -19.98
+          ],
+          [
+            13.9,
+            16.3,
+            -19.0
+          ]
+        ],
+        "timberTriangleCount": 1008,
+        "preservedRoofBackingArea": 1.34010154,
+        "clippedSurfaceArea": 38.81603599,
+        "clear": false,
+        "materials": [
+          "Oak • rubbed midtone"
+        ]
+      }
+    ],
+    "artworkVisibility": [
+      {
+        "centerX": -10.5,
+        "centerY": 11.76,
+        "canvasSize": [
+          3.6,
+          4.8
+        ],
+        "probeCount": 315,
+        "failures": [],
+        "passed": true
+      },
+      {
+        "centerX": -4.6,
+        "centerY": 11.76,
+        "canvasSize": [
+          3.0,
+          4.0
+        ],
+        "probeCount": 315,
+        "failures": [],
+        "passed": true
+      },
+      {
+        "centerX": 0.0,
+        "centerY": 12.0,
+        "canvasSize": [
+          2.6556,
+          6.64
+        ],
+        "probeCount": 315,
+        "failures": [],
+        "passed": true
+      },
+      {
+        "centerX": 4.6,
+        "centerY": 11.76,
+        "canvasSize": [
+          3.0,
+          4.0
+        ],
+        "probeCount": 315,
+        "failures": [],
+        "passed": true
+      },
+      {
+        "centerX": 10.5,
+        "centerY": 11.76,
+        "canvasSize": [
+          3.6,
+          4.8
+        ],
+        "probeCount": 315,
+        "failures": [],
+        "passed": true
+      }
+    ],
+    "geometryPassed": false,
+    "failures": [
+      "removed pilaster x=-13.35 still has timber area=38.81603599 in zone [(-13.9, 7.55, -19.98), (-12.8, 16.3, -19.0)]",
+      "removed pilaster x=-7.1 still has timber area=38.81599592 in zone [(-7.65, 7.55, -19.98), (-6.55, 16.3, -19.0)]",
+      "removed pilaster x=-2.02 still has timber area=14.63252435 in zone [(-2.55, 7.55, -19.98), (-2.12, 16.3, -19.0)]",
+      "removed pilaster x=2.02 still has timber area=14.63252435 in zone [(2.12, 7.55, -19.98), (2.55, 16.3, -19.0)]",
+      "removed pilaster x=7.1 still has timber area=38.81599592 in zone [(6.55, 7.55, -19.98), (7.65, 16.3, -19.0)]",
+      "removed pilaster x=13.35 still has timber area=38.81603599 in zone [(12.8, 7.55, -19.98), (13.9, 16.3, -19.0)]"
+    ]
+  },
+  "negativeControlProvesAllSixAbsenceZonesFailAndArtworkRetained": true
+}

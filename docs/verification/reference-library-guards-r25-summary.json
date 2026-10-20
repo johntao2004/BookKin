@@ -1,0 +1,40 @@
+{
+  "revision": "20261019-guard-joinery-r25",
+  "sourceSha256": "c656b8200eb46fc4d80da7d3780f314a29cad5838660307f3d64ce349469a8fa",
+  "configSha256": "7533063816c4f0c7852c9e20ee2877ddd1bb1df5c2bc3a2b1eb8db8b0b5a0576",
+  "changes": [
+    "shared structural newels; no repeated endpoint spindles",
+    "straight inset moulded rails; slender vertical infill",
+    "single supported L-shaped deck with flush internal seam and adjacent gallery butt joint"
+  ],
+  "checks": {
+    "guardPhysicalProbes": 70,
+    "guardNegativeControlRejectsR24": true,
+    "relevantStairAndGuardTests": 40,
+    "sourceAnd13ExactModules": true,
+    "lint": true,
+    "typecheck": true,
+    "build": true,
+    "fullRun": {
+      "filesPassed": 107,
+      "filesFailed": 1,
+      "testsPassed": 431,
+      "testsFailed": 3,
+      "failedFile": "CategoriesPage.test.tsx",
+      "isolatedRecheckPassed": 8,
+      "singleGreenFullRun": false
+    }
+  },
+  "browserEvidence": ".artifacts/model-clearance/guards-runtime-r25.json",
+  "delivery": {
+    "localPreview": "http://127.0.0.1:4175/virtual-library",
+    "committed": false,
+    "pushed": false,
+    "deployed": false
+  },
+  "executor": {
+    "provider": "authorized Alibaba free-only local relay",
+    "actualModel": "deepseek-v4-flash-0731",
+    "scope": "two collision regression files; reviewed and integrated by lead"
+  }
+}

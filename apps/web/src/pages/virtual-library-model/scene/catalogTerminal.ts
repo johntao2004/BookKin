@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { PALETTE } from '../config';
+import { tokens } from '../../../theme/generated-tokens';
 import { VIRTUAL_LIBRARY_LAYOUT } from '../../virtual-library-layout';
 import { markCameraCollider } from '../../virtual-library-collision';
 import type { LibraryMaterials } from './materials';
@@ -96,5 +97,21 @@ export function createCatalogTerminal(materials: LibraryMaterials) {
 
   markCameraCollider(group, {id: 'catalog-orb', shape: 'box',
     center: {x: 0, y: 0.515, z: 0}, size: {x: 0.75, y: 1.03, z: 0.75}});
+  return group;
+}
+
+/** Larger floor-standing search instrument at the former central globe position. */
+export function createMagicCatalogOrb(materials: LibraryMaterials) {
+  const group = createCatalogTerminal(materials);
+  group.name = 'Magic catalog search orb';
+  group.position.set(0, 0, 8);
+  group.scale.setScalar(2.6);
+  const crystal = group.getObjectByName('Midnight blue celestial globe') as THREE.Mesh<THREE.SphereGeometry, THREE.MeshPhysicalMaterial>;
+  crystal.name = 'Smoky amber crystal with celestial inlay';
+  crystal.material.color.set(tokens.color.primitive.amber600).multiplyScalar(0.42);
+  crystal.material.emissive.set(tokens.color.primitive.amber600);
+  crystal.material.emissiveIntensity = 0.09;
+  crystal.material.metalness = 0.12;
+  crystal.material.roughness = 0.22;
   return group;
 }

@@ -142,6 +142,7 @@ export interface BooklistList {
 }
 
 export interface BookMetadata {
+  publiclyVisible?: boolean;
   id: string;
   title: string;
   subtitle?: string;
@@ -163,6 +164,7 @@ export interface BookMetadata {
 }
 
 export interface BookMetadataDraft {
+  publiclyVisible?: boolean;
   title: string;
   subtitle?: string;
   authors: string[];
@@ -390,4 +392,14 @@ export interface LibraryRoot {
   freeBytes?: number | null;
   lastCapabilityCheckAt?: string | null;
   lastScanAt?: string | null;
+}
+
+export interface BookKnowledge {
+  bookId: string;
+  status: 'GENERATING' | 'READY' | 'FAILED';
+  providerId: string | null;
+  sampledSections: number;
+  totalSections: number;
+  generatedAt: string | null;
+  points: { name: string; quote: string; locator: string }[];
 }

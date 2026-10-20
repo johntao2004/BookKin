@@ -1,0 +1,11 @@
+{
+  "evidence": {
+    "architecture": "20261020-stair-crosswalk-r30",
+    "cameraCollision": "clear",
+    "failedModules": 0,
+    "phase": "ready",
+    "sceneModel": "20261020-open-upper-balcony-r31"
+  },
+  "consoleErrors": [],
+  "note": "Lower end screens accepted on r30; a parallel upper-column task is advancing the scene revision."
+}

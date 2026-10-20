@@ -5,8 +5,8 @@ import { TestProviders } from "../test/TestProviders";
 import { BookCard } from "./BookCard";
 
 describe("BookCard", () => {
-  it("以书名和作者为主，并在更多操作左侧显示阅读百分比", () => {
-    const book = demoBooks[0];
+  it.each([0, 68])("阅读进度为 %i 时仅显示书名、作者与更多操作，不显示百分比", (progress) => {
+    const book = { ...demoBooks[0], progress };
 
     render(
       <TestProviders>
@@ -16,21 +16,11 @@ describe("BookCard", () => {
 
     expect(screen.getByText(book.title)).toBeInTheDocument();
     expect(screen.getByText(book.author)).toBeInTheDocument();
-    expect(screen.getByText(`已读 ${book.progress}%`)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: `${book.title}更多操作` })).toBeInTheDocument();
+    expect(screen.queryByText(/^已读/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/\d+(?:\.\d+)?\s*%/)).not.toBeInTheDocument();
     expect(screen.queryByText(book.format)).not.toBeInTheDocument();
     expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
-  });
-
-  it("未开始阅读时不显示百分比", () => {
-    const book = demoBooks[2];
-
-    render(
-      <TestProviders>
-        <BookCard book={book} onOpen={vi.fn()} onRead={vi.fn()} />
-      </TestProviders>,
-    );
-
-    expect(screen.queryByText(/^已读/)).not.toBeInTheDocument();
   });
 
   it("把封面和书名编辑合并为一个元信息入口，同时保留独立的文件移动", () => {

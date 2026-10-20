@@ -1,5 +1,5 @@
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { TestProviders } from "../../test/TestProviders";
 import { ReaderTopBar } from "./ReaderTopBar";
 
@@ -25,6 +25,8 @@ function renderTopBar(format: "EPUB" | "PDF") {
 }
 
 describe("ReaderTopBar", () => {
+  afterEach(() => vi.restoreAllMocks());
+
   it.each(["EPUB", "PDF"] as const)("uses the shared reader navigation layout for %s", (format) => {
     renderTopBar(format);
 
@@ -33,14 +35,37 @@ describe("ReaderTopBar", () => {
     expect(navigation.closest("section")).toHaveAttribute("data-reader-format", format);
     expect(navigation.closest("section")).toHaveClass("bk-top-nav", "bk-reader-control-bar");
     expect(screen.getByRole("button", { name: "返回书库" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "切换书签" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "阅读设置" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "打开笔记" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "更多阅读操作" })).toBeInTheDocument();
   });
 
-  it("keeps the EPUB directory action as an optional capability", () => {
+  it("keeps directory, bookmark and notes reachable from the compact reader menu", () => {
     renderTopBar("EPUB");
+    fireEvent.click(screen.getByRole("button", { name: "更多阅读操作" }));
+
+    expect(screen.getByRole("menuitem", { name: "目录" })).toBeInTheDocument();
+    expect(screen.getByRole("menuitem", { name: "添加书签" })).toBeInTheDocument();
+    expect(screen.getByRole("menuitem", { name: "本书笔记" })).toBeInTheDocument();
+  });
+
+  it("keeps the full action row available on desktop", () => {
+    vi.spyOn(window, "matchMedia").mockImplementation((query) => ({
+      matches: true,
+      media: query,
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    }));
+
+    renderTopBar("EPUB");
+
     expect(screen.getByRole("button", { name: "打开目录" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "切换书签" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "打开笔记" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "更多阅读操作" })).not.toBeInTheDocument();
   });
 
   it("uses the same page frame as the global navigation", () => {

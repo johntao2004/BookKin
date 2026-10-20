@@ -1,4 +1,5 @@
-import { ArrowForwardRounded } from "@/ui/icons";
+import { EMPTY_CATEGORIES_TITLE } from "../ui/empty-state-copy";
+import { BookGridSkeleton } from "../components/BookGridSkeleton";
 import { AddRounded } from "@/ui/icons";
 import { TuneRounded } from "@/ui/icons";
 import { Alert } from "@/ui/feedback";
@@ -8,7 +9,6 @@ import { Chip } from "@/ui/feedback";
 import { CircularProgress } from "@/ui/feedback";
 import { Divider } from "@/ui/feedback";
 import { FormControl } from "@/ui/primitives";
-import { InputLabel } from "@/ui/primitives";
 import { MenuItem } from "@/ui/primitives";
 import { Paper } from "@/ui/primitives";
 import { Select } from "@/ui/forms";
@@ -16,17 +16,20 @@ import { Stack } from "@/ui/primitives";
 import { Typography } from "@/ui/primitives";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useCallback, useDeferredValue, useMemo, type ReactNode } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { api } from "../api/client";
 import { useAuth } from "../auth/AuthContext";
 import { BrowseBookCard } from "../components/CatalogDiscoveryCards";
 import { BookCatalogEmptyState } from "../components/BookCatalogEmptyState";
 import { CategoryManagementDialog } from "../components/CategoryManagementDialog";
 import { PageContainer, PageHeader } from "../components/PageHeader";
+import { bookGridSx } from "../components/bookGrid";
 import { useInfiniteScrollTrigger } from "../hooks/useInfiniteScrollTrigger";
 import { tokens } from "../theme/generated-tokens";
 
 type SortKey = "recent" | "title" | "author";
+
+
 
 export function CategoriesPage() {
   const { user, ready } = useAuth();
@@ -132,17 +135,6 @@ export function CategoriesPage() {
         <Alert severity="error" action={<Button color="inherit" onClick={() => void categoriesQuery.refetch()}>重试</Button>}>分类暂时无法读取。</Alert>
       ) : categories.length && selectedCategory ? (
         <>
-          <Stack direction={{ xs: "column", md: "row" }} sx={{ alignItems: { xs: "stretch", md: "center" }, gap: `${tokens.spacing[3]}px`, mb: `${tokens.spacing[4]}px` }}>
-            <FormControl size="small" sx={{ minWidth: { md: tokens.spacing[24] + tokens.spacing[12] } }}>
-              <InputLabel id="categories-sort-label">排序</InputLabel>
-              <Select labelId="categories-sort-label" label="排序" value={sort} onChange={(event: any) => updateParam("sort", event.target.value, "recent")}>
-                <MenuItem value="recent">最近入库</MenuItem>
-                <MenuItem value="title">按书名</MenuItem>
-                <MenuItem value="author">按作者</MenuItem>
-              </Select>
-            </FormControl>
-          </Stack>
-
           <Paper
             variant="outlined"
             sx={{
@@ -187,46 +179,29 @@ export function CategoriesPage() {
                 );
               })}
             </FilterRow>
+            <Divider sx={{ my: `${tokens.spacing[3]}px` }} />
+            <FilterRow label="排序" ariaLabel="排序方式">
+              <FormControl size="small" sx={{ minWidth: tokens.spacing[24] + tokens.spacing[12] }}>
+                <Select sx={{ height: { xs: tokens.layout.touchTarget, sm: tokens.layout.controlHeight } }} label="排序" value={sort} onChange={(event: any) => updateParam("sort", event.target.value, "recent")}>
+                  <MenuItem value="recent">最近入库</MenuItem>
+                  <MenuItem value="title">按书名</MenuItem>
+                  <MenuItem value="author">按作者</MenuItem>
+                </Select>
+              </FormControl>
+            </FilterRow>
           </Paper>
 
-          <Stack direction={{ xs: "column", sm: "row" }} sx={{ justifyContent: "space-between", alignItems: { xs: "flex-start", sm: "center" }, gap: `${tokens.spacing[3]}px`, mb: `${tokens.spacing[4]}px` }}>
-            <Stack direction={{ xs: "column", md: "row" }} sx={{ alignItems: { xs: "flex-start", md: "baseline" }, gap: { xs: `${tokens.spacing[1]}px`, md: `${tokens.spacing[3]}px` }, minWidth: 0 }}>
-              <Stack direction="row" sx={{ alignItems: "center", gap: `${tokens.spacing[2]}px`, flexWrap: "wrap", flexShrink: 0 }}>
-                <Typography variant="h5" component="h2">{selectedCategory.name}</Typography>
-                <Chip
-                  size="small"
-                  variant="outlined"
-                  label={query || format !== "ALL" ? `${books.length}${booksQuery.hasNextPage ? "+" : ""} 本匹配` : `${selectedCategory.bookCount} 本可见藏书`}
-                />
-              </Stack>
-              <Typography variant="body2" color="text.secondary" noWrap sx={{ minWidth: 0, maxWidth: tokens.layout.readingMax }}>{selectedCategory.description || "这个分类还没有简介。"}</Typography>
-            </Stack>
-            <Button size="small" component={Link} to={`/categories/${selectedCategory.id}`} endIcon={<ArrowForwardRounded />}>分类详情</Button>
-          </Stack>
-
           {booksQuery.isPending ? (
-            <Stack sx={{ alignItems: "center", py: `${tokens.spacing[16]}px` }}><CircularProgress /><Typography color="text.secondary" sx={{ mt: `${tokens.spacing[2]}px` }}>正在取下书架上的书…</Typography></Stack>
+            <BookGridSkeleton label="正在取下书架上的书" />
           ) : booksQuery.isError && !booksQuery.data ? (
             <Alert severity="error" action={<Button color="inherit" onClick={() => void booksQuery.refetch()}>重试</Button>}>分类书目暂时无法读取。</Alert>
           ) : books.length ? (
-            <Box
-              sx={{
-                display: "grid",
-                gridTemplateColumns: {
-                  xs: "repeat(2, minmax(0, 1fr))",
-                  sm: "repeat(3, minmax(0, 1fr))",
-                  md: "repeat(5, minmax(0, 1fr))",
-                  lg: "repeat(6, minmax(0, 1fr))",
-                },
-                columnGap: { xs: `${tokens.spacing[4]}px`, sm: `${tokens.spacing[6]}px` },
-                rowGap: { xs: `${tokens.spacing[8]}px`, sm: `${tokens.spacing[10]}px` },
-              }}
-            >
+            <Box sx={bookGridSx}>
               {books.map((book) => <BrowseBookCard key={book.id} book={book} />)}
             </Box>
           ) : (
-            <BookCatalogEmptyState
-              action={query || format !== "ALL" ? <Button onClick={clearBookFilters}>清除筛选</Button> : undefined}
+            <BookCatalogEmptyState title={query || format !== "ALL" ? "未找到匹配的书籍" : "该分类暂无书籍"}
+              action={query || format !== "ALL" ? <Button variant="outlined" onClick={clearBookFilters}>清除筛选</Button> : undefined}
             />
           )}
 
@@ -238,7 +213,7 @@ export function CategoriesPage() {
           {booksQuery.isFetchNextPageError ? <Alert severity="warning" sx={{ mt: `${tokens.spacing[6]}px` }} action={<Button color="inherit" onClick={() => void booksQuery.fetchNextPage()}>重新加载</Button>}>更多分类书目加载失败，已显示的书籍不受影响。</Alert> : null}
         </>
       ) : (
-        <BookCatalogEmptyState />
+        <BookCatalogEmptyState title={EMPTY_CATEGORIES_TITLE} />
       )}
       {canManage && categoriesQuery.isSuccess ? (
         <CategoryManagementDialog
@@ -263,7 +238,8 @@ function FilterRow({ label, ariaLabel, children }: { label: string; ariaLabel: s
 
 function filterChipSx(selected: boolean) {
   return {
-    height: { xs: tokens.layout.touchTarget, sm: tokens.spacing[8] },
+    minHeight: { xs: tokens.layout.touchTarget, sm: tokens.layout.controlHeight },
+    borderRadius: `${tokens.radius.sm}px`,
     bgcolor: selected ? "primary.light" : "background.default",
     borderColor: selected ? "primary.main" : "divider",
     color: "text.primary",

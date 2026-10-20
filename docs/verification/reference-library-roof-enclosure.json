@@ -1,0 +1,612 @@
+{
+  "geometry": "/Users/johntao/.codex/worktrees/remote-main-preview/BookKin/scripts/hogwarts-library/deliverables/architecture-uncompressed.glb",
+  "config": "/Users/johntao/.codex/worktrees/remote-main-preview/BookKin/apps/web/public/assets/hogwarts-library/scene-config.json",
+  "revision": "20261019-guard-joinery-r25",
+  "parameters": {
+    "outerWallX": 20.0,
+    "gapZ": [
+      16.4,
+      17.5,
+      19.1
+    ],
+    "gapY": [
+      9.4,
+      12.0,
+      15.0
+    ],
+    "archSpringY": 14.58,
+    "archRise": 2.94,
+    "archRadius": 2.5,
+    "archCenterZ": 17.5,
+    "archX": [
+      9.3,
+      12.0,
+      18.1
+    ],
+    "archDZ": [
+      -2.0,
+      -1.0,
+      0.0,
+      1.0,
+      2.0
+    ],
+    "archTolerance": 0.08,
+    "jointX": [
+      8.8,
+      8.88,
+      8.96
+    ],
+    "jointHitRangeY": [
+      14.0,
+      18.0
+    ]
+  },
+  "probes": {
+    "outerWallGaps": {
+      "left": [
+        {
+          "z": -16.4,
+          "y": 9.4,
+          "hit": {
+            "x": -19.9,
+            "material": "Stone • warm ashlar"
+          }
+        },
+        {
+          "z": -16.4,
+          "y": 12.0,
+          "hit": {
+            "x": -19.9,
+            "material": "Stone • warm ashlar"
+          }
+        },
+        {
+          "z": -16.4,
+          "y": 15.0,
+          "hit": {
+            "x": -19.9,
+            "material": "Stone • warm ashlar"
+          }
+        },
+        {
+          "z": -17.5,
+          "y": 9.4,
+          "hit": {
+            "x": -19.9,
+            "material": "Stone • warm ashlar"
+          }
+        },
+        {
+          "z": -17.5,
+          "y": 12.0,
+          "hit": {
+            "x": -19.9,
+            "material": "Stone • warm ashlar"
+          }
+        },
+        {
+          "z": -17.5,
+          "y": 15.0,
+          "hit": {
+            "x": -19.9,
+            "material": "Stone • warm ashlar"
+          }
+        },
+        {
+          "z": -19.1,
+          "y": 9.4,
+          "hit": {
+            "x": -19.9,
+            "material": "Stone • warm ashlar"
+          }
+        },
+        {
+          "z": -19.1,
+          "y": 12.0,
+          "hit": {
+            "x": -19.9,
+            "material": "Stone • warm ashlar"
+          }
+        },
+        {
+          "z": -19.1,
+          "y": 15.0,
+          "hit": {
+            "x": -19.9,
+            "material": "Stone • warm ashlar"
+          }
+        },
+        {
+          "z": 16.4,
+          "y": 9.4,
+          "hit": {
+            "x": -19.9,
+            "material": "Stone • warm ashlar"
+          }
+        },
+        {
+          "z": 16.4,
+          "y": 12.0,
+          "hit": {
+            "x": -19.9,
+            "material": "Stone • warm ashlar"
+          }
+        },
+        {
+          "z": 16.4,
+          "y": 15.0,
+          "hit": {
+            "x": -19.9,
+            "material": "Stone • warm ashlar"
+          }
+        },
+        {
+          "z": 17.5,
+          "y": 9.4,
+          "hit": {
+            "x": -19.9,
+            "material": "Stone • warm ashlar"
+          }
+        },
+        {
+          "z": 17.5,
+          "y": 12.0,
+          "hit": {
+            "x": -19.9,
+            "material": "Stone • warm ashlar"
+          }
+        },
+        {
+          "z": 17.5,
+          "y": 15.0,
+          "hit": {
+            "x": -19.9,
+            "material": "Stone • warm ashlar"
+          }
+        },
+        {
+          "z": 19.1,
+          "y": 9.4,
+          "hit": {
+            "x": -19.9,
+            "material": "Stone • warm ashlar"
+          }
+        },
+        {
+          "z": 19.1,
+          "y": 12.0,
+          "hit": {
+            "x": -19.9,
+            "material": "Stone • warm ashlar"
+          }
+        },
+        {
+          "z": 19.1,
+          "y": 15.0,
+          "hit": {
+            "x": -19.9,
+            "material": "Stone • warm ashlar"
+          }
+        }
+      ],
+      "right": [
+        {
+          "z": -16.4,
+          "y": 9.4,
+          "hit": {
+            "x": 19.9,
+            "material": "Stone • warm ashlar"
+          }
+        },
+        {
+          "z": -16.4,
+          "y": 12.0,
+          "hit": {
+            "x": 19.9,
+            "material": "Stone • warm ashlar"
+          }
+        },
+        {
+          "z": -16.4,
+          "y": 15.0,
+          "hit": {
+            "x": 19.9,
+            "material": "Stone • warm ashlar"
+          }
+        },
+        {
+          "z": -17.5,
+          "y": 9.4,
+          "hit": {
+            "x": 19.9,
+            "material": "Stone • warm ashlar"
+          }
+        },
+        {
+          "z": -17.5,
+          "y": 12.0,
+          "hit": {
+            "x": 19.9,
+            "material": "Stone • warm ashlar"
+          }
+        },
+        {
+          "z": -17.5,
+          "y": 15.0,
+          "hit": {
+            "x": 19.9,
+            "material": "Stone • warm ashlar"
+          }
+        },
+        {
+          "z": -19.1,
+          "y": 9.4,
+          "hit": {
+            "x": 19.9,
+            "material": "Stone • warm ashlar"
+          }
+        },
+        {
+          "z": -19.1,
+          "y": 12.0,
+          "hit": {
+            "x": 19.9,
+            "material": "Stone • warm ashlar"
+          }
+        },
+        {
+          "z": -19.1,
+          "y": 15.0,
+          "hit": {
+            "x": 19.9,
+            "material": "Stone • warm ashlar"
+          }
+        },
+        {
+          "z": 16.4,
+          "y": 9.4,
+          "hit": {
+            "x": 19.9,
+            "material": "Stone • warm ashlar"
+          }
+        },
+        {
+          "z": 16.4,
+          "y": 12.0,
+          "hit": {
+            "x": 19.9,
+            "material": "Stone • warm ashlar"
+          }
+        },
+        {
+          "z": 16.4,
+          "y": 15.0,
+          "hit": {
+            "x": 19.9,
+            "material": "Stone • warm ashlar"
+          }
+        },
+        {
+          "z": 17.5,
+          "y": 9.4,
+          "hit": {
+            "x": 19.9,
+            "material": "Stone • warm ashlar"
+          }
+        },
+        {
+          "z": 17.5,
+          "y": 12.0,
+          "hit": {
+            "x": 19.9,
+            "material": "Stone • warm ashlar"
+          }
+        },
+        {
+          "z": 17.5,
+          "y": 15.0,
+          "hit": {
+            "x": 19.9,
+            "material": "Stone • warm ashlar"
+          }
+        },
+        {
+          "z": 19.1,
+          "y": 9.4,
+          "hit": {
+            "x": 19.9,
+            "material": "Stone • warm ashlar"
+          }
+        },
+        {
+          "z": 19.1,
+          "y": 12.0,
+          "hit": {
+            "x": 19.9,
+            "material": "Stone • warm ashlar"
+          }
+        },
+        {
+          "z": 19.1,
+          "y": 15.0,
+          "hit": {
+            "x": 19.9,
+            "material": "Stone • warm ashlar"
+          }
+        }
+      ]
+    },
+    "endArchCrown": {
+      "-9.3/-19.5": {
+        "expectedY": 16.344,
+        "measuredY": 16.3425
+      },
+      "-9.3/-18.5": {
+        "expectedY": 17.2746,
+        "measuredY": 17.2731
+      },
+      "-9.3/-17.5": {
+        "expectedY": 17.52,
+        "measuredY": 17.52
+      },
+      "-9.3/-16.5": {
+        "expectedY": 17.2746,
+        "measuredY": 17.2731
+      },
+      "-9.3/-15.5": {
+        "expectedY": 16.344,
+        "measuredY": 16.3425
+      },
+      "-9.3/15.5": {
+        "expectedY": 16.344,
+        "measuredY": 16.3425
+      },
+      "-9.3/16.5": {
+        "expectedY": 17.2746,
+        "measuredY": 17.2731
+      },
+      "-9.3/17.5": {
+        "expectedY": 17.52,
+        "measuredY": 17.52
+      },
+      "-9.3/18.5": {
+        "expectedY": 17.2746,
+        "measuredY": 17.2731
+      },
+      "-9.3/19.5": {
+        "expectedY": 16.344,
+        "measuredY": 16.3425
+      },
+      "-12.0/-19.5": {
+        "expectedY": 16.344,
+        "measuredY": 16.3425
+      },
+      "-12.0/-18.5": {
+        "expectedY": 17.2746,
+        "measuredY": 17.2731
+      },
+      "-12.0/-17.5": {
+        "expectedY": 17.52,
+        "measuredY": 17.52
+      },
+      "-12.0/-16.5": {
+        "expectedY": 17.2746,
+        "measuredY": 17.2731
+      },
+      "-12.0/-15.5": {
+        "expectedY": 16.344,
+        "measuredY": 16.3425
+      },
+      "-12.0/15.5": {
+        "expectedY": 16.344,
+        "measuredY": 16.3425
+      },
+      "-12.0/16.5": {
+        "expectedY": 17.2746,
+        "measuredY": 17.2731
+      },
+      "-12.0/17.5": {
+        "expectedY": 17.52,
+        "measuredY": 17.52
+      },
+      "-12.0/18.5": {
+        "expectedY": 17.2746,
+        "measuredY": 17.2731
+      },
+      "-12.0/19.5": {
+        "expectedY": 16.344,
+        "measuredY": 16.3425
+      },
+      "-18.1/-19.5": {
+        "expectedY": 16.344,
+        "measuredY": 16.3425
+      },
+      "-18.1/-18.5": {
+        "expectedY": 17.2746,
+        "measuredY": 17.2731
+      },
+      "-18.1/-17.5": {
+        "expectedY": 17.52,
+        "measuredY": 17.52
+      },
+      "-18.1/-16.5": {
+        "expectedY": 17.2746,
+        "measuredY": 17.2731
+      },
+      "-18.1/-15.5": {
+        "expectedY": 16.344,
+        "measuredY": 16.3425
+      },
+      "-18.1/15.5": {
+        "expectedY": 16.344,
+        "measuredY": 16.3425
+      },
+      "-18.1/16.5": {
+        "expectedY": 17.2746,
+        "measuredY": 17.2731
+      },
+      "-18.1/17.5": {
+        "expectedY": 17.52,
+        "measuredY": 17.52
+      },
+      "-18.1/18.5": {
+        "expectedY": 17.2746,
+        "measuredY": 17.2731
+      },
+      "-18.1/19.5": {
+        "expectedY": 16.344,
+        "measuredY": 16.3425
+      },
+      "9.3/-19.5": {
+        "expectedY": 16.344,
+        "measuredY": 16.3425
+      },
+      "9.3/-18.5": {
+        "expectedY": 17.2746,
+        "measuredY": 17.2731
+      },
+      "9.3/-17.5": {
+        "expectedY": 17.52,
+        "measuredY": 17.52
+      },
+      "9.3/-16.5": {
+        "expectedY": 17.2746,
+        "measuredY": 17.2731
+      },
+      "9.3/-15.5": {
+        "expectedY": 16.344,
+        "measuredY": 16.3425
+      },
+      "9.3/15.5": {
+        "expectedY": 16.344,
+        "measuredY": 16.3425
+      },
+      "9.3/16.5": {
+        "expectedY": 17.2746,
+        "measuredY": 17.2731
+      },
+      "9.3/17.5": {
+        "expectedY": 17.52,
+        "measuredY": 17.52
+      },
+      "9.3/18.5": {
+        "expectedY": 17.2746,
+        "measuredY": 17.2731
+      },
+      "9.3/19.5": {
+        "expectedY": 16.344,
+        "measuredY": 16.3425
+      },
+      "12.0/-19.5": {
+        "expectedY": 16.344,
+        "measuredY": 16.3425
+      },
+      "12.0/-18.5": {
+        "expectedY": 17.2746,
+        "measuredY": 17.2731
+      },
+      "12.0/-17.5": {
+        "expectedY": 17.52,
+        "measuredY": 17.52
+      },
+      "12.0/-16.5": {
+        "expectedY": 17.2746,
+        "measuredY": 17.2731
+      },
+      "12.0/-15.5": {
+        "expectedY": 16.344,
+        "measuredY": 16.3425
+      },
+      "12.0/15.5": {
+        "expectedY": 16.344,
+        "measuredY": 16.3425
+      },
+      "12.0/16.5": {
+        "expectedY": 17.2746,
+        "measuredY": 17.2731
+      },
+      "12.0/17.5": {
+        "expectedY": 17.52,
+        "measuredY": 17.52
+      },
+      "12.0/18.5": {
+        "expectedY": 17.2746,
+        "measuredY": 17.2731
+      },
+      "12.0/19.5": {
+        "expectedY": 16.344,
+        "measuredY": 16.3425
+      },
+      "18.1/-19.5": {
+        "expectedY": 16.344,
+        "measuredY": 16.3425
+      },
+      "18.1/-18.5": {
+        "expectedY": 17.2746,
+        "measuredY": 17.2731
+      },
+      "18.1/-17.5": {
+        "expectedY": 17.52,
+        "measuredY": 17.52
+      },
+      "18.1/-16.5": {
+        "expectedY": 17.2746,
+        "measuredY": 17.2731
+      },
+      "18.1/-15.5": {
+        "expectedY": 16.344,
+        "measuredY": 16.3425
+      },
+      "18.1/15.5": {
+        "expectedY": 16.344,
+        "measuredY": 16.3425
+      },
+      "18.1/16.5": {
+        "expectedY": 17.2746,
+        "measuredY": 17.2731
+      },
+      "18.1/17.5": {
+        "expectedY": 17.52,
+        "measuredY": 17.52
+      },
+      "18.1/18.5": {
+        "expectedY": 17.2746,
+        "measuredY": 17.2731
+      },
+      "18.1/19.5": {
+        "expectedY": 16.344,
+        "measuredY": 16.3425
+      }
+    },
+    "archJointShell": {
+      "-8.8": {
+        "zSamples": 25,
+        "gaps": []
+      },
+      "-8.88": {
+        "zSamples": 25,
+        "gaps": []
+      },
+      "-8.96": {
+        "zSamples": 25,
+        "gaps": []
+      },
+      "8.8": {
+        "zSamples": 25,
+        "gaps": []
+      },
+      "8.88": {
+        "zSamples": 25,
+        "gaps": []
+      },
+      "8.96": {
+        "zSamples": 25,
+        "gaps": []
+      }
+    }
+  },
+  "passed": true,
+  "failures": [],
+  "sourceSha256": "c656b8200eb46fc4d80da7d3780f314a29cad5838660307f3d64ce349469a8fa",
+  "configSha256": "7533063816c4f0c7852c9e20ee2877ddd1bb1df5c2bc3a2b1eb8db8b0b5a0576"
+}

@@ -1,0 +1,88 @@
+# Original recessed collegiate windows. Coordinates before the side-module shift.
+def clip_window_polygon(subject, boundary):
+ for a,b in zip(boundary,boundary[1:]+boundary[:1]):
+  def distance(p):return (b[0]-a[0])*(p[1]-a[1])-(b[1]-a[1])*(p[0]-a[0])
+  result=[]
+  for p,q in zip(subject,subject[1:]+subject[:1]):
+   dp,dq=distance(p),distance(q)
+   if dp>=-1e-9:result.append(p)
+   if (dp>=0)!=(dq>=0):
+    t=dp/(dp-dq);result.append((p[0]+t*(q[0]-p[0]),p[1]+t*(q[1]-p[1])))
+  subject=result
+  if not subject:break
+ return subject
+
+def _upper_collegiate_window(side,z):
+ half=1.30;bottom=6.98;spring=11.48;top=12.65
+ outline=[(-half,bottom),(half,bottom),(half,spring)]
+ outline.extend((half*(1-(i/24)**2),spring+(top-spring)*i/24) for i in range(1,25))
+ outline.extend((-half*(1-(i/24)**2),spring+(top-spring)*i/24) for i in range(23,-1,-1))
+ # Clip a continuous diamond tessellation to the actual arched opening.
+ # Every pane shares its edges; no rectangular sky plate or transparent mask.
+ edges={}
+ for row in range(-1,16):
+  cy=bottom+row*.42
+  for col in range(-6,7):
+   if (row+col)%2:continue
+   u=col*.32
+   poly=clip_window_polygon([(u-.32,cy),(u,cy-.42),(u+.32,cy),(u,cy+.42)],outline)
+   if len(poly)<3:continue
+   area=abs(sum(a[0]*b[1]-b[0]*a[1] for a,b in zip(poly,poly[1:]+poly[:1])))/2
+   if area<1e-7:continue
+   tone=(row*7+col*3)%17
+   mat='Glass • cool window pane' if tone in (1,5,9) else 'Glass • warm window pane' if tone==12 else 'Glass • pale window'
+   points=[(side*12.02,y,z+u) for u,y in poly]
+   face(mat,points if side>0 else points[::-1])
+   for a,b in zip(poly,poly[1:]+poly[:1]):
+    if math.hypot(a[0]-b[0],a[1]-b[1])<.015:continue
+    key=tuple(sorted((tuple(round(v,5) for v in a),tuple(round(v,5) for v in b))))
+    edges[key]=(a,b)
+ for a,b in edges.values():tube(IRON,[(side*11.99,a[1],z+a[0]),(side*11.99,b[1],z+b[0])],.006,6)
+ # Deep jambs and closed spandrels seal the old black perimeter slit.
+ for sign in (-1,1):
+  box(STONE,(side*12.04,(bottom+spring)/2,z+sign*1.365),(.38,spring-bottom,.17),.012)
+  for i in range(24):
+   t=i/24;tt=(i+1)/24;y=spring+(top-spring)*t;yy=spring+(top-spring)*tt
+   u=sign*half*(1-t*t);uu=sign*half*(1-tt*tt);outer=sign*1.425
+   for x in (11.90,12.30):
+    poly=[(side*x,y,z+u),(side*x,yy,z+uu),(side*x,yy,z+outer),(side*x,y,z+outer)]
+    face(STONE,poly[::-1] if ((sign==side)==(x==11.90)) else poly)
+   quad(STONE,(side*11.90,y,z+u),(side*12.30,y,z+u),(side*12.30,yy,z+uu),(side*11.90,yy,z+uu))
+ box(STONE,(side*12.10,12.745,z),(.4,.19,2.85))
+ pointed(STONE,(side*11.87,0,z),2.70,bottom,spring,top,.075,.28,'x')
+ pointed(STONE,(side*11.80,0,z),2.49,bottom+.10,spring,top-.12,.028,.07,'x')
+ # One continuous central mullion and a single restrained transom.
+ box(STONE,(side*11.83,8.99,z),(.26,4.02,.11),.012)
+ box(STONE,(side*11.85,9.22,z),(.24,.065,2.60),.01)
+ for center in (-.64,.64):
+  for sign in (-1,1):
+   points=[]
+   for i in range(25):
+    t=i/24;points.append((side*11.82,10.98+.80*t,z+center+sign*.59*(1-t*t)))
+   tube(STONE,points,.045,8)
+ # A connected quatrefoil, with its feet tied to both lancet heads.
+ points=[]
+ for i in range(65):
+  a=i*TAU/64;r=.205*(1+.18*math.cos(4*a));points.append((side*11.82,12.08+r*math.sin(a),z+r*math.cos(a)))
+ tube(STONE,points,.032,8)
+ for sign in (-1,1):tube(STONE,[(side*11.82,11.78,z+sign*.64),(side*11.82,12.08,z+sign*.24)],.029,8)
+ tube(STONE,[(side*11.82,12.32,z),(side*11.82,12.62,z)],.03,8)
+ tube(STONE,[(side*11.82,10.98,z),(side*11.82,11.84,z)],.03,8)
+ # Supported stepped sill, with all uprights meeting its top.
+ box(STONE,(side*11.83,6.91,z),(.50,.14,2.98),.025)
+ box(STONE,(side*11.91,6.80,z),(.34,.08,2.81),.012)
+
+# Reuse the same connected lancet construction at the shorter ground-floor
+# elevation. Only newly appended vertices are remapped; previous windows and
+# wall segments stay untouched. Internal vertices use Blender (x, -z, y).
+GROUND_WINDOW_BOTTOM=.9
+GROUND_WINDOW_SCALE=4.2/(12.65-6.98)
+def ground_window_y(y):return GROUND_WINDOW_BOTTOM+(y-6.98)*GROUND_WINDOW_SCALE
+
+def collegiate_window(side,z,ground=False):
+ starts={key:len(data.v) for key,data in BUILD.items()}
+ _upper_collegiate_window(side,z)
+ if ground:
+  for key,data in BUILD.items():
+   start=starts.get(key,0)
+   data.v[start:]=[(x,by,ground_window_y(y)) for x,by,y in data.v[start:]]

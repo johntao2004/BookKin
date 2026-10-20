@@ -30,8 +30,8 @@ describe("LibraryPage", () => {
     const uploadButton = screen.getByRole("button", { name: "上传书籍" });
     const formatControl = screen.getByRole("combobox", { name: "格式" });
     const sortControl = screen.getByRole("combobox", { name: "排序" });
-    const emptyHeadings = await screen.findAllByRole("heading", { name: "无书目" });
-    expect(within(overview).getByRole("heading", { name: "无书目" })).toBeInTheDocument();
+    const emptyHeadings = await screen.findAllByRole("heading", { name: "暂无书籍" });
+    expect(within(overview).getByRole("heading", { name: "本周暂无新书" })).toBeInTheDocument();
     expect(pageTitle.compareDocumentPosition(overview)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
     expect(overview.compareDocumentPosition(catalogTitle)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
     expect(overview.compareDocumentPosition(uploadButton)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
@@ -55,7 +55,7 @@ describe("LibraryPage", () => {
       vi.spyOn(api, "listBooks").mockResolvedValue({ items: [] });
       render(<TestProviders initialPath={initialPath}><LibraryPage /></TestProviders>);
 
-      expect(await screen.findAllByRole("heading", { name: "无书目" })).toHaveLength(2);
+      expect(await screen.findByRole("heading", { name: "暂无书籍" })).toBeInTheDocument();
       expect(screen.queryByRole("button", { name: "清除筛选" })).not.toBeInTheDocument();
     },
   );
@@ -66,7 +66,7 @@ describe("LibraryPage", () => {
       vi.spyOn(api, "listBooks").mockResolvedValue({ items: [] });
       render(<TestProviders initialPath={initialPath}><LibraryPage /></TestProviders>);
 
-      expect(await screen.findAllByRole("heading", { name: "无书目" })).toHaveLength(2);
+      expect(await screen.findByRole("heading", { name: "未找到匹配的书籍" })).toBeInTheDocument();
       expect(screen.getByRole("button", { name: "清除筛选" })).toBeInTheDocument();
       const overview = screen.getByRole("region", { name: "书库概览" });
       const catalogTitle = screen.getByRole("heading", { name: "全部藏书", level: 2 });
@@ -157,7 +157,7 @@ describe("LibraryPage", () => {
     expect(within(currentReading).queryByText(/已读/)).not.toBeInTheDocument();
 
     const recentAnnotations = await screen.findByRole("region", { name: "最近批注" });
-    const recentTitle = await within(recentAnnotations).findByRole("heading", { name: "无书目" });
+    const recentTitle = await within(recentAnnotations).findByRole("heading", { name: "暂无批注" });
     const progressTitle = within(currentReading).getByRole("heading", { name: "请开始阅读" });
     const progressDescription = within(currentReading).getByText("打开任意一本书后，阅读进度会显示在这里。");
     expect(recentTitle).toHaveClass("bk-typography-h4");
@@ -165,4 +165,20 @@ describe("LibraryPage", () => {
     expect(within(recentAnnotations).queryByText("去书中划下第一句话，它会出现在这里。")).not.toBeInTheDocument();
     expect(progressDescription).toHaveClass("bk-typography-body2");
   });
+});
+
+it('can hide overview and restores that choice after reopening while keeping all books visible', async () => {
+  localStorage.removeItem('bookkin-library-overview:anonymous');
+  sessionStorage.clear();
+  vi.spyOn(api, 'listBooks').mockResolvedValue({items: []});
+  const first = render(<TestProviders><LibraryPage /></TestProviders>);
+  fireEvent.click(screen.getByRole('button', {name: '隐藏概览'}));
+  expect(screen.queryByRole('region', {name: '书库概览'})).not.toBeInTheDocument();
+  expect(screen.getByRole('heading', {name: '全部藏书'})).toBeInTheDocument();
+  first.unmount();
+  render(<TestProviders><LibraryPage /></TestProviders>);
+  expect(screen.getByRole('button', {name: '显示概览'})).toHaveAttribute('aria-expanded', 'false');
+  fireEvent.click(screen.getByRole('button', {name: '显示概览'}));
+  expect(screen.getByRole('region', {name: '书库概览'})).toBeInTheDocument();
+  localStorage.removeItem('bookkin-library-overview:anonymous');
 });

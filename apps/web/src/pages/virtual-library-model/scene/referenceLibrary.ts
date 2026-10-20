@@ -1,9 +1,11 @@
 import * as THREE from 'three';
+import { RectAreaLightUniformsLib } from 'three/addons/lights/RectAreaLightUniformsLib.js';
 import { markCameraCollider, type LocalCameraColliderDescriptor } from '../../virtual-library-collision';
 import { disposeScene } from '../../virtual-library-scene';
 import type { ExpandableShelfSection } from './buildLibrary';
 import type { LongRoomBuilt, LongRoomSlot } from './longRoom';
 import type { LibraryMaterials } from './materials';
+import { createMagicCatalogOrb } from './catalogTerminal';
 import { createReferenceLibraryStreaming, type ReferenceLibraryStreaming } from './referenceLibraryStreaming';
 import { PALETTE } from '../config';
 import {
@@ -21,11 +23,13 @@ export interface ReferenceSceneConfig {
   stairRoutes: {left: ReferencePoint[]; right: ReferencePoint[]};
   cameras: {id: string; position: VectorTuple; target: VectorTuple; fov: number}[];
   lighting: {
+    revision?: string;
     exposure: number;
     hemisphere: {sky: string; ground: string; intensity: number};
     ambient: ReferenceLight;
     directional: (ReferenceLight & {position: VectorTuple; target: VectorTuple})[];
-    points: (ReferenceLight & {position: VectorTuple; distance: number})[];
+    areas?: (ReferenceLight & {position: VectorTuple; target: VectorTuple; width: number; height: number})[];
+    points: (ReferenceLight & {position: VectorTuple; distance: number; shadow?: boolean})[];
   };
   omissions: string[];
 }
@@ -79,8 +83,8 @@ export function createReferenceCatalogAnchors() {
   return {shelfSections, catalogSlots};
 }
 
-/** The catalog cases contain boards and books in front of their thin back panel.
- * Keep the full occupied cabinet core solid, without widening either aisle. */
+/** Keep the occupied cabinet core solid through both shelf fronts, including
+ * real books in front of the thin shared back panel. */
 export function referenceCameraColliderDescriptors(config: ReferenceSceneConfig) {
   return config.colliders.map(collider => collider.shape === 'box' && collider.id.startsWith('case-back-')
     ? {...collider, size: {...collider.size, z: Math.max(collider.size.z, R.shelfFrontOffset * 2)}}
@@ -91,12 +95,16 @@ export function referenceCameraColliderDescriptors(config: ReferenceSceneConfig)
 export function validateReferenceConfig(value: unknown): asserts value is ReferenceSceneConfig {
   if (!value || typeof value !== 'object') throw new Error('建筑配置不可读取');
   const config = value as ReferenceSceneConfig;
+  const sameDimension = (actual: number, expected: number) => Number.isFinite(actual)
+    && Math.abs(actual - expected) <= 1e-9;
   if (config.version !== 1 || !Array.isArray(config.colliders) || !config.colliders.length
     || !config.stairRoutes || !config.lighting || !Array.isArray(config.cameras)) {
     throw new Error('建筑配置版本或结构无效');
   }
-  if (!config.dimensions || config.dimensions.width !== R.width || config.dimensions.length !== R.length
-    || config.dimensions.galleryY !== R.galleryY || config.dimensions.vaultCrownY !== R.height) {
+  if (!config.dimensions || !sameDimension(config.dimensions.width, R.width)
+    || !sameDimension(config.dimensions.length, R.length)
+    || !sameDimension(config.dimensions.galleryY, R.galleryY)
+    || !sameDimension(config.dimensions.vaultCrownY, R.height)) {
     throw new Error('建筑尺寸配置尚未同步，请重新加载场景');
   }
   const ids = new Set<string>();
@@ -133,7 +141,7 @@ function createReferenceMaterials(): LibraryMaterials {
 }
 
 export function addReferenceLighting(root: THREE.Group, config: ReferenceSceneConfig) {
-  const {hemisphere, ambient, directional, points} = config.lighting;
+  const {hemisphere, ambient, directional, areas = [], points} = config.lighting;
   root.add(new THREE.HemisphereLight(hemisphere.sky, hemisphere.ground, hemisphere.intensity));
   root.add(new THREE.AmbientLight(ambient.color, ambient.intensity));
   directional.forEach((entry, index) => {
@@ -148,9 +156,26 @@ export function addReferenceLighting(root: THREE.Group, config: ReferenceSceneCo
     }
     root.add(light, light.target);
   });
+  // Finite window emitters model bilateral diffuse sky, rather than opposing suns.
+  // LTC area lights do not cast shadows: this is soft daylight approximation,
+  // not baked global illumination. The central chandelier retains local shadows.
+  if (areas.length) RectAreaLightUniformsLib.init();
+  areas.forEach((entry, index) => {
+    const light = new THREE.RectAreaLight(entry.color, entry.intensity, entry.width, entry.height);
+    light.name = `Window sky ${index}`;
+    light.position.set(...entry.position); light.lookAt(new THREE.Vector3(...entry.target));
+    root.add(light);
+  });
   points.forEach(entry => {
     const light = new THREE.PointLight(entry.color, entry.intensity, entry.distance, 2);
-    light.position.set(...entry.position); root.add(light);
+    light.position.set(...entry.position);
+    light.castShadow = entry.shadow === true;
+    if (light.castShadow) {
+      light.shadow.mapSize.set(1024, 1024);
+      light.shadow.camera.near = 0.2; light.shadow.camera.far = entry.distance;
+      light.shadow.normalBias = 0.035;
+    }
+    root.add(light);
   });
 }
 
@@ -177,7 +202,7 @@ export async function buildReferenceLibraryProgressively(
     for (const collider of referenceCameraColliderDescriptors(config)) markCameraCollider(root, collider);
     const materials = createReferenceMaterials();
     root.userData.disposableCatalogResources = {geometries: [], materials: Object.values(materials)};
-    const catalogTerminal = new THREE.Group();
+    const catalogTerminal = createMagicCatalogOrb(materials);
     root.add(catalogTerminal);
     const anchors = createReferenceCatalogAnchors();
     root.userData.referenceScaleNote = config.scaleNote;
@@ -188,7 +213,7 @@ export async function buildReferenceLibraryProgressively(
       onChange: options.onChange, onError: options.onError});
     signal.throwIfAborted();
     const ownedStreaming = streaming;
-    return {root, materials, ...anchors, catalogTerminal, interactiveObjects: [],
+    return {root, materials, ...anchors, catalogTerminal, interactiveObjects: [catalogTerminal],
       animateEnvironment: () => undefined, referenceConfig: config, streaming,
       disposeArchitecture: () => {
         // The controller owns architectural shading resources. Detach immediately

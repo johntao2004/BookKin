@@ -36,15 +36,18 @@ describe("FileOperationsPage", () => {
     const table = await screen.findByRole("table", { name: "操作日志列表" });
     expect(within(table).getAllByRole("columnheader").map((cell) => cell.textContent)).toEqual([
       "任务",
-      "文件变更",
+      "书籍",
       "状态",
       "时间",
     ]);
     expect(within(table).getAllByRole("row")).toHaveLength(3);
-    expect(within(table).getByText(".bookkin-trash/4fa12d/声之来信.epub")).toBeInTheDocument();
+    expect(within(table).getByText("声之来信")).toBeInTheDocument();
+    expect(table).not.toHaveTextContent("顾安安/");
+    expect(table).not.toHaveTextContent(".bookkin-trash");
+    expect(table.querySelector("[title]")).toBeNull();
     expect(within(table).getAllByText("已完成")).toHaveLength(2);
     expect(within(table).queryByText("COMPLETE")).not.toBeInTheDocument();
-    expect(within(table).getAllByText("顾远/山川与灯火.epub")).toHaveLength(1);
+    expect(within(table).getAllByText("山川与灯火")).toHaveLength(1);
   });
 
   it("保留清楚的空状态引导", async () => {

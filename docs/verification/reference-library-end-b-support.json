@@ -1,0 +1,1582 @@
+{
+  "scope": "Exported B-end GLB ray/AABB regression. This is model evidence, not browser, GPU, or arbitrary-angle visual acceptance.",
+  "source": "/Users/johntao/.codex/worktrees/remote-main-preview/BookKin/scripts/hogwarts-library/deliverables/architecture-uncompressed.glb",
+  "config": "/Users/johntao/.codex/worktrees/remote-main-preview/BookKin/apps/web/public/assets/hogwarts-library/scene-config.json",
+  "sourceSha256": "c656b8200eb46fc4d80da7d3780f314a29cad5838660307f3d64ce349469a8fa",
+  "configSha256": "7533063816c4f0c7852c9e20ee2877ddd1bb1df5c2bc3a2b1eb8db8b0b5a0576",
+  "revision": "20261019-guard-joinery-r25",
+  "colliderCount": 1344,
+  "cache": {
+    "bounds": {
+      "min": [
+        -7.2,
+        -0.05,
+        13.3
+      ],
+      "max": [
+        7.2,
+        7.2,
+        20.1
+      ]
+    },
+    "triangles": 8827
+  },
+  "parameters": {
+    "supportXs": [
+      -2.3,
+      0.0,
+      2.3
+    ],
+    "supportZ": 15.75,
+    "springY": 4.56,
+    "archXs": [
+      -1.15,
+      1.15
+    ],
+    "innerHalf": 0.88,
+    "innerRise": 1.62,
+    "outerHalf": 1.03,
+    "outerRise": 1.7999999999999998,
+    "balconyUndersideY": 6.888,
+    "beamYRange": [
+      6.408,
+      6.888
+    ],
+    "beamXSpan": [
+      -3.7,
+      3.7
+    ],
+    "beamZ": 15.68,
+    "beamDepth": 0.54,
+    "panelXs": [
+      -5.5,
+      5.5
+    ],
+    "panelBackingFrontZ": 19.74,
+    "panelFrameFrontZ": 19.65,
+    "panelWheelZ": 19.62
+  },
+  "probes": [
+    {
+      "id": "balcony-underside-0",
+      "kind": "balcony-underside",
+      "origin": [
+        -0.8,
+        5.8,
+        14.2
+      ],
+      "direction": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "expectedY": 6.888,
+      "actual": {
+        "t": 1.088,
+        "point": [
+          -0.8,
+          6.888,
+          14.2
+        ],
+        "material": "Walnut • deep recess"
+      },
+      "passed": true,
+      "failure": "balcony underside 0 expected y=6.888: (1.088000011444092, (np.float64(-0.8), np.float64(6.888000011444092), np.float64(14.2)), 'Walnut • deep recess')"
+    },
+    {
+      "id": "balcony-underside-1",
+      "kind": "balcony-underside",
+      "origin": [
+        0.8,
+        5.8,
+        14.2
+      ],
+      "direction": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "expectedY": 6.888,
+      "actual": {
+        "t": 1.088,
+        "point": [
+          0.8,
+          6.888,
+          14.2
+        ],
+        "material": "Walnut • deep recess"
+      },
+      "passed": true,
+      "failure": "balcony underside 1 expected y=6.888: (1.088000011444092, (np.float64(0.8), np.float64(6.888000011444092), np.float64(14.2)), 'Walnut • deep recess')"
+    },
+    {
+      "id": "balcony-underside-2",
+      "kind": "balcony-underside",
+      "origin": [
+        -0.8,
+        5.8,
+        15.25
+      ],
+      "direction": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "expectedY": 6.888,
+      "actual": {
+        "t": 1.088,
+        "point": [
+          -0.8,
+          6.888,
+          15.25
+        ],
+        "material": "Walnut • deep recess"
+      },
+      "passed": true,
+      "failure": "balcony underside 2 expected y=6.888: (1.088000011444092, (np.float64(-0.8), np.float64(6.888000011444092), np.float64(15.25)), 'Walnut • deep recess')"
+    },
+    {
+      "id": "balcony-underside-3",
+      "kind": "balcony-underside",
+      "origin": [
+        0.8,
+        5.8,
+        15.25
+      ],
+      "direction": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "expectedY": 6.888,
+      "actual": {
+        "t": 1.088,
+        "point": [
+          0.8,
+          6.888,
+          15.25
+        ],
+        "material": "Walnut • deep recess"
+      },
+      "passed": true,
+      "failure": "balcony underside 3 expected y=6.888: (1.088000011444092, (np.float64(0.8), np.float64(6.888000011444092), np.float64(15.25)), 'Walnut • deep recess')"
+    },
+    {
+      "id": "support-pier--2.3-0.8",
+      "kind": "support-pier",
+      "origin": [
+        -2.3,
+        0.8,
+        15.3
+      ],
+      "direction": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "expectedZRange": [
+        15.35,
+        15.95
+      ],
+      "actual": {
+        "t": 0.307,
+        "point": [
+          -2.3,
+          0.8,
+          15.607
+        ],
+        "material": "Oak • rubbed midtone"
+      },
+      "passed": true,
+      "failure": "support pier missing at x=-2.3 y=0.8: (0.30700031255416044, (np.float64(-2.3), np.float64(0.8), np.float64(15.607000312554161)), 'Oak • rubbed midtone')"
+    },
+    {
+      "id": "support-pier--2.3-2.0",
+      "kind": "support-pier",
+      "origin": [
+        -2.3,
+        2.0,
+        15.3
+      ],
+      "direction": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "expectedZRange": [
+        15.35,
+        15.95
+      ],
+      "actual": {
+        "t": 0.307,
+        "point": [
+          -2.3,
+          2.0,
+          15.607
+        ],
+        "material": "Oak • rubbed midtone"
+      },
+      "passed": true,
+      "failure": "support pier missing at x=-2.3 y=2.0: (0.30700031255416044, (np.float64(-2.3), np.float64(2.0), np.float64(15.607000312554161)), 'Oak • rubbed midtone')"
+    },
+    {
+      "id": "support-pier--2.3-4.3",
+      "kind": "support-pier",
+      "origin": [
+        -2.3,
+        4.3,
+        15.3
+      ],
+      "direction": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "expectedZRange": [
+        15.35,
+        15.95
+      ],
+      "actual": {
+        "t": 0.208592,
+        "point": [
+          -2.3,
+          4.3,
+          15.508592
+        ],
+        "material": "Oak • rubbed midtone"
+      },
+      "passed": true,
+      "failure": "support pier missing at x=-2.3 y=4.3: (0.20859230220667938, (np.float64(-2.3), np.float64(4.3), np.float64(15.50859230220668)), 'Oak • rubbed midtone')"
+    },
+    {
+      "id": "support-pier-0.0-0.8",
+      "kind": "support-pier",
+      "origin": [
+        0.0,
+        0.8,
+        15.3
+      ],
+      "direction": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "expectedZRange": [
+        15.35,
+        15.95
+      ],
+      "actual": {
+        "t": 0.307,
+        "point": [
+          0.0,
+          0.8,
+          15.607
+        ],
+        "material": "Oak • rubbed midtone"
+      },
+      "passed": true,
+      "failure": "support pier missing at x=0.0 y=0.8: (0.30700035095214767, (np.float64(0.0), np.float64(0.8), np.float64(15.607000350952148)), 'Oak • rubbed midtone')"
+    },
+    {
+      "id": "support-pier-0.0-2.0",
+      "kind": "support-pier",
+      "origin": [
+        0.0,
+        2.0,
+        15.3
+      ],
+      "direction": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "expectedZRange": [
+        15.35,
+        15.95
+      ],
+      "actual": {
+        "t": 0.307,
+        "point": [
+          0.0,
+          2.0,
+          15.607
+        ],
+        "material": "Oak • rubbed midtone"
+      },
+      "passed": true,
+      "failure": "support pier missing at x=0.0 y=2.0: (0.30700035095214767, (np.float64(0.0), np.float64(2.0), np.float64(15.607000350952148)), 'Oak • rubbed midtone')"
+    },
+    {
+      "id": "support-pier-0.0-4.3",
+      "kind": "support-pier",
+      "origin": [
+        0.0,
+        4.3,
+        15.3
+      ],
+      "direction": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "expectedZRange": [
+        15.35,
+        15.95
+      ],
+      "actual": {
+        "t": 0.208592,
+        "point": [
+          0.0,
+          4.3,
+          15.508592
+        ],
+        "material": "Oak • rubbed midtone"
+      },
+      "passed": true,
+      "failure": "support pier missing at x=0.0 y=4.3: (0.20859230220667943, (np.float64(0.0), np.float64(4.3), np.float64(15.50859230220668)), 'Oak • rubbed midtone')"
+    },
+    {
+      "id": "support-pier-2.3-0.8",
+      "kind": "support-pier",
+      "origin": [
+        2.3,
+        0.8,
+        15.3
+      ],
+      "direction": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "expectedZRange": [
+        15.35,
+        15.95
+      ],
+      "actual": {
+        "t": 0.307,
+        "point": [
+          2.3,
+          0.8,
+          15.607
+        ],
+        "material": "Oak • rubbed midtone"
+      },
+      "passed": true,
+      "failure": "support pier missing at x=2.3 y=0.8: (0.30700031255416044, (np.float64(2.3), np.float64(0.8), np.float64(15.607000312554161)), 'Oak • rubbed midtone')"
+    },
+    {
+      "id": "support-pier-2.3-2.0",
+      "kind": "support-pier",
+      "origin": [
+        2.3,
+        2.0,
+        15.3
+      ],
+      "direction": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "expectedZRange": [
+        15.35,
+        15.95
+      ],
+      "actual": {
+        "t": 0.307,
+        "point": [
+          2.3,
+          2.0,
+          15.607
+        ],
+        "material": "Oak • rubbed midtone"
+      },
+      "passed": true,
+      "failure": "support pier missing at x=2.3 y=2.0: (0.30700031255416044, (np.float64(2.3), np.float64(2.0), np.float64(15.607000312554161)), 'Oak • rubbed midtone')"
+    },
+    {
+      "id": "support-pier-2.3-4.3",
+      "kind": "support-pier",
+      "origin": [
+        2.3,
+        4.3,
+        15.3
+      ],
+      "direction": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "expectedZRange": [
+        15.35,
+        15.95
+      ],
+      "actual": {
+        "t": 0.208592,
+        "point": [
+          2.3,
+          4.3,
+          15.508592
+        ],
+        "material": "Oak • rubbed midtone"
+      },
+      "passed": true,
+      "failure": "support pier missing at x=2.3 y=4.3: (0.20859230220667935, (np.float64(2.3), np.float64(4.3), np.float64(15.50859230220668)), 'Oak • rubbed midtone')"
+    },
+    {
+      "id": "round-arch-0",
+      "kind": "round-arch",
+      "sample": "spring-left",
+      "origin": [
+        -2.105,
+        4.61,
+        15.3
+      ],
+      "direction": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "expectedZRange": [
+        15.35,
+        16.05
+      ],
+      "actual": {
+        "t": 0.1476,
+        "point": [
+          -2.105,
+          4.61,
+          15.4476
+        ],
+        "material": "Oak • rubbed midtone"
+      },
+      "passed": true,
+      "failure": "round support arch missing at -2.105/4.61: (0.14760036468505788, (np.float64(-2.105), np.float64(4.61), np.float64(15.447600364685059)), 'Oak • rubbed midtone')"
+    },
+    {
+      "id": "round-arch-1",
+      "kind": "round-arch",
+      "sample": "haunch-left",
+      "origin": [
+        -1.5999999999999999,
+        6.064,
+        15.3
+      ],
+      "direction": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "expectedZRange": [
+        15.35,
+        16.05
+      ],
+      "actual": {
+        "t": 0.21,
+        "point": [
+          -1.6,
+          6.064,
+          15.51
+        ],
+        "material": "Oak • rubbed midtone"
+      },
+      "passed": true,
+      "failure": "round support arch missing at -1.5999999999999999/6.064: (0.21000022888183525, (np.float64(-1.5999999999999999), np.float64(6.064), np.float64(15.510000228881836)), 'Oak • rubbed midtone')"
+    },
+    {
+      "id": "round-arch-2",
+      "kind": "round-arch",
+      "sample": "crown",
+      "origin": [
+        -1.15,
+        6.27,
+        15.3
+      ],
+      "direction": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "expectedZRange": [
+        15.35,
+        16.05
+      ],
+      "actual": {
+        "t": 0.21,
+        "point": [
+          -1.15,
+          6.27,
+          15.51
+        ],
+        "material": "Oak • rubbed midtone"
+      },
+      "passed": true,
+      "failure": "round support arch missing at -1.15/6.27: (0.21000022888183523, (np.float64(-1.15), np.float64(6.27), np.float64(15.510000228881836)), 'Oak • rubbed midtone')"
+    },
+    {
+      "id": "round-arch-3",
+      "kind": "round-arch",
+      "sample": "haunch-right",
+      "origin": [
+        -0.7,
+        6.064,
+        15.3
+      ],
+      "direction": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "expectedZRange": [
+        15.35,
+        16.05
+      ],
+      "actual": {
+        "t": 0.21,
+        "point": [
+          -0.7,
+          6.064,
+          15.51
+        ],
+        "material": "Oak • rubbed midtone"
+      },
+      "passed": true,
+      "failure": "round support arch missing at -0.7/6.064: (0.21000022888183523, (np.float64(-0.7), np.float64(6.064), np.float64(15.510000228881836)), 'Oak • rubbed midtone')"
+    },
+    {
+      "id": "round-arch-4",
+      "kind": "round-arch",
+      "sample": "spring-right",
+      "origin": [
+        -0.19499999999999995,
+        4.61,
+        15.3
+      ],
+      "direction": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "expectedZRange": [
+        15.35,
+        16.05
+      ],
+      "actual": {
+        "t": 0.1476,
+        "point": [
+          -0.195,
+          4.61,
+          15.4476
+        ],
+        "material": "Oak • rubbed midtone"
+      },
+      "passed": true,
+      "failure": "round support arch missing at -0.19499999999999995/4.61: (0.14760036468505788, (np.float64(-0.19499999999999995), np.float64(4.61), np.float64(15.447600364685059)), 'Oak • rubbed midtone')"
+    },
+    {
+      "id": "round-arch-5",
+      "kind": "round-arch",
+      "sample": "spandrel-low",
+      "origin": [
+        -1.15,
+        6.5,
+        15.3
+      ],
+      "direction": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "expectedZRange": [
+        15.35,
+        16.05
+      ],
+      "actual": {
+        "t": 0.11,
+        "point": [
+          -1.15,
+          6.5,
+          15.41
+        ],
+        "material": "Oak • rubbed midtone"
+      },
+      "passed": true,
+      "failure": "round support arch missing at -1.15/6.5: (0.10999984741210866, (np.float64(-1.15), np.float64(6.5), np.float64(15.40999984741211)), 'Oak • rubbed midtone')"
+    },
+    {
+      "id": "round-arch-6",
+      "kind": "round-arch",
+      "sample": "spandrel-high",
+      "origin": [
+        -1.15,
+        6.85,
+        15.3
+      ],
+      "direction": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "expectedZRange": [
+        15.35,
+        16.05
+      ],
+      "actual": {
+        "t": 0.11,
+        "point": [
+          -1.15,
+          6.85,
+          15.41
+        ],
+        "material": "Oak • rubbed midtone"
+      },
+      "passed": true,
+      "failure": "round support arch missing at -1.15/6.85: (0.10999984741210866, (np.float64(-1.15), np.float64(6.85), np.float64(15.40999984741211)), 'Oak • rubbed midtone')"
+    },
+    {
+      "id": "round-arch-7",
+      "kind": "round-arch",
+      "sample": "spring-left",
+      "origin": [
+        0.19499999999999995,
+        4.61,
+        15.3
+      ],
+      "direction": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "expectedZRange": [
+        15.35,
+        16.05
+      ],
+      "actual": {
+        "t": 0.1476,
+        "point": [
+          0.195,
+          4.61,
+          15.4476
+        ],
+        "material": "Oak • rubbed midtone"
+      },
+      "passed": true,
+      "failure": "round support arch missing at 0.19499999999999995/4.61: (0.14760036468505788, (np.float64(0.19499999999999995), np.float64(4.61), np.float64(15.447600364685059)), 'Oak • rubbed midtone')"
+    },
+    {
+      "id": "round-arch-8",
+      "kind": "round-arch",
+      "sample": "haunch-left",
+      "origin": [
+        0.7,
+        6.064,
+        15.3
+      ],
+      "direction": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "expectedZRange": [
+        15.35,
+        16.05
+      ],
+      "actual": {
+        "t": 0.21,
+        "point": [
+          0.7,
+          6.064,
+          15.51
+        ],
+        "material": "Oak • rubbed midtone"
+      },
+      "passed": true,
+      "failure": "round support arch missing at 0.7/6.064: (0.21000022888183528, (np.float64(0.7), np.float64(6.064), np.float64(15.510000228881836)), 'Oak • rubbed midtone')"
+    },
+    {
+      "id": "round-arch-9",
+      "kind": "round-arch",
+      "sample": "crown",
+      "origin": [
+        1.15,
+        6.27,
+        15.3
+      ],
+      "direction": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "expectedZRange": [
+        15.35,
+        16.05
+      ],
+      "actual": {
+        "t": 0.21,
+        "point": [
+          1.15,
+          6.27,
+          15.51
+        ],
+        "material": "Oak • rubbed midtone"
+      },
+      "passed": true,
+      "failure": "round support arch missing at 1.15/6.27: (0.2100002288818352, (np.float64(1.15), np.float64(6.27), np.float64(15.510000228881836)), 'Oak • rubbed midtone')"
+    },
+    {
+      "id": "round-arch-10",
+      "kind": "round-arch",
+      "sample": "haunch-right",
+      "origin": [
+        1.5999999999999999,
+        6.064,
+        15.3
+      ],
+      "direction": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "expectedZRange": [
+        15.35,
+        16.05
+      ],
+      "actual": {
+        "t": 0.21,
+        "point": [
+          1.6,
+          6.064,
+          15.51
+        ],
+        "material": "Oak • rubbed midtone"
+      },
+      "passed": true,
+      "failure": "round support arch missing at 1.5999999999999999/6.064: (0.21000022888183523, (np.float64(1.5999999999999999), np.float64(6.064), np.float64(15.510000228881836)), 'Oak • rubbed midtone')"
+    },
+    {
+      "id": "round-arch-11",
+      "kind": "round-arch",
+      "sample": "spring-right",
+      "origin": [
+        2.105,
+        4.61,
+        15.3
+      ],
+      "direction": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "expectedZRange": [
+        15.35,
+        16.05
+      ],
+      "actual": {
+        "t": 0.1476,
+        "point": [
+          2.105,
+          4.61,
+          15.4476
+        ],
+        "material": "Oak • rubbed midtone"
+      },
+      "passed": true,
+      "failure": "round support arch missing at 2.105/4.61: (0.14760036468505788, (np.float64(2.105), np.float64(4.61), np.float64(15.447600364685059)), 'Oak • rubbed midtone')"
+    },
+    {
+      "id": "round-arch-12",
+      "kind": "round-arch",
+      "sample": "spandrel-low",
+      "origin": [
+        1.15,
+        6.5,
+        15.3
+      ],
+      "direction": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "expectedZRange": [
+        15.35,
+        16.05
+      ],
+      "actual": {
+        "t": 0.11,
+        "point": [
+          1.15,
+          6.5,
+          15.41
+        ],
+        "material": "Oak • rubbed midtone"
+      },
+      "passed": true,
+      "failure": "round support arch missing at 1.15/6.5: (0.10999984741210866, (np.float64(1.15), np.float64(6.5), np.float64(15.40999984741211)), 'Oak • rubbed midtone')"
+    },
+    {
+      "id": "round-arch-13",
+      "kind": "round-arch",
+      "sample": "spandrel-high",
+      "origin": [
+        1.15,
+        6.85,
+        15.3
+      ],
+      "direction": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "expectedZRange": [
+        15.35,
+        16.05
+      ],
+      "actual": {
+        "t": 0.11,
+        "point": [
+          1.15,
+          6.85,
+          15.41
+        ],
+        "material": "Oak • rubbed midtone"
+      },
+      "passed": true,
+      "failure": "round support arch missing at 1.15/6.85: (0.10999984741210866, (np.float64(1.15), np.float64(6.85), np.float64(15.40999984741211)), 'Oak • rubbed midtone')"
+    },
+    {
+      "id": "ground-opening--1.15-1.78",
+      "kind": "ground-opening",
+      "origin": [
+        -1.15,
+        1.78,
+        14.5
+      ],
+      "direction": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "expected": "clear through z=16.2",
+      "actual": null,
+      "passed": true,
+      "failure": "ground opening blocked at x=-1.15 y=1.78: None"
+    },
+    {
+      "id": "ground-opening--1.15-3.5",
+      "kind": "ground-opening",
+      "origin": [
+        -1.15,
+        3.5,
+        14.5
+      ],
+      "direction": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "expected": "clear through z=16.2",
+      "actual": null,
+      "passed": true,
+      "failure": "ground opening blocked at x=-1.15 y=3.5: None"
+    },
+    {
+      "id": "ground-opening-1.15-1.78",
+      "kind": "ground-opening",
+      "origin": [
+        1.15,
+        1.78,
+        14.5
+      ],
+      "direction": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "expected": "clear through z=16.2",
+      "actual": null,
+      "passed": true,
+      "failure": "ground opening blocked at x=1.15 y=1.78: None"
+    },
+    {
+      "id": "ground-opening-1.15-3.5",
+      "kind": "ground-opening",
+      "origin": [
+        1.15,
+        3.5,
+        14.5
+      ],
+      "direction": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "expected": "clear through z=16.2",
+      "actual": null,
+      "passed": true,
+      "failure": "ground opening blocked at x=1.15 y=3.5: None"
+    },
+    {
+      "id": "support-head--1.15-6.5",
+      "kind": "support-head",
+      "origin": [
+        -1.15,
+        6.5,
+        15.3
+      ],
+      "direction": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "expectedZRange": [
+        15.35,
+        15.95
+      ],
+      "actual": {
+        "t": 0.11,
+        "point": [
+          -1.15,
+          6.5,
+          15.41
+        ],
+        "material": "Oak • rubbed midtone"
+      },
+      "passed": true,
+      "failure": "support head not solid at x=-1.15 y=6.5: (0.10999984741210866, (np.float64(-1.15), np.float64(6.5), np.float64(15.40999984741211)), 'Oak • rubbed midtone')"
+    },
+    {
+      "id": "support-head--1.15-6.85",
+      "kind": "support-head",
+      "origin": [
+        -1.15,
+        6.85,
+        15.3
+      ],
+      "direction": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "expectedZRange": [
+        15.35,
+        15.95
+      ],
+      "actual": {
+        "t": 0.11,
+        "point": [
+          -1.15,
+          6.85,
+          15.41
+        ],
+        "material": "Oak • rubbed midtone"
+      },
+      "passed": true,
+      "failure": "support head not solid at x=-1.15 y=6.85: (0.10999984741210866, (np.float64(-1.15), np.float64(6.85), np.float64(15.40999984741211)), 'Oak • rubbed midtone')"
+    },
+    {
+      "id": "support-head-1.15-6.5",
+      "kind": "support-head",
+      "origin": [
+        1.15,
+        6.5,
+        15.3
+      ],
+      "direction": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "expectedZRange": [
+        15.35,
+        15.95
+      ],
+      "actual": {
+        "t": 0.11,
+        "point": [
+          1.15,
+          6.5,
+          15.41
+        ],
+        "material": "Oak • rubbed midtone"
+      },
+      "passed": true,
+      "failure": "support head not solid at x=1.15 y=6.5: (0.10999984741210866, (np.float64(1.15), np.float64(6.5), np.float64(15.40999984741211)), 'Oak • rubbed midtone')"
+    },
+    {
+      "id": "support-head-1.15-6.85",
+      "kind": "support-head",
+      "origin": [
+        1.15,
+        6.85,
+        15.3
+      ],
+      "direction": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "expectedZRange": [
+        15.35,
+        15.95
+      ],
+      "actual": {
+        "t": 0.11,
+        "point": [
+          1.15,
+          6.85,
+          15.41
+        ],
+        "material": "Oak • rubbed midtone"
+      },
+      "passed": true,
+      "failure": "support head not solid at x=1.15 y=6.85: (0.10999984741210866, (np.float64(1.15), np.float64(6.85), np.float64(15.40999984741211)), 'Oak • rubbed midtone')"
+    },
+    {
+      "id": "beam-span-0",
+      "kind": "beam-span",
+      "origin": [
+        -3.4,
+        6.65,
+        15.3
+      ],
+      "direction": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "expectedZRange": [
+        15.35,
+        15.95
+      ],
+      "actual": {
+        "t": 0.11,
+        "point": [
+          -3.4,
+          6.65,
+          15.41
+        ],
+        "material": "Oak • rubbed midtone"
+      },
+      "passed": true,
+      "failure": "support beam missing across span at x=-3.4: (0.10999984741210866, (np.float64(-3.4), np.float64(6.65), np.float64(15.40999984741211)), 'Oak • rubbed midtone')"
+    },
+    {
+      "id": "beam-span-1",
+      "kind": "beam-span",
+      "origin": [
+        0.0,
+        6.65,
+        15.3
+      ],
+      "direction": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "expectedZRange": [
+        15.35,
+        15.95
+      ],
+      "actual": {
+        "t": 0.11,
+        "point": [
+          0.0,
+          6.65,
+          15.41
+        ],
+        "material": "Oak • rubbed midtone"
+      },
+      "passed": true,
+      "failure": "support beam missing across span at x=0.0: (0.10999984741210866, (np.float64(0.0), np.float64(6.65), np.float64(15.40999984741211)), 'Oak • rubbed midtone')"
+    },
+    {
+      "id": "beam-span-2",
+      "kind": "beam-span",
+      "origin": [
+        3.4,
+        6.65,
+        15.3
+      ],
+      "direction": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "expectedZRange": [
+        15.35,
+        15.95
+      ],
+      "actual": {
+        "t": 0.11,
+        "point": [
+          3.4,
+          6.65,
+          15.41
+        ],
+        "material": "Oak • rubbed midtone"
+      },
+      "passed": true,
+      "failure": "support beam missing across span at x=3.4: (0.10999984741210866, (np.float64(3.4), np.float64(6.65), np.float64(15.40999984741211)), 'Oak • rubbed midtone')"
+    },
+    {
+      "id": "beam-bottom",
+      "kind": "beam-bottom",
+      "origin": [
+        -3.4,
+        6.2,
+        15.68
+      ],
+      "direction": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "expectedY": 6.408,
+      "actual": {
+        "t": 0.208,
+        "point": [
+          -3.4,
+          6.408,
+          15.68
+        ],
+        "material": "Oak • rubbed midtone"
+      },
+      "passed": true,
+      "failure": "support beam bottom expected y=6.408: (0.20799999237060532, (np.float64(-3.4), np.float64(6.4079999923706055), np.float64(15.68)), 'Oak • rubbed midtone')"
+    },
+    {
+      "id": "beam-top",
+      "kind": "beam-top",
+      "origin": [
+        -3.4,
+        7.1,
+        15.68
+      ],
+      "direction": [
+        0.0,
+        -1.0,
+        0.0
+      ],
+      "expectedY": 6.888,
+      "actual": {
+        "t": 0.212,
+        "point": [
+          -3.4,
+          6.888,
+          15.68
+        ],
+        "material": "Oak • rubbed midtone"
+      },
+      "passed": true,
+      "failure": "support beam top expected y=6.888: (0.21199998855590785, (np.float64(-3.4), np.float64(6.888000011444092), np.float64(15.68)), 'Oak • rubbed midtone')"
+    },
+    {
+      "id": "removed-pointed-arch--2.3--1.0",
+      "kind": "removed-pointed-arch",
+      "origin": [
+        -3.0124999999999997,
+        4.19,
+        15.3
+      ],
+      "direction": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "expected": "clear",
+      "actual": null,
+      "passed": true,
+      "failure": "retired pointed arch remains at x=-3.0124999999999997 y=4.19: None"
+    },
+    {
+      "id": "removed-pointed-arch--2.3-1.0",
+      "kind": "removed-pointed-arch",
+      "origin": [
+        -1.5875,
+        4.19,
+        15.3
+      ],
+      "direction": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "expected": "clear",
+      "actual": null,
+      "passed": true,
+      "failure": "retired pointed arch remains at x=-1.5875 y=4.19: None"
+    },
+    {
+      "id": "removed-pointed-arch-0.0--1.0",
+      "kind": "removed-pointed-arch",
+      "origin": [
+        -0.7125,
+        4.19,
+        15.3
+      ],
+      "direction": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "expected": "clear",
+      "actual": null,
+      "passed": true,
+      "failure": "retired pointed arch remains at x=-0.7125 y=4.19: None"
+    },
+    {
+      "id": "removed-pointed-arch-0.0-1.0",
+      "kind": "removed-pointed-arch",
+      "origin": [
+        0.7125,
+        4.19,
+        15.3
+      ],
+      "direction": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "expected": "clear",
+      "actual": null,
+      "passed": true,
+      "failure": "retired pointed arch remains at x=0.7125 y=4.19: None"
+    },
+    {
+      "id": "removed-pointed-arch-2.3--1.0",
+      "kind": "removed-pointed-arch",
+      "origin": [
+        1.5875,
+        4.19,
+        15.3
+      ],
+      "direction": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "expected": "clear",
+      "actual": null,
+      "passed": true,
+      "failure": "retired pointed arch remains at x=1.5875 y=4.19: None"
+    },
+    {
+      "id": "removed-pointed-arch-2.3-1.0",
+      "kind": "removed-pointed-arch",
+      "origin": [
+        3.0124999999999997,
+        4.19,
+        15.3
+      ],
+      "direction": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "expected": "clear",
+      "actual": null,
+      "passed": true,
+      "failure": "retired pointed arch remains at x=3.0124999999999997 y=4.19: None"
+    },
+    {
+      "id": "corbel--2.3",
+      "kind": "corbel",
+      "origin": [
+        -2.3,
+        5.65,
+        15.3
+      ],
+      "direction": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "actual": {
+        "t": 0.133185,
+        "point": [
+          -2.3,
+          5.65,
+          15.433185
+        ],
+        "material": "Oak • rubbed midtone"
+      },
+      "passed": true,
+      "failure": "support corbel missing at x=-2.3: (0.13318514950917112, (np.float64(-2.3), np.float64(5.65), np.float64(15.433185149509171)), 'Oak • rubbed midtone')"
+    },
+    {
+      "id": "corbel-0.0",
+      "kind": "corbel",
+      "origin": [
+        0.0,
+        5.65,
+        15.3
+      ],
+      "direction": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "actual": {
+        "t": 0.133185,
+        "point": [
+          0.0,
+          5.65,
+          15.433185
+        ],
+        "material": "Oak • rubbed midtone"
+      },
+      "passed": true,
+      "failure": "support corbel missing at x=0.0: (0.13318512054929482, (np.float64(0.0), np.float64(5.65), np.float64(15.433185120549295)), 'Oak • rubbed midtone')"
+    },
+    {
+      "id": "corbel-2.3",
+      "kind": "corbel",
+      "origin": [
+        2.3,
+        5.65,
+        15.3
+      ],
+      "direction": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "actual": {
+        "t": 0.133185,
+        "point": [
+          2.3,
+          5.65,
+          15.433185
+        ],
+        "material": "Oak • rubbed midtone"
+      },
+      "passed": true,
+      "failure": "support corbel missing at x=2.3: (0.13318514885630353, (np.float64(2.3), np.float64(5.65), np.float64(15.433185148856305)), 'Oak • rubbed midtone')"
+    },
+    {
+      "id": "wall-panel-depth--5.5",
+      "kind": "wall-panel-depth",
+      "origin": [
+        -5.5,
+        3.0,
+        16.5
+      ],
+      "direction": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "expectedZRange": [
+        19.5,
+        19.9
+      ],
+      "expectedBackingFrontZ": 19.74,
+      "actual": {
+        "t": 3.24,
+        "point": [
+          -5.5,
+          3.0,
+          19.74
+        ],
+        "material": "Walnut • deep recess"
+      },
+      "passed": true,
+      "failure": "wall panel face not at z=19.5..19.9 for x=-5.5: (3.239999771118164, (np.float64(-5.5), np.float64(3.0), np.float64(19.739999771118164)), 'Walnut • deep recess')"
+    },
+    {
+      "id": "unsupported-frame-band--5.5",
+      "kind": "unsupported-frame-band",
+      "bounds": [
+        [
+          -7.3,
+          2.0,
+          17.0
+        ],
+        [
+          -3.7,
+          5.0,
+          19.3
+        ]
+      ],
+      "triangleCount": 0,
+      "passed": true,
+      "failure": "unsupported wall-panel frame geometry for x=-5.5: 0 triangles"
+    },
+    {
+      "id": "wall-panel-wheel--5.5",
+      "kind": "wall-panel-wheel",
+      "origin": [
+        -5.5,
+        3.8,
+        16.5
+      ],
+      "direction": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "expectedZRange": [
+        19.5,
+        19.74
+      ],
+      "actual": {
+        "t": 3.06385,
+        "point": [
+          -5.5,
+          3.8,
+          19.56385
+        ],
+        "material": "Brass • aged edge"
+      },
+      "passed": true,
+      "failure": "wall-panel wheel does not join backing at x=-5.5: (3.0638501906024747, (np.float64(-5.5), np.float64(3.8), np.float64(19.563850190602473)), 'Brass • aged edge')"
+    },
+    {
+      "id": "wall-panel-frame-edges--5.5",
+      "kind": "wall-panel-frame-edges",
+      "actual": [
+        {
+          "t": 3.15,
+          "point": [
+            -7.0,
+            3.0,
+            19.65
+          ],
+          "material": "Oak • rubbed midtone"
+        },
+        {
+          "t": 3.15,
+          "point": [
+            -4.0,
+            3.0,
+            19.65
+          ],
+          "material": "Oak • rubbed midtone"
+        }
+      ],
+      "passed": true,
+      "failure": "wall-panel frame front missing for x=-5.5: [{'t': 3.15, 'point': [-7.0, 3.0, 19.65], 'material': 'Oak • rubbed midtone'}, {'t': 3.15, 'point': [-4.0, 3.0, 19.65], 'material': 'Oak • rubbed midtone'}]"
+    },
+    {
+      "id": "wall-panel-top--5.5",
+      "kind": "wall-panel-top",
+      "measuredDarkTopY": 6.875999927520752,
+      "maximumY": 6.888,
+      "passed": true,
+      "failure": "wall panel top reaches y=6.875999927520752, maximum is 6.888"
+    },
+    {
+      "id": "wall-panel-depth-5.5",
+      "kind": "wall-panel-depth",
+      "origin": [
+        5.5,
+        3.0,
+        16.5
+      ],
+      "direction": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "expectedZRange": [
+        19.5,
+        19.9
+      ],
+      "expectedBackingFrontZ": 19.74,
+      "actual": {
+        "t": 3.24,
+        "point": [
+          5.5,
+          3.0,
+          19.74
+        ],
+        "material": "Walnut • deep recess"
+      },
+      "passed": true,
+      "failure": "wall panel face not at z=19.5..19.9 for x=5.5: (3.239999771118164, (np.float64(5.5), np.float64(3.0), np.float64(19.739999771118164)), 'Walnut • deep recess')"
+    },
+    {
+      "id": "unsupported-frame-band-5.5",
+      "kind": "unsupported-frame-band",
+      "bounds": [
+        [
+          3.7,
+          2.0,
+          17.0
+        ],
+        [
+          7.3,
+          5.0,
+          19.3
+        ]
+      ],
+      "triangleCount": 0,
+      "passed": true,
+      "failure": "unsupported wall-panel frame geometry for x=5.5: 0 triangles"
+    },
+    {
+      "id": "wall-panel-wheel-5.5",
+      "kind": "wall-panel-wheel",
+      "origin": [
+        5.5,
+        3.8,
+        16.5
+      ],
+      "direction": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "expectedZRange": [
+        19.5,
+        19.74
+      ],
+      "actual": {
+        "t": 3.06385,
+        "point": [
+          5.5,
+          3.8,
+          19.56385
+        ],
+        "material": "Brass • aged edge"
+      },
+      "passed": true,
+      "failure": "wall-panel wheel does not join backing at x=5.5: (3.0638501906024747, (np.float64(5.5), np.float64(3.8), np.float64(19.563850190602473)), 'Brass • aged edge')"
+    },
+    {
+      "id": "wall-panel-frame-edges-5.5",
+      "kind": "wall-panel-frame-edges",
+      "actual": [
+        {
+          "t": 3.15,
+          "point": [
+            4.0,
+            3.0,
+            19.65
+          ],
+          "material": "Oak • rubbed midtone"
+        },
+        {
+          "t": 3.15,
+          "point": [
+            7.0,
+            3.0,
+            19.65
+          ],
+          "material": "Oak • rubbed midtone"
+        }
+      ],
+      "passed": true,
+      "failure": "wall-panel frame front missing for x=5.5: [{'t': 3.15, 'point': [4.0, 3.0, 19.65], 'material': 'Oak • rubbed midtone'}, {'t': 3.15, 'point': [7.0, 3.0, 19.65], 'material': 'Oak • rubbed midtone'}]"
+    },
+    {
+      "id": "wall-panel-top-5.5",
+      "kind": "wall-panel-top",
+      "measuredDarkTopY": 6.875999927520752,
+      "maximumY": 6.888,
+      "passed": true,
+      "failure": "wall panel top reaches y=6.875999927520752, maximum is 6.888"
+    }
+  ],
+  "passed": true,
+  "failures": []
+}

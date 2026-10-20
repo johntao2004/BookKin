@@ -85,7 +85,7 @@ public class BookUploadController {
     @PostMapping("/{id}/commit")
     BookUpload commit(@PathVariable UUID id, @RequestHeader("Idempotency-Key") String idempotencyKey,
                       @Valid @RequestBody(required = false) CommitRequest input, Principal principal) {
-        return service.commit(id, idempotencyKey, input != null && input.publishToDisplay(), principal);
+        return service.commit(id, idempotencyKey, input == null || input.publishToDisplay() == null || input.publishToDisplay(), principal);
     }
 
     @DeleteMapping("/{id}")
@@ -94,6 +94,6 @@ public class BookUploadController {
     public record CreateUpload(@NotNull UUID libraryRootId, @NotBlank String filename, @Positive long sizeBytes) {}
     public record CoverSelection(@NotBlank String candidateId) {}
     public record AiMatchRequest(@Size(max = 80) String providerId) {}
-    public record CommitRequest(boolean publishToDisplay) {}
+    public record CommitRequest(Boolean publishToDisplay) {}
     public record UploadList(List<BookUpload> items) {}
 }

@@ -2,13 +2,25 @@ import {
   cameraRelativeWalkDelta,
   clampVirtualLibraryFlightHeight,
   isShelfMovementLocked,
+  resolveGuidedStairCollision,
   virtualLibraryVerticalFlightDelta,
   virtualLibraryMovementKey,
+  WALKING_CAMERA_CLEARANCE,
+  WALKING_EYE_HEIGHT,
   VIRTUAL_LIBRARY_KEYBOARD_FLIGHT_SPEED,
   type VirtualLibraryMovementKey,
 } from "./virtual-library-navigation";
+import {
+  resolveCameraCollision,
+  type BoxCameraCollider,
+} from "./virtual-library-collision";
 
 describe("virtual library continuous keyboard navigation", () => {
+  it("keeps human eye height and body clearance unchanged when architecture grows", () => {
+    expect(WALKING_EYE_HEIGHT).toBe(1.78);
+    expect(WALKING_CAMERA_CLEARANCE).toEqual({horizontal: 0.3, above: 0.3, below: 1.53});
+  });
+
   it("maps WASD and arrow keys to all four movement directions", () => {
     expect(virtualLibraryMovementKey("KeyW", "w")).toBe("forward");
     expect(virtualLibraryMovementKey("KeyA", "a")).toBe("left");
@@ -85,5 +97,50 @@ describe("virtual library continuous keyboard navigation", () => {
     expect(isShelfMovementLocked(0)).toBe(true);
     expect(isShelfMovementLocked(18)).toBe(true);
     expect(isShelfMovementLocked(null)).toBe(false);
+  });
+
+  it("keeps the supported stair exception for short steps and removes it for other movement", () => {
+    const support: BoxCameraCollider = {
+      id: "stair-tread-test",
+      room: "hall",
+      shape: "box",
+      x: 0,
+      y: 0.9,
+      z: 0,
+      halfX: 1,
+      halfY: 0.55,
+      halfZ: 1,
+      rotationY: 0,
+    };
+    const supportedEye = {x: 0, y: 1.78, z: 0};
+    const previous = {x: 0, y: 1.78, z: -0.04};
+    const supported = resolveGuidedStairCollision(
+      previous,
+      {x: 0, y: 1.78, z: 0.04},
+      [support],
+      [],
+      supportedEye,
+    );
+
+    expect(supported).toMatchObject({x: 0, y: 1.78, z: 0.04, blocked: false});
+    for (const desired of [
+      {x: 0.4, y: 1.78, z: 0},
+      {x: 0.4, y: 1.78, z: -0.4},
+      {x: 0, y: 3.78, z: 0},
+      {x: 8, y: 9.78, z: 8},
+    ]) {
+      expect(resolveGuidedStairCollision(
+        previous,
+        desired,
+        [support],
+        [support],
+        supportedEye,
+      )).toEqual(resolveCameraCollision(
+        previous,
+        desired,
+        [support],
+        WALKING_CAMERA_CLEARANCE,
+      ));
+    }
   });
 });

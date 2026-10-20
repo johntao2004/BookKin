@@ -1,3 +1,4 @@
+import { prepareSessionExit, setPersistenceUser } from "./session-save";
 import { Button } from "@/ui/buttons";
 import { Typography } from "@/ui/primitives";
 import { CircularProgress } from "@/ui/feedback";
@@ -47,7 +48,9 @@ export function AuthProvider({ children }: PropsWithChildren) {
       queryClient.clear();
       identity.current = next?.id ?? null;
     }
+    setPersistenceUser(next?.id ?? null);
     setUser(next);
+    if(next) void api.replayReadingProgress().catch(() => undefined);
     setSessionError(null);
     if (api.isDemo) {
       try {
@@ -77,14 +80,46 @@ export function AuthProvider({ children }: PropsWithChildren) {
   }, [persist, sessionAttempt]);
 
   useEffect(() => {
+    let active=true; let expiring=false;
     const expire = () => {
-      authRevision.current += 1;
-      persist(null);
-      setReady(true);
+      if(expiring) return;
+      expiring=true;
+      const revision=authRevision.current;
+      void Promise.race([prepareSessionExit(),new Promise(resolve=>window.setTimeout(resolve,5000))]).then(()=>{
+        if(!active || revision!==authRevision.current)return;
+        authRevision.current += 1;
+        persist(null);
+        setReady(true);
+      });
     };
     window.addEventListener("bookkin:session-expired", expire);
-    return () => window.removeEventListener("bookkin:session-expired", expire);
-  }, [persist]);
+    return () => { active=false; window.removeEventListener("bookkin:session-expired", expire); };
+  }, [persist,user?.id]);
+
+  useEffect(() => {
+    if(!user || api.isDemo) return;
+    let stopped=false; let exiting=false; let timer: number | undefined;
+    const exit = async () => {
+      if(stopped || exiting) return;
+      exiting=true;
+      await Promise.race([prepareSessionExit(), new Promise(resolve=>window.setTimeout(resolve,5000))]);
+      if(stopped)return;
+      try { await api.logout(); } catch { /* Expired/offline sessions still leave the local session. */ } finally { if(!stopped) { authRevision.current+=1; persist(null); setReady(true); } }
+    };
+    const check = async () => {
+      try {
+        const state=await api.sessionStatus();
+        if(stopped || exiting) return;
+        window.clearTimeout(timer);
+        const remaining=state.expiresAt-state.serverTime;
+        timer=window.setTimeout(()=>void exit(),state.revocationRequested?0:Math.max(0,Math.min(remaining-10000,2_147_483_647)));
+      } catch { /* Transient network failures retain durable progress and retry. */ }
+    };
+    void check();
+    const interval=window.setInterval(()=>void check(),10000);
+    window.addEventListener("focus",check);
+    return ()=>{stopped=true;window.clearInterval(interval);window.clearTimeout(timer);window.removeEventListener("focus",check);};
+  },[user,persist]);
 
   const value = useMemo<AuthContextValue>(() => ({
     user,
@@ -106,6 +141,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
       return next;
     },
     logout: async () => {
+      await Promise.race([prepareSessionExit(), new Promise(resolve => window.setTimeout(resolve, 5000))]);
       await api.logout();
       authRevision.current += 1;
       persist(null);

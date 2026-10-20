@@ -1,0 +1,45 @@
+{
+  "revision": "20261019-plain-exhibition-wall-r26",
+  "sourceSha256": "89c97b672ce582b0d2b490c33f426f0ab906c779d6424ba7b11ea42e437b4908",
+  "configSha256": "a48a105806b98b4f7767e2d951b683d61002f66f583b951a9c34d3df5bd960ba",
+  "change": {
+    "removedDecorativePilasters": 6,
+    "surroundCornices": 0,
+    "retainedArtworks": 5,
+    "structuralArcadeRetained": true
+  },
+  "checks": {
+    "exact13ModuleTriangleMultiset": "passed",
+    "sixAbsenceZones": "passed, all six fail on saved r25 negative control",
+    "artworkVisibilitySamples": 1575,
+    "endWalls": "passed",
+    "endArcade": "passed",
+    "crosswalk": "passed",
+    "walkClearance": "passed,14 doorways and336 book rows",
+    "lint": "passed",
+    "typecheck": "passed",
+    "focusedTests": "40/40 passed",
+    "build": "passed",
+    "fullTestSuite": "not rerun"
+  },
+  "browser": {
+    "revisionLoaded": true,
+    "residentModules": 13,
+    "failedModules": 0,
+    "distantHallView": "visible, removed wall pilasters and retained paintings",
+    "closeViews": "passed: front, oblique and close views on fresh tab10; individual frames retained and decorative wall pilasters absent",
+    "evidence": ".artifacts/model-clearance/exhibition-runtime-r26.json",
+    "priorPageIssue": "Tab9: WebGL context lost; recreation blocked. Fresh tab10 recovered and front/oblique/close views verified.",
+    "freshPageErrors": [],
+    "screenshots": [
+      ".artifacts/model-clearance/exhibition-wall-r26.png",
+      ".artifacts/model-clearance/exhibition-wall-oblique-r26.png",
+      ".artifacts/model-clearance/exhibition-wall-close-r26.png"
+    ]
+  },
+  "git": {
+    "committed": false,
+    "pushed": false,
+    "deployed": false
+  }
+}

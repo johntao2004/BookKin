@@ -11,13 +11,33 @@ beforeEach(async () => {
   vi.stubGlobal('fetch', fetchMock);
   api = (await import('./client')).api;
 });
-afterEach(() => { vi.unstubAllGlobals(); vi.unstubAllEnvs(); vi.useRealTimers(); });
+afterEach(() => { vi.unstubAllGlobals(); vi.unstubAllEnvs(); vi.useRealTimers(); vi.restoreAllMocks(); });
 
 describe('real authentication transport', () => {
   it('distinguishes an anonymous session from an unavailable service', async () => {
     fetchMock.mockResolvedValueOnce(json({}, 401)).mockResolvedValueOnce(new Response('Bad gateway', { status: 502 }));
     await expect(api.getSession()).resolves.toBeNull();
     await expect(api.getSession()).rejects.toThrow('书库服务暂时不可用');
+  });
+  it('keeps a valid session when a feature endpoint unexpectedly returns 401', async () => {
+    const dispatch = vi.spyOn(window, 'dispatchEvent');
+    fetchMock.mockResolvedValueOnce(json({ detail: '接口暂时不可用' }, 401))
+      .mockResolvedValueOnce(json(session));
+    await expect(api.listBookKnowledge()).rejects.toThrow('接口暂时不可用');
+    expect(fetchMock.mock.calls[1][0]).toBe('/api/v1/auth/session');
+    expect(dispatch).not.toHaveBeenCalled();
+  });
+  it('expires the session only after the session endpoint confirms 401', async () => {
+    const dispatch = vi.spyOn(window, 'dispatchEvent');
+    fetchMock.mockResolvedValueOnce(json({}, 401)).mockResolvedValueOnce(json({}, 401));
+    await expect(api.listBookKnowledge()).rejects.toThrow();
+    expect(dispatch).toHaveBeenCalledWith(expect.objectContaining({ type: 'bookkin:session-expired' }));
+  });
+  it('keeps the session when expiry confirmation is unavailable', async () => {
+    const dispatch = vi.spyOn(window, 'dispatchEvent');
+    fetchMock.mockResolvedValueOnce(json({}, 401)).mockRejectedValueOnce(new TypeError('Failed to fetch'));
+    await expect(api.listBookKnowledge()).rejects.toThrow();
+    expect(dispatch).not.toHaveBeenCalled();
   });
   it('reports a disconnected CSRF endpoint without submitting credentials', async () => {
     fetchMock.mockRejectedValueOnce(new TypeError('Failed to fetch'));

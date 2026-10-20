@@ -3,8 +3,8 @@ import { resolveCameraCollision, type CameraPosition, type CameraCollider, type 
 export type VirtualLibraryMovementKey = "forward" | "backward" | "left" | "right" | "up" | "down";
 
 export const WALKING_EYE_HEIGHT = 1.78;
-// Keep a 25 cm step allowance under the body. The exported stair risers are
-// 19.375 cm high; a spherical eye alone misses rails, desks and chair backs.
+// Keep a 25 cm step allowance under the body. The taller 40-tread stair has
+// 18.6 cm risers; a spherical eye alone misses rails, desks and chair backs.
 export const WALKING_CAMERA_CLEARANCE: Readonly<CameraCollisionClearance> = {
   horizontal: 0.3,
   above: 0.3,
@@ -103,4 +103,68 @@ export function resolveGuidedStairCollision(
   }
   const eye = resolveCameraCollision(previous, body, colliders);
   return {...eye, blocked: body.blocked || eye.blocked, blockedBy: body.blockedBy ?? eye.blockedBy};
+}
+
+type StairRoutes = Readonly<Record<'left' | 'right', readonly CameraPosition[]>>;
+
+/** Local tread support, selected by both plan position and current foot height.
+ * Height gating prevents the nearly overlapping bottom/top turns from snapping
+ * a ground-floor visitor directly onto the gallery. */
+function stairWalkingHeight(previous: CameraPosition, desired: CameraPosition, routes: StairRoutes) {
+  let closest: {distance: number; height: number} | null = null;
+  const footY = previous.y - WALKING_EYE_HEIGHT;
+  for (const route of Object.values(routes)) for (let index = 1; index < route.length; index++) {
+    const start = route[index - 1], end = route[index];
+    const dx = end.x - start.x, dz = end.z - start.z;
+    const lengthSquared = dx * dx + dz * dz;
+    if (lengthSquared < 0.000001) continue;
+    const t = Math.max(0, Math.min(1,
+      ((desired.x - start.x) * dx + (desired.z - start.z) * dz) / lengthSquared));
+    const distance = Math.hypot(desired.x - start.x - dx * t, desired.z - start.z - dz * t);
+    const height = start.y + (end.y - start.y) * t;
+    if (distance > 0.32 || Math.abs(height - footY) > 0.25) continue;
+    if (!closest || distance < closest.distance) closest = {distance, height};
+  }
+  return closest?.height ?? null;
+}
+
+/** Resolve real keyboard/wheel/button walking in short supported steps. This
+ * never starts the guided animation, changes yaw, or removes guard collision. */
+export function resolveReferenceWalkingCollision(
+  previous: CameraPosition,
+  desired: CameraPosition,
+  colliders: readonly CameraCollider[],
+  obstacles: readonly CameraCollider[],
+  routes: StairRoutes,
+  followStairs = true,
+) {
+  if (!followStairs) return resolveCameraCollision(previous, desired, colliders, WALKING_CAMERA_CLEARANCE);
+  const distance = Math.hypot(desired.x - previous.x, desired.z - previous.z);
+  const steps = Math.max(1, Math.ceil(distance / 0.055));
+  // Sweep each slice from the last accepted point; a large button/wheel move
+  // cannot tunnel through the pillar, rails or intervening architecture.
+  let resolved = resolveCameraCollision(previous, previous, [], WALKING_CAMERA_CLEARANCE);
+  for (let index = 1; index <= steps; index++) {
+    const t = index / steps;
+    const next = {x: previous.x + (desired.x - previous.x) * t,
+      y: resolved.y, z: previous.z + (desired.z - previous.z) * t};
+    const floor = stairWalkingHeight(resolved, next, routes);
+    if (floor === null) {
+      resolved = resolveCameraCollision(resolved, next, colliders, WALKING_CAMERA_CLEARANCE);
+      continue;
+    }
+    next.y = floor + WALKING_EYE_HEIGHT;
+    const body = resolveCameraCollision(resolved, next, obstacles, WALKING_CAMERA_CLEARANCE);
+    // Sliding along a rail is valid if the resolved position still has tread
+    // support. Rejecting every small sideways correction traps keyboard users
+    // at the landing even though the authored centre line is traversable.
+    const actualFloor = stairWalkingHeight(resolved, body, routes);
+    if (actualFloor === null || Math.abs(body.y - actualFloor - WALKING_EYE_HEIGHT) > 0.05) {
+      resolved = {...resolved, blocked: true, blockedBy: body.blockedBy};
+      break;
+    }
+    const eye = resolveCameraCollision(resolved, body, colliders);
+    resolved = {...eye, blocked: body.blocked || eye.blocked, blockedBy: body.blockedBy ?? eye.blockedBy};
+  }
+  return resolved;
 }

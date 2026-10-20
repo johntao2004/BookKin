@@ -23,6 +23,7 @@ export default defineConfig({
     strictPort: true,
     allowedHosts: ["terminal.local", "localhost", "127.0.0.1", "johns-MacBook-Air.local"],
     proxy: {
+      "/robots.txt": {target: apiProxyTarget, changeOrigin: true},
       "/api": {
         target: apiProxyTarget,
         changeOrigin: true,

@@ -40,7 +40,7 @@ public class BookCoverRepository {
         var currentRecord = dsl.fetchOne("select cover_asset_id from books where id = ?", bookId);
         UUID current = currentRecord == null ? null : currentRecord.get(0, UUID.class);
         dsl.execute("update books set cover_asset_id = null, updated_at = now() where id = ?", bookId);
-        if (current != null) dsl.execute("update book_cover_assets set retired_at = now(), expires_at = cast(? as timestamptz) where id = ?", OffsetDateTime.now().plusDays(30), current);
+        if (current != null) dsl.execute("update book_cover_assets set retired_at = now(), expires_at = now() where id = ?", current);
     }
 
     public List<ExpiredCoverAsset> findExpired(int limit) {
@@ -58,6 +58,21 @@ public class BookCoverRepository {
 
     public void delete(UUID id) {
         dsl.execute("delete from book_cover_assets where id = ? and retired_at is not null and expires_at < now()", id);
+    }
+
+    /** Lock against reactivation so a queued cleanup cannot delete a current cover. */
+    @Transactional
+    public boolean purgeExpired(ExpiredCoverAsset asset, Runnable removeFile) {
+        var eligible = dsl.fetchOne("""
+                select id from book_cover_assets a
+                 where id = ? and fingerprint = ? and retired_at is not null and expires_at < now()
+                   and not exists (select 1 from books b where b.cover_asset_id = a.id)
+                 for update
+                """, asset.id(), asset.fingerprint());
+        if (eligible == null) return false;
+        removeFile.run();
+        dsl.execute("delete from book_cover_assets where id = ?", asset.id());
+        return true;
     }
 
     public record ExpiredCoverAsset(UUID id, UUID bookId, UUID libraryRootId, String relativePath, String fingerprint) {}

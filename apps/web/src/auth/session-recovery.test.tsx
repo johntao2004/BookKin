@@ -4,7 +4,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, expect, it, vi } from 'vitest';
 import { AuthProvider, RequireAuth, useAuth } from './AuthContext';
 import { api } from '../api/client';
-vi.mock('../api/client', () => ({ api: { isDemo: false, getSession: vi.fn(), login: vi.fn() } }));
+vi.mock('../api/client', () => ({ api: { isDemo: false, getSession: vi.fn(), login: vi.fn(), replayReadingProgress: vi.fn().mockResolvedValue(undefined), sessionStatus: vi.fn().mockImplementation(async()=>({expiresAt:Date.now()+86400000,serverTime:Date.now(),revocationRequested:false})), logout: vi.fn().mockResolvedValue(undefined) } }));
 const user = { id: 'owner', username: 'owner', displayName: 'Owner', role: 'OWNER' as const, mustChangePassword: false };
 function Probe() {
   const auth = useAuth();

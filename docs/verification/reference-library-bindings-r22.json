@@ -1,0 +1,27 @@
+{
+  "revision": "reference-library-real-bindings-2026-10-19-r22",
+  "files": {
+    "apps/web/src/pages/virtual-library-scene.ts": "c63c4fbdb653ef1fd8bdbd7ae1f3e2567496f215d1c1baa676266dd5014c2880",
+    "apps/web/src/pages/catalog-book-appearance.ts": "0c078fd57481ab0c9b8afff3602dcfd809381075de15462d30464f5a746c0cbd",
+    "apps/web/src/pages/catalog-book-surfaces.ts": "52db4002b1b11a2e8bf943a55629b446ee063418e3a72704c86e89b1c5466a24"
+  },
+  "scope": "Runtime real-catalog bindings; no geometry-module or lighting changes",
+  "limits": "Binding dimensions are deterministic visual estimates, not original print-edition scans or page counts; original front-cover quality is retained.",
+  "tests": {
+    "fullFiles": 108,
+    "fullTests": 434,
+    "focusedTests": 63,
+    "lint": true,
+    "typecheck": true,
+    "build": true
+  },
+  "worker": "Alibaba-hosted deepseek-v4-flash-0731 produced shared surface module; lead corrected texture axis/lightness and integrated/reviewed.",
+  "browser": {
+    "actualCatalogBooks": 125,
+    "architectureFailedModules": 0,
+    "freshConsoleErrors": 0,
+    "selectionRotationAdjacentSwitching": true,
+    "mobileBrowserAcceptance": false,
+    "evidence": ".artifacts/model-clearance/book-realism-runtime-r22.json"
+  }
+}

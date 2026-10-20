@@ -19,6 +19,35 @@ describe("pdfTextToParagraphs", () => {
     expect(paragraphs).toEqual(["黄昏从山脊落下来时，河面先暗了一层。"]);
   });
 
+  it("joins widely spaced PDF baselines while retaining real paragraph indentation", () => {
+    expect(pdfTextToParagraphs([
+      item("第一段的开头，", 72.525, 743.22, { hasEOL: true }),
+      item("这里仍是同一段的正文，", 42.525, 715.2, { hasEOL: true }),
+      item("这里也是连续正文，", 42.525, 687.2, { hasEOL: true }),
+      item("直到这一句结束。", 42.525, 659.2, { hasEOL: true }),
+      item("第二段从这里开始。", 70.525, 620.68, { hasEOL: true }),
+    ])).toEqual(["第一段的开头，这里仍是同一段的正文，这里也是连续正文，直到这一句结束。", "第二段从这里开始。"]);
+  });
+
+  it("retains a paragraph break with extra spacing and no indentation", () => {
+    expect(pdfTextToParagraphs([
+      item("第一行，", 42, 743, { hasEOL: true }),
+      item("第二行，", 42, 715, { hasEOL: true }),
+      item("第三行，", 42, 687, { hasEOL: true }),
+      item("第四行。", 42, 659, { hasEOL: true }),
+      item("另一段。", 42, 614, { hasEOL: true }),
+    ])).toEqual(["第一行，第二行，第三行，第四行。", "另一段。"]);
+  });
+
+  it("keeps numbered items apart with regular wide line spacing", () => {
+    expect(pdfTextToParagraphs([
+      item("1. 第一项", 42, 743, { hasEOL: true }),
+      item("第一项的续行。", 42, 715, { hasEOL: true }),
+      item("2. 第二项", 42, 687, { hasEOL: true }),
+      item("第二项的续行。", 42, 659, { hasEOL: true }),
+    ])).toEqual(["1. 第一项第一项的续行。", "2. 第二项第二项的续行。"]);
+  });
+
   it("keeps visibly indented lines as separate paragraphs", () => {
     const paragraphs = pdfTextToParagraphs([
       item("第一段结束。", 36, 720, { hasEOL: true }),

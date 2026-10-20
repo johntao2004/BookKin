@@ -1,0 +1,114 @@
+{
+  "modal": [
+    {
+      "dialogBottom": 708,
+      "dialogLeft": 16,
+      "dialogRight": 304,
+      "height": 740,
+      "overflow": 0,
+      "pageWidth": 320,
+      "saveVisible": true,
+      "width": 320
+    },
+    {
+      "dialogBottom": 812,
+      "dialogLeft": 19.5,
+      "dialogRight": 370.5,
+      "height": 844,
+      "overflow": 0,
+      "pageWidth": 390,
+      "saveVisible": true,
+      "width": 390
+    },
+    {
+      "dialogBottom": 900,
+      "dialogLeft": 21.5,
+      "dialogRight": 408.5,
+      "height": 932,
+      "overflow": 0,
+      "pageWidth": 430,
+      "saveVisible": true,
+      "width": 430
+    },
+    {
+      "dialogBottom": 960.8984375,
+      "dialogLeft": 38.3984375,
+      "dialogRight": 729.59375,
+      "height": 1024,
+      "overflow": 0,
+      "pageWidth": 768,
+      "saveVisible": true,
+      "width": 768
+    }
+  ],
+  "articleReader": [
+    {
+      "overflowing": [],
+      "pageWidth": 305,
+      "width": 320
+    },
+    {
+      "overflowing": [],
+      "pageWidth": 375,
+      "width": 390
+    },
+    {
+      "overflowing": [],
+      "pageWidth": 415,
+      "width": 430
+    },
+    {
+      "overflowing": [],
+      "pageWidth": 768,
+      "width": 768
+    }
+  ],
+  "vaultSetup": [
+    {
+      "overflow": 0,
+      "pageWidth": 320,
+      "width": 320
+    },
+    {
+      "overflow": 0,
+      "pageWidth": 390,
+      "width": 390
+    },
+    {
+      "overflow": 0,
+      "pageWidth": 430,
+      "width": 430
+    },
+    {
+      "overflow": 0,
+      "pageWidth": 768,
+      "width": 768
+    }
+  ],
+  "vaultPdfReader": [
+    {
+      "overflow": [],
+      "pageWidth": 305,
+      "readerWidth": 281,
+      "width": 320
+    },
+    {
+      "overflow": [],
+      "pageWidth": 375,
+      "readerWidth": 351,
+      "width": 390
+    },
+    {
+      "overflow": [],
+      "pageWidth": 415,
+      "readerWidth": 391,
+      "width": 430
+    },
+    {
+      "overflow": [],
+      "pageWidth": 753,
+      "readerWidth": 705,
+      "width": 768
+    }
+  ]
+}

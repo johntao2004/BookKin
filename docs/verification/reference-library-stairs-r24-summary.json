@@ -1,0 +1,40 @@
+{
+  "revision": "20261019-tangent-stair-landings-r24",
+  "sourceSha256": "d1f8a1442a8346a48d37a91c0b33cf97c48318641a5366c13e2e05cb1bd529b3",
+  "configSha256": "e946c3d913a5ba090b74bb52a2bde084fb6e519820a70e6ea9824fb664b6f374",
+  "implementation": {
+    "centerAbsX": 5.9,
+    "steps": 40,
+    "rise": 7.44,
+    "turns": 1.25,
+    "walkingRadius": 1.3,
+    "walkingSlopeDegrees": 36.08025408301051,
+    "supportedRestingZone": [
+      5.3,
+      4.2
+    ],
+    "restingZoneIncludesExistingCrosswalk": true,
+    "bodyRadius": 0.3
+  },
+  "checks": {
+    "lint": true,
+    "typecheck": true,
+    "vitestFiles": 108,
+    "vitestTests": 434,
+    "build": true,
+    "physicalStairClearance": true,
+    "sourceAndExact13Modules": true,
+    "negativeControlRejectsR23": true
+  },
+  "browserEvidence": ".artifacts/model-clearance/stairs-runtime-r24.json",
+  "delivery": {
+    "localPreview": "http://127.0.0.1:4175/virtual-library",
+    "committed": false,
+    "pushed": false,
+    "deployed": false
+  },
+  "limitations": [
+    "Model units are estimates, not surveyed stair dimensions.",
+    "Complete manual up/down routes have CPU collision regressions; browser exercised guided up/down plus manual platform and partial tread entry."
+  ]
+}

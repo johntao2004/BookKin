@@ -1,0 +1,2727 @@
+{
+  "revision": "20261020-continuous-entablature-r39",
+  "configSha256": "b6faf0c7d3caa8c190af39ea5d5b3eb4f8f7a9ddd4273c33d9bd92178e2ccc51",
+  "contract": "six physical apertures per side on each floor, mirrored left and right; glass-first rays reject painted windows and glass hidden behind opaque walls",
+  "current": {
+    "sourceSha256": "c0bd528b05014b2b6e2b9aae047c0e30818b74c48efe44281d7a96b2cff8d0fd",
+    "windowCount": 24,
+    "windows": [
+      {
+        "storey": "lower",
+        "side": -1,
+        "z": -12.5,
+        "glassFirstRays": 16,
+        "totalRays": 16,
+        "passed": true,
+        "headSealed": true,
+        "rays": [
+          {
+            "y": 1.4300000000000002,
+            "z": -13.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 1.4300000000000002,
+            "z": -12.98,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 1.4300000000000002,
+            "z": -12.02,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 1.4300000000000002,
+            "z": -11.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 2.3600000000000003,
+            "z": -13.4,
+            "material": "Glass • warm window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 2.3600000000000003,
+            "z": -12.98,
+            "material": "Glass • cool window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 2.3600000000000003,
+            "z": -12.02,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 2.3600000000000003,
+            "z": -11.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 3.64,
+            "z": -13.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 3.64,
+            "z": -12.98,
+            "material": "Glass • warm window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 3.64,
+            "z": -12.02,
+            "material": "Glass • cool window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 3.64,
+            "z": -11.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 4.73,
+            "z": -13.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 4.73,
+            "z": -12.98,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 4.73,
+            "z": -12.02,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 4.73,
+            "z": -11.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          }
+        ]
+      },
+      {
+        "storey": "lower",
+        "side": -1,
+        "z": -7.5,
+        "glassFirstRays": 16,
+        "totalRays": 16,
+        "passed": true,
+        "headSealed": true,
+        "rays": [
+          {
+            "y": 1.4300000000000002,
+            "z": -8.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 1.4300000000000002,
+            "z": -7.98,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 1.4300000000000002,
+            "z": -7.02,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 1.4300000000000002,
+            "z": -6.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 2.3600000000000003,
+            "z": -8.4,
+            "material": "Glass • warm window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 2.3600000000000003,
+            "z": -7.98,
+            "material": "Glass • cool window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 2.3600000000000003,
+            "z": -7.02,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 2.3600000000000003,
+            "z": -6.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 3.64,
+            "z": -8.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 3.64,
+            "z": -7.98,
+            "material": "Glass • warm window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 3.64,
+            "z": -7.02,
+            "material": "Glass • cool window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 3.64,
+            "z": -6.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 4.73,
+            "z": -8.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 4.73,
+            "z": -7.98,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 4.73,
+            "z": -7.02,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 4.73,
+            "z": -6.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          }
+        ]
+      },
+      {
+        "storey": "lower",
+        "side": -1,
+        "z": -2.5,
+        "glassFirstRays": 16,
+        "totalRays": 16,
+        "passed": true,
+        "headSealed": true,
+        "rays": [
+          {
+            "y": 1.4300000000000002,
+            "z": -3.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 1.4300000000000002,
+            "z": -2.98,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 1.4300000000000002,
+            "z": -2.02,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 1.4300000000000002,
+            "z": -1.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 2.3600000000000003,
+            "z": -3.4,
+            "material": "Glass • warm window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 2.3600000000000003,
+            "z": -2.98,
+            "material": "Glass • cool window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 2.3600000000000003,
+            "z": -2.02,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 2.3600000000000003,
+            "z": -1.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 3.64,
+            "z": -3.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 3.64,
+            "z": -2.98,
+            "material": "Glass • warm window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 3.64,
+            "z": -2.02,
+            "material": "Glass • cool window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 3.64,
+            "z": -1.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 4.73,
+            "z": -3.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 4.73,
+            "z": -2.98,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 4.73,
+            "z": -2.02,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 4.73,
+            "z": -1.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          }
+        ]
+      },
+      {
+        "storey": "lower",
+        "side": -1,
+        "z": 2.5,
+        "glassFirstRays": 16,
+        "totalRays": 16,
+        "passed": true,
+        "headSealed": true,
+        "rays": [
+          {
+            "y": 1.4300000000000002,
+            "z": 1.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 1.4300000000000002,
+            "z": 2.02,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 1.4300000000000002,
+            "z": 2.98,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 1.4300000000000002,
+            "z": 3.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 2.3600000000000003,
+            "z": 1.6,
+            "material": "Glass • warm window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 2.3600000000000003,
+            "z": 2.02,
+            "material": "Glass • cool window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 2.3600000000000003,
+            "z": 2.98,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 2.3600000000000003,
+            "z": 3.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 3.64,
+            "z": 1.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 3.64,
+            "z": 2.02,
+            "material": "Glass • warm window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 3.64,
+            "z": 2.98,
+            "material": "Glass • cool window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 3.64,
+            "z": 3.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 4.73,
+            "z": 1.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 4.73,
+            "z": 2.02,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 4.73,
+            "z": 2.98,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 4.73,
+            "z": 3.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          }
+        ]
+      },
+      {
+        "storey": "lower",
+        "side": -1,
+        "z": 7.5,
+        "glassFirstRays": 16,
+        "totalRays": 16,
+        "passed": true,
+        "headSealed": true,
+        "rays": [
+          {
+            "y": 1.4300000000000002,
+            "z": 6.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 1.4300000000000002,
+            "z": 7.02,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 1.4300000000000002,
+            "z": 7.98,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 1.4300000000000002,
+            "z": 8.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 2.3600000000000003,
+            "z": 6.6,
+            "material": "Glass • warm window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 2.3600000000000003,
+            "z": 7.02,
+            "material": "Glass • cool window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 2.3600000000000003,
+            "z": 7.98,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 2.3600000000000003,
+            "z": 8.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 3.64,
+            "z": 6.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 3.64,
+            "z": 7.02,
+            "material": "Glass • warm window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 3.64,
+            "z": 7.98,
+            "material": "Glass • cool window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 3.64,
+            "z": 8.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 4.73,
+            "z": 6.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 4.73,
+            "z": 7.02,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 4.73,
+            "z": 7.98,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 4.73,
+            "z": 8.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          }
+        ]
+      },
+      {
+        "storey": "lower",
+        "side": -1,
+        "z": 12.5,
+        "glassFirstRays": 16,
+        "totalRays": 16,
+        "passed": true,
+        "headSealed": true,
+        "rays": [
+          {
+            "y": 1.4300000000000002,
+            "z": 11.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 1.4300000000000002,
+            "z": 12.02,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 1.4300000000000002,
+            "z": 12.98,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 1.4300000000000002,
+            "z": 13.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 2.3600000000000003,
+            "z": 11.6,
+            "material": "Glass • warm window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 2.3600000000000003,
+            "z": 12.02,
+            "material": "Glass • cool window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 2.3600000000000003,
+            "z": 12.98,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 2.3600000000000003,
+            "z": 13.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 3.64,
+            "z": 11.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 3.64,
+            "z": 12.02,
+            "material": "Glass • warm window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 3.64,
+            "z": 12.98,
+            "material": "Glass • cool window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 3.64,
+            "z": 13.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 4.73,
+            "z": 11.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 4.73,
+            "z": 12.02,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 4.73,
+            "z": 12.98,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 4.73,
+            "z": 13.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          }
+        ]
+      },
+      {
+        "storey": "lower",
+        "side": 1,
+        "z": -12.5,
+        "glassFirstRays": 16,
+        "totalRays": 16,
+        "passed": true,
+        "headSealed": true,
+        "rays": [
+          {
+            "y": 1.4300000000000002,
+            "z": -13.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 1.4300000000000002,
+            "z": -12.98,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 1.4300000000000002,
+            "z": -12.02,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 1.4300000000000002,
+            "z": -11.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 2.3600000000000003,
+            "z": -13.4,
+            "material": "Glass • warm window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 2.3600000000000003,
+            "z": -12.98,
+            "material": "Glass • cool window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 2.3600000000000003,
+            "z": -12.02,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 2.3600000000000003,
+            "z": -11.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 3.64,
+            "z": -13.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 3.64,
+            "z": -12.98,
+            "material": "Glass • warm window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 3.64,
+            "z": -12.02,
+            "material": "Glass • cool window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 3.64,
+            "z": -11.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 4.73,
+            "z": -13.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 4.73,
+            "z": -12.98,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 4.73,
+            "z": -12.02,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 4.73,
+            "z": -11.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          }
+        ]
+      },
+      {
+        "storey": "lower",
+        "side": 1,
+        "z": -7.5,
+        "glassFirstRays": 16,
+        "totalRays": 16,
+        "passed": true,
+        "headSealed": true,
+        "rays": [
+          {
+            "y": 1.4300000000000002,
+            "z": -8.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 1.4300000000000002,
+            "z": -7.98,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 1.4300000000000002,
+            "z": -7.02,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 1.4300000000000002,
+            "z": -6.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 2.3600000000000003,
+            "z": -8.4,
+            "material": "Glass • warm window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 2.3600000000000003,
+            "z": -7.98,
+            "material": "Glass • cool window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 2.3600000000000003,
+            "z": -7.02,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 2.3600000000000003,
+            "z": -6.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 3.64,
+            "z": -8.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 3.64,
+            "z": -7.98,
+            "material": "Glass • warm window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 3.64,
+            "z": -7.02,
+            "material": "Glass • cool window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 3.64,
+            "z": -6.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 4.73,
+            "z": -8.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 4.73,
+            "z": -7.98,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 4.73,
+            "z": -7.02,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 4.73,
+            "z": -6.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          }
+        ]
+      },
+      {
+        "storey": "lower",
+        "side": 1,
+        "z": -2.5,
+        "glassFirstRays": 16,
+        "totalRays": 16,
+        "passed": true,
+        "headSealed": true,
+        "rays": [
+          {
+            "y": 1.4300000000000002,
+            "z": -3.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 1.4300000000000002,
+            "z": -2.98,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 1.4300000000000002,
+            "z": -2.02,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 1.4300000000000002,
+            "z": -1.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 2.3600000000000003,
+            "z": -3.4,
+            "material": "Glass • warm window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 2.3600000000000003,
+            "z": -2.98,
+            "material": "Glass • cool window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 2.3600000000000003,
+            "z": -2.02,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 2.3600000000000003,
+            "z": -1.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 3.64,
+            "z": -3.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 3.64,
+            "z": -2.98,
+            "material": "Glass • warm window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 3.64,
+            "z": -2.02,
+            "material": "Glass • cool window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 3.64,
+            "z": -1.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 4.73,
+            "z": -3.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 4.73,
+            "z": -2.98,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 4.73,
+            "z": -2.02,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 4.73,
+            "z": -1.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          }
+        ]
+      },
+      {
+        "storey": "lower",
+        "side": 1,
+        "z": 2.5,
+        "glassFirstRays": 16,
+        "totalRays": 16,
+        "passed": true,
+        "headSealed": true,
+        "rays": [
+          {
+            "y": 1.4300000000000002,
+            "z": 1.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 1.4300000000000002,
+            "z": 2.02,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 1.4300000000000002,
+            "z": 2.98,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 1.4300000000000002,
+            "z": 3.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 2.3600000000000003,
+            "z": 1.6,
+            "material": "Glass • warm window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 2.3600000000000003,
+            "z": 2.02,
+            "material": "Glass • cool window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 2.3600000000000003,
+            "z": 2.98,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 2.3600000000000003,
+            "z": 3.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 3.64,
+            "z": 1.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 3.64,
+            "z": 2.02,
+            "material": "Glass • warm window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 3.64,
+            "z": 2.98,
+            "material": "Glass • cool window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 3.64,
+            "z": 3.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 4.73,
+            "z": 1.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 4.73,
+            "z": 2.02,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 4.73,
+            "z": 2.98,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 4.73,
+            "z": 3.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          }
+        ]
+      },
+      {
+        "storey": "lower",
+        "side": 1,
+        "z": 7.5,
+        "glassFirstRays": 16,
+        "totalRays": 16,
+        "passed": true,
+        "headSealed": true,
+        "rays": [
+          {
+            "y": 1.4300000000000002,
+            "z": 6.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 1.4300000000000002,
+            "z": 7.02,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 1.4300000000000002,
+            "z": 7.98,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 1.4300000000000002,
+            "z": 8.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 2.3600000000000003,
+            "z": 6.6,
+            "material": "Glass • warm window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 2.3600000000000003,
+            "z": 7.02,
+            "material": "Glass • cool window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 2.3600000000000003,
+            "z": 7.98,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 2.3600000000000003,
+            "z": 8.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 3.64,
+            "z": 6.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 3.64,
+            "z": 7.02,
+            "material": "Glass • warm window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 3.64,
+            "z": 7.98,
+            "material": "Glass • cool window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 3.64,
+            "z": 8.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 4.73,
+            "z": 6.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 4.73,
+            "z": 7.02,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 4.73,
+            "z": 7.98,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 4.73,
+            "z": 8.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          }
+        ]
+      },
+      {
+        "storey": "lower",
+        "side": 1,
+        "z": 12.5,
+        "glassFirstRays": 16,
+        "totalRays": 16,
+        "passed": true,
+        "headSealed": true,
+        "rays": [
+          {
+            "y": 1.4300000000000002,
+            "z": 11.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 1.4300000000000002,
+            "z": 12.02,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 1.4300000000000002,
+            "z": 12.98,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 1.4300000000000002,
+            "z": 13.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 2.3600000000000003,
+            "z": 11.6,
+            "material": "Glass • warm window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 2.3600000000000003,
+            "z": 12.02,
+            "material": "Glass • cool window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 2.3600000000000003,
+            "z": 12.98,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 2.3600000000000003,
+            "z": 13.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 3.64,
+            "z": 11.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 3.64,
+            "z": 12.02,
+            "material": "Glass • warm window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 3.64,
+            "z": 12.98,
+            "material": "Glass • cool window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 3.64,
+            "z": 13.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 4.73,
+            "z": 11.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 4.73,
+            "z": 12.02,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 4.73,
+            "z": 12.98,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 4.73,
+            "z": 13.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          }
+        ]
+      },
+      {
+        "storey": "upper",
+        "side": -1,
+        "z": -12.5,
+        "glassFirstRays": 16,
+        "totalRays": 16,
+        "passed": true,
+        "headSealed": true,
+        "rays": [
+          {
+            "y": 8.725999999999999,
+            "z": -13.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 8.725999999999999,
+            "z": -12.98,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 8.725999999999999,
+            "z": -12.02,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 8.725999999999999,
+            "z": -11.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 10.104,
+            "z": -13.4,
+            "material": "Glass • warm window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 10.104,
+            "z": -12.98,
+            "material": "Glass • cool window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 10.104,
+            "z": -12.02,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 10.104,
+            "z": -11.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 11.832,
+            "z": -13.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 11.832,
+            "z": -12.98,
+            "material": "Glass • warm window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 11.832,
+            "z": -12.02,
+            "material": "Glass • cool window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 11.832,
+            "z": -11.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 13.426,
+            "z": -13.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 13.426,
+            "z": -12.98,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 13.426,
+            "z": -12.02,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 13.426,
+            "z": -11.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          }
+        ]
+      },
+      {
+        "storey": "upper",
+        "side": -1,
+        "z": -7.5,
+        "glassFirstRays": 16,
+        "totalRays": 16,
+        "passed": true,
+        "headSealed": true,
+        "rays": [
+          {
+            "y": 8.725999999999999,
+            "z": -8.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 8.725999999999999,
+            "z": -7.98,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 8.725999999999999,
+            "z": -7.02,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 8.725999999999999,
+            "z": -6.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 10.104,
+            "z": -8.4,
+            "material": "Glass • warm window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 10.104,
+            "z": -7.98,
+            "material": "Glass • cool window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 10.104,
+            "z": -7.02,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 10.104,
+            "z": -6.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 11.832,
+            "z": -8.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 11.832,
+            "z": -7.98,
+            "material": "Glass • warm window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 11.832,
+            "z": -7.02,
+            "material": "Glass • cool window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 11.832,
+            "z": -6.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 13.426,
+            "z": -8.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 13.426,
+            "z": -7.98,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 13.426,
+            "z": -7.02,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 13.426,
+            "z": -6.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          }
+        ]
+      },
+      {
+        "storey": "upper",
+        "side": -1,
+        "z": -2.5,
+        "glassFirstRays": 16,
+        "totalRays": 16,
+        "passed": true,
+        "headSealed": true,
+        "rays": [
+          {
+            "y": 8.725999999999999,
+            "z": -3.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 8.725999999999999,
+            "z": -2.98,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 8.725999999999999,
+            "z": -2.02,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 8.725999999999999,
+            "z": -1.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 10.104,
+            "z": -3.4,
+            "material": "Glass • warm window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 10.104,
+            "z": -2.98,
+            "material": "Glass • cool window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 10.104,
+            "z": -2.02,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 10.104,
+            "z": -1.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 11.832,
+            "z": -3.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 11.832,
+            "z": -2.98,
+            "material": "Glass • warm window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 11.832,
+            "z": -2.02,
+            "material": "Glass • cool window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 11.832,
+            "z": -1.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 13.426,
+            "z": -3.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 13.426,
+            "z": -2.98,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 13.426,
+            "z": -2.02,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 13.426,
+            "z": -1.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          }
+        ]
+      },
+      {
+        "storey": "upper",
+        "side": -1,
+        "z": 2.5,
+        "glassFirstRays": 16,
+        "totalRays": 16,
+        "passed": true,
+        "headSealed": true,
+        "rays": [
+          {
+            "y": 8.725999999999999,
+            "z": 1.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 8.725999999999999,
+            "z": 2.02,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 8.725999999999999,
+            "z": 2.98,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 8.725999999999999,
+            "z": 3.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 10.104,
+            "z": 1.6,
+            "material": "Glass • warm window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 10.104,
+            "z": 2.02,
+            "material": "Glass • cool window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 10.104,
+            "z": 2.98,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 10.104,
+            "z": 3.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 11.832,
+            "z": 1.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 11.832,
+            "z": 2.02,
+            "material": "Glass • warm window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 11.832,
+            "z": 2.98,
+            "material": "Glass • cool window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 11.832,
+            "z": 3.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 13.426,
+            "z": 1.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 13.426,
+            "z": 2.02,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 13.426,
+            "z": 2.98,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 13.426,
+            "z": 3.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          }
+        ]
+      },
+      {
+        "storey": "upper",
+        "side": -1,
+        "z": 7.5,
+        "glassFirstRays": 16,
+        "totalRays": 16,
+        "passed": true,
+        "headSealed": true,
+        "rays": [
+          {
+            "y": 8.725999999999999,
+            "z": 6.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 8.725999999999999,
+            "z": 7.02,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 8.725999999999999,
+            "z": 7.98,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 8.725999999999999,
+            "z": 8.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 10.104,
+            "z": 6.6,
+            "material": "Glass • warm window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 10.104,
+            "z": 7.02,
+            "material": "Glass • cool window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 10.104,
+            "z": 7.98,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 10.104,
+            "z": 8.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 11.832,
+            "z": 6.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 11.832,
+            "z": 7.02,
+            "material": "Glass • warm window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 11.832,
+            "z": 7.98,
+            "material": "Glass • cool window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 11.832,
+            "z": 8.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 13.426,
+            "z": 6.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 13.426,
+            "z": 7.02,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 13.426,
+            "z": 7.98,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 13.426,
+            "z": 8.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          }
+        ]
+      },
+      {
+        "storey": "upper",
+        "side": -1,
+        "z": 12.5,
+        "glassFirstRays": 16,
+        "totalRays": 16,
+        "passed": true,
+        "headSealed": true,
+        "rays": [
+          {
+            "y": 8.725999999999999,
+            "z": 11.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 8.725999999999999,
+            "z": 12.02,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 8.725999999999999,
+            "z": 12.98,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 8.725999999999999,
+            "z": 13.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 10.104,
+            "z": 11.6,
+            "material": "Glass • warm window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 10.104,
+            "z": 12.02,
+            "material": "Glass • cool window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 10.104,
+            "z": 12.98,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 10.104,
+            "z": 13.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 11.832,
+            "z": 11.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 11.832,
+            "z": 12.02,
+            "material": "Glass • warm window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 11.832,
+            "z": 12.98,
+            "material": "Glass • cool window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 11.832,
+            "z": 13.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 13.426,
+            "z": 11.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 13.426,
+            "z": 12.02,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 13.426,
+            "z": 12.98,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 13.426,
+            "z": 13.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          }
+        ]
+      },
+      {
+        "storey": "upper",
+        "side": 1,
+        "z": -12.5,
+        "glassFirstRays": 16,
+        "totalRays": 16,
+        "passed": true,
+        "headSealed": true,
+        "rays": [
+          {
+            "y": 8.725999999999999,
+            "z": -13.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 8.725999999999999,
+            "z": -12.98,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 8.725999999999999,
+            "z": -12.02,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 8.725999999999999,
+            "z": -11.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 10.104,
+            "z": -13.4,
+            "material": "Glass • warm window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 10.104,
+            "z": -12.98,
+            "material": "Glass • cool window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 10.104,
+            "z": -12.02,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 10.104,
+            "z": -11.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 11.832,
+            "z": -13.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 11.832,
+            "z": -12.98,
+            "material": "Glass • warm window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 11.832,
+            "z": -12.02,
+            "material": "Glass • cool window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 11.832,
+            "z": -11.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 13.426,
+            "z": -13.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 13.426,
+            "z": -12.98,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 13.426,
+            "z": -12.02,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 13.426,
+            "z": -11.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          }
+        ]
+      },
+      {
+        "storey": "upper",
+        "side": 1,
+        "z": -7.5,
+        "glassFirstRays": 16,
+        "totalRays": 16,
+        "passed": true,
+        "headSealed": true,
+        "rays": [
+          {
+            "y": 8.725999999999999,
+            "z": -8.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 8.725999999999999,
+            "z": -7.98,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 8.725999999999999,
+            "z": -7.02,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 8.725999999999999,
+            "z": -6.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 10.104,
+            "z": -8.4,
+            "material": "Glass • warm window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 10.104,
+            "z": -7.98,
+            "material": "Glass • cool window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 10.104,
+            "z": -7.02,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 10.104,
+            "z": -6.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 11.832,
+            "z": -8.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 11.832,
+            "z": -7.98,
+            "material": "Glass • warm window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 11.832,
+            "z": -7.02,
+            "material": "Glass • cool window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 11.832,
+            "z": -6.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 13.426,
+            "z": -8.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 13.426,
+            "z": -7.98,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 13.426,
+            "z": -7.02,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 13.426,
+            "z": -6.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          }
+        ]
+      },
+      {
+        "storey": "upper",
+        "side": 1,
+        "z": -2.5,
+        "glassFirstRays": 16,
+        "totalRays": 16,
+        "passed": true,
+        "headSealed": true,
+        "rays": [
+          {
+            "y": 8.725999999999999,
+            "z": -3.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 8.725999999999999,
+            "z": -2.98,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 8.725999999999999,
+            "z": -2.02,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 8.725999999999999,
+            "z": -1.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 10.104,
+            "z": -3.4,
+            "material": "Glass • warm window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 10.104,
+            "z": -2.98,
+            "material": "Glass • cool window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 10.104,
+            "z": -2.02,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 10.104,
+            "z": -1.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 11.832,
+            "z": -3.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 11.832,
+            "z": -2.98,
+            "material": "Glass • warm window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 11.832,
+            "z": -2.02,
+            "material": "Glass • cool window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 11.832,
+            "z": -1.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 13.426,
+            "z": -3.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 13.426,
+            "z": -2.98,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 13.426,
+            "z": -2.02,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 13.426,
+            "z": -1.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          }
+        ]
+      },
+      {
+        "storey": "upper",
+        "side": 1,
+        "z": 2.5,
+        "glassFirstRays": 16,
+        "totalRays": 16,
+        "passed": true,
+        "headSealed": true,
+        "rays": [
+          {
+            "y": 8.725999999999999,
+            "z": 1.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 8.725999999999999,
+            "z": 2.02,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 8.725999999999999,
+            "z": 2.98,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 8.725999999999999,
+            "z": 3.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 10.104,
+            "z": 1.6,
+            "material": "Glass • warm window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 10.104,
+            "z": 2.02,
+            "material": "Glass • cool window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 10.104,
+            "z": 2.98,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 10.104,
+            "z": 3.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 11.832,
+            "z": 1.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 11.832,
+            "z": 2.02,
+            "material": "Glass • warm window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 11.832,
+            "z": 2.98,
+            "material": "Glass • cool window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 11.832,
+            "z": 3.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 13.426,
+            "z": 1.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 13.426,
+            "z": 2.02,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 13.426,
+            "z": 2.98,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 13.426,
+            "z": 3.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          }
+        ]
+      },
+      {
+        "storey": "upper",
+        "side": 1,
+        "z": 7.5,
+        "glassFirstRays": 16,
+        "totalRays": 16,
+        "passed": true,
+        "headSealed": true,
+        "rays": [
+          {
+            "y": 8.725999999999999,
+            "z": 6.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 8.725999999999999,
+            "z": 7.02,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 8.725999999999999,
+            "z": 7.98,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 8.725999999999999,
+            "z": 8.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 10.104,
+            "z": 6.6,
+            "material": "Glass • warm window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 10.104,
+            "z": 7.02,
+            "material": "Glass • cool window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 10.104,
+            "z": 7.98,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 10.104,
+            "z": 8.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 11.832,
+            "z": 6.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 11.832,
+            "z": 7.02,
+            "material": "Glass • warm window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 11.832,
+            "z": 7.98,
+            "material": "Glass • cool window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 11.832,
+            "z": 8.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 13.426,
+            "z": 6.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 13.426,
+            "z": 7.02,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 13.426,
+            "z": 7.98,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 13.426,
+            "z": 8.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          }
+        ]
+      },
+      {
+        "storey": "upper",
+        "side": 1,
+        "z": 12.5,
+        "glassFirstRays": 16,
+        "totalRays": 16,
+        "passed": true,
+        "headSealed": true,
+        "rays": [
+          {
+            "y": 8.725999999999999,
+            "z": 11.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 8.725999999999999,
+            "z": 12.02,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 8.725999999999999,
+            "z": 12.98,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 8.725999999999999,
+            "z": 13.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 10.104,
+            "z": 11.6,
+            "material": "Glass • warm window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 10.104,
+            "z": 12.02,
+            "material": "Glass • cool window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 10.104,
+            "z": 12.98,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 10.104,
+            "z": 13.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 11.832,
+            "z": 11.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 11.832,
+            "z": 12.02,
+            "material": "Glass • warm window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 11.832,
+            "z": 12.98,
+            "material": "Glass • cool window pane",
+            "glassFirst": true
+          },
+          {
+            "y": 11.832,
+            "z": 13.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 13.426,
+            "z": 11.6,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 13.426,
+            "z": 12.02,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 13.426,
+            "z": 12.98,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          },
+          {
+            "y": 13.426,
+            "z": 13.4,
+            "material": "Glass • pale window",
+            "glassFirst": true
+          }
+        ]
+      }
+    ],
+    "passed": true
+  },
+  "windowLightBindings": [
+    {
+      "storey": "lower",
+      "side": -1,
+      "z": -12.5,
+      "passed": true
+    },
+    {
+      "storey": "lower",
+      "side": -1,
+      "z": -7.5,
+      "passed": true
+    },
+    {
+      "storey": "lower",
+      "side": -1,
+      "z": -2.5,
+      "passed": true
+    },
+    {
+      "storey": "lower",
+      "side": -1,
+      "z": 2.5,
+      "passed": true
+    },
+    {
+      "storey": "lower",
+      "side": -1,
+      "z": 7.5,
+      "passed": true
+    },
+    {
+      "storey": "lower",
+      "side": -1,
+      "z": 12.5,
+      "passed": true
+    },
+    {
+      "storey": "lower",
+      "side": 1,
+      "z": -12.5,
+      "passed": true
+    },
+    {
+      "storey": "lower",
+      "side": 1,
+      "z": -7.5,
+      "passed": true
+    },
+    {
+      "storey": "lower",
+      "side": 1,
+      "z": -2.5,
+      "passed": true
+    },
+    {
+      "storey": "lower",
+      "side": 1,
+      "z": 2.5,
+      "passed": true
+    },
+    {
+      "storey": "lower",
+      "side": 1,
+      "z": 7.5,
+      "passed": true
+    },
+    {
+      "storey": "lower",
+      "side": 1,
+      "z": 12.5,
+      "passed": true
+    },
+    {
+      "storey": "upper",
+      "side": -1,
+      "z": -12.5,
+      "passed": true
+    },
+    {
+      "storey": "upper",
+      "side": -1,
+      "z": -7.5,
+      "passed": true
+    },
+    {
+      "storey": "upper",
+      "side": -1,
+      "z": -2.5,
+      "passed": true
+    },
+    {
+      "storey": "upper",
+      "side": -1,
+      "z": 2.5,
+      "passed": true
+    },
+    {
+      "storey": "upper",
+      "side": -1,
+      "z": 7.5,
+      "passed": true
+    },
+    {
+      "storey": "upper",
+      "side": -1,
+      "z": 12.5,
+      "passed": true
+    },
+    {
+      "storey": "upper",
+      "side": 1,
+      "z": -12.5,
+      "passed": true
+    },
+    {
+      "storey": "upper",
+      "side": 1,
+      "z": -7.5,
+      "passed": true
+    },
+    {
+      "storey": "upper",
+      "side": 1,
+      "z": -2.5,
+      "passed": true
+    },
+    {
+      "storey": "upper",
+      "side": 1,
+      "z": 2.5,
+      "passed": true
+    },
+    {
+      "storey": "upper",
+      "side": 1,
+      "z": 7.5,
+      "passed": true
+    },
+    {
+      "storey": "upper",
+      "side": 1,
+      "z": 12.5,
+      "passed": true
+    }
+  ],
+  "passed": true
+}

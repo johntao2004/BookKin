@@ -50,7 +50,7 @@ const breakpointValues: Record<string, number> = {
   sm: tokens.layout.breakpointMobile,
   md: tokens.layout.breakpointTablet,
   lg: tokens.layout.breakpointDesktop,
-  xl: 1920,
+  xl: tokens.layout.breakpointWide,
 };
 
 const defaultTheme: UiTheme = {
@@ -150,11 +150,13 @@ const unitlessCssProperties = new Set([
   "gridRow",
   "gridRowEnd",
   "gridRowStart",
+  "lineClamp",
   "lineHeight",
   "opacity",
   "order",
   "orphans",
   "tabSize",
+  "WebkitLineClamp",
   "widows",
   "zIndex",
   "zoom",
@@ -165,7 +167,8 @@ function cssValue(key: string, value: unknown): string | undefined {
   if (typeof value === "number") {
     if (unitlessCssProperties.has(key)) return String(value);
     if (["margin", "marginTop", "marginRight", "marginBottom", "marginLeft", "marginInline", "marginBlock", "padding", "paddingTop", "paddingRight", "paddingBottom", "paddingLeft", "paddingInline", "paddingBlock", "gap", "rowGap", "columnGap"].includes(key)) return `${value * 8}px`;
-    if (key === "borderRadius") return `${value * 4}px`;
+    // Legacy sx sizes share one visual radius; retain flush edges and circles.
+    if (key === "borderRadius") return value === 0 ? "0px" : value >= tokens.radius.full ? `${tokens.radius.full}px` : `${tokens.radius.md}px`;
     if (key === "border") return `${value}px solid var(--color-border)`;
     return `${value}px`;
   }
@@ -325,11 +328,30 @@ const typographyStyles: Record<string, CSSProperties> = {
   overline: { fontFamily: "var(--typography-font-family-body)", fontSize: "var(--typography-font-size-caption-uppercase)", fontWeight: 500, lineHeight: "var(--typography-line-height-caption)", letterSpacing: "1.5px", textTransform: "uppercase" },
 };
 
+// Semantic application headings share one responsive scale regardless of the
+// legacy visual variant. Reader content can still explicitly inherit its size.
+const headingSizes: Record<string, SxObject> = {
+  h1: { xs: tokens.typography.fontSize.headingSm, sm: tokens.typography.fontSize.heading },
+  h2: { xs: tokens.typography.fontSize.title, sm: tokens.typography.fontSize.headingSm },
+  h3: { xs: tokens.typography.fontSize.titleSm, sm: tokens.typography.fontSize.title },
+};
+
 export function Typography({ variant = "body1", component, color, noWrap, align, sx, className, children, ...props }: BoxProps & { variant?: string; component?: ElementType; color?: string; noWrap?: boolean; align?: CSSProperties["textAlign"] }) {
   const Component = component ?? typographyElements[variant] ?? "span";
   const theme = useTheme();
   const colorValue = color ? cssVarPath(color) : undefined;
   const { style: inlineStyle, ...restProps } = props;
+  const resolvedSx = flattenSx(sx, theme);
+  const heading = typeof Component === "string" && /^h[1-6]$/.test(Component);
+  // Reader content and font specimens deliberately own their typeface.
+  const customTypeface = resolvedSx.fontFamily && resolvedSx.fontFamily !== tokens.typography.fontFamily.display;
+  const headingStyle = heading && !customTypeface ? {
+    fontFamily: tokens.typography.fontFamily.display,
+    fontWeight: tokens.typography.fontWeight.regular,
+    lineHeight: tokens.typography.lineHeight.titleLg,
+    letterSpacing: "normal",
+    ...(headingSizes[Component as string] ? { fontSize: headingSizes[Component as string] } : {}),
+  } : {};
   // Keep the base typography and the caller's `sx` in the same generated
   // stylesheet.  Inline font declarations prevent responsive sx values (for
   // example `fontSize: { xs: ..., md: ... }`) from taking effect because an
@@ -340,8 +362,9 @@ export function Typography({ variant = "body1", component, color, noWrap, align,
     ...(colorValue ? { color: colorValue } : {}),
     ...(noWrap ? { whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } : {}),
     ...(align ? { textAlign: align } : {}),
-    ...flattenSx(sx, theme),
+    ...resolvedSx,
     ...(inlineStyle ?? {}),
+    ...headingStyle,
   };
   return createElement(Component, { ...restProps, className: mergeClassNames("bk-typography", `bk-typography-${variant}`, sxClassName(typographySx, theme), className) }, children);
 }
@@ -442,19 +465,23 @@ function Overlay({ open, onClose, anchorEl, anchorPosition, children, sx, role =
     if (!open || !overlayRef.current) return;
     const overlay = overlayRef.current;
     const update = () => {
+      const scale = Number.parseFloat(getComputedStyle(document.documentElement).zoom) || 1;
       const gap = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--spacing-2")) || 8;
       const view = window.visualViewport;
-      const width = view?.width ?? window.innerWidth;
-      const height = view?.height ?? window.innerHeight;
-      const ox = view?.offsetLeft ?? 0;
-      const oy = view?.offsetTop ?? 0;
+      const width = (view?.width ?? window.innerWidth) / scale;
+      const height = (view?.height ?? window.innerHeight) / scale;
+      const ox = (view?.offsetLeft ?? 0) / scale;
+      const oy = (view?.offsetTop ?? 0) / scale;
       overlay.style.maxHeight = `${Math.max(0, height - gap * 2)}px`;
       overlay.style.maxWidth = `${Math.max(0, width - gap * 2)}px`;
-      const rect = anchorEl?.getBoundingClientRect();
-      const box = overlay.getBoundingClientRect();
+      // DOM rectangles use displayed coordinates; fixed CSS offsets use unzoomed coordinates.
+      const measuredAnchor = anchorEl?.getBoundingClientRect();
+      const rect = measuredAnchor && { left: measuredAnchor.left / scale, top: measuredAnchor.top / scale, width: measuredAnchor.width / scale, height: measuredAnchor.height / scale };
+      const measuredBox = overlay.getBoundingClientRect();
+      const box = { width: measuredBox.width / scale, height: measuredBox.height / scale };
       const offset = (value: string | number | undefined, size: number) => typeof value === "number" ? value : value === "center" ? size / 2 : value === "bottom" || value === "right" ? size : 0;
-      const ax = anchorPosition?.left ?? (rect ? rect.left + offset(anchorOrigin?.horizontal ?? "right", rect.width) : ox + gap);
-      const ay = anchorPosition?.top ?? (rect ? rect.top + offset(anchorOrigin?.vertical ?? "bottom", rect.height) + gap : oy + gap);
+      const ax = anchorPosition ? anchorPosition.left / scale : (rect ? rect.left + offset(anchorOrigin?.horizontal ?? "right", rect.width) : ox + gap);
+      const ay = anchorPosition ? anchorPosition.top / scale : (rect ? rect.top + offset(anchorOrigin?.vertical ?? "bottom", rect.height) + gap : oy + gap);
       let left = ax - offset(transformOrigin?.horizontal ?? "right", box.width);
       let top = ay - offset(transformOrigin?.vertical ?? "top", box.height);
       if (rect && top + box.height > oy + height - gap && rect.top - gap - box.height >= oy + gap) top = rect.top - gap - box.height;
@@ -472,12 +499,14 @@ function Overlay({ open, onClose, anchorEl, anchorPosition, children, sx, role =
     return () => { observer.disconnect(); window.removeEventListener("resize", update); window.removeEventListener("scroll", update, true); window.visualViewport?.removeEventListener("resize", update); window.visualViewport?.removeEventListener("scroll", update); };
   }, [open, anchorEl, anchorPosition?.top, anchorPosition?.left, anchorOrigin?.horizontal, anchorOrigin?.vertical, transformOrigin?.horizontal, transformOrigin?.vertical]);
   if (!open || typeof document === "undefined") return null;
-  const style: CSSProperties = { position: "fixed", zIndex: 1400, minWidth: "min(220px, calc(100vw - var(--spacing-2) * 2))", maxWidth: "min(94vw, 420px)", background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "var(--radius-lg)", boxShadow: "var(--shadow-popover)", padding: "var(--spacing-2)", ...flattenSx(sx, theme), ...position };
-  return createPortal(<div {...props} ref={overlayRef} role={role} className={mergeClassNames("bk-overlay", className)} style={style}>{children}</div>, document.body);
+  const viewportWidth = "var(--app-viewport-width, 100vw)";
+  const overlayClass = sxClassName({ position: "fixed", zIndex: 1400, minWidth: `min(220px, calc(${viewportWidth} - var(--spacing-2) * 2))`, maxWidth: `min(calc(${viewportWidth} - var(--spacing-2) * 2), 420px)`, background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "var(--radius-lg)", boxShadow: "var(--shadow-popover)", padding: "var(--spacing-2)", ...flattenSx(sx, theme) }, theme);
+  return createPortal(<div {...props} ref={overlayRef} role={role} className={mergeClassNames("bk-overlay", overlayClass, className)} style={position}>{children}</div>, document.body);
 }
 
-export function Menu({ open, onClose, anchorEl, children, slotProps, ...props }: OverlayProps & { slotProps?: { paper?: { sx?: SxProps } } }) {
-  return <Overlay open={open} onClose={onClose} anchorEl={anchorEl} sx={slotProps?.paper?.sx} {...props}>{children}</Overlay>;
+export function Menu({ open, onClose, anchorEl, children, slotProps, className, ...props }: OverlayProps & { slotProps?: { paper?: { sx?: SxProps } } }) {
+  const theme = useTheme();
+  return <Overlay open={open} onClose={onClose} anchorEl={anchorEl} className={mergeClassNames("bk-action-menu", className)} sx={{ minWidth: "min(var(--layout-menu-min-width), calc(var(--app-viewport-width, 100vw) - var(--spacing-2) * 2))", padding: "var(--spacing-1)", ...flattenSx(slotProps?.paper?.sx, theme) }} {...props}>{children}</Overlay>;
 }
 
 export function Popover({ open, onClose, anchorEl, children, slotProps, ...props }: OverlayProps & { slotProps?: { paper?: { sx?: SxProps } } }) {

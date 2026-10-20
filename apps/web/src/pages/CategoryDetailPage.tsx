@@ -1,3 +1,4 @@
+import { BookGridSkeleton } from "../components/BookGridSkeleton";
 import { ArrowBackRounded } from "@/ui/icons";
 import { FilterListRounded } from "@/ui/icons";
 import { TuneRounded } from "@/ui/icons";
@@ -22,6 +23,7 @@ import { useAuth } from "../auth/AuthContext";
 import { AddToBooklistDialog } from "../components/AddToBooklistDialog";
 import { BrowseBookCard } from "../components/CatalogDiscoveryCards";
 import { BookCatalogEmptyState } from "../components/BookCatalogEmptyState";
+import { bookGridSx } from "../components/bookGrid";
 import { CategoryBooksDrawer } from "../components/CategoryBooksDrawer";
 import { PageContainer, PageHeader } from "../components/PageHeader";
 import type { BrowseBook } from "../domain/types";
@@ -110,15 +112,15 @@ export function CategoryDetailPage() {
         </Stack>
       </Stack>
       {booksQuery.isPending ? (
-        <Stack sx={{ alignItems: "center", py: `${tokens.spacing[16]}px` }}><CircularProgress /></Stack>
+        <BookGridSkeleton label="正在加载分类书目" />
       ) : booksQuery.isError && !booksQuery.data ? (
         <Alert severity="error" action={<Button color="inherit" onClick={() => void booksQuery.refetch()}>重试</Button>}>分类书目暂时无法读取。</Alert>
       ) : books.length ? (
-        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2, minmax(0, 1fr))", sm: "repeat(3, minmax(0, 1fr))", md: "repeat(4, minmax(0, 1fr))", lg: "repeat(6, minmax(0, 1fr))" }, gap: { xs: 2, sm: 3, md: 4 } }}>
+        <Box sx={bookGridSx}>
           {books.map((book) => <BrowseBookCard key={book.id} book={book} onAdd={user ? setAddBook : undefined} />)}
         </Box>
       ) : (
-        <BookCatalogEmptyState />
+        <BookCatalogEmptyState title={query || format !== "ALL" ? "未找到匹配的书籍" : "该分类暂无书籍"} />
       )}
       {booksQuery.hasNextPage && !booksQuery.isFetchNextPageError ? <Stack ref={triggerRef} sx={{ alignItems: "center", py: `${tokens.spacing[8]}px` }}>{booksQuery.isFetchingNextPage ? <CircularProgress size={24} /> : supported ? <Typography variant="caption" color="text.disabled">继续向下浏览将加载更多</Typography> : <Button onClick={loadNextPage}>继续加载</Button>}</Stack> : null}
       {booksQuery.isFetchNextPageError ? <Alert severity="warning" sx={{ mt: `${tokens.spacing[6]}px` }} action={<Button color="inherit" onClick={() => void booksQuery.fetchNextPage()}>重新加载</Button>}>更多分类书目加载失败，已显示的书籍不受影响。</Alert> : null}

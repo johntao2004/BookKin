@@ -56,6 +56,14 @@ public class RetentionWorker {
             }
         }
         for (var version : versions.findExpired(200)) cleanupVersion(owner.id(), version);
+        enforceCoverRetention();
+    }
+
+    /** Confirmed cover resets should not wait for the daily retention sweep. */
+    @Scheduled(fixedDelay = 60_000)
+    public synchronized void enforceCoverRetention() {
+        var owner = users.findOwner().orElse(null);
+        if (owner == null) return;
         for (var cover : covers.findExpired(200)) cleanupCover(owner.id(), cover);
     }
 
@@ -85,19 +93,30 @@ public class RetentionWorker {
 
     private void cleanupCover(java.util.UUID ownerId, BookCoverRepository.ExpiredCoverAsset cover) {
         try {
-            var root = roots.findById(cover.libraryRootId()).orElseThrow();
-            Path rootPath = Path.of(root.canonicalPath() == null ? root.configuredPath() : root.canonicalPath()).toRealPath();
-            Path path = rootPath.resolve(cover.relativePath()).normalize();
-            if (!path.startsWith(rootPath)) throw new IllegalStateException("Cover path escaped root");
-            if (Files.exists(path, LinkOption.NOFOLLOW_LINKS)) {
-                if (Files.isSymbolicLink(path)) throw new IllegalStateException("Cover path is a symbolic link");
-                path = path.toRealPath();
-                if (!path.startsWith(rootPath)) throw new IllegalStateException("Cover path escaped root");
-                String actual = fingerprints.sha256(path);
-                if (!actual.equals(cover.fingerprint())) throw new IllegalStateException("Cover fingerprint changed");
-                Files.delete(path);
-            }
-            covers.delete(cover.id());
+            boolean removed = covers.purgeExpired(cover, () -> {
+                try {
+                    var root = roots.findById(cover.libraryRootId()).orElseThrow();
+                    if (!root.canWrite() || root.status() != com.elexvx.bookkin.ingestion.LibraryRoot.RootStatus.ONLINE)
+                        throw new IllegalStateException("Cover root is not writable");
+                    Path rootPath = Path.of(root.canonicalPath() == null ? root.configuredPath() : root.canonicalPath()).toRealPath();
+                    Path path = rootPath.resolve(cover.relativePath()).normalize();
+                    if (!path.startsWith(rootPath.resolve(".bookkin-assets/covers"))) throw new IllegalStateException("Cover path escaped assets");
+                    Path segment = rootPath;
+                    for (Path part : rootPath.relativize(path)) {
+                        segment = segment.resolve(part);
+                        if (Files.isSymbolicLink(segment)) throw new IllegalStateException("Cover path is a symbolic link");
+                    }
+                    if (Files.exists(path, LinkOption.NOFOLLOW_LINKS)) {
+                        if (Files.isSymbolicLink(path)) throw new IllegalStateException("Cover path is a symbolic link");
+                        path = path.toRealPath();
+                        if (!path.startsWith(rootPath)) throw new IllegalStateException("Cover path escaped root");
+                        String actual = fingerprints.sha256(path);
+                        if (!actual.equals(cover.fingerprint())) throw new IllegalStateException("Cover fingerprint changed");
+                        Files.delete(path);
+                    }
+                } catch (Exception exception) { throw new IllegalStateException(exception.getMessage(), exception); }
+            });
+            if (!removed) return;
             audit.record(ownerId, "COVER_RETENTION_PURGE", "BOOK_COVER_ASSET", cover.id().toString(),
                     cover.relativePath(), null, cover.fingerprint(), null, "SUCCEEDED", "{}");
         } catch (Exception exception) {

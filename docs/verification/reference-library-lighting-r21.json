@@ -1,0 +1,14 @@
+{
+  "scope": "lighting-only r21; all non-lighting scene-config fields and exact module bytes remain r20",
+  "lightingRevision": "bilateral-window-daylight-r21",
+  "geometryRevision": "20261019-wide-shelves-r20",
+  "sourceSha256": "d5460c8879bde5443bb0a323eb1be7973309ee1d95d9e90ef7867409973f2189",
+  "previousConfigSha256": "3718e80f2cf1237d7632b79a69a370515712e7b906b0f6a8ec50a4d9aa1e9ea6",
+  "configSha256": "481c65bd92c84cf5eeb59f733e84432011aaa127287db5b55a070fb9416d1dfe",
+  "nonLightingFieldsIdentical": true,
+  "generatorLightingMatches": true,
+  "areaCount": 12,
+  "localFixturePoints": 3,
+  "shadowCastingFixtures": 1,
+  "limitations": "RectAreaLight is a shadowless diffuse approximation. Only the central chandelier casts local shadows; no baked GI or physical daylight simulation claimed. Previous geometry reports bind the original r20 config hash."
+}

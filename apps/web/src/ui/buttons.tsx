@@ -1,3 +1,4 @@
+import { RefreshRounded } from "./icons";
 import AntButton from "antd/es/button";
 import type { ElementType, ForwardedRef, ReactNode } from "react";
 import { createElement, forwardRef } from "react";
@@ -22,7 +23,7 @@ type ButtonProps = Record<string, any> & {
   onKeyDown?: (event: any) => void;
 };
 
-export const Button = forwardRef<HTMLElement, ButtonProps>(function Button({ variant = "text", color, size = "medium", fullWidth, startIcon, endIcon, component: Component, to, href, sx, className, children, type, ...props }, ref) {
+export const Button = forwardRef<HTMLElement, ButtonProps>(function Button({ variant = "outlined", color, size = "medium", fullWidth, startIcon, endIcon, component: Component, to, href, sx, className, children, type, ...props }, ref) {
   const theme = useTheme();
   const antdType = variant === "contained" ? "primary" : variant === "outlined" ? "default" : "text";
   const isError = color === "error" || color === "error.main";
@@ -40,12 +41,25 @@ export const Button = forwardRef<HTMLElement, ButtonProps>(function Button({ var
   return <AntButton ref={ref as ForwardedRef<HTMLButtonElement>} autoInsertSpace={false} {...props} icon={leadingIcon ?? props.icon} danger={isError || undefined} type={antdType as "primary" | "default" | "text"} size={size === "medium" ? "middle" : size} block={fullWidth} className={classes} style={style} htmlType={typeof type === "string" ? type as "button" | "submit" | "reset" : undefined}>{children}{trailingIcon}</AntButton>;
 });
 
-export const ButtonBase = Button;
+// Inline reader markers and unstyled interaction surfaces opt out of action chrome.
+export const ButtonBase = forwardRef<HTMLElement, ButtonProps>(function ButtonBase(props, ref) {
+  return <Button ref={ref} variant="text" {...props} />;
+});
 
 export const IconButton = forwardRef<HTMLElement, ButtonProps>(function IconButton({ sx, className, children, ...props }, ref) {
-  return <Button ref={ref} variant="text" size="small" sx={{ minWidth: tokens.layout.iconButtonSize, width: tokens.layout.iconButtonSize, minHeight: tokens.layout.iconButtonSize, height: tokens.layout.iconButtonSize, borderRadius: tokens.radius.full, p: 0, ...flattenSx(sx, useTheme()) }} className={mergeClassNames("bk-icon-button", className)} {...props}>{children}</Button>;
+  return <Button ref={ref} variant="text" size="small" sx={{ minWidth: tokens.layout.iconButtonSize, width: tokens.layout.iconButtonSize, minHeight: tokens.layout.iconButtonSize, height: tokens.layout.iconButtonSize, borderRadius: `${tokens.radius.md}px`, p: 0, ...flattenSx(sx, useTheme()) }} className={mergeClassNames("bk-icon-button", className)} {...props}>{children}</Button>;
 });
 
 export function Fab({ sx, className, children, ...props }: ButtonProps) {
-  return <Button variant="contained" className={mergeClassNames("bk-fab", className)} sx={{ minWidth: tokens.layout.touchTarget, width: tokens.layout.touchTarget, height: tokens.layout.touchTarget, borderRadius: tokens.radius.pill, p: 0, ...flattenSx(sx, useTheme()) }} {...props}>{children}</Button>;
+  return <Button variant="contained" className={mergeClassNames("bk-fab", className)} sx={{ minWidth: tokens.layout.touchTarget, width: tokens.layout.touchTarget, height: tokens.layout.touchTarget, borderRadius: `${tokens.radius.md}px`, p: 0, ...flattenSx(sx, useTheme()) }} {...props}>{children}</Button>;
+}
+
+/** Shared secondary action for reloading data across pages. */
+export function RefreshButton({ children = "刷新", ...props }: ButtonProps) {
+  return <Button {...props} variant="outlined" size="medium" startIcon={<RefreshRounded />}>{children}</Button>;
+}
+
+/** Shared primary action for persisting a settings form. */
+export function SaveButton(props: ButtonProps) {
+  return <Button {...props} variant="contained" size="medium" />;
 }
