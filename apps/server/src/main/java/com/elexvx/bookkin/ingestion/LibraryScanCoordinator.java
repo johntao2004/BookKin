@@ -20,6 +20,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+// 扫描读取 EPUB/PDF 并更新目录；内部暂存、回收及资源目录不进入常规扫描。
+// Scanning reads EPUB/PDF files and updates the catalog; internal staging, trash and asset directories are excluded.
 @Service
 public class LibraryScanCoordinator {
     private static final Logger log = LoggerFactory.getLogger(LibraryScanCoordinator.class);
@@ -83,6 +85,8 @@ public class LibraryScanCoordinator {
                         String relative = Normalizer.normalize(rootPath.relativize(path).toString(), Normalizer.Form.NFC)
                                 .replace('\\', '/');
                         String normalized = relative.toLowerCase(Locale.ROOT);
+                        // 大小与修改时间仅用于跳过未变化文件；发生变化时再计算内容 SHA-256。
+                        // Size and modification time are only a fast unchanged-file check; changed files receive a content SHA-256.
                         String quick = attributes.size() + ":" + attributes.lastModifiedTime().toMillis();
                         if (quick.equals(knownFingerprints.get(normalized))) {
                             unchangedPaths.add(normalized);
@@ -120,6 +124,8 @@ public class LibraryScanCoordinator {
                 }
             });
             if (!unchangedPaths.isEmpty()) catalog.touchBatch(root.id(), unchangedPaths, scanId);
+            // 只有完整无失败扫描才能标记缺失，避免权限或 I/O 错误造成误判。
+            // Only a failure-free scan marks missing files, avoiding false absence caused by permission or I/O errors.
             if (failed.get() == 0) catalog.markMissing(root.id(), scanId);
             roots.recordScan(root.id());
         } catch (Exception exception) {

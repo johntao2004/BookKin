@@ -1,3 +1,5 @@
+// 验证独立历史储藏路线双向受支撑且无碰撞，不代表主馆暴露该路线入口。
+// Checks the isolated historical storage route is supported/collision-free in both directions without implying main-scene access.
 import {buildLongRoom} from './longRoom';
 import * as THREE from 'three';
 import {collectCameraColliders,resolveCameraCollision} from '../../virtual-library-collision';

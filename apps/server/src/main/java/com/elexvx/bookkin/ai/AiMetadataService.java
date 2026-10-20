@@ -31,6 +31,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+// 书目建议的服务端 AI 适配器：仅发送已提取元数据与简短候选摘要，不发送暂存 EPUB/PDF 二进制；结果由主人或管理员审核应用。
 /**
  * Server-side AI adapter for bibliographic suggestions.
  *
@@ -144,6 +145,7 @@ public class AiMetadataService {
         return new MatchResult(candidates.stream().limit(config.maxCandidates()).toList(), List.copyOf(attempted), List.copyOf(errors));
     }
 
+    // 公开 AI 网关：只有经原文摘录核实的概念才能进入知识图谱。
     /** Public AI gateway: only verified excerpt-backed concepts can enter the graph. */
     public KnowledgeResult extractKnowledge(List<KnowledgePassage> passages) throws Exception {
         var config = configuration.get();

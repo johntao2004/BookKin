@@ -31,6 +31,8 @@ public class SessionLifecycleService {
         audit.record(actor.id(),"SESSION_POLICY_CHANGED","SECURITY","sessions",null,null,null,null,"SUCCEEDED","{}");
         return minutes;
     }
+    // 绝对有效期从创建时间计算；撤销截止时间可以进一步缩短它。
+    // Absolute lifetime starts at session creation; a revocation deadline may shorten it further.
     public Status status(HttpSession session) {
         long expiresAt=session.getCreationTime()+maxMinutes()*60_000L;
         var pending=db.fetchOne("select r.revoke_at from session_revocation r join spring_session s on s.primary_id=r.session_primary_id where s.session_id=?",session.getId());
@@ -47,6 +49,7 @@ public class SessionLifecycleService {
             return user==null?null:new ActiveSession(r.get("primary_id",String.class).trim(),user.id().toString(),user.username(),user.displayName(),user.role().name(),Instant.ofEpochMilli(r.get("creation_time",Long.class)),Instant.ofEpochMilli(r.get("last_access_time",Long.class)),Instant.ofEpochMilli(expires),r.get("session_id",String.class).trim().equals(currentId),revoke!=null);
         }).filter(java.util.Objects::nonNull).toList();
     }
+    // 仅为现存会话设置短暂保存窗口，不撤销之后新建的登录会话。
     // Existing sessions get a short save window; a later login is never revoked.
     @Transactional
     public void requestRevocation(String username) {

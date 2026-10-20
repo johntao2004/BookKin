@@ -13,6 +13,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 
+// 实现单段 HTTP 字节范围与 HEAD 响应，分块写出文件内容而非整本载入堆。
+// Implements single HTTP byte ranges and HEAD responses, streaming chunks instead of loading the entire book into heap.
 final class BookContentResponse {
     private static final int BUFFER_SIZE = 256 * 1024;
 

@@ -16,6 +16,7 @@ import org.springframework.stereotype.Component;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
+// 有界只读文本采样，不执行 OCR，也不修改 NAS 原文件。
 /** Bounded, read-only text samples; no OCR and no changes to NAS originals. */
 @Component
 public class BookTextSampler {
@@ -71,6 +72,7 @@ public class BookTextSampler {
                 String decoded = java.net.URLDecoder.decode(href.replace("+", "%2B"), StandardCharsets.UTF_8);
                 String entry = entryName((base == null ? Path.of(decoded) : base.resolve(decoded)).normalize().toString());
                 var chapter = xml(zip, entry);
+                // 正文内出现的脚本和样式内容也忽略。
                 // Ignore executable/style content even when it occurs inside the body.
                 for (String tag : List.of("script", "style")) {
                     var elements = chapter.getElementsByTagNameNS("*", tag);
@@ -92,6 +94,7 @@ public class BookTextSampler {
             byte[] bytes = input.readNBytes(MAX_XML_BYTES + 1);
             if (bytes.length > MAX_XML_BYTES) throw new IOException("EPUB 章节超过提取安全限制");
             var factory = FileInspector.secureXmlFactory();
+            // EPUB 2 可能声明 XHTML 公共 DTD，但这里不加载 DTD 或展开实体。
             // EPUB 2 chapters may declare XHTML's public DTD; never load it or expand entities.
             factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", false);
             factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);

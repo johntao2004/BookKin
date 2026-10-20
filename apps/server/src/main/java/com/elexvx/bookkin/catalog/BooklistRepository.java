@@ -11,6 +11,8 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 @Repository
+// 维护书单成员顺序与版本，并按请求者可见性筛选读取结果。
+// Maintains ordered booklist membership/revisions and filters reads by viewer visibility.
 public class BooklistRepository {
     private final DSLContext dsl;
 

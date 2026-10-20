@@ -1,3 +1,5 @@
+// 覆盖禁用 AI 时无密钥启动及配置密钥后的密文往返，避免测试暗示可以明文降级。
+// Covers keyless startup with AI disabled and encrypted round trips with a configured key, without implying plaintext fallback.
 package com.elexvx.bookkin.ai;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

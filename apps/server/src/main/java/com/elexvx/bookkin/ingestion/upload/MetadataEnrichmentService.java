@@ -27,6 +27,8 @@ import java.util.Set;
 import org.springframework.stereotype.Service;
 
 @Service
+// 查询在线候选并补空缺字段；来源失败被隔离，人工值不因自动补全而强制替换。
+// Queries online candidates and fills missing fields; provider failures are isolated and manual values are not forcibly replaced.
 public class MetadataEnrichmentService {
     private static final Set<String> COVER_HOSTS = Set.of("covers.openlibrary.org", "books.google.com", "books.googleusercontent.com");
     private final BookUploadRepository uploads;

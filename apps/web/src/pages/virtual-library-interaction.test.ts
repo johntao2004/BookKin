@@ -1,3 +1,5 @@
+// 区分短按、拖动、移出释放与其他书架命中，只有当前选中目标的有效点击打开阅读。
+// Distinguishes clicks, drags, release-away and other shelves so only valid clicks on the selected target open reading.
 import {
   BOOK_POINTER_CLICK_TOLERANCE,
   isFocusedShelfTarget,

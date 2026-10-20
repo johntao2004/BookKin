@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# 在巨柱内部的收缩探测区域统计栏杆木材三角面，排除柱面本身，识别穿柱的扶手或独立立柱。
+# Counts rail-material triangles in inset pier interiors, excluding the actual pier faces while detecting rails or independent posts passing through them.
 """Check exported gallery rail surfaces do not run through giant pier interiors."""
 import argparse
 import hashlib

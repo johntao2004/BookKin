@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 
+// 雕刻眼睑研究。外缘贴合现有人像网格；眼裂与眼睑饱满度仍为依据照片作出的估计。
 /** Carved eyelid study. Outer margins conform to the current portrait mesh;
  * the opening and lid fullness remain photograph-derived estimates. */
 export function addSwiftEyes(root: THREE.Group, head: THREE.BufferGeometry, material: THREE.Material) {

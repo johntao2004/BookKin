@@ -1,3 +1,5 @@
+// 保护统一元信息入口及独立文件移动、加入书单动作，避免卡片菜单出现重复编辑路径。
+// Protects unified metadata editing alongside separate file-move and booklist actions without duplicate edit paths.
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { demoBooks } from "../data/demo";

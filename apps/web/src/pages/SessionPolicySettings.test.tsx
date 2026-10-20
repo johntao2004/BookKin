@@ -1,3 +1,5 @@
+// 覆盖时长输入边界、主人保存和管理员只读，客户端输入校验不替代服务端限制。
+// Covers duration bounds, owner save and administrator read-only state without replacing server validation.
 import { fireEvent,render,screen,waitFor } from "@testing-library/react";
 import { afterEach,expect,it,vi } from "vitest";
 import { TestProviders } from "../test/TestProviders";

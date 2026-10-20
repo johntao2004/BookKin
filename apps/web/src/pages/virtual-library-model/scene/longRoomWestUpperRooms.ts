@@ -4,6 +4,7 @@ import {LONG_ROOM as L} from '../longRoomLayout';
 import {createWestHighWindow} from './longRoomWestWindow';
 import {markCameraCollider} from '../../virtual-library-collision';
 
+// Y1.003：西侧上层储藏室（21/78 平方米）及北侧通道（4 平方米）。布局分隔遵循图纸，放大后的外轮廓与门洞为估计。局部轴线保持世界朝向，-z 从大厅端部向西延伸。
 /** Y1.003: west upper storage (21/78 m²) and northern circulation (4 m²).
  * Layout subdivisions follow the drawing; enlarged envelope/doors are estimates.
  * Local axes retain world orientation; negative z runs west from the hall end. */
@@ -28,10 +29,12 @@ export function createWestUpperRooms(materials:LibraryMaterials) {
   };
   box('West upper continuous floor',R.south-R.north,.2,8,0,R.floor-.1,-4.5,materials.floor);
   box('West upper continuous ceiling',R.south-R.north+.24,.2,8.24,0,R.ceiling+.1,-4.5);
+  // 大厅门洞已由大厅木作实体封闭。此后墙仍保留开口，以供后续有支撑的回廊层过渡段使用。
   // Hall doorway is physically closed in the hall joinery. Preserve an aperture
   // in this rear wall for the later supported gallery-level transition.
   for(const [a,b] of [[R.north,-.9],[.9,R.south]])box('West upper east wall pier',b-a,H,.24,(a+b)/2,R.floor+H/2,R.east);
   box('West upper entrance head',1.8,H-R.doorHeight,.24,0,R.floor+(H+R.doorHeight)/2,R.east);
+  // 资料房间标高与放大回廊相差 46 厘米。此短过渡段明确属于通行适配，并非经测绘的楼梯。
   // The source room datum and enlarged gallery differ by 46 cm. This short
   // transition is an explicit circulation adaptation, not surveyed stairwork.
   const T=WEST_UPPER_TRANSITION,rise=(L.galleryY-R.floor)/T.steps;
@@ -57,6 +60,7 @@ export function createWestUpperRooms(materials:LibraryMaterials) {
   windowWall('West upper north windows',8,[-2.5,0,2.5],R.north,-4.5,Math.PI/2);
   windowWall('West upper south windows',8,[-2.5,0,2.5],R.south,-4.5,-Math.PI/2);
   windowWall('West upper west windows',R.south-R.north,[-7.4,-3.7,0,3.7,7.4],0,R.west,0);
+  // 北侧通道与储藏室的横向隔墙，门位于平面东侧。
   // Transverse north/store partitions, with doors at the plan's east side.
   const partition=(x:number,z0:number,z1:number,doorZ:number)=>{
     for(const [a,b] of [[z0,doorZ-R.doorWidth/2],[doorZ+R.doorWidth/2,z1]])
@@ -67,6 +71,7 @@ export function createWestUpperRooms(materials:LibraryMaterials) {
   };
   partition(R.northPartition,R.west,R.east,-3);
   partition(R.storagePartition,R.west,R.east,-2.1);
+  // 短纵墙将西侧小室与 21 平方米储藏室分开。
   // The short longitudinal wall separates the west-side cell from the 21 m² store.
   const doorX=-5.4;
   for(const [a,b] of [[R.northPartition,doorX-R.doorWidth/2],[doorX+R.doorWidth/2,R.storagePartition]])
@@ -74,6 +79,7 @@ export function createWestUpperRooms(materials:LibraryMaterials) {
   box('West upper store inner door head',R.doorWidth,H-R.doorHeight,.14,doorX,R.floor+(H+R.doorHeight)/2,R.innerPartition);
   for(const side of [-1,1])box('West upper inner door lining',.06,R.doorHeight,.22,doorX+side*(R.doorWidth/2+.03),R.floor+R.doorHeight/2,R.innerPartition,materials.woodWarm);
   box('West upper inner door timber head',R.doorWidth+.12,.07,.22,doorX,R.floor+R.doorHeight+.035,R.innerPartition,materials.woodWarm);
+  // Y1.003 的 78 平方米储藏室包含两个靠边的小体块。保持其低矮并紧贴西墙，使中央过道仍可通行。
   // Y1.003's 78 m² store contains two small perimeter blocks. Keep them low
   // and against the west wall so the central aisle remains a usable route.
   for(const x of [-3.75,2.4]) {

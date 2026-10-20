@@ -24,6 +24,8 @@ import org.springframework.web.bind.annotation.RestController;
 @Profile("api")
 @RequestMapping("/api/v1/file-operations")
 @PreAuthorize("hasAnyRole('OWNER','ADMIN')")
+// 管理角色的预览与入队接口；返回任务记录不代表后台文件操作已完成。
+// Management endpoints for preview and enqueueing; a returned job record does not mean filesystem work has finished.
 public class FileOperationController {
     private final FileOperationService service;
     private final FileOperationRepository operations;

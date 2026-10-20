@@ -11,6 +11,8 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 
 @Service
+// 管理 SMTP 设置并发送验证/恢复邮件；设置视图不返回已保存密码。
+// Manages SMTP settings and verification/recovery delivery; settings views do not return saved passwords.
 public class MailService {
     private final DSLContext db;
     private final AiSettingsCrypto crypto;

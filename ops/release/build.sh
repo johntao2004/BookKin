@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
+# 在独立发布目录中验证并打包前后端，附带路由清单、部署工具和 JAR 来源校验信息。
+# Validates and packages the frontend and backend in a fresh release directory, with routes, deployment tools and JAR provenance checksums.
 set -euo pipefail
 ROOT=$(cd "$(dirname "$0")/../.." && pwd)
 cd "$ROOT"
+# 每次构建均创建新目录，避免混入上一次发布的文件。
 # A new directory on every build prevents files from a previous release leaking in.
 DEST=$(mktemp -d "$ROOT/.artifacts/release-XXXXXXXX")
 printf 'Release directory: %s\n' "$DEST"

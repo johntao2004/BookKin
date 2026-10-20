@@ -1,3 +1,5 @@
+// 把 PDF 页码、定位与文本匹配转换为可见标记，保留已有阅读文本结构。
+// Maps PDF page/locator/text matching to visible annotations while preserving reading text structure.
 import { annotationColorBackground, annotationColorHex } from "../../domain/annotation-colors";
 import type { Annotation } from "../../domain/types";
 

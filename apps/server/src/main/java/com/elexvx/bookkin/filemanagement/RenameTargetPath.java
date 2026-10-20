@@ -6,6 +6,8 @@ import java.util.Locale;
 import java.util.Set;
 import org.springframework.http.HttpStatus;
 
+// 把重命名输入转换为受控目标路径，并保留原书格式扩展名规则。
+// Converts rename input to a controlled destination while preserving format-extension rules.
 final class RenameTargetPath {
     private static final Set<String> BOOK_EXTENSIONS = Set.of(".epub", ".pdf");
 

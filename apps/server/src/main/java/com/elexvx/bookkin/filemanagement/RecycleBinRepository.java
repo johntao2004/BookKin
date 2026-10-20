@@ -9,6 +9,8 @@ import org.jooq.Record;
 import org.springframework.stereotype.Repository;
 
 @Repository
+// 记录回收文件位置与状态，不因数据库记录变化自行移动或删除 NAS 文件。
+// Tracks trash locations/states without moving or deleting NAS files merely through row updates.
 public class RecycleBinRepository {
     private final DSLContext dsl;
 

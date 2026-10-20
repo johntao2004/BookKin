@@ -1,3 +1,5 @@
+// 本地文章文件先解析为可校对草稿，导入界面不跳过后续保存步骤。
+// Parses local article files into reviewable drafts without bypassing the later save step.
 import { useRef, useState } from "react";
 
 export function ArticleFileImport({ disabled, onImport, onError, kind = "article" }: {

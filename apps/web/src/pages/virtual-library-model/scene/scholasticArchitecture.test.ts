@@ -1,3 +1,5 @@
+// 检查替代历史建筑的灯链连接、屋顶净高与有限几何预算，不声明其为当前主模型。
+// Checks alternate historical architecture’s light chains, roof clearance and bounded geometry without declaring it the active model.
 import * as THREE from 'three';
 import { LIBRARY } from '../config';
 import { collectCameraColliders } from '../../virtual-library-collision';

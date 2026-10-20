@@ -1,8 +1,10 @@
 import * as THREE from 'three';
 
+// 依据 Bridgwater 于 2016 年拍摄的侧面与四分之三侧面照片研究 Swift 肖像。归一化截面为视觉估计，并非摄影测量结果。
 /** Swift portrait study from Bridgwater's 2016 side/three-quarter photographs.
  * Normalized sections are visual estimates, not photogrammetric measurements. */
 export function createSwiftHeadGeometry() {
+  // 依次为 y、半宽、前方面部平面及后方头骨延伸范围。
   // y, half-width, anterior facial plane, posterior skull extent.
   const sections = [
     [-1, 0, 0, 0], [-0.88, 0.43, 0.56, -0.35],

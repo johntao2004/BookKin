@@ -15,6 +15,7 @@ const fields = [
   ["series", "系列"], ["seriesIndex", "系列序号"], ["tags", "标签"],
 ] as const;
 
+// 已入库书籍与暂存上传共用同一个书目表单。
 /** Both saved books and staged uploads render this single bibliographic form. */
 export function MetadataEditorForm({ value, onChange, coverUrl, coverAlt, coverActions, coverDetails, extraFields, children, disabled = false }: {
   value: MetadataEditorValues; onChange: (key: keyof MetadataEditorValues, value: string | boolean) => void;

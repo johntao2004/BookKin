@@ -30,6 +30,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @Profile("api")
 @RequestMapping("/api/v1/display-books")
+// 公开书籍关系先于内容或封面读取校验；目录中存在不等于已公开。
+// Checks public-book membership before content/cover access; catalog existence alone does not mean publication.
 public class DisplayCatalogController {
     private final DisplayCatalogService display;
     private final BookRepository books;
@@ -53,6 +55,7 @@ public class DisplayCatalogController {
 
     @GetMapping("/{id}/cover")
     ResponseEntity<FileSystemResource> cover(@PathVariable UUID id) {
+        // 先检查公开关系，防止私人书籍的缓存封面成为匿名枚举入口。
         // Looking up the public relationship first is intentional: a private book's
         // cached cover must not become an anonymous enumeration endpoint.
         display.findPublic(id);

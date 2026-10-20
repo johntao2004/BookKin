@@ -1,3 +1,5 @@
+// 验证修订号与完整分页快照，失败、重复游标或取消时保留旧目录而不丢书或无限循环。
+// Checks revision/complete-pagination snapshots, preserving prior catalog data on failure, repeated cursors or cancellation.
 import { QueryClient, QueryObserver } from "@tanstack/react-query";
 import { api } from "../api/client";
 import type { Book } from "../domain/types";

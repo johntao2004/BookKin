@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# 比较旧新 GLB 的局部三角面签名，要求上层屏风消失而平台、后墙和楼梯保持一致。
+# Compares regional triangle signatures across old/new GLBs, requiring the upper screen to disappear while balcony, rear wall and stairs remain identical.
 """Compare exported balcony-screen clearance with an actual pre-change GLB."""
 import argparse
 import hashlib

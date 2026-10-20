@@ -1,3 +1,5 @@
+// 验证历史斜窗洞两侧的三层真实凹入面，而不是仅用表面颜色模拟深度。
+// Checks three physical recessed fields on both historical splayed window returns rather than color-only depth.
 import * as THREE from 'three';
 import { createLongRoomWindowReveal } from './longRoomWindowReveal';
 

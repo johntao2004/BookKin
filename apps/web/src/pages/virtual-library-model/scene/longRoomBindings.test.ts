@@ -1,3 +1,5 @@
+// 验证历史装帧贴图字节保真和分批生成让出执行权，性能优化不能改变表面结果。
+// Checks historical binding-map byte preservation and cooperative generation without changing surface output.
 import { DataTexture, type Texture } from 'three';
 import { createHash } from 'node:crypto';
 import { expect, it } from 'vitest';

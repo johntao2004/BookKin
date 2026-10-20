@@ -48,6 +48,7 @@ function createPlaqueFrame(materials:LibraryMaterials,name:string,width:number,h
   return group;
 }
 
+// Comerford 于 2012 年 10 月 18 日拍摄的 DSCN9262：方形黄铜纪念牌置于宽斜接木框内。绝对尺寸、铭文和墙上位置尚未核实，因此有意仅作独立部件研究。
 /** Comerford DSCN9262, 18 October 2012: square brass memorial in a broad
  * mitred timber frame. Absolute dimensions, inscription and wall placement
  * remain unverified; this is intentionally an isolated component study. */
@@ -56,6 +57,7 @@ export function createHenryMemorialStudy(materials:LibraryMaterials) {
   root.userData={fidelity:'photographic frame proportions; unmeasured one-metre study',
     inscriptionStatus:'worn Latin and arms not reconstructed',placementStatus:'unverified; not in live room',
     source:'https://www.patrickcomerford.com/2012/10/memories-of-old-bishop-and-old-book-in.html'};
+  // 截面从外缘沿宽斜面下行，经内侧凸线进入内嵌黄铜面；相邻边采用斜接。
   // Cross-section progresses from the outer rim down the broad sloping face,
   // through the inner bead to the inset brass; adjacent sides meet at mitres.
   const rings=[[.5,.018],[.478,.028],[.465,.016],[.357,.043],[.343,.022],[.33,.017]];
@@ -70,6 +72,7 @@ export function createHenryMemorialStudy(materials:LibraryMaterials) {
     const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
     geometry.setAttribute('uv',new THREE.Float32BufferAttribute(new Float32Array(positions.length/3*2),2));
     geometry.setIndex(indices);geometry.computeVertexNormals();mapWestPanelGrain(geometry,0,false);
+    // 横向和竖向框条各自沿轴向铺设纵向木纹。
     // Horizontal and vertical rails each carry the long grain along their axis.
     if(side%2===0) {
       const p=geometry.getAttribute('position'),uv=geometry.getAttribute('uv');
@@ -87,6 +90,7 @@ export function createHenryMemorialStudy(materials:LibraryMaterials) {
   return root;
 }
 
+// Henry Jones Room 的记述提到两块牌匾，以及较早纪念碑下方的一块现代可读面板。此处在改编后的西侧门洞上方安装一组内容简短、受来源限定的牌匾；精确墙面坐标和较早拉丁铭文仍未确定。
 /** The Henry Jones Room account describes two plaques and a modern readable
  * panel below the older monument. This installs a short, source-bounded pair
  * above the adapted west doorway; exact wall coordinates and the older Latin

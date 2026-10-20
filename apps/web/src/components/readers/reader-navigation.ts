@@ -1,3 +1,5 @@
+// 过滤可编辑目标上的快捷键并识别横向滑动，避免阅读导航抢占表单输入。
+// Filters editable targets and recognizes horizontal swipes so reader navigation does not hijack text input.
 import { tokens } from "../../theme/generated-tokens";
 
 export const READER_SWIPE_THRESHOLD = tokens.layout.touchTarget;

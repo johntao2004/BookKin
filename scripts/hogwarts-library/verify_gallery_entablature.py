@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# 沿廊下通长檐口测量空隙和深度台阶，以旧 GLB 作为必须失败的负对照。
+# Samples the continuous gallery entablature for gaps and depth steps, using the old GLB as a required failing control.
 """Reject gaps and depth steps in the exported longitudinal gallery entablature."""
 import argparse
 import hashlib

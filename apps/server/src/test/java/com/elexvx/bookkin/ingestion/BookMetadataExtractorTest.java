@@ -1,3 +1,5 @@
+// 从实际 EPUB/PDF 样本读取元数据与封面，区分文件格式事实和后续人工校对。
+// Extracts metadata/covers from real EPUB/PDF fixtures, separating file facts from later manual review.
 package com.elexvx.bookkin.ingestion;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

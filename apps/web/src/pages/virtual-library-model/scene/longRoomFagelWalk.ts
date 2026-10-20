@@ -5,6 +5,7 @@ const entryZ=LONG_ROOM.length/2-1.5;
 const turnZ=LONG_ROOM.length/2+FAGEL.doorZ;
 const approach=turnZ-entryZ;
 export const FAGEL_WALK_LENGTH=approach+8.4;
+// 中央入口及两处对齐的隔墙缺口；距离按沿地面的米数计算。
 /** Central portal and both aligned partition gaps; distance is metres along floor. */
 export function fagelWalkPoint(distance:number):CameraPosition {
   const d=Math.max(0,Math.min(FAGEL_WALK_LENGTH,distance));

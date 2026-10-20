@@ -1,3 +1,5 @@
+// 覆盖小屏取景、像素上限、缩放及私人目录接入；模拟测试不能替代真实 GPU 性能测量。
+// Covers compact framing, pixel limits, zoom and private catalog integration; mocks do not establish real GPU performance.
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { api } from "../api/client";
 import { TestProviders } from "../test/TestProviders";

@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# 结合导出三角面与配置检查横向通道的地面连通、净宽和端部阻挡；数值契约针对本文件约定的布局。
+# Checks crosswalk floor connectivity, clear width and end obstructions from exported triangles and configuration under this file’s layout-specific contract.
 """Blender-free r6 crosswalk, end-clearance and side-gallery regression."""
 from __future__ import annotations
 

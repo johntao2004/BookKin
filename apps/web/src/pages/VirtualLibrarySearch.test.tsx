@@ -1,3 +1,5 @@
+// 验证真实目录的多字段匹配、空态及阅读/定位分流，不制造占位书籍结果。
+// Checks real catalog matching, empty state and separate read/focus actions without invented placeholder books.
 import { fireEvent, render, screen } from '@testing-library/react';
 import { TestProviders } from '../test/TestProviders';
 import type { Book } from '../domain/types';

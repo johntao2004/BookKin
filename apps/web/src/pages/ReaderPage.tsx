@@ -77,6 +77,8 @@ export function ReaderPage() {
     : navigate(user ? "/library/all" : "/library");
   const annotationTarget = searchParams.get("locator") ?? undefined;
   const queryClient = useQueryClient();
+  // 访客走公开书籍接口且不读取私有批注；认证缓存隔离由 AuthProvider 管理。
+  // Guests use public book APIs without private annotations; AuthProvider owns identity-related cache isolation.
   const guest = !user;
   const bookQuery = useQuery<Book | DisplayBook>({ queryKey: ["reader-book", bookId, guest], queryFn: async () => guest ? api.getDisplayBook(bookId) : api.getBook(bookId), enabled: Boolean(bookId) });
   const annotationQueryKey = ["annotations", bookId] as const;
@@ -136,7 +138,7 @@ export function ReaderPage() {
   useEffect(() => {
     if(!user || !bookId) return;
     const key=`bookkin-note-draft:${user.id}:${bookId}`;
-    try { const draft=JSON.parse(localStorage.getItem(key) ?? "null"); if(draft?.selection) {setNote(draft.note ?? "");setSelection(draft.selection);setNoteComposerOpen(Boolean(draft.note));} } catch { /* Ignore damaged local drafts. */ }
+    try { const draft=JSON.parse(localStorage.getItem(key) ?? "null"); if(draft?.selection) {setNote(draft.note ?? "");setSelection(draft.selection);setNoteComposerOpen(Boolean(draft.note));} } catch { /* 忽略损坏的本地草稿。 */ /* Ignore damaged local drafts. */ }
   },[user?.id,bookId]);
   useEffect(() => {
     if(user && bookId && selection) localStorage.setItem(`bookkin-note-draft:${user.id}:${bookId}`,JSON.stringify({note,selection}));
@@ -360,6 +362,8 @@ export function ReaderPage() {
   );
 }
 
+// 仅为已登录且书籍加载成功的阅读累计时间；离开时提交最多 60 秒的本次增量。
+// Track time only for signed-in readers after successful book load; leaving flushes the current delta capped at 60 seconds.
 function useReadingTimeTracking(bookId: string, enabled: boolean) {
   const lastRecordedAt = useRef(Date.now());
 

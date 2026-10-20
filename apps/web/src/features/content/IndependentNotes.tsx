@@ -1,3 +1,5 @@
+// 独立文章/专区阅读的笔记界面通过传入状态操作，不写普通书库批注。
+// Notes UI for independent article/vault reading updates supplied state rather than normal catalog annotations.
 import { randomId } from "../../utils/random-id";
 import { useState } from "react";
 import {

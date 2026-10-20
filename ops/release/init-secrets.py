@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# 保留已有 AI 设置加密密钥，或在允许初始化时原子写入新密钥；已有加密数据时拒绝缺钥重建。
+# Preserves an existing AI-settings encryption key or atomically initializes one when allowed; refuses replacement when encrypted data already exists.
+# 初始化持久化部署密钥；不打印或轮换已有密钥。
 """Initialize persistent deployment secrets. Never print or rotate an existing key."""
 import os
 from pathlib import Path

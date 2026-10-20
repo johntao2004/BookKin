@@ -38,6 +38,7 @@ export function TableAction(props: ComponentProps<typeof AntButton>) {
   return <AntButton {...props} type="default" size="small" />;
 }
 
+// 为组合探索界面保留原生控件入口。
 // Native controls for composed exploration surfaces.
 export { default as _AntAlert } from "antd/es/alert";
 export { default as _AntButton } from "antd/es/button";

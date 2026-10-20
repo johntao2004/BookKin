@@ -1,3 +1,5 @@
+// 检查历史储藏层楼板、隔断门洞、窗边实体与下降入口的支撑。
+// Checks historical storage floors, partition doors, solid window boundaries and supported descending entry.
 import * as THREE from 'three';
 import {createWestUpperRooms,WEST_UPPER_ROOMS as R,WEST_UPPER_TRANSITION as T} from './longRoomWestUpperRooms';
 import {LONG_ROOM as L} from '../longRoomLayout';

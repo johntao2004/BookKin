@@ -1,3 +1,5 @@
+// 覆盖按书分组、空态和 Word 导出入口，保留选中书籍的批注范围。
+// Covers per-book grouping, empty states and Word export while retaining selected-book scope.
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, vi } from "vitest";
 import { Route, Routes } from "react-router-dom";

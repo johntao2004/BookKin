@@ -13,6 +13,7 @@ export interface BookCardAction {
   danger?: boolean;
 }
 
+// 所有书籍集合共用一套书卡布局与操作入口。
 /** One catalog layout and action entry point across all book collections. */
 export function BookCardPresentation({ book, onOpen, onRead, actions = [] }: {
   book: { id: string; title: string; author: string; coverUrl: string; available?: boolean };

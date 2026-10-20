@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { PALETTE } from '../config';
 
+// 踏步磨损饰面依据 Casey 2018 西楼梯照片估计。它独立于深色橡木栏杆，未将照片光照烘焙进贴图。
 /** Worn tread finish estimated from Casey's 2018 west-stair photograph.
  * Independent from the dark oak balustrade; no photographed lighting is baked in. */
 export function createWestTreadMaterial(base: THREE.MeshStandardMaterial) {
@@ -43,6 +44,7 @@ export function createWestTreadMaterial(base: THREE.MeshStandardMaterial) {
   return material;
 }
 
+// 局部 X 轴横穿梯段：木纹沿每级踏步长边延伸。端面单独投影，防止圆角踏步前缘退化为单条 UV 线。
 /** Local X runs across the flight: grain follows the long edge of each tread.
  * Project end faces separately so rounded nosings never collapse into a single UV line. */
 export function mapWestTreadGrain(geometry: THREE.BufferGeometry, offset = 0) {

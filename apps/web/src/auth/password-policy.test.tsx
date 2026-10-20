@@ -1,3 +1,5 @@
+// 覆盖共享规则提示、提交前拒绝与设置保存，保持 ASCII 符号和长度规则一致。
+// Covers shared rule feedback, pre-submit rejection and settings persistence with consistent ASCII-symbol and length rules.
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
 import { passwordRequirements } from "./password-policy";

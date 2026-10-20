@@ -35,12 +35,15 @@ public class RecoveryService {
         var id = db.fetchOptional("select user_id from recovery_mailboxes where email=?",email.toLowerCase(Locale.ROOT).trim()).map(r->r.get(0,UUID.class));
         id.flatMap(users::findById).filter(u->u.status()==UserStatus.ACTIVE).ifPresent(user -> {
             try { issue(user,email.toLowerCase(Locale.ROOT).trim(),"RESET"); }
-            catch (ApiException e) { // Keep account existence private; owner can diagnose delivery with test mail.
+            catch (ApiException e) { /* 保护账户存在性；主人可通过测试邮件诊断投递。 */ // Keep account existence private; owner can diagnose delivery with test mail.
                 audit.record(user.id(),"PASSWORD_RESET_MAIL_FAILED","USER",user.id().toString(),null,null,null,null,"FAILED","{}");
             }
         });
     }
+    // 明文令牌仅进入邮件链接，数据库保存摘要及签发时密码哈希以识别失效链接。
+    // The raw token goes only into the email link; storage keeps its digest and issuance-time password hash to detect stale links.
     private void issue(BookKinUser user, String email, String purpose) {
+        // 按用户串行化签发和消费，不直接访问其他模块的表。
         // Serialize issuance/consumption per user without accessing another module's tables.
         db.execute("select pg_advisory_xact_lock(hashtext(?))","recovery:"+user.id());
         byte[] bytes = new byte[32]; new SecureRandom().nextBytes(bytes);
@@ -51,6 +54,8 @@ public class RecoveryService {
             "请在 30 分钟内打开以下链接：\n"+mail.settings().publicUrl()+"/recover#"+purpose.toLowerCase(Locale.ROOT)+"="+token+"\n\n链接仅可使用一次。如果不是你本人操作，请忽略此邮件。"); }
         catch (RuntimeException e) { db.execute("delete from recovery_tokens where token_hash=?",hash(token)); throw e; }
     }
+    // 消费令牌与更新身份处于同一事务；密码或绑定邮箱变化会使旧重置链接失效。
+    // Token consumption and identity updates share a transaction; changed passwords or bound email invalidate old reset links.
     @Transactional
     public void consume(String token, String purpose, String newPassword) {
         String digest=hash(token);

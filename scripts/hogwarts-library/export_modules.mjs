@@ -1,3 +1,5 @@
+// 按空间区域拆分已有三角面，保持属性原字节并验证 Meshopt 往返，再输出共享材质、纹理和加载清单。
+// Partitions existing triangles spatially, preserves attribute bytes and verifies Meshopt round trips before writing shared materials, textures and the loading manifest.
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -32,6 +34,8 @@ function fineRegion(cx,cy,cz,min,max,material){
  if(cy>=6*heightScale)return 'central-lighting';
  return cz<0?'central-furniture-south':'central-furniture-north';
 }
+// 区域选择只给完整三角面分配归属，不裁剪跨界面；跨多个跨间的结构面留在核心模块。
+// Region assignment keeps triangles whole rather than clipping boundaries; structural triangles spanning multiple bays remain in the core.
 function region(cx,cy,cz,min,max,material){
  const id=fineRegion(cx,cy,cz,min,max,material);
  if(id.startsWith('core-'))return 'core';
@@ -77,6 +81,8 @@ await fs.mkdir(path.join(OUT,'modules'),{recursive:true});const inventory=[];
 for(const part of parts.values()){
  let offset=0,decoded=0;const chunks=[],views=[],accessors=[],primitives=[];
  const append=(bytes)=>{const pad=(4-offset%4)%4;if(pad){chunks.push(Buffer.alloc(pad));offset+=pad}const start=offset;chunks.push(Buffer.from(bytes));offset+=bytes.length;return start};
+ // 压缩完成立即解码逐字节比较，不通过量化或容差掩盖属性变化。
+ // Immediately decode compressed data and compare bytes exactly, without quantization or tolerance hiding attribute changes.
  function encode(bytes,count,stride,mode,componentType,type,min,max){
   const compressed=MeshoptEncoder.encodeGltfBuffer(bytes,count,stride,mode,1),out=new Uint8Array(bytes.length);MeshoptDecoder.decodeGltfBuffer(out,count,stride,compressed,mode,'NONE');assert.ok(Buffer.from(out).equals(bytes));
   const id=views.length,access=accessors.length;views.push({buffer:1,byteOffset:decoded,byteLength:bytes.length,extensions:{KHR_meshopt_compression:{buffer:0,byteOffset:append(compressed),byteLength:compressed.length,byteStride:stride,count,mode,filter:'NONE'}}});decoded+=bytes.length;
@@ -101,6 +107,8 @@ const bank={asset:original.asset,extensionsUsed:original.extensionsUsed,scene:0,
  materials:original.materials,textures:original.textures,samplers:original.samplers,
  images:original.images.map((im,i)=>({name:im.name,mimeType:im.mimeType,uri:`textures/${path.basename(textures[i].uri)}`}))};
 const bankBytes=Buffer.from(JSON.stringify(bank));await fs.writeFile(path.join(OUT,'materials.gltf'),bankBytes);
+// startup 列表只是启动预加载策略；模块是否进入当前清单仍由本次实际拆分结果决定。
+// The startup set is a preload policy; only modules produced by this export become manifest entries.
 const startup=new Set(['core','a-end','sector-left-2','sector-right-2','globe','central-furniture-north','central-furniture-south','central-lighting']);
 const materialCapacityLimits=original.materials.map((m,id)=>({name:m.name,vertices:0,indices:0}));
 for(const part of parts.values())for(const p of part.primitives){materialCapacityLimits[p.material].vertices+=p.attributes.POSITION.count;materialCapacityLimits[p.material].indices+=p.indices.length;}

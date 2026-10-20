@@ -1,4 +1,7 @@
 #!/bin/sh
+# 校验恢复清单、归档路径和校验和，支持只校验模式，并将确认的恢复点导入配置的文件根目录与数据库。
+# Validates recovery metadata, archive paths and checksums, supports a dry run, and restores a selected recovery point to configured roots and the database.
+# 恢复完整的 BookKin 恢复点。仅可在隔离的 Compose 项目中运行，或在确认破坏性的数据库替换后运行。
 # Restore a complete BookKin recovery point. Run only against an isolated
 # Compose project or after confirming the destructive database replacement.
 set -eu
@@ -44,6 +47,7 @@ fi
 
 validate_archive() {
   archive=$1
+  # 虽然归档由“.”生成，解包传入的恢复点前仍须拒绝绝对路径和父目录路径分量。
   # Archives are generated from '.', nevertheless reject absolute paths and
   # parent-directory components before extracting a supplied recovery point.
   tar -tzf "$archive" | awk '

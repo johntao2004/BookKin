@@ -1,3 +1,5 @@
+// 验证各账户字段独立提交并清除确认密码，避免凭据留在普通资料状态。
+// Checks separate account-field submissions and clearing of confirmation passwords.
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { expect, it, vi } from "vitest";
 import { TestProviders } from "../test/TestProviders";

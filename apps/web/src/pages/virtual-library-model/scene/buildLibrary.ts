@@ -42,6 +42,7 @@ export interface BuiltLibrary {
 }
 
 export interface ExpandableShelfSection {
+  // 使用资产专属的裁剪平面；旧构建器保留现有默认值。
   /** Asset-specific planes; legacy builders retain their existing defaults. */
   frontOffset?: number;
   bookCenterOffset?: number;
@@ -161,6 +162,7 @@ export function calculateSpiralStairGalleryConnection() {
   const railRadius = galleryInnerRadius - 0.08;
   const stairAxisAngle = Math.atan2(STAIR_CENTER.z, STAIR_CENTER.x);
   const stairCenterRadius = Math.hypot(STAIR_CENTER.x, STAIR_CENTER.z);
+  // 末级踏步必须与通往回廊的路线垂直。楼梯随角度增大而上升，因此当末级踏步位于塔楼轴线后方四分之一圈处时，其前进切线指向径向外侧。
   // The final tread must be perpendicular to the route into the gallery. The
   // stair rises with increasing angle, so its forward tangent points radially
   // outward when the final tread sits a quarter-turn behind the tower axis.
@@ -434,6 +436,7 @@ function addFloorAndShell(root: THREE.Group, materials: LibraryMaterials) {
   }
 
   const wallMaterial = materials.stone.clone();
+  // 大厅通常从内部观看，但墙体仍需真实的外表面，避免极端环绕视角暴露被剔除的空壳。
   // The hall is normally viewed from inside, but the wall still needs a real
   // exterior face so an extreme orbit never exposes a culled, hollow shell.
   wallMaterial.side = THREE.DoubleSide;
@@ -525,6 +528,7 @@ function addTangentialBookcase(
     group.add(makeBox(width, height - 0.32, 0.11, materials.woodDark, 0, baseY + height / 2, backZ));
     const insetZ = backZ + faces[0] * 0.066;
     const insetWidth = width - 0.18;
+    // 内凹木作在书架查看距离下可辨识，同时不占用书籍槽位。
     // Recessed joinery reads at shelf-inspection distance without occupying book slots.
     for (const panelX of [-width / 3, 0, width / 3]) {
       const panelWidth = width / 3 - 0.12;
@@ -570,6 +574,7 @@ function addTangentialBookcase(
     }
   }
 
+  // 古典橡木壁柱为每个书柜形成鲜明、重复排列的建筑开间。
   // Classical oak pilasters give each bookcase a strong, repeated architectural bay.
   for (const x of outerPostPositions) {
     group.add(makeBox(0.2, height, depth + 0.12, materials.woodWarm, x, baseY + height / 2, 0));

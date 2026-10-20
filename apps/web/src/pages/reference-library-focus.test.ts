@@ -1,3 +1,5 @@
+// 验证不同层高与书架朝向的聚焦取景，并在碰撞调整后仍保持可见范围。
+// Checks shelf-focus framing across elevations/faces remains visible after collision adjustment.
 import * as THREE from 'three';
 import { readFileSync } from 'node:fs';
 import { getReferenceShelfFocusFov, getReferenceShelfFrame } from './reference-library-focus';

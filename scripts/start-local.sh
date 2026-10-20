@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# 构建并复制只读 JAR 快照，配置本地存储及持久密钥，启动 API/Worker 并在退出时清理受管进程。
+# Builds a read-only JAR snapshot, configures local storage and persistent keys, starts API/Worker and cleans up managed processes on exit.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -23,6 +25,7 @@ export BOOKKIN_STORAGE_ROOTS_0_NAME="${BOOKKIN_STORAGE_ROOTS_0_NAME:-主书库}"
 export BOOKKIN_STORAGE_ROOTS_0_PATH="${BOOKKIN_STORAGE_ROOTS_0_PATH:-$LOCAL_LIBRARY_ROOT}"
 export BOOKKIN_FONT_STORAGE_PATH="${BOOKKIN_FONT_STORAGE_PATH:-$LOCAL_LIBRARY_ROOT/.bookkin-assets/fonts}"
 
+# 在不将可复用密钥写入应用配置的前提下，使本地加密 AI 设置在重启后仍可使用。生产部署必须自行设置 BOOKKIN_AI_SETTINGS_ENCRYPTION_KEY。
 # Keep local encrypted AI settings usable across restarts without shipping a
 # reusable key in application configuration. Production deployments must set
 # BOOKKIN_AI_SETTINGS_ENCRYPTION_KEY themselves.

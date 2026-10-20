@@ -1,3 +1,5 @@
+// 验证离开场景时阴影资源与共享凹凸纹理释放，避免重复进入持续积累资源。
+// Checks leaving the scene releases shadow resources and shared bump textures against repeated-entry leaks.
 import * as THREE from 'three';
 import { disposeScene } from './virtual-library-scene';
 

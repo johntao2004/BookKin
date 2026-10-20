@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# 从实际 GLB 三角面测量拱廊内表面、边界和接缝，按配置或历史回退契约判定；不以源码常量替代几何证据。
+# Measures arcade soffits, boundaries and seams from actual GLB triangles using configuration or the historical fallback contract, not generator constants as geometry evidence.
 """Blender-free verification of the twelve r12 arcade soffits in the source GLB.
 
 Run with NumPy:

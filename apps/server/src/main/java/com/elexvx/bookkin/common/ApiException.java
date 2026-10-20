@@ -2,6 +2,8 @@ package com.elexvx.bookkin.common;
 
 import org.springframework.http.HttpStatus;
 
+// 携带 HTTP 状态与稳定业务错误码，由统一异常处理器转换为响应。
+// Carries HTTP status and stable business codes for the shared response exception handler.
 public final class ApiException extends RuntimeException {
     private final HttpStatus status;
     private final String code;

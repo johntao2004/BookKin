@@ -7,6 +7,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.scheduling.annotation.Scheduled;
 @Component
 @Profile("worker")
+// 启动时登记配置根目录并检查能力，后续定时刷新可访问状态。
+// Registers configured roots and probes capabilities at startup, then refreshes availability on schedule.
 public class LibraryRootSchedule implements ApplicationRunner {
     private final LibraryRootRepository roots;
     private final BookKinProperties properties;

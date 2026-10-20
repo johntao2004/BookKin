@@ -11,6 +11,8 @@ import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import org.springframework.stereotype.Service;
 
+// 实例配置密钥派生 AES 密钥，每次保存使用新 IV；未配置密钥时不降级明文保存。
+// Derives the AES key from instance configuration and uses a fresh IV per save; missing keys never fall back to plaintext storage.
 @Service
 public class AiSettingsCrypto {
     private static final String PREFIX = "v1:";

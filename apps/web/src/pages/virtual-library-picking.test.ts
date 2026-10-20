@@ -1,3 +1,5 @@
+// 验证楼板和墙体遮挡目标，隐藏或不渲染的祖先/材质不应错误阻挡点击。
+// Checks wall/floor occlusion while hidden or non-rendered ancestors/materials do not falsely block picking.
 import * as THREE from "three";
 import { isUnoccludedSceneHit } from "./virtual-library-picking";
 

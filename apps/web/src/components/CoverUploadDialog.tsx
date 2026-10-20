@@ -1,3 +1,5 @@
+// 封面变更先经本地裁切确认，再调用上传接口并刷新消费方。
+// Cover changes pass local crop confirmation before upload and consumer refresh.
 import { ImageOutlined } from "@/ui/icons";
 import { RestartAltOutlined } from "@/ui/icons";
 import { UploadFileOutlined } from "@/ui/icons";

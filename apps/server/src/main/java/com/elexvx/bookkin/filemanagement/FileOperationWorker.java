@@ -15,6 +15,8 @@ public class FileOperationWorker {
         this.executor = executor;
     }
 
+    // 仅 worker Profile 轮询领取任务；调度键以本注解的 page.worker 为准。
+    // Only the worker profile polls for jobs; the scheduling key here is page.worker as written in this annotation.
     @Scheduled(fixedDelayString = "${page.worker.poll-delay:1s}")
     public void poll() {
         operations.claimNext().ifPresent(executor::execute);

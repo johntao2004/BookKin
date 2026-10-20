@@ -1,3 +1,5 @@
+// 先验证当前密码与用户名冲突再写入，并区分身份改名撤销会话与普通显示名修改。
+// Checks password/name conflicts before writes and distinguishes identity renames that revoke sessions from display-name changes.
 package com.elexvx.bookkin.auth;
 
 import static org.junit.jupiter.api.Assertions.*;

@@ -1,3 +1,5 @@
+// 验证 SMTP 配置保存、保留密钥及恢复链接确认，密码不一致时不得发送重置请求。
+// Checks SMTP save/secret preservation and recovery-link confirmation, with no reset request on mismatched passwords.
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
 import { api } from "../api/client";

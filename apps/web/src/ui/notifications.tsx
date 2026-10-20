@@ -22,6 +22,7 @@ export function FeedbackBubble({ children, severity = "info", action, duration =
   const key = useId();
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
+  // 更新相同键替换通知内容，不堆叠重复提示。
   // Updating the same key replaces content rather than stacking duplicate notices.
   useEffect(() => {
     api?.open({ key, type: severity, title: children, actions: action, duration,

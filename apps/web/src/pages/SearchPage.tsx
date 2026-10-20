@@ -20,6 +20,7 @@ export function SearchPage() {
   const audience = user?.id ?? "anonymous";
   const enabled = ready && Boolean(query);
   const matches = (values: (string | undefined)[]) => values.join(" ").toLocaleLowerCase().includes(query.toLocaleLowerCase());
+  // 各搜索源保留服务端可见性规则；匿名用户不请求私人目录或批注，且缓存键不得跨身份共用。
   // Every source keeps its server-side visibility rules. Never query the private
   // catalog or annotations for anonymous visitors, or share their cache keys.
   const books = useInfiniteQuery({

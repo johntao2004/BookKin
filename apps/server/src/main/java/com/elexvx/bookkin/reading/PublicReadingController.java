@@ -23,6 +23,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @Profile("api")
 @RequestMapping("/api/v1/display-books/{bookId}")
+// 仅公开展示书籍允许匿名读取正文，传输期间仍使用文件读租约。
+// Allows anonymous content reads only for public display books while retaining read leases during transfer.
 public class PublicReadingController {
     private final DisplayCatalogService display;
     private final BookRepository books;

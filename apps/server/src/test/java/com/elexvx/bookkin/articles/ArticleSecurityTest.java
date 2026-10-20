@@ -1,3 +1,5 @@
+// 覆盖正文净化与地址拒绝边界，确保活动内容和私有网络目标不会通过文章导入入口。
+// Covers content sanitization and address rejection so active content and private-network targets are rejected by article import.
 package com.elexvx.bookkin.articles;
 import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.Test;

@@ -1,3 +1,5 @@
+// 以真实容器数据库验证迁移能创建目录与文件日志；容器不可用时不能把跳过当作通过。
+// Verifies catalog/file-journal migrations against a real container database; unavailable containers mean skipped coverage, not a pass.
 package com.elexvx.bookkin;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

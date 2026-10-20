@@ -30,6 +30,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @Profile("api")
 @RequestMapping("/api/v1/reader-fonts")
+// 登录用户读取字体，管理角色登记、上传及切换状态。
+// Signed-in users read fonts; management roles register, upload and change font status.
 public class ReaderFontController {
     private final ReaderFontService service;
 

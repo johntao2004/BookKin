@@ -1,3 +1,5 @@
+# 用临时目录和模拟 Docker 输出检查完整备份、缓存排除与缺字体挂载；不连接真实数据库或执行真实恢复。
+# Uses temporary files and fake Docker output to check complete backups, cache exclusion and missing fonts, without a real database or live restore.
 import os
 import pathlib
 import subprocess

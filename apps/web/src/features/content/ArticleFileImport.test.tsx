@@ -1,3 +1,5 @@
+// 覆盖重复选择、拖放、禁用态和多文件拒绝，保证文件与图片入口遵守相同插入流程。
+// Covers reselection, drops, disabled state and multi-file rejection with consistent file/image insertion flows.
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
 import { ArticleFileImport } from "./ArticleFileImport";

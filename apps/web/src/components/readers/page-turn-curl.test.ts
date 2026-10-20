@@ -1,3 +1,5 @@
+// 覆盖前后翻页的贴图朝向、单页范围与运动可见度，防止纸边压缩字形产生错误视觉。
+// Covers next/previous texture orientation, single-page bounds and motion visibility near compressed paper edges.
 import { describe, expect, it } from "vitest";
 import {
   pageCurlTextureLayout,

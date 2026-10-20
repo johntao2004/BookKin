@@ -1,3 +1,5 @@
+// 覆盖视角相对移动、斜向归一、反向抵消与飞行高度限制，保持人体尺寸不随建筑增大。
+// Covers view-relative movement, diagonal normalization, opposing inputs and flight bounds with human size independent of architecture scale.
 import {
   cameraRelativeWalkDelta,
   clampVirtualLibraryFlightHeight,

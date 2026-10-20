@@ -9,6 +9,8 @@ import org.jooq.Record;
 import org.springframework.stereotype.Repository;
 
 @Repository
+// 书库模块跨模块网关，保存根路径、能力和扫描信息。
+// Cross-module library-root gateway storing paths, capabilities and scan information.
 public class LibraryRootRepository {
     private final DSLContext dsl;
 

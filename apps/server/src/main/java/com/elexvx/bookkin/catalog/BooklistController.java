@@ -24,6 +24,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @Profile("api")
 @RequestMapping("/api/v1/booklists")
+// 书单协议层传递身份与 revision，服务层决定可见性及可编辑性。
+// Booklist protocol layer passes identity and revision; services decide visibility and editability.
 public class BooklistController {
     private final BooklistService booklists;
 

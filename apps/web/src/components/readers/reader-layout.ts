@@ -1,3 +1,5 @@
+// 集中计算阅读容器、单页和双页的几何约定，供 EPUB/PDF 共用。
+// Centralizes reader container/single-page/spread geometry for both EPUB and PDF.
 import { tokens } from "../../theme/generated-tokens";
 
 export const READER_PROGRESS_HEIGHT = 2;

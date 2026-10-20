@@ -7,6 +7,8 @@ import java.util.HexFormat;
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Value;
 @Component
+// 仅接受登记基目录下的独立绝对目录，逐段拒绝软链接并生成位置指纹。
+// Accepts independent absolute directories below the registration base, rejects symlink segments and derives a location fingerprint.
 public class LibraryLocationProbe {
     private final Path base;
     public LibraryLocationProbe(@Value("${bookkin.storage.registration-base:/library}") String base) { this.base = Path.of(base).toAbsolutePath().normalize(); }

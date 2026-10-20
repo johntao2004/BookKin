@@ -68,6 +68,7 @@ import {
 } from "@ant-design/icons";
 import { createElement, forwardRef, type CSSProperties, type ForwardRefExoticComponent, type RefAttributes } from "react";
 
+// BookKin 本地图标约定保留语义名称和旧展示属性，使页面使用 Ant Design 时无需混入第二套图标系统。
 /**
  * Local icon contract for BookKin.
  *

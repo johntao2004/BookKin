@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# 探测延伸平台、双木扶手与出口净空；提供基线时要求旧模型失败，避免只有新模型自证。
+# Probes the extended deck, dual timber rails and exit clearance, requiring an optional supplied baseline to fail rather than checking only the new model.
 """Probe actual exported deck, dual timber handrails and unobstructed exits."""
 import argparse
 import hashlib

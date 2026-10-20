@@ -8,6 +8,8 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 
 @RestController @Profile("api") @RequestMapping("/api/v1/articles")
+// 文章 HTTP 适配层，把认证身份交给服务处理可见性、导入及私人阅读状态。
+// HTTP adapter for articles; passes identity to the service for visibility, imports and private reading state.
 public class ArticleController {
  private final ArticleService service;
  public ArticleController(ArticleService service){this.service=service;}

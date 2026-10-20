@@ -1,3 +1,5 @@
+// 先检查是否开放注册，再展示共享密码规则；提交是否允许以服务端策略为准。
+// Checks signup availability and shows shared password rules; the server remains authoritative at submission.
 import { PasswordRequirements, usePasswordPolicy, passwordRequirements } from "../auth/password-policy";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";

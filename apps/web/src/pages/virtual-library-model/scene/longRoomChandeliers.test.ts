@@ -1,3 +1,5 @@
+// 验证历史馆吊灯按拱跨节奏悬挂，定义存在不代表当前馆灯光配置。
+// Checks chandelier placement by historical vault-bay rhythm, not current-library lighting configuration.
 import * as THREE from 'three';
 import { longRoomBayZ } from '../longRoomLayout';
 import { collectCameraColliders } from '../../virtual-library-collision';

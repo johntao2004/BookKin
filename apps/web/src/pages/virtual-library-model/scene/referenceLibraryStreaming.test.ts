@@ -1,3 +1,5 @@
+// 覆盖并发上限、显式重试、取消、迟到结果及共享资源唯一释放，不用自动重试掩盖失败。
+// Covers concurrency limits, explicit retry, cancellation, late results and single shared-resource disposal without masking failures through automatic retries.
 import * as THREE from 'three';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
@@ -6,6 +8,7 @@ import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 import { createReferenceLibraryStreaming, createReferenceMaterialPool, validateReferenceLibraryManifest,
   type ReferenceLibraryChunk, type ReferenceLibraryManifest, type ReferenceLibraryStreaming } from './referenceLibraryStreaming';
 import { REFERENCE_LIBRARY, REFERENCE_LIBRARY_ASSET_REVISION } from '../hogwartsLibraryLayout';
+import { createVirtualLibraryTextureLoader } from '../../virtual-library-texture-loader';
 
 const blank = {asset: {version: '2.0'}, scene: 0, scenes: [{nodes: []}]};
 const encoded = new TextEncoder().encode(JSON.stringify(blank));
@@ -154,6 +157,44 @@ describe('reference library module streaming', () => {
     expect(settings.parent.children).toHaveLength(0);
   });
 
+  it('settles failed startup while cancelling stalled custom-handler images without route cancellation', async () => {
+    const actual: ReferenceLibraryManifest = JSON.parse(readFileSync('public/assets/hogwarts-library/library-manifest.json', 'utf8'));
+    const failedChunk = actual.chunks.find(value => !value.core && value.startup)!;
+    const startup = {...actual, chunks: actual.chunks.filter(value => value.core || value.id === failedChunk.id)};
+    const abort = new AbortController(), settings = options(abort.signal);
+    settings.manager.addHandler(/\.(?:png|jpe?g|webp)(?:\?|$)/i,
+      createVirtualLibraryTextureLoader(settings.manager, abort.signal));
+    let imageRequests = 0, abortedImages = 0;
+    let failStartup: (() => void) | undefined;
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async (input, init) => {
+      const path = String(input).split('?')[0];
+      if (path.endsWith('library-manifest.json')) return response(startup);
+      if (path.endsWith(`/${failedChunk.id}.glb`)) {
+        return new Promise<Response>(resolve => { failStartup = () => resolve(response(null, 503)); });
+      }
+      if (/\.(?:png|jpe?g|webp)$/i.test(path)) {
+        imageRequests++;
+        return new Promise<Response>((_resolve, reject) => init!.signal!.addEventListener('abort', () => {
+          abortedImages++; reject(new DOMException('aborted image', 'AbortError'));
+        }, {once: true}));
+      }
+      const data = readFileSync('public' + path);
+      return {ok: true, status: 200, text: async () => data.toString(),
+        arrayBuffer: async () => {const local = new ArrayBuffer(data.byteLength); new Uint8Array(local).set(data); return local;}} as Response;
+    });
+    const pending = createReferenceLibraryStreaming(settings);
+    const assertion = expect(pending).rejects.toThrow('503');
+    try {
+      await vi.waitFor(() => { expect(imageRequests).toBeGreaterThan(0); expect(failStartup).toBeTypeOf('function'); });
+      failStartup!();
+      await assertion;
+      expect(abortedImages).toBe(imageRequests);
+      expect(abort.signal.aborted).toBe(false);
+      expect(settings.parent.children).toHaveLength(0);
+    } finally { abort.abort(); }
+  });
+
   it('disposes a late decoded chunk once instead of attaching after cancellation', async () => {
     const abort = new AbortController();
     const settings = options(abort.signal);
@@ -260,12 +301,42 @@ describe('reference library module streaming', () => {
 });
 
 describe('canonical reference material ownership', () => {
-  async function parser() {
-    const gltf = await new GLTFLoader().parseAsync(JSON.stringify({...blank,
+  async function parser(manager = new THREE.LoadingManager()) {
+    const gltf = await new GLTFLoader(manager).parseAsync(JSON.stringify({...blank,
       materials: [{pbrMetallicRoughness: {baseColorTexture: {index: 0}}}, {pbrMetallicRoughness: {baseColorTexture: {index: 0}}}],
       textures: [{source: 0, sampler: 0}], samplers: [{}], images: [{uri: 'textures/shared.png'}]}), '/assets/hogwarts-library/');
     return gltf.parser;
   }
+
+  it('cancels only bank-owned requests on a texture handler shared with catalog covers', async () => {
+    const abort = new AbortController(), manager = new THREE.LoadingManager();
+    const loader = createVirtualLibraryTextureLoader(manager, abort.signal);
+    manager.addHandler(/\.png(?:\?|$)/i, loader);
+    const requests = new Map<string, AbortSignal>();
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    vi.spyOn(globalThis, 'fetch').mockImplementation((input, init) => {
+      const signal = init!.signal as AbortSignal;
+      requests.set(String(input), signal);
+      return new Promise<Response>((_resolve, reject) => signal.addEventListener('abort', () => {
+        reject(new DOMException('aborted image', 'AbortError'));
+      }, {once: true}));
+    });
+    const catalogError = vi.fn();
+    const catalog = loader.load('/catalog-cover.png', undefined, undefined, catalogError);
+    const pool = createReferenceMaterialPool(await parser(manager));
+    const loading = pool.loadMaterial(0);
+    const assertion = expect(loading).rejects.toThrow('建筑纹理加载失败');
+    try {
+      await vi.waitFor(() => expect(requests.size).toBe(2));
+      const disposal = pool.dispose();
+      await assertion; await disposal;
+      expect(requests.get('/assets/hogwarts-library/textures/shared.png')?.aborted).toBe(true);
+      expect(requests.get('/catalog-cover.png')?.aborted).toBe(false);
+      expect(catalogError).not.toHaveBeenCalled();
+      expect(abort.signal.aborted).toBe(false);
+      expect(pool.diagnostics()).toEqual({materials: 0, textures: 0, pending: 0});
+    } finally { catalog.dispose(); abort.abort(); }
+  });
 
   it('shares canonical promises and final variants, including exactly one tangent normal flip', async () => {
     const source = await parser();

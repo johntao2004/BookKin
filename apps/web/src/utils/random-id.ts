@@ -1,3 +1,4 @@
+// 用 getRandomValues 生成 UUID v4，兼容局域网 HTTP 来源。
 /** UUID v4 using getRandomValues, which also works on LAN HTTP origins. */
 export function randomId(): string {
   const bytes = crypto.getRandomValues(new Uint8Array(16));

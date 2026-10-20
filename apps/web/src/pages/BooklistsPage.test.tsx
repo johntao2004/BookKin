@@ -1,3 +1,5 @@
+// 区分匿名公开书单与登录后的个人/家庭分组，不因旧官方类型暴露额外选择。
+// Distinguishes anonymous public lists from signed-in personal/family groups without reviving legacy official-type choices.
 import { fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { api } from "../api/client";

@@ -1,3 +1,5 @@
+// 用可控观察器验证哨兵接近视口时触发加载；真实滚动仍需浏览器验收。
+// Uses a controlled observer to check sentinel-triggered loading; real scrolling still needs browser verification.
 import { act, render } from "@testing-library/react";
 import { useInfiniteScrollTrigger } from "./useInfiniteScrollTrigger";
 

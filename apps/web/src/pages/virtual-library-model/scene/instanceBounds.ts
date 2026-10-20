@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 
+// 为仿射实例变换计算保守包围范围，无需临时矩阵或反复合并包围球。源包围盒可以覆盖多个 LOD 几何体。
 /** Conservative bounds for affine instance transforms, without temporary matrices
  * or repeated sphere unions. The source box may cover several LOD geometries. */
 export function instanceBounds(source: THREE.Box3, matrices: ArrayLike<number>, count: number) {

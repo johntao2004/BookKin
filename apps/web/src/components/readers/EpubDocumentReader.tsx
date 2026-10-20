@@ -36,6 +36,7 @@ interface Props {
 }
 
 function renderedContents(rendition: Rendition) {
+  // epub.js 0.3 的类型声明是单个 Contents，实际管理器返回数组。
   // epub.js 0.3 declares a single Contents value, while every manager returns an array at runtime.
   return rendition.getContents() as unknown as Contents[];
 }
@@ -157,6 +158,8 @@ export default function EpubDocumentReader({ bookId, annotations, theme, fontSiz
       const data = await response.arrayBuffer();
       if (disposed || !hostRef.current) return;
 
+      // EPUB 在独立 rendition 中分页且禁止书内脚本；卸载时销毁 rendition 和书籍资源。
+      // Paginate EPUB in its own rendition with book scripts disabled; destroy rendition and book resources on unmount.
       book = ePub(data);
       rendition = book.renderTo(hostRef.current, {
         width: "100%",
@@ -185,11 +188,14 @@ export default function EpubDocumentReader({ bookId, annotations, theme, fontSiz
         try {
           if (book && book.locations.length() > 0) measuredProgress = book.locations.percentageFromCfi(location.start.cfi);
         } catch {
+          // 无法测量异常 CFI 时保留 rendition 提供的百分比。
           // Keep the rendition-provided percentage when a malformed CFI cannot be measured.
         }
         const progress = Math.max(0, Math.min(1, measuredProgress));
         setReadingProgress(progress);
         onPosition(location.start.cfi, progress);
+        // 位置写入防抖 350 毫秒；readOnly 只报告界面位置，不保存服务端进度。
+        // Debounce position writes by 350 ms; readOnly reports UI position without persisting server progress.
         window.clearTimeout(saveTimer.current);
         saveTimer.current = window.setTimeout(() => {
           if (!readOnly) void api.saveReadingPosition(bookId, location.start.cfi, progress).catch(() => undefined);
@@ -206,6 +212,8 @@ export default function EpubDocumentReader({ bookId, annotations, theme, fontSiz
 
       await book.ready;
       await book.locations.generate(128);
+      // 深链接优先于已存位置；无效 CFI 依次回退到已存定位或百分比。
+      // Deep links take precedence over saved positions; invalid CFIs fall back to saved locators or percentages.
       const initialTarget = initialTargetRef.current;
       const position = readOnly ? null : await api.getReadingPosition(bookId);
       if (initialTarget) {
@@ -322,6 +330,7 @@ export default function EpubDocumentReader({ bookId, annotations, theme, fontSiz
           : cfiRange;
         if (range) applyEpubInlineAnnotation(range, annotation);
       } catch {
+        // 忽略过期或外部变更的 CFI 范围，让书籍仍可阅读。
         // Ignore stale or externally changed CFI ranges while keeping the book readable.
       }
     });

@@ -15,6 +15,7 @@ export const pageWidthSx = {
   px: { xs: `${tokens.spacing[3]}px`, sm: `${tokens.spacing[6]}px` },
 };
 
+// 阅读器导航与正文共用准确页面框架，避免平板和小型笔记本上上下导航栏错位。
 // Reader chrome and document surfaces share the exact page frame at every
 // viewport width. A narrower intermediate reader frame makes the two stacked
 // navigation bars visibly drift apart on tablets and small laptops.
@@ -67,6 +68,7 @@ export function PageHeader({
 }: {
   eyebrow: string;
   title: string;
+  // 仅嵌入式设置标题支持说明文案，标准页头不显示描述。
   /** Supporting copy for embedded settings headings; standard page headers omit descriptions. */
   embeddedDescription?: string;
   action?: ReactNode;

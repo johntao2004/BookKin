@@ -1,3 +1,5 @@
+// 覆盖页面缩放、底边翻转与滚动跟随，弹出层坐标必须与可视视口一致。
+// Covers page scaling, bottom-edge flipping and scroll tracking so portal positions match the viewport.
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
 import { TestProviders } from "../test/TestProviders";

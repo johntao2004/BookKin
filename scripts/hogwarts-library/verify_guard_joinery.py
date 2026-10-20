@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# 测量导出护栏线脚与细立柱，并要求指定的旧模型被同一组探针拒绝。
+# Measures exported guard mouldings and slender spindles, requiring the same probes to reject the specified older model.
 """Measure guard mouldings and slender vertical spindles in the real export."""
 import hashlib
 import json

@@ -1,3 +1,5 @@
+// 未知前端路由的恢复页面，不把资源不存在解释成认证失败。
+// Recovery page for unknown frontend routes, keeping missing resources distinct from authentication failures.
 import { Button } from "@/ui/buttons";
 import { Stack } from "@/ui/primitives";
 import { Typography } from "@/ui/primitives";

@@ -1,3 +1,5 @@
+// 覆盖功能接口误报 401、会话复核及网络失败，防止不确定响应清除有效身份。
+// Covers feature-level 401s, session confirmation and network failures so uncertain responses do not clear valid identity.
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const session = { id: 'owner', username: 'owner', role: 'OWNER', mustChangePassword: false };

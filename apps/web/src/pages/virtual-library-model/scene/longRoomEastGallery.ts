@@ -4,6 +4,7 @@ import type {LibraryMaterials} from './materials';
 import {markCameraCollider} from '../../virtual-library-collision';
 import {createLongRoomBaluster,galleryBalusterPlacement} from './longRoomBaluster';
 
+// 服务于 Y1.003 门洞的端部通道。平面尺寸与过渡踏步为放大回廊作了调整，并非测绘所得的历史木作。
 /** End circulation serving the Y1.003 doorway. Plan dimensions and transition
  * treads are adapted to the enlarged gallery, not surveyed historical joinery. */
 export function addEastGalleryConnection(parent:THREE.Group,materials:LibraryMaterials) {
@@ -37,6 +38,7 @@ export function addEastGalleryConnection(parent:THREE.Group,materials:LibraryMat
  const rise=(L.galleryY-E.upperFloor)/E.steps;
  for(let i=0;i<E.steps;i++) {
   const y=L.galleryY-(i+1)*rise,z=E.back+(i+0.5)*E.going;
+  // 小幅凸出的踏步前缘覆盖踢面接缝，避免浮点误差产生裂缝。
   // Small tread nosing overlaps the riser joint and avoids floating-point cracks.
   floor('East doorway transition tread',E.width,E.going+0.02,0,y,z);
   for(const side of [-1,1]) {

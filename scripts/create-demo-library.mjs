@@ -1,3 +1,5 @@
+// 生成四本带独立内嵌封面的演示 EPUB，并可追加受数量限制的压力样本；保留已存在文件并输出生成清单。
+// Creates four demo EPUBs with distinct embedded covers and optional bounded stress fixtures, preserving existing files and recording a generation manifest.
 import { execFileSync } from "node:child_process";
 import { copyFile, mkdir, mkdtemp, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -32,6 +34,7 @@ const chapter = [
   "信带来了吗？老人问。顾远点头，却没有立刻把信递出去。河谷里起了风，灯影在水面轻轻摇晃。他忽然明白，有些路不是为了抵达，而是让人终于愿意打开一直不敢读的那一页。",
 ];
 
+// 默认演示目录只包含具有完整内嵌封面的书籍。纯文本 PDF 样本会以白色首页作为封面，因此不得在此预置。
 // The default demo catalog only contains books with polished, embedded covers.
 // Text-only PDF fixtures render their first white page as a cover and must not be seeded here.
 const defaultBooks = [

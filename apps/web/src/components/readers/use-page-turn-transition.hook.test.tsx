@@ -1,3 +1,5 @@
+// 验证减少动态效果、关闭开关和非移动视口时立即翻页，不启动动画。
+// Checks reduced motion, disabled effects and non-mobile viewports turn pages immediately without animation.
 import { act, renderHook } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { PAGE_TURN_MOBILE_QUERY, usePageTurnTransition } from "./use-page-turn-transition";

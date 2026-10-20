@@ -1,3 +1,5 @@
+// 在独立 Worker 烘焙静态批次，只转移新生成缓冲区并把失败返回调用方。
+// Bakes static batches in a worker, transferring only generated buffers and reporting errors to the caller.
 import { bakeStaticBatch, type StaticBatchInput } from './staticBatchData';
 
 self.onmessage = (event: MessageEvent<StaticBatchInput[]>) => {

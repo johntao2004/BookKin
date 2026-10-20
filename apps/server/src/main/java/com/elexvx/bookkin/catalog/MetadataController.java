@@ -29,6 +29,8 @@ import org.springframework.http.MediaType;
 @Profile("api")
 @RequestMapping("/api/v1/books")
 @PreAuthorize("hasAnyRole('OWNER','ADMIN')")
+// 管理角色修改书目和封面，文件写回仍通过独立安全预览任务。
+// Management roles edit bibliography/covers; file writeback remains a separate safety-preview operation.
 public class MetadataController {
     private final BookMetadataRepository metadata;
     private final MetadataEditingService editing;

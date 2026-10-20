@@ -3,6 +3,7 @@ import { LONG_ROOM_LIVE_SHELF_SECTION_COUNT } from "./virtual-library-model/long
 
 export interface LibrarySubcategory {
   id: string;
+  // 与书目元数据一起保存的 Thema 1.6 主题代码。
   /** Thema 1.6 subject code persisted with the book metadata. */
   code: string;
   label: string;
@@ -12,9 +13,11 @@ export interface LibrarySubcategory {
 
 export interface LibraryCategory {
   id: string;
+  // 书架分区显示可读上级名称，书籍存储更具体的子代码。
   /** A readable shelf zone. Books are assigned the more specific child code. */
   code: string;
   label: string;
+  // 编辑界面使用 Thema 1.6 层级的完整英文标题。
   /** Full English heading from the Thema 1.6 hierarchy for edit surfaces. */
   themaLabel: string;
   subtitle: string;
@@ -101,6 +104,7 @@ export const LIBRARY_CATEGORIES: readonly LibraryCategory[] = [
   },
 ] as const;
 
+// 仅为真实书籍提供暂存分区，不写入 Thema 主题代码字段。
 /** A real-book holding area, never written as a Thema subject code. */
 export const UNCLASSIFIED_CATEGORY: LibraryCategory = {
   id: "unclassified",
@@ -183,6 +187,7 @@ export function defaultCategoryForShelf(sectionId: number) {
   return LIBRARY_CATEGORIES[Math.abs(sectionId) % LIBRARY_CATEGORIES.length];
 }
 
+// 每个类别保留独立书架，场景使用相同排序顺序。
 /** Reserve separate bookcases per category; the scene consumes the same sorted order. */
 export function longRoomCatalogSectionCounts(books: readonly Book[], maxSections = LONG_ROOM_LIVE_SHELF_SECTION_COUNT) {
   const counts: number[] = [];

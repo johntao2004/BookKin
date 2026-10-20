@@ -1,3 +1,5 @@
+// 房间几何、碰撞与取景定义集中管理；定义存在不代表当前 UI 暴露该房间入口。
+// Centralizes room geometry, collision and views; a definition does not imply an entry is exposed in current UI.
 import * as THREE from "three";
 import { addScholasticRoomCeiling } from "./virtual-library-model/scene/scholasticArchitecture";
 import { tokens } from "../theme/generated-tokens";

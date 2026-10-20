@@ -22,6 +22,8 @@ public class RegistrationService {
   policy.lock(); policy.update(enabled);
   audit.record(actor.id(),"REGISTRATION_POLICY_CHANGED","SECURITY","registration",null,null,null,null,"SUCCEEDED","{\"enabled\":"+enabled+"}");
  }
+ // 持锁读取注册策略后只创建 MEMBER；客户端不能指定更高角色。
+ // Registration locks the policy and creates only MEMBER accounts; clients cannot select a higher role.
  @Transactional
  public void register(String username, String nickname, String password) {
   if(!policy.lock() || users.findOwner().isEmpty()) throw ApiException.forbidden("REGISTRATION_CLOSED","当前未开放注册");

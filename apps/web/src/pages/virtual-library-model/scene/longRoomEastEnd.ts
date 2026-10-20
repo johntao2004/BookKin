@@ -1,3 +1,5 @@
+// 本文件说明适用于该 Long Room 构建路径；下方旧注释的 live 不表示当前主场景已启用此模型。
+// These comments describe this Long Room builder; legacy uses of live below do not assert inclusion in the current main scene.
 import {addUpperEndJoinery} from './longRoomUpperEnd';
 import { EAST_UPPER_ROOM as U } from './longRoomEastUpperRoom';
 import { createFagelRoom } from './longRoomFagel';
@@ -20,6 +22,7 @@ function archPath(x: number, base: number, spring: number, radius: number, scale
   shape.absellipse(x, spring, radius, radius / scaleY, 0, Math.PI, false); shape.closePath(); return shape;
 }
 
+// 公开导览所示的轴线入口、成对壁龛和两侧有屏隔的门厅。尺寸仍为适应放大大厅而作的估计。
 /** Public tour: axial entrance, paired niches and side-screened vestibule.
  * Dimensions remain estimates adapted to the enlarged hall. */
 export function addLongRoomEastEnd(parent: THREE.Group, materials: LibraryMaterials, includeAdjacentRooms = true) {
@@ -38,6 +41,7 @@ export function addLongRoomWestEnd(parent: THREE.Group, materials: LibraryMateri
   addLongRoomEnd(parent, materials, 'West', openForConnectionStudy, includeUpper);
 }
 
+// 此 Long Room 主厅构建路径的两端均有意采用连续木墙封闭。门扇、上层门口构件及成对拱形壁龛仅供独立历史参考组件使用。
 /** Both live ends are intentionally continuous timber closures. Their doors,
  * upper door treatments and paired arched niches remain available only to the
  * isolated historical reference assembly. */
@@ -106,6 +110,7 @@ function addLongRoomEnd(parent: THREE.Group, materials: LibraryMaterials, end: '
   const portal = new THREE.Path(); portal.moveTo(-openingWidth / 2, 0); portal.lineTo(openingWidth / 2, 0);
   portal.lineTo(openingWidth / 2, openingHeight * verticalScale); portal.lineTo(-openingWidth / 2, openingHeight * verticalScale); portal.closePath();
   outline.holes.push(portal);
+  // Y1.003 显示了通往 Early Printed Books 的轴线门洞。洞口尺寸仍为估计；两层墙体均采用该房间相同的洞口尺寸。
   // Y1.003 shows an axial doorway into Early Printed Books. Its opening size
   // remains estimated; use the room's same dimensions through both wall layers.
   if(east && includeUpper) {
@@ -123,6 +128,7 @@ function addLongRoomEnd(parent: THREE.Group, materials: LibraryMaterials, end: '
   }
   for (const x of [-3.25, 3.25]) {
     const hole = archPath(x, 1.3, 5.25, 0.95, verticalScale);
+    // 按路径缩放洞口，使其与缩放后的壁龛木作精确吻合。
     // Scale the aperture as a path so it matches the scaled niche joinery exactly.
     const points = hole.getPoints(64); const scaled = new THREE.Path();
     points.forEach((point, index) => index === 0 ? scaled.moveTo(point.x, point.y * verticalScale) : scaled.lineTo(point.x, point.y * verticalScale));
@@ -158,6 +164,7 @@ function addLongRoomEnd(parent: THREE.Group, materials: LibraryMaterials, end: '
     const points = Array.from({length: 49}, (_, i) => new THREE.Vector3(x + 0.98 * Math.cos(i * Math.PI / 48), 5.25 + 0.98 / verticalScale * Math.sin(i * Math.PI / 48), -0.03));
     const arch = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points), 48, 0.055, 20, false), materials.woodWarm);
     arch.name = 'Niche round-arch moulding'; arch.castShadow = arch.receiveShadow = true; joinery.add(arch);
+    // 拱形洞口侧壁将开口连接至内缩背板，避免露出门厅。
     // Arched reveal connects the opening to its recessed backing instead of exposing the vestibule.
     const hood = new THREE.Shape(); hood.moveTo(x + 0.95, 5.25); hood.absellipse(x, 5.25, 0.95, 0.95 / verticalScale, 0, Math.PI, false);
     hood.lineTo(x - 0.89, 5.25); hood.absellipse(x, 5.25, 0.89, 0.89 / verticalScale, Math.PI, 0, true); hood.closePath();
@@ -174,6 +181,7 @@ function addLongRoomEnd(parent: THREE.Group, materials: LibraryMaterials, end: '
     box('West door overpanel', [2.75, 1.15, 0.06], [0, 4.91, -0.025], materials.woodDark);
 
   }
+  // 东侧门扇向大厅开启；远端闭合的对开门保留中央合缝竖框。
   // East leaves open toward the hall; the closed far-end pair retains a meeting stile.
   for (const side of [-1, 1]) {
     const opened=openForConnectionStudy;
@@ -226,6 +234,7 @@ function addLongRoomEnd(parent: THREE.Group, materials: LibraryMaterials, end: '
         center:{x:side*(U.door.width/2+width/2),y:U.floor+U.door.height/2,z:0},size:{x:width,y:U.door.height,z:0.15}});
     } else if(openForConnectionStudy) {
       const upperBase=L.galleryY,upperTop=L.galleryY+2.7,upperWidth=1.8;
+      // 保留下层与上层开口之间的墙带及上层开口顶部墙体，同时保持中央上层开口畅通。
       // Preserve the wall band between the lower and upper apertures and the
       // head above the upper aperture; the central upper opening stays clear.
       for(const [id,bottom,top] of [['between-portals',headY,upperBase],['above-upper-portal',upperTop,L.height]] as const)
@@ -245,6 +254,7 @@ function addLongRoomEnd(parent: THREE.Group, materials: LibraryMaterials, end: '
     id: 'west-retired-storage-closure', shape: 'box',
     center: {x: 0, y: L.galleryY + 1.35, z: 0}, size: {x: 1.8, y: 2.7, z: 0.15},
   });
+  // 宽范围反射光使回廊下方的端部木作清晰可见。无阴影补光辅助单张缓存的建筑太阳光阴影贴图。
   // Broad reflected light makes the end joinery legible beneath the gallery.
   // Shadowless fill supplements the single cached architectural sun shadow map.
   const endFill = new THREE.PointLight(PALETTE.parchment, 180, 18, 2);

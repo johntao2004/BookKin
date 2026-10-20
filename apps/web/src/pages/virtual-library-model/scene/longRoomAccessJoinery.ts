@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 
+// 参考 Andrew Tierney 的 TCD 楼梯照片改编通行楼梯木作。原楼梯位于西侧附楼，此处并非其测绘布局。
 /** Adapted access stair joinery, informed by Andrew Tierney's TCD stair photo.
  * The original stair is in the west pavilion; this is not its surveyed layout. */
 export function createAccessBalusterGeometry() {
@@ -26,6 +27,7 @@ export function createAccessBalusterGeometry() {
     const x = position.getX(i), y = position.getY(i), z = position.getZ(i);
     const radius = Math.hypot(x, z), angle = Math.atan2(x, z);
     const end = THREE.MathUtils.clamp(Math.min(y - 0.38, 0.85 - y) / 0.04, 0, 1);
+    // 八条浅凹槽逐渐收束至箍环。
     // Eight shallow concave channels, fading into the collars.
     const hollow = Math.max(0, Math.cos(angle * 8)) ** 2 * 0.0035 * end;
     position.setXYZ(i, x * (1 - hollow / radius), y, z * (1 - hollow / radius));
@@ -39,6 +41,7 @@ export function createAccessBalusterGeometry() {
   return geometry;
 }
 
+// 采用圆润顶冠、肩部和下缘凸线，而非圆管。
 /** Rounded crown, shoulder and lower bead rather than a circular pipe. */
 export function createAccessHandrailProfile() {
   const profile = new THREE.Shape();

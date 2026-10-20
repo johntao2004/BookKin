@@ -4,6 +4,7 @@ import type { LibraryMaterials } from './materials';
 type MaterialLike = THREE.Material | THREE.Material[];
 
 export interface BookShelfSlot {
+  // 持久的建筑位置标识，与目录记录身份无关。
   /** Persistent architectural address, independent of catalog record identity. */
   slotId?: string;
   position: THREE.Vector3;

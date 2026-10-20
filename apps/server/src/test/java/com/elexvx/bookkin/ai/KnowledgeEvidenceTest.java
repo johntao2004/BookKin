@@ -1,3 +1,5 @@
+// 用伪造引文、错误定位及格式错误作为负例，验证无依据知识不会进入图谱。
+// Uses invented quotations, wrong locations and malformed output to reject ungrounded graph knowledge.
 package com.elexvx.bookkin.ai;
 
 import static org.junit.jupiter.api.Assertions.*;

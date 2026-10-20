@@ -1,3 +1,5 @@
+// 覆盖关闭策略、未初始化、重复名称、角色限制和频率限制，确保自行注册只能生成 MEMBER。
+// Covers closed/uninitialized signup, duplicates, role limits and throttling so self-registration creates only MEMBER accounts.
 package com.elexvx.bookkin.auth;
 import com.elexvx.bookkin.users.*;
 import com.elexvx.bookkin.audit.AuditService;

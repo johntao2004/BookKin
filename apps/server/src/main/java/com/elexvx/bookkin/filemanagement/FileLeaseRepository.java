@@ -8,6 +8,8 @@ import org.jooq.DSLContext;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+// 按文件加事务级锁协调租约：读者可并行，有任何活跃租约时写者等待。
+// Per-file transaction locks coordinate leases: readers may coexist, while writers wait for all active leases.
 @Repository
 public class FileLeaseRepository {
     private final DSLContext dsl;

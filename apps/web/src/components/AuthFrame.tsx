@@ -1,3 +1,5 @@
+// 认证页面共享视觉框架，不在此组件中执行登录或账户创建。
+// Shared authentication-page presentation; login and account creation happen outside this frame.
 import { useSiteSettings, SiteMetadata, SiteFooter } from "../site/site-settings";
 import { Button } from "@/ui/buttons";
 import { ArrowBackRounded } from "@/ui/icons";

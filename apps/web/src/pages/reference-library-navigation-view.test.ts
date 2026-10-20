@@ -1,3 +1,5 @@
+// 检查引导楼梯上下出口的朝向与受支撑切向，不把相机朝向误作可通行证明。
+// Checks guided stair exit headings and supported tangents without treating camera orientation alone as clearance proof.
 import { readFileSync } from 'node:fs';
 import { getReferenceStairExitView } from './reference-library-view';
 import { REFERENCE_LIBRARY as R } from './virtual-library-model/hogwartsLibraryLayout';

@@ -39,6 +39,8 @@ public class BookUploadProcessor {
         this.aiSettings = aiSettings;
     }
 
+    // 只处理 INSPECTING 会话；解析产出校对草稿，不在此阶段移动到正式书库路径。
+    // Only INSPECTING sessions are processed; parsing produces a review draft without moving into the final catalog path.
     @Async("bookUploadExecutor")
     public void process(java.util.UUID uploadId) {
         var upload = uploads.find(uploadId).orElse(null);

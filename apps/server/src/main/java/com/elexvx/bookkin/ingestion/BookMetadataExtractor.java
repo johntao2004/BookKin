@@ -32,6 +32,8 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 @Component
+// 从 EPUB/PDF 提取本地书目信息和封面缓存；缺失字段用明确回退值，不是在线确认结果。
+// Extracts local EPUB/PDF metadata and cover cache; missing fields use explicit fallbacks rather than verified online results.
 public class BookMetadataExtractor {
     private static final int MAX_XML_BYTES = 5 * 1024 * 1024;
     private static final int MAX_COVER_BYTES = 25 * 1024 * 1024;
@@ -106,6 +108,7 @@ public class BookMetadataExtractor {
                     }
                 }
             } catch (Exception ignored) {
+                // 无效 XMP 不应掩盖仍可读取的 Document Info 元数据。
                 // Invalid XMP must not hide valid Document Info metadata.
             }
             String cover = null;

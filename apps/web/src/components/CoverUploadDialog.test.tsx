@@ -1,3 +1,5 @@
+// 验证选图后的明确确认与自定义封面上传流程，保留动作边界。
+// Checks explicit confirmation after image selection before custom-cover upload.
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { api } from "../api/client";

@@ -10,6 +10,8 @@ import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.ObjectMapper;
 
 @Service
+// 持久化站点个性化设置并生成 robots 策略，校验站点 URL 只包含来源地址。
+// Persists site personalization and generates robots policy, validating site URLs as origins only.
 public class SiteSettingsService {
     private final DSLContext db;
     private final ObjectMapper json;
@@ -20,11 +22,11 @@ public class SiteSettingsService {
     }
     public record Settings(@NotBlank @Size(max=80) String name, @NotNull @Size(max=120) String tagline,
         @NotNull @Size(max=500) String description, @NotNull @Size(max=250) String keywords,
-        @NotNull @Size(max=255) String publicUrl, @NotNull Boolean allowIndexing,
+        @NotNull @Size(max=255) String publicUrl, @NotNull Boolean allowIndexing, @NotNull Boolean virtualLibraryEnabled,
         @NotNull @Size(max=80) String icpNumber, @NotNull @Size(max=80) String policeNumber,
         @NotNull @Size(max=200) String copyright, @NotNull @Email @Size(max=254) String contactEmail) {}
     public Settings current() {
-        return json.readValue(db.fetchOne("select settings::text from site_settings where id=1").get(0,String.class),Settings.class);
+        return normalize(json.readValue(db.fetchOne("select settings::text from site_settings where id=1").get(0,String.class),Settings.class));
     }
     static Settings normalize(Settings s) {
         var url=s.publicUrl().trim();
@@ -38,7 +40,8 @@ public class SiteSettingsService {
             } catch(IllegalArgumentException e) {throw ApiException.badRequest("INVALID_SITE_URL","站点地址需为完整的 HTTP/HTTPS 域名地址，不含路径、账号、查询参数或片段。");}
         }
         return new Settings(s.name().trim(),s.tagline().trim(),s.description().trim(),s.keywords().trim(),url,
-            s.allowIndexing(),s.icpNumber().trim(),s.policeNumber().trim(),s.copyright().trim(),s.contactEmail().trim());
+            s.allowIndexing(),s.virtualLibraryEnabled()==null||s.virtualLibraryEnabled(),
+            s.icpNumber().trim(),s.policeNumber().trim(),s.copyright().trim(),s.contactEmail().trim());
     }
     @Transactional
     public Settings save(String username, Settings settings) {

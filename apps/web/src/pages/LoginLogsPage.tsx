@@ -1,3 +1,5 @@
+// 按页读取登录审计结果，日志用于管理查看而不是认证判断。
+// Reads login audits page by page for management review, not authentication decisions.
 import { EmptyState } from "../ui/empty-state";
 import { ActionToolbar } from "../components/PageHeader";
 import { useState } from "react";

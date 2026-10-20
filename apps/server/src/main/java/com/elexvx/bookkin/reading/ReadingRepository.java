@@ -14,6 +14,8 @@ import java.util.stream.Collectors;
 import org.jooq.DSLContext;
 import org.springframework.stereotype.Repository;
 
+// 阅读位置与时长以用户为边界；调用方必须从认证身份取得 userId。
+// Reading positions/time are user-scoped; callers must derive userId from authenticated identity.
 @Repository
 public class ReadingRepository {
     private final DSLContext dsl;
@@ -29,6 +31,8 @@ public class ReadingRepository {
                         record.get("updated_at", OffsetDateTime.class)));
     }
 
+    // 同一用户同一本书采用最后写入位置；deviceId 是来源信息，不是版本冲突锁。
+    // The last write wins for a user/book pair; deviceId records provenance, not a version-conflict lock.
     public ReadingPosition save(UUID userId, UUID bookId, String locator, BigDecimal progress, String deviceId) {
         dsl.execute("""
                 insert into reading_positions(user_id, book_id, locator, progress, device_id)
@@ -39,6 +43,8 @@ public class ReadingRepository {
         return find(userId, bookId).orElseThrow();
     }
 
+    // 累加的是增量秒数；每日每本书上限一天，不是可安全重复提交的绝对计数。
+    // Seconds are additive deltas capped at one day per book/day, not an absolute counter safe to replay.
     public void addReadingTime(UUID userId, UUID bookId, LocalDate readingDate, int seconds) {
         dsl.execute("""
                 insert into reading_time_daily(user_id, book_id, reading_date, seconds)

@@ -20,6 +20,7 @@ function molding(points:Point[], width:number, depth:number, material:THREE.Mate
     bevelSize:0.004,bevelThickness:0.004,bevelSegments:3,steps:1}),material);
 }
 
+// 带扇贝状边缘和凸起中央折脊的石膏叶片；局部 +Y 指向叶尖。
 /** Scalloped plaster leaf with a raised central fold; local +Y points to the tip. */
 function leafGeometry() {
   const rows=24, columns=8, positions:number[]=[], faces:number[]=[];
@@ -41,6 +42,7 @@ function leafGeometry() {
   geometry.setIndex(faces); geometry.computeVertexNormals(); return geometry;
 }
 
+// Casey 2018 照片所示特征：窄素面区域紧邻带耳饰和叶纹的区域。宽度、高度、轮廓偏移与雕刻比例仍为估计。
 /** Casey 2018 photo character: narrow plain field beside a lugged, foliate field.
  * Widths, heights, contour offsets and carving proportions remain estimates. */
 export function createWestStairPanel(width:number,height:number,plaster:THREE.Material,decorated=true) {

@@ -10,6 +10,8 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 @Repository
+// 保存字体元信息、内容引用及上传状态；字体文件存储由服务处理。
+// Stores font metadata, content references and upload state while services manage file storage.
 public class ReaderFontRepository {
     private final DSLContext dsl;
 

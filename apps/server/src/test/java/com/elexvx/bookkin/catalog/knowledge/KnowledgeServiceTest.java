@@ -1,3 +1,5 @@
+// 验证禁用 AI 不读取文件、失败不覆盖旧知识，以及成功结果保留真实引文与采样范围。
+// Checks that disabled AI reads no files, failures preserve prior knowledge and success retains real evidence/sample coverage.
 package com.elexvx.bookkin.catalog.knowledge;
 
 import static org.junit.jupiter.api.Assertions.*;

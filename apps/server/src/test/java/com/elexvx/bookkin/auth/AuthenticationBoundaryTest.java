@@ -1,3 +1,5 @@
+// 通过请求级测试区分匿名、角色不足与 CSRF 失败，保护公开恢复入口和主人专属设置的边界。
+// Uses request-level tests to distinguish anonymous access, insufficient roles and CSRF failures across recovery and owner-only settings.
 package com.elexvx.bookkin.auth;
 
 import static org.mockito.Mockito.mock;

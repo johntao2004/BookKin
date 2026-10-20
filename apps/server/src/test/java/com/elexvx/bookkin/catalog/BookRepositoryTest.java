@@ -1,3 +1,5 @@
+// 检查修改时间以带时区时间戳绑定，防止文件索引更新依赖数据库隐式类型转换。
+// Checks timestamp-with-time-zone binding so file-index updates do not rely on implicit database conversion.
 package com.elexvx.bookkin.catalog;
 
 import static org.mockito.ArgumentMatchers.argThat;

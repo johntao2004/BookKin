@@ -3,6 +3,7 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 
 export const LONG_ROOM_PILASTER_SHAFT_DEPTH = 0.26;
 
+// 依据公开墩柱照片估计并建模带圆弧收口的内凹沟槽。局部 +Z 为朝向过道的雕刻面。
 /** Modeled recessed flutes with rounded stops, estimated from the public pier
  * photograph. Local +Z is the aisle-facing carved surface. */
 export function createLongRoomPilasterShaft(height: number, material: THREE.Material, options: {
@@ -40,6 +41,7 @@ export function createLongRoomPilasterShaft(height: number, material: THREE.Mate
   face.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
   face.setIndex(indices); face.computeVertexNormals();
   const shell = new THREE.BoxGeometry(width, height, depth);
+  // 移除原始 +Z 平面，避免遮盖内凹几何体。
   // Remove the original +Z plane so it cannot cover the recessed geometry.
   const index = Array.from(shell.index!.array);
   index.splice(shell.groups[4].start, shell.groups[4].count);

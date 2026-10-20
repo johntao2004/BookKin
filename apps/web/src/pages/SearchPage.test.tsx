@@ -1,3 +1,5 @@
+// 验证匿名只搜索公开来源，登录搜索私人笔记时保留原阅读定位。
+// Checks anonymous searches use only public sources and signed-in private-note results preserve reading locators.
 import { render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, afterEach, expect, it, vi } from "vitest";
 import { api } from "../api/client";

@@ -11,6 +11,8 @@ import java.util.Set;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
+// 集中校验相对路径与真实根边界；路径检查本身不提供文件锁。
+// Centralizes relative-path and real-root checks; path validation itself does not lock files.
 @Component
 public class PathPolicy {
     private static final Set<String> WINDOWS_RESERVED = Set.of(
@@ -34,6 +36,8 @@ public class PathPolicy {
         return path.toString().replace('\\', '/');
     }
 
+    // 通过真实路径阻止链接逃出书库；书库内解析到的链接与全面禁止软链接并不等同。
+    // Real-path containment rejects links escaping the root; this is not a blanket ban on all in-root symlinks.
     public Path resolveExisting(Path root, String relative) throws IOException {
         Path canonicalRoot = root.toRealPath();
         Path candidate = canonicalRoot.resolve(normalizeRelative(relative)).normalize();
@@ -42,6 +46,8 @@ public class PathPolicy {
         return real;
     }
 
+    // 目标可能尚不存在，因此检查最近已存在父目录的真实路径。
+    // The destination may not exist yet, so validate the nearest existing parent through its real path.
     public Path resolveTarget(Path root, String relative) throws IOException {
         Path canonicalRoot = root.toRealPath();
         Path candidate = canonicalRoot.resolve(normalizeRelative(relative)).normalize();

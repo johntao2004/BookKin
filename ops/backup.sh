@@ -1,4 +1,7 @@
 #!/bin/sh
+# 导出数据库、书库根目录和字体归档，并生成恢复清单及校验和；派生缓存不纳入备份。
+# Exports the database, library roots and fonts with a recovery manifest and checksums; derived caches are excluded.
+# 为数据库及所有持久化 BookKin 文件根目录创建自包含恢复点。缓存属于派生数据，有意不纳入备份。
 # Create a self-contained recovery point for the database and every persistent
 # BookKin file root. The cache is derived data and is intentionally excluded.
 set -eu
@@ -41,6 +44,7 @@ test "$ROOT_COUNT" -gt 0 || {
   exit 1
 }
 
+# 数据库导出前先验证字体挂载；挂载缺失时立即失败，避免生成看似有效却不完整的恢复点。
 # Validate the font mount before starting the database dump so a missing mount
 # fails fast without producing a partial-looking recovery point.
 FONT_ROOT=${BOOKKIN_FONT_BACKUP_ROOT:-${BOOKKIN_FONT_STORAGE:-./.local/fonts}}
@@ -78,6 +82,7 @@ while IFS= read -r LIBRARY_ROOT; do
   esac
 
   ARCHIVE="recoverable-root-$ROOT_INDEX.tar.gz"
+  # 归档“.”以包含隐藏目录和根目录中的普通书籍文件。符号链接按链接本身归档，tar 不跟随链接。
   # Archive '.' so hidden directories and the root's regular book files are
   # included. Symlinks are archived as links; tar does not follow them.
   tar -C "$LIBRARY_ROOT" --exclude='./.bookkin-cache' -czf "$DESTINATION/$ARCHIVE" .
@@ -94,6 +99,7 @@ else
   CHECKSUM_FILES="$CHECKSUM_FILES fonts.tar.gz"
 fi
 
+# 清单本身也参与校验，防止缺少根目录或字体归档的备份被误认作完整备份。
 # The manifest itself is checked too, so a missing root or font archive cannot
 # be mistaken for a complete backup.
 # shellcheck disable=SC2086

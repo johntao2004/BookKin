@@ -1,3 +1,5 @@
+// 验证历史错层窗框、十八块玻璃和中部接缝连续，避免只靠透明材质遮掩开口。
+// Checks historical staggered sash frames, eighteen panes and a closed meeting seam rather than material-only concealment.
 import * as THREE from 'three';
 import { createLongRoomSashes } from './longRoomSash';
 

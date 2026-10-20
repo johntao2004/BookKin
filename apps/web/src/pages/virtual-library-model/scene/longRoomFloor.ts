@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { PALETTE } from '../config';
 
+// 共享地板贴图单元在 2.88 × 4.8 米范围内包含十二块估计宽 0.24 米的木板。表面磨损仅为代表性效果，不复制照片纹理。
 /** A shared floor tile, 12 estimated 0.24 m boards across 2.88 × 4.8 m.
  * Surface wear is representative; no photographic texture is copied. */
 export function createLongRoomFloorTextures() {

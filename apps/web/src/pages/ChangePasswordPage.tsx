@@ -1,3 +1,5 @@
+// 临时密码与普通改密共用密码要求提示，完成后同步认证状态。
+// Temporary-password and ordinary password changes share policy feedback and refresh auth state after success.
 import { FormActions } from "../components/PageHeader";
 import { Alert } from "@/ui/feedback";
 import { Button } from "@/ui/buttons";

@@ -1,3 +1,5 @@
+// 用真实数据库验证内容去重、并发上传与手工字段保护，包含绕过仓储后的数据库约束检查。
+// Uses a real database for deduplication, concurrent upload and manual-field protection, including constraints when repository checks are bypassed.
 package com.elexvx.bookkin.ingestion;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# 通过共享无向边寻找连通分量，检查阳台扶手、底栏及平台饰面的封闭拼接；仅顶点相触不算连续实体。
+# Uses shared undirected edges to check closed balcony handrail, lower-rail and deck/fascia assemblies; vertex-only contact is not solid connectivity.
 """Standalone GLB geometry verifier for B-end balcony continuous joinery.
 
 Checks each of the three balcony assemblies is one closed solid (top mitered

@@ -105,6 +105,7 @@ export function cssVarPath(value: string) {
     "primary.light": "var(--color-primary-soft)",
     "primary.dark": "var(--color-primary-hover)",
     "secondary.main": "var(--color-accent-teal)",
+    // 保留旧 secondary.dark 在进度卡和认证图层的语义映射，避免迁移 Ant Design 后回退到无效 CSS 值。
     // MUI derived `secondary.dark` was used by the original theme for the
     // reading-progress card and the authentication artwork layer.  Keep the
     // semantic mapping here so those surfaces do not silently fall back to an
@@ -167,6 +168,7 @@ function cssValue(key: string, value: unknown): string | undefined {
   if (typeof value === "number") {
     if (unitlessCssProperties.has(key)) return String(value);
     if (["margin", "marginTop", "marginRight", "marginBottom", "marginLeft", "marginInline", "marginBlock", "padding", "paddingTop", "paddingRight", "paddingBottom", "paddingLeft", "paddingInline", "paddingBlock", "gap", "rowGap", "columnGap"].includes(key)) return `${value * 8}px`;
+    // 旧 sx 尺寸统一映射到共享圆角，同时保留齐边和圆形。
     // Legacy sx sizes share one visual radius; retain flush edges and circles.
     if (key === "borderRadius") return value === 0 ? "0px" : value >= tokens.radius.full ? `${tokens.radius.full}px` : `${tokens.radius.md}px`;
     if (key === "border") return `${value}px solid var(--color-border)`;
@@ -328,6 +330,7 @@ const typographyStyles: Record<string, CSSProperties> = {
   overline: { fontFamily: "var(--typography-font-family-body)", fontSize: "var(--typography-font-size-caption-uppercase)", fontWeight: 500, lineHeight: "var(--typography-line-height-caption)", letterSpacing: "1.5px", textTransform: "uppercase" },
 };
 
+// 应用语义标题共用响应式字号，不依赖旧视觉 variant；阅读正文可显式继承字号。
 // Semantic application headings share one responsive scale regardless of the
 // legacy visual variant. Reader content can still explicitly inherit its size.
 const headingSizes: Record<string, SxObject> = {
@@ -343,6 +346,7 @@ export function Typography({ variant = "body1", component, color, noWrap, align,
   const { style: inlineStyle, ...restProps } = props;
   const resolvedSx = flattenSx(sx, theme);
   const heading = typeof Component === "string" && /^h[1-6]$/.test(Component);
+  // 阅读正文及字体示例自行管理字体。
   // Reader content and font specimens deliberately own their typeface.
   const customTypeface = resolvedSx.fontFamily && resolvedSx.fontFamily !== tokens.typography.fontFamily.display;
   const headingStyle = heading && !customTypeface ? {
@@ -352,6 +356,7 @@ export function Typography({ variant = "body1", component, color, noWrap, align,
     letterSpacing: "normal",
     ...(headingSizes[Component as string] ? { fontSize: headingSizes[Component as string] } : {}),
   } : {};
+  // 基础排版与调用方 sx 放在同一生成样式表；内联字体声明会压过媒体查询，使响应式字号失效。
   // Keep the base typography and the caller's `sx` in the same generated
   // stylesheet.  Inline font declarations prevent responsive sx values (for
   // example `fontSize: { xs: ..., md: ... }`) from taking effect because an
@@ -474,6 +479,7 @@ function Overlay({ open, onClose, anchorEl, anchorPosition, children, sx, role =
       const oy = (view?.offsetTop ?? 0) / scale;
       overlay.style.maxHeight = `${Math.max(0, height - gap * 2)}px`;
       overlay.style.maxWidth = `${Math.max(0, width - gap * 2)}px`;
+      // DOM 矩形使用显示坐标，固定 CSS 偏移使用未缩放逻辑坐标。
       // DOM rectangles use displayed coordinates; fixed CSS offsets use unzoomed coordinates.
       const measuredAnchor = anchorEl?.getBoundingClientRect();
       const rect = measuredAnchor && { left: measuredAnchor.left / scale, top: measuredAnchor.top / scale, width: measuredAnchor.width / scale, height: measuredAnchor.height / scale };
@@ -516,6 +522,7 @@ export function Popover({ open, onClose, anchorEl, children, slotProps, ...props
 
 export function Snackbar({ open, message, onClose, autoHideDuration = 4000, children }: { open?: boolean; message?: ReactNode; onClose?: () => void; autoHideDuration?: number; children?: ReactNode }) {
   if (!open) return null;
+  // Alert 子组件已通过共享提供器生成通知。
   // Alert children already render a notification through the shared provider.
   return message !== undefined
     ? <FeedbackBubble duration={autoHideDuration / 1000} onClose={onClose}>{message}</FeedbackBubble>

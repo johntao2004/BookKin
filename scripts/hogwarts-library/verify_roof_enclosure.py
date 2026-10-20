@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# 用区域缓存和射线核对端墙封闭、侧拱冠与主侧拱连接；历史 r16 尺寸契约需匹配所测模型。
+# Uses regional caches and rays to check end-wall enclosure, side-arch crowns and vault junctions; the historical r16 dimensional contract must match the inspected model.
 """Blender-free verification of the r16 roof enclosure at both hall ends.
 
 The r15 build left the two end bays (|z| in 15..20) with a low flat slab over the exhibition galleries, black gaps in the

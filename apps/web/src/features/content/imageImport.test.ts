@@ -1,3 +1,5 @@
+// 验证在读取图片前拒绝不支持类型和过大文件，避免无效输入先消耗读取资源。
+// Checks unsupported types and oversized images are rejected before reading their bytes.
 import { expect, it } from 'vitest';
 import { readArticleImage } from './imageImport';
 it('rejects unsupported image types and oversized images before reading', async () => {

@@ -3,6 +3,8 @@ package com.elexvx.bookkin.ingestion;
 import java.math.BigDecimal;
 import java.util.List;
 
+// 规范化提取结果中的空字符串与人员列表，确保后续入库拥有标题和作者回退值。
+// Normalizes blank strings and contributor lists so ingestion receives title/author fallback values.
 public record ExtractedBook(
         String title,
         String subtitle,

@@ -1,3 +1,5 @@
+// 通过 URL hash 选择允许的设置面板，仅挂载当前面板并兼容旧入口。
+// Selects permitted settings panels through the URL hash, mounting only the active panel and preserving legacy entry points.
 import { lazy, Suspense, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { RequireAuth, useAuth } from "../auth/AuthContext";

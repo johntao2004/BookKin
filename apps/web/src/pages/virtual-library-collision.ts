@@ -96,6 +96,7 @@ export interface CameraCollisionResult extends CameraPosition {
   blockedBy: string | null;
 }
 
+// 相对眼睛的竖直空间净距；below 包含相机下方人体空间。
 /** Eye-relative upright clearance. `below` includes the body beneath the camera. */
 export interface CameraCollisionClearance {
   horizontal: number;
@@ -249,6 +250,8 @@ function collectArcBoxes(
   return boxes;
 }
 
+// 把模型局部描述转换到世界坐标；碰撞依赖描述数据，不依赖可见网格的三角面。
+// Convert local descriptors to world coordinates; collision depends on descriptors, not visible mesh triangles.
 export function collectCameraColliders(
   root: THREE.Object3D,
   room: LibraryRoomId,
@@ -361,6 +364,8 @@ function rotateBoxNormalToWorld(normal: CameraPosition, rotationY: number) {
   };
 }
 
+// 扩张障碍物后检测整个移动线段，避免高速移动只检查终点时穿墙。
+// Expand the obstacle and sweep the full movement segment to avoid endpoint-only tunneling at high speed.
 function sweepBox(
   start: CameraPosition,
   end: CameraPosition,
@@ -417,6 +422,7 @@ function sweepBox(
     exitTime = Math.min(exitTime, farTime);
     if (enterTime > exitTime) return null;
   }
+  // 负进入时间表示离开或相切；恰为零时保留进入面法线，防止接触卡住或穿过角点。
   // A negative entry is an exit/tangent motion. At exactly zero retain the
   // entering face normal so contact cannot stall or slide through a corner.
   if (enterTime < 0 || enterTime > 1) return null;
@@ -465,6 +471,7 @@ function sweepCylinder(
         if (y < minY || y > maxY) continue;
         const x = startX + deltaX * time;
         const z = startZ + deltaZ * time;
+        // 只有进入接触阻挡运动；t=0 的离开或恰好相切不能把相机推出柱子或阻断滑动。
         // Only entering contacts block motion. An exit or an exact tangent
         // at t=0 must not push the camera away from a column or stall sliding.
         if (x * deltaX + z * deltaZ >= 0) continue;
@@ -679,6 +686,8 @@ function earliestCollision(
   return earliest;
 }
 
+// 先修正起点穿透，再取最早接触并去除朝内分量，以有限迭代保留沿墙滑动。
+// Recover initial penetration, find the earliest contact and remove inward motion with bounded iterations for wall sliding.
 export function resolveCameraCollision(
   previous: CameraPosition,
   desired: CameraPosition,

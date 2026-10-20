@@ -75,6 +75,8 @@ public class ReadingController {
         return positions.weeklyStats(userId, LocalDate.now());
     }
 
+    // 内容请求取得 15 分钟读租约，并在流结束或路径、Range 检查失败时释放；此处不续租。
+    // Content acquires a 15-minute read lease and releases it after streaming or path/Range failure; this code does not renew it.
     @GetMapping("/content")
     void content(@PathVariable UUID bookId,
                  @RequestHeader(value = HttpHeaders.RANGE, required = false) String range,

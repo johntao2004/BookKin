@@ -1,3 +1,5 @@
+// 验证只显示当前查询的最新私人批注而非书签，并在异步加载后重算可见行数。
+// Checks the newest private annotation rather than bookmarks and recalculates visible lines after asynchronous loading.
 import { render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, vi } from "vitest";
 import { api } from "../api/client";

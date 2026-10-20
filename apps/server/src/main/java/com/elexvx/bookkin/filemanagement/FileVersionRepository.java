@@ -9,6 +9,8 @@ import org.jooq.Record;
 import org.springframework.stereotype.Repository;
 
 @Repository
+// 存取版本记录和保留期信息；仓储存在本身不表示每种写回流程都会创建版本。
+// Stores version records and retention information; its presence does not imply every writeback creates a version.
 public class FileVersionRepository {
     private final DSLContext dsl;
 

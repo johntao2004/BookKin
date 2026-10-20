@@ -72,6 +72,8 @@ export function BookUploadDialog({ open, initialRootId, onClose }: {
     if (!rootId && writableRoots[0]) setRootId(writableRoots[0].id);
   }, [open, rootId, writableRoots]);
 
+  // 两个工作循环共享队列游标，限制并发传输；UPLOADED 表示传输成功，尚需校对入库。
+  // Two workers share a queue cursor to bound transfers; UPLOADED means transfer success, still requiring review and commit.
   const start = async (queue: LocalUpload[]) => {
     if (!rootId || uploading.current || !queue.length) return;
     uploading.current = true;

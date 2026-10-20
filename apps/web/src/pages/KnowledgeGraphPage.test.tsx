@@ -1,3 +1,5 @@
+// 验证只有明确选书分析才发起生成，并覆盖成员限制、无伪造节点和抽屉懒加载。
+// Checks explicit selected-book analysis, member restrictions, honest empty graphs and lazy drawer loading.
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import type { NetworkGraphOptions } from '@ant-design/graphs';
 import { api } from '../api/client';

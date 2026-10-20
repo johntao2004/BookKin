@@ -1,3 +1,5 @@
+// 验证从 3D 场景进入阅读后返回原视角且书籍身份不变。
+// Checks returning from a 3D-library reading session restores the camera without changing book identity.
 import { fireEvent, render, screen } from '@testing-library/react';
 import { Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { TestProviders } from '../test/TestProviders';

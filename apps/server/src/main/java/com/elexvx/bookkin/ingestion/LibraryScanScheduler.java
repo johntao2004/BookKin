@@ -12,6 +12,8 @@ import org.springframework.stereotype.Component;
 
 @Component
 @Profile("worker")
+// Worker 定时启动扫描作业；实际调度属性以注解中的 page.scan.interval 为准。
+// Worker launches scan jobs on schedule; the actual scheduling property is page.scan.interval in the annotation.
 public class LibraryScanScheduler {
     private static final Logger log = LoggerFactory.getLogger(LibraryScanScheduler.class);
     private final JobOperator operator;

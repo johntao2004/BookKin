@@ -13,6 +13,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+// 临时密码身份仅可进入恢复及改密相关白名单，其他 API 返回 428。
+// Temporary-password identities are restricted to the recovery/password allowlist; other APIs return 428.
 @Component
 @Profile("api")
 public class MustChangePasswordFilter extends OncePerRequestFilter {

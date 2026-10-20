@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 
+// 起始立柱可见于 Tierney 的现状楼梯照片（图 11.8）。轮廓比例为估计，并非照搬未实施的涡卷设计。
 /** Starting column visible in Tierney's existing-stair photograph (fig.11.8).
  * Profile proportions are estimates, not a copy of the unexecuted volute design. */
 export function createWestStartingNewel(height: number, material: THREE.Material) {

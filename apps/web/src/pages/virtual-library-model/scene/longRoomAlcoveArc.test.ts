@@ -1,3 +1,5 @@
+// 验证历史壁龛圆弧的拱腹、起点和水平冠切线，防止端点拼接出现断口。
+// Checks historical alcove intrados, spring endpoints and horizontal crown tangents against broken joins.
 import * as THREE from 'three';
 import { LongRoomAlcoveArc } from './longRoomAlcoveArc';
 

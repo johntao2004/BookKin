@@ -5,6 +5,7 @@ import type {LibraryMaterials} from './materials';
 import {createWestHighWindow} from './longRoomWestWindow';
 import {markCameraCollider} from '../../virtual-library-collision';
 
+// Y1.003：东侧附楼上方为 112 平方米的 Early Printed Books。楼层标高来自 Y2.001；放大的外轮廓、洞口尺寸及顶棚均为估计。
 /** Y1.003: Early Printed Books (112 m²) over the east pavilion. Floor datums
  * come from Y2.001; the enlarged envelope, opening sizes and ceiling are estimates. */
 export const EAST_UPPER_ROOM={floor:EAST_GALLERY_CONNECTION.upperFloor,ceiling:8.54,north:-9.33,south:9.33,west:0.5,east:8.5,
@@ -24,15 +25,18 @@ export function createEastUpperRoom(materials:LibraryMaterials) {
     if(collision)markCameraCollider(mesh,{id:`east-upper-${name}-${x}-${y}-${z}`,shape:'box',center:{x:0,y:0,z:0},size:{x:w,y:h,z:d}});
     return mesh;
   };
+  // 保持楼梯与电梯占地范围开敞，不在上方铺设连续板面。
   // Keep the stair/lift footprint open rather than placing an unbroken slab over it.
   for(const [x0,x1,z0,z1] of [[R.north,R.south,R.west,R.core.west],[R.north,R.south,R.core.east,R.east],
     [R.north,R.core.north,R.core.west,R.core.east],[R.core.south,R.south,R.core.west,R.core.east]])
     box('Upper pavilion floor around service core',x1-x0,0.2,z1-z0,(x0+x1)/2,R.floor-0.1,(z0+z1)/2,materials.floor);
   box('Upper pavilion ceiling',R.south-R.north+0.24,0.2,R.east-R.west+0.24,0,R.ceiling+0.1,4.5);
   const H=R.ceiling-R.floor;
+  // 原始平面图显示了主厅连接口，回廊入口路线已连接。
   // Main-hall connection appears on the source plan; the gallery approach is connected.
   for(const [a,b] of [[R.north,-R.door.width/2],[R.door.width/2,R.south]])box('Upper pavilion west wall',b-a,H,0.24,(a+b)/2,R.floor+H/2,R.west);
   box('Upper pavilion doorway head',R.door.width,H-R.door.height,0.24,0,R.floor+(H+R.door.height)/2,R.west);
+  // 为大厅端墙与附楼墙之间的墙厚补齐侧壁，避免从回廊斜看门洞时只见纸片状开口。
   // Line the wall thickness between the hall end and pavilion wall; avoid a
   // paper-thin cutout when the doorway is viewed obliquely from the gallery.
   for(const side of [-1,1])box('Upper pavilion doorway reveal',0.08,R.door.height,R.west,

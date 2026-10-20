@@ -162,6 +162,7 @@ export async function decryptFile(
     throw error;
   }
 }
+// EPUB 内的主动内容及外部引用不得逃出加密阅读器边界。
 /** EPUB's own active/external content must not escape the encrypted reader. */
 export async function privateEpub(bytes: Uint8Array) {
   const zip = await JSZip.loadAsync(bytes);

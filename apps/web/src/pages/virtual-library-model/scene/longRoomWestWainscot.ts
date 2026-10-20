@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { mapWestPanelGrain } from './longRoomWestOak';
 
+// Casey 2018 第 26 页可见倾斜木质护墙板。镶板数量与轮廓均为估计。
 /** Raking timber dado visible in Casey 2018, p.26. Panel count and profiles are estimates. */
 export function createWestRakingWainscot(run: number, rise: number, depth: number,
   wood: THREE.MeshStandardMaterial, trim: THREE.MeshStandardMaterial) {
@@ -26,6 +27,7 @@ export function createWestRakingWainscot(run: number, rise: number, depth: numbe
   const count = Math.ceil(run / 0.8), pitch = run / count;
   for (let panel = 0; panel < count; panel++) {
     const x = panel * pitch + 0.07, width = pitch - 0.14;
+    // 横框与竖框分开建模，以保持木接头处的纹理方向。
     // Separate rails and stiles preserve grain direction at the timber joints.
     for (const edgeX of [x, x + width - 0.035])
       add(outline(edgeX, 0.035, 0.14, 0.58), 0.025, depth, 'West panel vertical stile', trim, true);

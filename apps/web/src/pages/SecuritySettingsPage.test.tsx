@@ -1,3 +1,5 @@
+// 验证主人保存注册策略后采用服务器结果，管理员只能查看。
+// Checks owner policy changes use persisted server results while administrators remain read-only.
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { vi, it, expect, beforeEach } from "vitest";
 import { TestProviders } from "../test/TestProviders";

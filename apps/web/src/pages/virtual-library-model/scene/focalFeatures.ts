@@ -75,6 +75,7 @@ function receptionArc(
 
 const RECEPTION_CURVE_SEGMENTS = 96;
 
+// 构建一个连续的半环形结构，平面两端采用圆角封头。从上方或两侧观看柜台时，圆角封头可避免台面、裙板和底座露出矩形切面。
 /**
  * Builds one continuous half-annulus with rounded plan-view ends. The rounded
  * caps keep the countertop, apron and plinth from exposing rectangular cut
@@ -301,6 +302,7 @@ export function createHorseshoeReception(materials: LibraryMaterials) {
   group.add(receptionArc(radius + 0.03, 1.24, 0.035, materials.brass));
 
 
+  // 凸起的胡桃木面板沿弧形裙板排列，位于现有台面悬挑以内。
   // Raised walnut panels follow the curved apron, inside the existing counter overhang.
   const panelCount = 11;
   const panelRadius = radius + 0.175;

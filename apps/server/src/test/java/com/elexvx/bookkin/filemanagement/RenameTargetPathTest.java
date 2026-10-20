@@ -1,3 +1,5 @@
+// 验证重命名只改变文件名并保留目录与格式，拒绝路径片段和冲突扩展名。
+// Checks filename-only renames preserve directory/format and reject path segments or conflicting extensions.
 package com.elexvx.bookkin.filemanagement;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

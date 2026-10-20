@@ -8,6 +8,8 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 @Repository
+// 管理封面资源引用与清理资格，二进制本体保存在文件系统。
+// Manages cover references and cleanup eligibility while binary content stays in the filesystem.
 public class BookCoverRepository {
     private final DSLContext dsl;
     public BookCoverRepository(DSLContext dsl) { this.dsl = dsl; }
@@ -60,6 +62,7 @@ public class BookCoverRepository {
         dsl.execute("delete from book_cover_assets where id = ? and retired_at is not null and expires_at < now()", id);
     }
 
+    // 清理时锁定记录防止重新启用，避免删除当前正在使用的封面。
     /** Lock against reactivation so a queued cleanup cannot delete a current cover. */
     @Transactional
     public boolean purgeExpired(ExpiredCoverAsset asset, Runnable removeFile) {

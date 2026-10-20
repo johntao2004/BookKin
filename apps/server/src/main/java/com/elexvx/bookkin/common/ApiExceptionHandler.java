@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
+// 业务异常与参数校验异常转为 ProblemDetail，保持响应中的可识别错误码。
+// Maps business and validation exceptions to ProblemDetail responses with identifiable error codes.
 public class ApiExceptionHandler {
     @ExceptionHandler(ApiException.class)
     ProblemDetail apiException(ApiException exception) {

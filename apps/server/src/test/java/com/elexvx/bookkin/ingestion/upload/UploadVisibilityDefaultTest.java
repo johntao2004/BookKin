@@ -1,3 +1,5 @@
+// 验证缺省公开选项与明确私有选择，并确保上传重放不会把后来隐藏的书重新公开。
+// Checks default/public and explicit/private choices while preventing replay from republishing a subsequently hidden book.
 package com.elexvx.bookkin.ingestion.upload;
 
 import static org.mockito.Mockito.*;

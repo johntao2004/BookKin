@@ -1,3 +1,5 @@
+// 在配置数据库中验证撤销仅作用于已有会话及策略持久化，不能把后续登录一起撤销。
+// Uses the configured database to verify revocation targets existing sessions and policy persists without revoking later logins.
 package com.elexvx.bookkin.auth;
 import com.elexvx.bookkin.users.*;
 import com.elexvx.bookkin.audit.AuditService;

@@ -1,3 +1,5 @@
+// 覆盖初始化网络来源与已有用户状态判断，不把前端是否显示初始化表单当成服务端授权。
+// Covers setup network-origin and existing-user checks without treating form visibility as server authorization.
 package com.elexvx.bookkin.auth;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;

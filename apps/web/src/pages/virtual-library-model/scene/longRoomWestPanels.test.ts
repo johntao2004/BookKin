@@ -1,3 +1,5 @@
+// 检查历史墙面板保持开放中心，长边框具有真实几何浮雕。
+// Checks historical wall panels retain open fields and real relief along long frame edges.
 import * as THREE from 'three';
 import { expect, it } from 'vitest';
 import { createWestStairPanel } from './longRoomWestPanels';

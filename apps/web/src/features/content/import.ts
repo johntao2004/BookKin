@@ -26,6 +26,7 @@ export async function importArticle(file: File): Promise<string> {
     const zip = await JSZip.loadAsync(file);
     const entries = Object.values(zip.files).filter((x) => !x.dir);
     if (entries.length > 100) throw new Error("ZIP 文件数量不能超过 100 个。");
+    // JSZip 提供其路径清理之前的原始名称，便于自行检查。
     // JSZip exposes original names before its own path cleanup.
     for (const entry of entries) {
       const original =

@@ -1,3 +1,5 @@
+// 文章与独立阅读状态的 API 适配层，revision 随状态提交以识别并发修改。
+// API adapter for articles and independent reading state, submitting revisions to detect concurrent updates.
 import { request } from "../../api/client";
 export interface Article {
   id: string;

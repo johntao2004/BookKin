@@ -30,6 +30,8 @@ public final class BookUploadModels {
             return new MetadataDraft(title, subtitle, authors, translators, language, publisher, publishedDate, isbn,
                     description, series, seriesIndex, tags, pageCount, wordCount, sources, targetPath, value);
         }
+        // 草稿未指定公开状态时默认公开；这里只规范化数据，不执行入库或授权。
+        // Missing draft visibility defaults to public; this normalizes data without committing or authorizing ingestion.
         public MetadataDraft {
             publiclyVisible = publiclyVisible == null ? true : publiclyVisible;
             authors = clean(authors);

@@ -3,6 +3,7 @@ import type { LibraryMaterials } from './materials';
 import { makeBox } from './parts';
 import { markCameraCollider } from '../../virtual-library-collision';
 
+// 依据官方照片和已公布尺寸进行独立重建研究。整体轮廓与展示柜位置仍为估计，未嵌入第三方网格。
 /** Independent reconstruction study from the official photograph and published dimensions.
  * Overall profile and cabinet placement remain estimates; no third-party mesh is embedded.
  */
@@ -18,12 +19,14 @@ export function createLongRoomHarp(materials: LibraryMaterials) {
       bevelSize: 0.004, bevelThickness: 0.004, bevelSegments: 2, steps: 1}), materials.woodDark);
     mesh.position.z = -depth / 2; mesh.name = name; mesh.castShadow = true; harp.add(mesh);
   };
+  // 弯曲前柱与下凹的琴颈匹配照片中的轮廓。
   // Curved forepillar and dipping harmonic neck, matching the photographed silhouette.
   profile([[-0.18,0.025],[-0.255,0.1],[-0.3,0.23],[-0.32,0.4],[-0.31,0.56],[-0.27,0.74],
     [-0.23,0.85],[-0.18,0.83],[-0.22,0.68],[-0.24,0.51],[-0.25,0.35],[-0.23,0.18],[-0.14,0.07]], 0.065, 'Curved carved forepillar');
   profile([[-0.23,0.85],[-0.15,0.79],[-0.07,0.73],[0.01,0.71],[0.07,0.72],[0.12,0.77],
     [0.18,0.79],[0.24,0.77],[0.27,0.72],[0.23,0.69],[0.17,0.72],[0.12,0.69],[0.05,0.66],
     [-0.03,0.66],[-0.12,0.69],[-0.2,0.76]], 0.075, 'Dipping harmonic neck');
+  // 共鸣板宽度从 32 厘米渐缩至 12 厘米（Dooley 报告第 3 页）。
   // Soundboard width tapers from 32 cm to 12 cm (Dooley report, p.3).
   const soundbox = new THREE.BufferGeometry();
   const vertices = [-0.2,0,-0.16, -0.1,0,-0.16, 0.28,0.7,-0.06, 0.18,0.7,-0.06,

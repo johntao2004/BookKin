@@ -1,3 +1,5 @@
+// 统一阅读字体、偏好默认值与存储解析；不可用设置回退到可用预设。
+// Centralizes reader fonts, preference defaults and storage parsing with fallbacks for unavailable settings.
 import type { ReaderFont, ReaderFontKind } from "../../domain/types";
 import { tokens } from "../../theme/generated-tokens";
 

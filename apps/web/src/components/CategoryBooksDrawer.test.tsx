@@ -1,3 +1,5 @@
+// 验证多选变更先留在本地草稿，只有明确确认才调用批量保存。
+// Checks multi-selection remains local until explicit confirmation triggers a batch save.
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { api } from "../api/client";

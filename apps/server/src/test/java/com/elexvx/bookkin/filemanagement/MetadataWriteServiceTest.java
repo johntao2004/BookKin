@@ -1,3 +1,5 @@
+// 分别验证成功清理暂存快照和数据库失败恢复原文件，不把暂存补偿误认成持久版本历史。
+// Checks temporary-snapshot cleanup on success and original restoration on database failure, not persistent version history.
 package com.elexvx.bookkin.filemanagement;
 
 import static org.assertj.core.api.Assertions.assertThat;

@@ -1,3 +1,5 @@
+// 覆盖真实/演示登录边界、初始化与注册入口条件，问候辅助函数测试不代表页面显示问候。
+// Covers real/demo login boundaries and setup/signup availability; greeting-helper tests do not imply visible greeting copy.
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { Route, Routes } from "react-router-dom";
 import { afterEach, vi } from "vitest";

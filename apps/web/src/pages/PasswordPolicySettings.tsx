@@ -1,3 +1,5 @@
+// 编辑当前密码复杂度策略，规则变化不意味着重新验证所有已有密码。
+// Edits current password complexity rules without implying revalidation of every existing password.
 import { useState, type FormEvent } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { api, type PasswordPolicy } from "../api/client";

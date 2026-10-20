@@ -1,3 +1,5 @@
+// 本文件说明适用于该 Long Room 构建路径；下方旧注释的 live 不表示当前主场景已启用此模型。
+// These comments describe this Long Room builder; legacy uses of live below do not assert inclusion in the current main scene.
 import {addLongRoomFloorOcclusion} from './longRoomFloorOcclusion';
 import {addEastGalleryConnection} from './longRoomEastGallery';
 import { createLongRoomSashes } from './longRoomSash';
@@ -39,6 +41,7 @@ export interface LongRoomBuilt {
   root: THREE.Group;
   materials: LibraryMaterials;
   shelfSections: ExpandableShelfSection[];
+  // 这里只创建空的放置锚点；真实目录书籍在别处挂载。
   /** Empty placement anchors only; real catalog books are attached elsewhere. */
   catalogSlots: LongRoomSlot[];
   interactiveObjects: THREE.Object3D[];
@@ -102,6 +105,7 @@ function extrudePlanShape(points: THREE.Vector2[], height: number) {
     steps: 1,
     bevelEnabled: false,
   });
+  // ExtrudeGeometry 沿局部 +Z 延伸。将此厚度旋转至世界 Y 轴并居中，使所有弯曲构件与长方体采用相同定位约定。
   // ExtrudeGeometry grows along local +Z. Rotate that depth onto world Y and
   // centre it so every curved member uses the same position convention as a box.
   geometry.rotateX(Math.PI / 2);
@@ -134,6 +138,7 @@ function createGalleryArcPrismGeometry(
   return extrudePlanShape(points, height);
 }
 
+// 将地板填入原先方形的中空转角，直到弧形栏杆处。这是增加实体填角，并非在回廊上减去一个洞口。
 /** Adds floor into the previously square void corner up to the curved rail.
  * This is a positive solid infill, not a subtractive aperture in the gallery. */
 function createGalleryCornerFloorInfillGeometry(
@@ -166,9 +171,11 @@ function alignFloorGrain(mesh: THREE.Mesh) {
   uv.needsUpdate = true;
 }
 
+// 使用真正的等截面筒拱，而非径向穹顶或渐缩圆厅。
 /** A genuine constant-section barrel, not a radial dome or a tapering rotunda. */
 function* createLongRoomVaultSteps(materials: LibraryMaterials): Generator<void, THREE.Group> {
   const root = new THREE.Group(); root.name = 'Long Room continuous barrel vault';
+  // 保持主筒拱和侧回廊顶棚为完整表面。此前各开间相交的小拱看似孔洞，并在横向拱肋交接处产生悬空接缝碎片。
   // Keep the main barrel and the side-gallery ceilings as complete surfaces.
   // The previous per-bay intersecting lunettes read as holes and produced
   // dangling seam pieces where they met the transverse ribs.
@@ -242,6 +249,7 @@ function sceneryVolumeHash(seed: number) {
   return (hash ^ (hash >>> 16)) >>> 0;
 }
 
+// 匿名背景书卷仅用于参考研究，主厅构建路径不会创建它们。
 /** Reference-only anonymous scenery volumes; the live hall never constructs them. */
 class HistoricalVolumes {
   private clusters = new Map<string, {center: THREE.Vector3; batches: {
@@ -271,12 +279,14 @@ class HistoricalVolumes {
       const colors = new Float32Array(batch.colors.length * 2); colors.set(batch.colors); batch.colors = colors;
     }
     const offset = batch.count * 16, c = Math.cos(rotation), sine = Math.sin(rotation);
+    // 直接写入平移、旋转和缩放，避免为每本书卷创建临时对象。
     // Write TRS directly, avoiding temporary objects per volume.
     batch.matrices[offset] = c * width; batch.matrices[offset + 2] = -sine * width;
     batch.matrices[offset + 5] = height;
     batch.matrices[offset + 8] = sine * depth; batch.matrices[offset + 10] = c * depth;
     batch.matrices[offset + 12] = x; batch.matrices[offset + 13] = y; batch.matrices[offset + 14] = z;
     batch.matrices[offset + 15] = 1;
+    // 成套书保留共同的随机种子。对相邻种子进行哈希以避免重复明暗条纹；此配色为依据照片作出的估计。
     // Matching sets retain a shared seed. Hash adjacent seeds to avoid a
     // repeating light/dark stripe; this palette is a photographic estimate.
     const family = hash % 20, variation = (hash >>> 8) / 0xffffff;
@@ -312,6 +322,7 @@ class HistoricalVolumes {
       lod.position.copy(cluster.center);
       const near = new THREE.Group(), far = new THREE.Group();
       near.position.copy(cluster.center).negate(); far.position.copy(near.position);
+      // 让出执行权前先挂载，使取消时能释放尚未完成的书群。滞回机制可避免在阈值附近缓慢行走时闪烁。
       // Attach before yielding so cancellation can dispose partial clusters.
       // Hysteresis keeps a slow walk around the threshold from flickering.
       lod.addLevel(near, 0); lod.addLevel(far, 18, 0.12); root.add(lod);
@@ -383,6 +394,7 @@ function addPilaster(root: THREE.Group, materials: LibraryMaterials, side: numbe
         [x, base + height + connectorHeight / 2, z], materials.woodWarm);
     }
   }
+  // 向过道凸出的壁柱位于嵌入式书柜背板包围盒之外。
   // The projecting aisle pilaster is outside the fitted case's backboard box.
   markCameraCollider(root, { id: `long-room-pilaster-${side}-${z}-${base}`, shape: 'box',
     center: { x, y: base + height / 2, z }, size: { x: 0.48, y: height, z: L.caseThickness + 0.12 } });
@@ -394,6 +406,7 @@ const longRoomWindowLevels = () => [
   { base: L.galleryY + 0.7, height: L.vaultSpring - L.galleryY - 1 },
 ];
 
+// 实体墩柱和拱肩围绕真实开口构建，玻璃后方没有隐藏的完整墙体。
 /** Solid piers/spandrels surround actual apertures; there is no hidden full wall behind glazing. */
 function addExteriorWall(root: THREE.Group, materials: LibraryMaterials, side: number) {
   const wall = new THREE.Group(); wall.name = 'Long exterior wall';
@@ -535,6 +548,7 @@ function addHistoricAlcoveStair(root: THREE.Group, materials: LibraryMaterials) 
   stair.position.set(S.x, 0, S.z);
   stair.userData.placement = 'south-entry-alcove-public-tour-estimated-anchor';
   root.add(stair);
+  // 最后一级扇形踏步朝向过道，由短平台跨接开口净空。
   // The final fan tread faces the aisle; a short landing spans the opening clearance.
   const landingCenterX = S.x + 1;
   const landingLength = 0.5;
@@ -563,6 +577,7 @@ function addHistoricAlcoveStair(root: THREE.Group, materials: LibraryMaterials) 
   for (const sign of [-1, 1]) {
     fence(V(S.x - half, L.galleryY, S.z + sign * half), V(S.x + half, L.galleryY, S.z + sign * half));
     fence(V(S.x + half, L.galleryY, S.z + sign * half), V(S.x + half, L.galleryY, S.z + sign * S.landingWidth/2));
+    // 仅保留扇形踏步到平台的短过渡口；平台两侧其余边缘均设置护栏，且不得挤占引导路线。
     // Leave only the short fan-tread-to-landing transition open; guard the
     // remainder of both landing edges without pinching the guided route.
     fence(V(landingGuardStartX, L.galleryY, S.z + sign * S.landingWidth / 2),
@@ -570,6 +585,7 @@ function addHistoricAlcoveStair(root: THREE.Group, materials: LibraryMaterials) 
   }
 }
 
+// 保留西侧上层横向通道；独立通行楼梯已移除。
 /** Retained west upper crosswalk; the freestanding access stair has been removed. */
 function addGalleryAccess(root: THREE.Group, materials: LibraryMaterials, includeRetiredRooms: boolean) {
   const stair=new THREE.Group();stair.name='Gallery end crossing';
@@ -587,6 +603,7 @@ function addGalleryAccess(root: THREE.Group, materials: LibraryMaterials, includ
     ? [WEST_GALLERY_CROSSWALK.outer, WEST_GALLERY_CROSSWALK.inner]
     : [WEST_GALLERY_CROSSWALK.inner];
   for (const z of guardRows) {
+    // 历史研究中的前侧栏杆中央留有 1.8 米开口，与西侧上层门洞对齐。此 Long Room 主厅构建路径采用封闭实墙，无需再将多余栏杆紧贴墙体。
     // The front run has a centered 1.8 m opening aligned with the west upper
     // doorway in the historical study. The sealed live hall has a solid wall,
     // so it does not need a redundant railing pressed against that wall.
@@ -605,6 +622,7 @@ function addGalleryAccess(root: THREE.Group, materials: LibraryMaterials, includ
       for(let i=0;i<segmentCount;i++)balusters.setMatrixAt(instanceIndex++,galleryBalusterPlacement(x0+(i+.5)*segmentWidth/segmentCount,L.galleryY,z));
     }
   }
+  // 为静态批处理路径保留一个实例化网格，并收拢未使用的前侧开口槽位，避免将构件放到原点。
   // Retain one instanced mesh for the static-batching path and collapse the
   // unused front-opening slots instead of placing members at the origin.
   const hidden=new THREE.Matrix4().makeScale(0,0,0);
@@ -616,6 +634,7 @@ function addGalleryAccess(root: THREE.Group, materials: LibraryMaterials, includ
   root.add(stair);
 }
 
+// 此 Long Room 主厅构建路径封闭东墙，但上层通行仍需补齐环形回廊的第四边。此桥不复用已停用的门洞过渡段及其不等高踏步。
 /** The live hall is sealed at the east wall, but its upper circulation still
  * needs the fourth side of the gallery ring. This bridge does not reuse the
  * retired doorway transition or its off-level treads. */
@@ -637,6 +656,7 @@ function addLiveEastGalleryCrosswalk(root: THREE.Group, materials: LibraryMateri
   balusters.name = 'Live east crosswalk turned balusters';
   balusters.castShadow = balusters.receiveShadow = true;
   let instanceIndex = 0;
+  // 只有中央中空区一侧需要防坠护栏。另一侧紧邻东侧实墙，那里再加栏杆会形成误导性的狭槽。
   // Only the central-void edge needs fall protection. The opposite edge meets
   // the solid east wall, where a second balustrade created a false slot.
   for (const z of [E.front]) {
@@ -665,6 +685,7 @@ function addLiveEastGalleryCrosswalk(root: THREE.Group, materials: LibraryMateri
   root.add(crossing);
 }
 
+// 四个有支撑的四分之一圆转角将此主厅构建路径的横向栏杆与纵向栏杆连接起来。每个转角都向原方形中空转角填入地板，不会从任一可行走板面扣除洞口。
 /** Four supported quarter-circle turns join the live crosswalk rails to the
  * longitudinal rails. Each turn adds floor into the former square void corner;
  * it never subtracts an aperture from either walkable slab. */
@@ -757,6 +778,7 @@ function addLiveGalleryRoundedCorners(root: THREE.Group, materials: LibraryMater
   root.add(corners);
 }
 
+// 依据照片构建的上层书架支撑；尺寸仍属于木作估计。
 /** Photo-derived upper-shelf supports; dimensions remain joinery estimates. */
 class UpperShelfBrackets {
   private shelfEdges: THREE.Matrix4[] = [];
@@ -854,6 +876,7 @@ function addTransverseCase(root: THREE.Group, materials: LibraryMaterials, volum
     for (const face of shelfFaces) {
       if (level === 1) for (const offset of upperShelfSupportOffsets(width)) brackets.add(side * (inner + offset), base + y, z, face);
       if (!volumes) continue;
+      // 按尺寸排序的书排包含小套书和单册装帧。尺寸来自照片估计，并非单书目录数据。官方馆藏指南要求较大开本放在较低书架。
       // Size-sorted rows contain short matching sets and individual bindings.
       // These dimensions are photographic estimates, not item-level catalog data.
       // Official collection guidance: largest formats on lower shelves.
@@ -874,6 +897,7 @@ function addTransverseCase(root: THREE.Group, materials: LibraryMaterials, volum
         if (level === 1 && h > shelfPitch - 0.178 - 0.04) {
           if (nextSupports.some(x => Math.abs(x - offset) < thickness / 2 + 0.021)) continue;
         }
+        // 略微内缩的书脊保持在架板上，位于圆角边缘后方。
         // Slightly recessed spines remain on the shelf, behind its rounded edge.
         const setback = (bindingSeed % 5) * 0.003;
         volumes.add(side * (inner + offset), base + y + 0.04 + h / 2,
@@ -887,6 +911,7 @@ function addTransverseCase(root: THREE.Group, materials: LibraryMaterials, volum
     size: { x: span, y: heightAt(inner), z: L.caseThickness + 0.08 } });
 }
 
+// 用户要求移除地下层及其中央下行入口。
 /** User requested removal of the basement and its central descending entrance. */
 function addHallFloor(root: THREE.Group, materials: LibraryMaterials) {
   const floor=namedBox(root,'Continuous Long Room timber floor',[L.width,0.18,L.length],[0,-0.09,0],materials.floor);
@@ -901,11 +926,13 @@ function* buildLongRoomSteps(options: LongRoomBuildOptions = {}): Generator<stri
   const includeRetiredRooms = options.includeRetiredRooms ?? false;
   const root = new THREE.Group(); root.name = 'Trinity College Dublin Long Room';
   root.userData.metresPerUnit = 1; root.userData.dimensions = { length: L.length, width: L.width, height: L.height };
+  // 共享精细橡木 PBR 材质也用于部件审阅视图。
   // Shared fine-oak PBR finish also used by the component review views.
   const materials = createLibraryMaterials(undefined, false, 'historic-oak');
   yield;
   addHallFloor(root, materials);
   const sections: ExpandableShelfSection[] = [], slots: LongRoomSlot[] = [];
+  // 历史书卷仅作独立参考布景。此主厅构建路径有意让所有未占用书架保持空置。
   // Historical volumes are isolated reference scenery only. The live hall
   // deliberately leaves every unoccupied shelf empty.
   const volumes = includeRetiredRooms ? new HistoricalVolumes() : null;
@@ -918,6 +945,7 @@ function* buildLongRoomSteps(options: LongRoomBuildOptions = {}): Generator<stri
   const revealTemplate = createLongRoomWindowReveal(longRoomWindowLevels()[0].height, revealMaterial);
   const windowMaterial = new THREE.MeshStandardMaterial({color: PALETTE.parchment, emissive: PALETTE.parchment,
     emissiveIntensity: 0.55, roughness: 0.4, side: THREE.DoubleSide});
+  // 共享几何体的作用域限定为本次构建，防止后续场景或其他材质集复用已释放资源。
   // Scope shared geometry to this build, so disposed resources are never reused
   // by a later scene or a different material set.
   const pilasters: PilasterTemplates = {capital: createLongRoomCapital(materials.woodWarm), shafts: new Map()};
@@ -998,6 +1026,7 @@ function* buildLongRoomSteps(options: LongRoomBuildOptions = {}): Generator<stri
   yield;
   addLongRoomFloorOcclusion(root);
   yield 'construction-floor-contact-occlusion';
+  // 室内反弹光近似：朝下的橡木拱顶接收的天空半球光较少。需将反射日光与直射阳光分别考虑。
   // Interior bounce approximation: a downward-facing oak vault receives little
   // sky hemisphere light. Account for reflected daylight separately from sun.
   const daylight = new THREE.Color(PALETTE.parchment).lerp(new THREE.Color(PALETTE.glassBlue), 0.8).multiplyScalar(5);
@@ -1020,11 +1049,12 @@ function* buildLongRoomSteps(options: LongRoomBuildOptions = {}): Generator<stri
     }
     root.add(sunlight, sunlight.target);
   }
-  const catalogTerminal = new THREE.Group(); // Catalog search is product UI, no fictional furniture in the reconstruction.
+  const catalogTerminal = new THREE.Group(); /* 目录搜索属于产品界面，不在重建场景中增添虚构家具。 */ // Catalog search is product UI, no fictional furniture in the reconstruction.
   return { root, materials, shelfSections: sections, catalogSlots: slots.sort((a, b) => a.catalogSectionIndex - b.catalogSectionIndex || a.rowIndex - b.rowIndex),
     interactiveObjects: [], catalogTerminal, animateEnvironment: () => undefined };
 }
 
+// 保留同步入口，供测试和独立模型审阅使用。
 /** Synchronous entry retained for tests and isolated model review. */
 export function buildLongRoom(options: LongRoomBuildOptions = {}, _loader = new THREE.TextureLoader()): LongRoomBuilt {
   const steps=buildLongRoomSteps(options);
@@ -1033,6 +1063,7 @@ export function buildLongRoom(options: LongRoomBuildOptions = {}, _loader = new 
   return step.value;
 }
 
+// 在 8 毫秒任务预算内合并低成本阶段；高成本阶段仍立即让出执行权。
 /** Group cheap stages within an 8 ms task budget; expensive stages still yield immediately. */
 export async function buildLongRoomProgressively(_loader: THREE.TextureLoader,
   signal: AbortSignal, onSlice: (milliseconds: number, stage: string) => void = () => undefined,
@@ -1058,6 +1089,7 @@ export async function buildLongRoomProgressively(_loader: THREE.TextureLoader,
       }
     }
   } finally {
+    // 渲染前取消可释放已部分构建的 CPU 几何体和数组。构建生成器此时尚未分配 GPU 资源。
     // Cancelling before rendering releases partially built CPU geometry and arrays.
     // No GPU resources have been allocated by the construction generator.
     steps.return(undefined as never);

@@ -8,6 +8,7 @@ import { markCameraCollider } from '../../virtual-library-collision';
 import { createWestHighWindow } from './longRoomWestWindow';
 import { WEST_LEVELS } from './longRoomWestLevels';
 
+// Y1.002：南侧 Fagel 房间面积为 55 平方米，设两组横向陈设与中央开口。外轮廓、陈设尺寸及匿名书卷仍为适配后的估计。坐标以东侧入口为基准，+x 向南、+z 向东。
 /** Y1.002: south-side Fagel room, 55 m², two transverse fittings and central openings.
  * Envelope, fitting sizes and anonymous volumes remain adapted estimates. Coordinates
  * are relative to the east portal, with positive x south and positive z east. */
@@ -48,6 +49,7 @@ export function createFagelRoom(materials:LibraryMaterials) {
   windowWall('Fagel south wall',8,[-2.5,0,2.5],9.33,4.5,-Math.PI/2);
   windowWall('Fagel east wall',7.33,[-1.8,1.8],5.665,8.5,Math.PI);
   windowWall('East circulation end wall',4.24,[0],0,8.5,Math.PI);
+  // 测绘图显示的是中央留空的横向陈设，并非单个侧墙书架。
   // The survey shows transverse fittings with central gaps, not a single side shelf.
   const bookMatrices:THREE.Matrix4[]=[];
   for(const x of [2,5.665])for(const side of [-1,1]) {

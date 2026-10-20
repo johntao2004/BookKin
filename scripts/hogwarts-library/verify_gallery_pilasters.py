@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# 将实际木材三角面裁剪到六个移除区并检查画作可见性；必须用旧模型证明负对照，不能只看版本字符串。
+# Clips actual timber triangles into six removal zones and checks artwork visibility; the old model must prove the negative control rather than relying on revision strings.
 """Bounded A-end pilaster-removal clearance on baked, uncompressed GLB triangles.
 
 The six decorative fluted pilasters (x=+/-13.35, +/-7.1, +/-2.02) and their

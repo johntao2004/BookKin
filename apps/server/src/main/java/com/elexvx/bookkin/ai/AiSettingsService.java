@@ -17,6 +17,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+// 合并实例配置与持久设置，对外视图只报告密钥是否已配置，不返回密钥。
+// Combines instance configuration with persisted settings; public views report key presence without returning secrets.
 public class AiSettingsService {
     private final BookKinProperties properties;
     private final AiSettingsRepository repository;

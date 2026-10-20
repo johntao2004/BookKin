@@ -1,3 +1,5 @@
+// 验证批量操作必须先选中条目并展示完整预览，不能跳过预览直接提交。
+// Checks selection and a complete preview are required before batch rename submission.
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { vi } from "vitest";
 import { demoBooks } from "../data/demo";

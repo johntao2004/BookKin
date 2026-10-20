@@ -1,3 +1,5 @@
+// 主人编辑站点个性化配置，保存结果通过公共设置查询刷新消费方。
+// Owner site-personalization edits refresh consumers through the shared settings query after saving.
 import { useState, type FormEvent } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, type SiteSettings } from '../api/client';
@@ -10,7 +12,7 @@ import { Skeleton } from '../ui/antd';
 
 export function SiteSettingsPage() {
   const client=useQueryClient();
-  const query=useQuery({queryKey:['site-settings'],queryFn:api.siteSettings});
+  const query=useQuery({queryKey:['site-settings'],queryFn:({signal})=>api.siteSettings(signal)});
   const [draft,setDraft]=useState<SiteSettings|null>(null);
   const [busy,setBusy]=useState(false),[error,setError]=useState(''),[saved,setSaved]=useState(false);
   if(query.isPending)return <Skeleton active />;
@@ -28,6 +30,11 @@ export function SiteSettingsPage() {
       <TextField label="网站名称" required value={form.name} disabled={busy} onChange={e=>update('name',e.target.value)} slotProps={{htmlInput:{maxLength:80}}} />
       {field('tagline','网站副标题',120,'用于浏览器标签页标题。')}
       <TextField label="网站简介" multiline minRows={3} value={form.description} disabled={busy} onChange={e=>update('description',e.target.value)} slotProps={{htmlInput:{maxLength:500}}} />
+    </Stack>
+    <Stack className="bk-form-section" spacing={2}>
+      <Typography component="h3" variant="h5">可选功能</Typography>
+      <Stack direction="row" sx={{alignItems:'center',justifyContent:'space-between',gap:2}}><Typography>启用虚拟 3D 书库</Typography><Switch checked={form.virtualLibraryEnabled} disabled={busy} slotProps={{input:{'aria-label':'启用虚拟 3D 书库'}}} onChange={(_,checked)=>update('virtualLibraryEnabled',checked)} /></Stack>
+      <Typography color="text.secondary">关闭后隐藏虚拟书库入口，普通藏书和阅读不受影响。</Typography>
     </Stack>
     <Stack className="bk-form-section" spacing={2}>
       <Typography component="h3" variant="h5">域名与搜索引擎</Typography>

@@ -1,3 +1,5 @@
+// 验证返回路径仅限站内允许范围，保存姿态必须为有限数值。
+// Checks return routes stay within allowed in-app paths and saved poses contain finite values.
 import { readReferenceReaderState } from './reference-library-view';
 
 it('retains only the expected in-app return route and finite scene pose', () => {

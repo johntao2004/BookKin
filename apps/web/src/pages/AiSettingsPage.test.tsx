@@ -1,3 +1,5 @@
+// 验证提供商选择与保存后恢复，避免多个提供商被意外同时启用。
+// Checks provider selection and restored saved state without unintentionally enabling multiple providers.
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, expect, it, vi } from "vitest";
 import { TestProviders } from "../test/TestProviders";

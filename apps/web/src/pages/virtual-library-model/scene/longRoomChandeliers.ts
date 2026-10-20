@@ -4,6 +4,7 @@ import { PALETTE } from '../config';
 import { markCameraCollider } from '../../virtual-library-collision';
 import type { LibraryMaterials } from './materials';
 
+// 五盏灯具位于交替的拱顶开间中，使轴向视图呈现有节奏的排列。
 /** Five fittings sit in alternating vault bays so the axial view reads as a measured rhythm. */
 export const LONG_ROOM_CRYSTAL_CHANDELIER_BAYS = [2, 6, 10, 14, 18] as const;
 export const LONG_ROOM_CRYSTAL_CHANDELIER_POSITIONS = LONG_ROOM_CRYSTAL_CHANDELIER_BAYS.map(
@@ -133,6 +134,7 @@ function createCrystalChandelierMaterials(materials: LibraryMaterials) {
   return { brass, darkBrass, crystal, crystalAccent, glow };
 }
 
+// 供放大版 Long Room 使用的高细节、低资源占用顶灯。
 /** A high-detail, low-footprint ceiling fitting for the enlarged Long Room. */
 export function createCrystalChandelier(
   materials: LibraryMaterials,
@@ -151,6 +153,7 @@ export function createCrystalChandelier(
   const centralDropGeometry = createCrystalDropGeometry(0.27, 1.14);
   const beadGeometry = new THREE.SphereGeometry(0.075, 12, 8);
 
+  // 保持悬挂结构视觉连续。此前较宽的锥体位于链条中段，看似脱离顶面的灯罩；现将灯杆直接接入箍环。
   // Keep the suspension visually continuous. The former wide cone sat midway
   // down the chain and read as a detached ceiling canopy rather than part of
   // the fixture, so the stem now meets the collar directly.

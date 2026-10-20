@@ -51,6 +51,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+// 协调暂存、校对和确认入库；文件落位与数据库提交之间依靠显式补偿，非单一事务。
+// Coordinates staging, review and ingestion; filesystem placement and database commits use explicit compensation, not one transaction.
 @Service
 public class BookUploadService {
     private final BookUploadRepository uploads;
@@ -104,6 +106,8 @@ public class BookUploadService {
                 OffsetDateTime.now().plus(properties.upload().retention())).view();
     }
 
+    // 逐块写入并计算哈希，完成长度校验后交给异步解析；此时尚未正式入库。
+    // Streams bytes and hashes them, then starts asynchronous parsing after length checks; this is not catalog commit.
     public BookUpload receive(UUID id, long contentLength, InputStream input, Principal principal) {
         UUID actor = actor(principal);
         var upload = owned(id, actor);
@@ -169,6 +173,8 @@ public class BookUploadService {
         return uploads.findOwned(id, actor).orElseThrow().view();
     }
 
+    // 补全失败恢复可校对状态，保留本地识别结果供用户继续处理。
+    // Enrichment failure restores the reviewable state so local extraction remains usable.
     public BookUpload enrich(UUID id, Principal principal) {
         UUID actor = actor(principal);
         var upload = requireReady(owned(id, actor));
@@ -227,6 +233,8 @@ public class BookUploadService {
         }
     }
 
+    // 幂等重放返回原结果；落位前再次检查暂存指纹、目标冲突和容量。
+    // Idempotent replay returns the original result; placement rechecks staging fingerprint, destination conflicts and space.
     public BookUpload commit(UUID id, String idempotencyKey, boolean publishToDisplay, Principal principal) {
         UUID actor = actor(principal);
         if (idempotencyKey == null || idempotencyKey.isBlank() || idempotencyKey.length() > 160) {
@@ -234,6 +242,7 @@ public class BookUploadService {
         }
         var current = owned(id, actor);
         if (current.status() == BookUploadStatus.SUCCEEDED && idempotencyKey.equals(current.idempotencyKey())) {
+            // 重放上传确认不能撤销之后修改的单本书公开状态。
             // A replay must not undo a later per-book visibility change.
             return current.view();
         }
@@ -465,6 +474,8 @@ public class BookUploadService {
         }
     }
 
+    // 补偿尝试把已移动内容退回暂存区；不能把此过程视作数据库原子回滚。
+    // Compensation attempts to return moved content to staging; it is not an atomic database rollback.
     private void compensate(Path staged, Path target, boolean bookMoved, Path stagedCover, Path asset, boolean coverMoved) {
         try { if (bookMoved && target != null && Files.exists(target) && !Files.exists(staged)) Files.move(target, staged, StandardCopyOption.ATOMIC_MOVE); }
         catch (Exception ignored) {}

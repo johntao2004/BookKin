@@ -1,3 +1,5 @@
+// 测试失败可重试、迟到匿名响应与演示存储隔离，避免会话恢复覆盖后续登录。
+// Tests retryable failures, late anonymous responses and demo-storage isolation so bootstrap cannot overwrite a later login.
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router-dom';

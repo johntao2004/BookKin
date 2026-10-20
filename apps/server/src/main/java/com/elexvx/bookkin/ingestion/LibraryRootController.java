@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.RestController;
 @Profile("api")
 @RequestMapping("/api/v1/library-roots")
 @PreAuthorize("hasAnyRole('OWNER','ADMIN')")
+// 书库位置先预览再登记，接口同时提供显式能力检查入口。
+// Previews library locations before registration and exposes an explicit capability check.
 public class LibraryRootController {
     private final LibraryRootRepository roots;
     private final LibraryRootRegistrationService registration;

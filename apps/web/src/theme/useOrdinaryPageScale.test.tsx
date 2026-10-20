@@ -1,3 +1,5 @@
+// 覆盖宽屏缩放、尺寸变化与退出恢复，阅读和沉浸页面禁用时保持原始比例。
+// Covers wide-screen scaling, resize and cleanup while disabled reader/immersive surfaces remain unscaled.
 import { act, renderHook } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
 import { useOrdinaryPageScale } from "./useOrdinaryPageScale";

@@ -1,3 +1,5 @@
+// 验证搜索球的位置、比例、碰撞与可点晶体一致，不只检查外观尺寸。
+// Checks search-orb position/scale, collider and clickable crystal agree rather than only visual size.
 import * as THREE from 'three';
 import { createMagicCatalogOrb } from './catalogTerminal';
 import { collectCameraColliders } from '../../virtual-library-collision';

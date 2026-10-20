@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# 沿实际三角面采样楼梯切向出口的落脚支撑与人体阻挡，并要求保存的 r23 基线失败。
+# Samples real triangles for tangent stair-exit support and body obstructions, requiring the saved r23 baseline to fail.
 """Measure supported tangent exits on actual source triangles, rejecting r23."""
 import hashlib
 import json

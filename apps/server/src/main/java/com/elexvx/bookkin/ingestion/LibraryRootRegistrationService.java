@@ -20,6 +20,8 @@ public class LibraryRootRegistrationService {
             if (candidate.startsWith(existing) || existing.startsWith(candidate)) throw new IllegalArgumentException("该位置已是书库，或与现有书库目录重叠");
         }
     }
+    // 根目录登记串行化，重试必须匹配名称和路径；提交时重新探测并校验预览指纹。
+    // Serialize root registration; retries must match name/path, and submission reprobes the directory against the preview fingerprint.
     @Transactional
     public LibraryRoot create(String name, String path, String fingerprint, UUID key) {
         if (name == null || name.isBlank() || name.length() > 100 || key == null) throw new IllegalArgumentException("请填写有效名称");

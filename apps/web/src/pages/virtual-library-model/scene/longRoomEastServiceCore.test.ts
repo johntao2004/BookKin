@@ -1,3 +1,5 @@
+// 检查历史服务入口到上层房间的楼板开口、连通与站立净高。
+// Checks historical service-entry connectivity, slab openings and standing headroom to the upper room.
 import * as THREE from 'three';
 import {addLongRoomEastEnd} from './longRoomEastEnd';
 import {createLibraryMaterials} from './materials';

@@ -1,3 +1,5 @@
+// 共享接待台与侧门的建模尺寸；调用路径决定是否使用这些布局值，不代表当前主模型全部采用。
+// Shares reception/side-portal dimensions; consumers determine their use, not every value necessarily belongs to the active main model.
 export const VIRTUAL_LIBRARY_LAYOUT = {
   reception: {
     centerZ: 0,

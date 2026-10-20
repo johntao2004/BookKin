@@ -1,3 +1,5 @@
+// 书单成员管理抽屉协调加入、移除和排序，使用服务器返回的修订状态。
+// Booklist membership drawer coordinates add/remove/reorder using server-returned revisions.
 import { EmptyState } from "../ui/empty-state";
 import { AddRounded } from "@/ui/icons";
 import { DeleteOutlineRounded } from "@/ui/icons";

@@ -83,6 +83,8 @@ export function FileOperationDialog({ book, type, onClose, onCompleted }: FileOp
     return () => { active = false; };
   }, [book, type]);
 
+  // 预览描述服务器检查结果，不能代替提交时的指纹与权限校验。
+  // Preview describes server checks but cannot replace submission-time fingerprint and permission validation.
   const createPreview = async () => {
     if (!book || !type) return;
     setLoading(true);

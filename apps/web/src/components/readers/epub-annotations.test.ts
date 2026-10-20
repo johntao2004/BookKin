@@ -1,3 +1,5 @@
+// 验证 EPUB 实际文本上的高亮、下划线和粗体可应用与清理，而非只检查保存返回值。
+// Checks highlight, underline and bold on actual EPUB text with cleanup, not only save responses.
 import { applyEpubInlineAnnotation, clearEpubInlineAnnotations, findEpubTextRange } from "./epub-annotations";
 import type { Annotation } from "../../domain/types";
 

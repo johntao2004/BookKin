@@ -6,6 +6,7 @@ import { markCameraCollider } from '../../virtual-library-collision';
 import type { LibraryMaterials } from './materials';
 import { makeBox } from './parts';
 
+// 由接待柜台承托的原创天体式目录仪器。
 /** An original celestial catalog instrument, supported by the reception counter. */
 export function createCatalogTerminal(materials: LibraryMaterials) {
   const group = new THREE.Group();
@@ -37,6 +38,7 @@ export function createCatalogTerminal(materials: LibraryMaterials) {
   orb.castShadow = true;
   group.add(orb);
 
+  // 子午环和倾斜的黄道托架与球体下方的底座接触。
   // A meridian hoop and tilted ecliptic cradle touch the pedestal below the orb.
   for (const [radius, tilt] of [[0.34, -0.3], [0.35, 1.1]]) {
     const ring = new THREE.Mesh(new THREE.TorusGeometry(radius, 0.012, 10, 96), materials.brass);
@@ -100,6 +102,7 @@ export function createCatalogTerminal(materials: LibraryMaterials) {
   return group;
 }
 
+// 位于原中央地球仪位置的加大落地式搜索仪器。
 /** Larger floor-standing search instrument at the former central globe position. */
 export function createMagicCatalogOrb(materials: LibraryMaterials) {
   const group = createCatalogTerminal(materials);

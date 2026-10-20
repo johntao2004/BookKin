@@ -1,3 +1,5 @@
+// 验证非安全上下文缺少 randomUUID 时仍可生成 ID；测试不声称回退算法提供密码学身份保证。
+// Checks ID generation without randomUUID on insecure origins, without claiming cryptographic identity guarantees for the fallback.
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { randomId } from "./random-id";
 

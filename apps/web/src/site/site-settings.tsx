@@ -1,3 +1,5 @@
+// 共享站点配置查询驱动标题、索引元信息和页脚；公开页面范围单独判断。
+// Shared site-settings queries drive title, indexing metadata and footer, with separate public-route classification.
 import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useLocation } from 'react-router-dom';
@@ -5,8 +7,12 @@ import { api, DEFAULT_SITE_SETTINGS } from '../api/client';
 import { Box, Typography } from '../ui/primitives';
 import { tokens } from '../theme/generated-tokens';
 
+export function useSiteSettingsQuery(live = false) {
+  return useQuery({queryKey:['site-settings'],queryFn:({signal})=>api.siteSettings(signal),
+    staleTime:live?0:60_000,refetchInterval:live?15_000:false});
+}
 export function useSiteSettings() {
-  const query=useQuery({queryKey:['site-settings'],queryFn:api.siteSettings,staleTime:60_000});
+  const query=useSiteSettingsQuery();
   return query.data??DEFAULT_SITE_SETTINGS;
 }
 export function SiteMetadata() {

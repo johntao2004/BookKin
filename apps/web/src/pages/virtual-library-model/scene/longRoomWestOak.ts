@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { PALETTE } from '../config';
 
+// 为西楼梯木作提供柔和的纵向橡木纹理，与踏步磨损分开。共享贴图使围护与审阅路线不依赖大厅纹理加载。
 /** Quiet longitudinal oak grain for the west stair joinery, separate from tread wear.
  * Shared maps keep the enclosure and review route independent of hall texture loading. */
 export function createWestOakFinish(base: THREE.MeshStandardMaterial, namePrefix = 'West staircase') {
@@ -41,6 +42,7 @@ export function createWestOakFinish(base: THREE.MeshStandardMaterial, namePrefix
   return {wood, woodWarm: trim, woodDark: dark};
 }
 
+// 局部 XY 镶板几何体：木纹竖向延伸或沿斜栏杆方向排列。厚度面采用独立投影，防止端面木纹退化。
 /** Local XY panel geometry: grain runs vertically or along the raking rail.
  * Thickness faces get a separate projection so end grain cannot collapse. */
 export function mapWestPanelGrain(geometry: THREE.BufferGeometry, slope: number, raking: boolean) {

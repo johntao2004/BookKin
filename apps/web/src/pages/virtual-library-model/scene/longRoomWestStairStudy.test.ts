@@ -1,3 +1,5 @@
+// 验证历史三段楼梯、平台与扶手切线连续，门洞连接不被栏杆阻断。
+// Checks historical three-flight support, landings and level handrail tangents without blocked door connections.
 import * as THREE from 'three';
 import { createWestStairStudy, WEST_STAIR_STUDY, westStairLandingLift } from './longRoomWestStairStudy';
 

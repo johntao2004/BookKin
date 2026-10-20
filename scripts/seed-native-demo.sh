@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# 向环境变量指定的本地 PostgreSQL 执行演示数据 SQL，并在 SQL 错误时停止。
+# Runs demo-data SQL against the PostgreSQL target configured by environment variables and stops on SQL errors.
 set -euo pipefail
 
 SCRIPT_DIRECTORY="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

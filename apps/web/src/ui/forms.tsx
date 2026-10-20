@@ -1,3 +1,5 @@
+// 将旧表单调用约定适配至 Ant Design，保留输入值和事件由调用方控制。
+// Adapts legacy form contracts to Ant Design while callers retain control of values and events.
 import AntCheckbox from "antd/es/checkbox";
 import AntInput from "antd/es/input";
 import AntRadio from "antd/es/radio";

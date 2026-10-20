@@ -1,3 +1,5 @@
+// 在真实数据库验证分类关系与书单的可见性、所有权和 revision 冲突，补足仅模拟仓储的测试边界。
+// Uses a real database for category relations and booklist visibility, ownership and revision conflicts beyond mocked repositories.
 package com.elexvx.bookkin.catalog;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

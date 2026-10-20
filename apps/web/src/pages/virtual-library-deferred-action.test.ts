@@ -1,3 +1,5 @@
+// 测试构建期间只保留最后意图，取消或销毁的场景不能接收过时导航。
+// Checks construction retains only the latest intent and cancelled/disposed scenes cannot receive stale navigation.
 import { createDeferredSceneAction } from './virtual-library-deferred-action';
 
 describe('scene navigation during construction', () => {

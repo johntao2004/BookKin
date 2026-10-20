@@ -11,6 +11,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 @org.springframework.context.annotation.Profile("api")
 @Service
+// 敏感资料修改先验证当前密码，用户名变更时撤销旧用户名会话。
+// Verifies the current password before profile changes and revokes old-username sessions after renaming.
 public class ProfileService {
     private final UserRepository users;
     private final PasswordEncoder passwords;

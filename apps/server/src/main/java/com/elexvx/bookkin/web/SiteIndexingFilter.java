@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+// HTML 响应也执行已保存索引策略，不依赖爬虫运行 JavaScript。
 /** HTML responses enforce the saved policy even for crawlers without JavaScript. */
 @Component
 @Profile("api")

@@ -6,6 +6,7 @@ import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+// 应用专用内部存储，与 NAS 书库根分离；存储名称不取自用户输入。
 /** Internal application-owned storage, separate from NAS book roots. Names never come from users. */
 @Component
 public class PrivateContentStore {
@@ -35,6 +36,7 @@ public class PrivateContentStore {
                 }
                 out.getFD().sync();
             }
+            // 通过硬链接原子发布，目标已存在时失败而非覆盖。
             // Hard-link publication is atomic and fails rather than replacing an existing object.
             Files.createLink(target, staging);
         } finally { Files.deleteIfExists(staging); }

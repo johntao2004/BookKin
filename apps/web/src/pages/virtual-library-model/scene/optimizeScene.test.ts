@@ -1,3 +1,5 @@
+// 覆盖静态批处理的属性保真、取消清理和内存边界，超大网格保留原状而非强行并入。
+// Covers static-batch attribute preservation, cancellation and memory bounds, retaining oversized source meshes intact.
 import * as THREE from 'three';
 import { optimizeStaticMeshes, optimizeStaticMeshesProgressively, STATIC_BATCH_VERTEX_LIMIT } from './optimizeScene';
 

@@ -19,6 +19,8 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 @Repository
+// 书目字段、贡献者和人工覆盖标记的持久化边界，供扫描与编辑流程协作。
+// Persistence boundary for bibliography, contributors and manual override markers used by scanning and editing.
 public class BookMetadataRepository {
     private static final Set<String> EDITABLE_FIELDS = Set.of("title", "subtitle", "authors", "translators",
             "language", "publisher", "publishedDate", "isbn", "description", "series", "seriesIndex",

@@ -1,3 +1,5 @@
+// 在抽屉中按分类加载书籍，查询及分页状态与当前分类绑定。
+// Loads category books inside a drawer with query/pagination state bound to the selected category.
 import { EmptyState } from "../ui/empty-state";
 import { SearchRounded } from "@/ui/icons";
 import { Alert } from "@/ui/feedback";

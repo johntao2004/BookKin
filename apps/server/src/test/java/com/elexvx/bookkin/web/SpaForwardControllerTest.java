@@ -1,3 +1,5 @@
+// 验证已声明页面的直接导航交给 SPA，保留页面路由与 API/静态资源职责边界。
+// Checks direct navigation of declared pages reaches the SPA while keeping page routing separate from API/static resources.
 package com.elexvx.bookkin.web;
 
 import org.junit.jupiter.params.ParameterizedTest;

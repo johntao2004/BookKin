@@ -1,3 +1,5 @@
+// 撤销会话的确认界面说明保存窗口，确认后由服务器标记目标会话。
+// Session-revocation confirmation explains the save window before the server marks target sessions.
 import { useState } from "react";
 import { api } from "../api/client";
 import { Button } from "../ui/buttons";

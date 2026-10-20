@@ -1,7 +1,10 @@
+// 本文件说明适用于该 Long Room 构建路径；下方旧注释的 live 不表示当前主场景已启用此模型。
+// These comments describe this Long Room builder; legacy uses of live below do not assert inclusion in the current main scene.
 import * as THREE from 'three';
 import type {LibraryMaterials} from './materials';
 import {markCameraCollider} from '../../virtual-library-collision';
 
+// Y1.002/003 与 XS-4A/B 所示的电梯旁独立转步楼梯。标高为资料中相对 Long Room 地板的标注；平面尺寸、踏步数量、扶手截面及中间转步高度仍为估计。此服务核心构建路径仅使用一层至二层梯段，其他楼层仅供审阅。
 /** Y1.002/003 and XS-4A/B: independent winder stair beside the lift.
  * Levels are source annotations relative to the Long Room floor; plan dimensions,
  * riser count, rail section and intermediate winding heights remain estimates.
@@ -58,6 +61,7 @@ export function createEastServiceStair(materials:LibraryMaterials,levels:readonl
       box('Service stair closed riser',0.025,riser,S.width,x-going/2,y-riser/2,z);
       guard(new THREE.Vector3(x,y,z),new THREE.Vector3(1,0,0),i);
     }
+    // 八级真实弯曲的楔形踏步围绕开敞楼梯井转向。
     // Eight genuinely curved wedge treads turn around a clear open well.
     for(let i=0;i<S.winders;i++) {
       const a=i*Math.PI/S.winders,b=(i+1)*Math.PI/S.winders;
@@ -98,6 +102,7 @@ export function createEastServiceStair(materials:LibraryMaterials,levels:readonl
       const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(vertices,3));
       g.setIndex(indices);g.computeVertexNormals();add('Service stair continuous timber stringer',g,materials.woodWarm);
     }
+    // 先穿过共用平台，再开始上一层梯段。
     // Cross the common landing before starting the next storey.
     for(let j=0;j<=12;j++)route.push(new THREE.Vector3(S.startX-0.5,levels[level+1],S.centerZ+S.radius-2*S.radius*j/12));
   }

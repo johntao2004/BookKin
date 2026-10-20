@@ -1,8 +1,10 @@
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+// 覆盖菜单离开关闭、输入法提交与移动端导航可达性，不只验证桌面静态渲染。
+// Covers pointer-leave menus, IME submission and mobile navigation reachability beyond static desktop rendering.
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter, useLocation } from "react-router-dom";
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import { api } from "../api/client";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { api, DEFAULT_SITE_SETTINGS } from "../api/client";
 import { AppShell } from "./AppShell";
 import { BookKinThemeProvider } from "../theme/BookKinThemeProvider";
 
@@ -13,19 +15,22 @@ vi.mock("../auth/AuthContext", () => ({
   }),
 }));
 
-vi.mock("../pages/VirtualLibraryExperience", () => ({
-  VirtualLibraryExperience: () => null,
-}));
+const sceneImported = vi.hoisted(() => vi.fn());
+vi.mock("../pages/VirtualLibraryExperience", () => {
+  sceneImported();
+  return {VirtualLibraryExperience: () => null};
+});
 
 function RouteProbe() {
   const location = useLocation();
   return <output data-testid="search-route">{location.pathname}{location.search}</output>;
 }
 
-function renderShell(initialPath: string) {
+function renderShell(initialPath: string, virtualLibraryEnabled = true) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
+  queryClient.setQueryData(['site-settings'], {...DEFAULT_SITE_SETTINGS, virtualLibraryEnabled});
   return render(
     <QueryClientProvider client={queryClient}>
       <MemoryRouter initialEntries={[initialPath]}>
@@ -39,6 +44,7 @@ function renderShell(initialPath: string) {
 
 describe("AppShell", () => {
   beforeEach(() => localStorage.clear());
+  afterEach(() => {vi.restoreAllMocks(); vi.useRealTimers();});
 
   it("automatically closes the theme dropdown when the pointer leaves", async () => {
     renderShell("/library");
@@ -151,16 +157,24 @@ describe("AppShell", () => {
     expect(within(accountMenu).queryByRole("menuitem", { name: "展示书目设置" })).not.toBeInTheDocument();
   });
 
-  it("prefetches the 3D catalog when the virtual-library link is approached", async () => {
+  it("does not import 3D or prefetch its catalog while idle or approaching its link", async () => {
+    vi.useFakeTimers();
     const listBooks = vi.spyOn(api, "listBooks").mockResolvedValue({ items: [] });
+    const revision = vi.spyOn(api, "catalogRevision");
     renderShell("/library");
+    const link = screen.getByRole("link", { name: "虚拟书库" });
+    fireEvent.mouseEnter(link); fireEvent.focus(link); fireEvent.touchStart(link);
+    await act(() => vi.advanceTimersByTimeAsync(2_000));
+    expect(sceneImported).not.toHaveBeenCalled();
+    expect(listBooks).not.toHaveBeenCalled();
+    expect(revision).not.toHaveBeenCalled();
+  });
 
-    fireEvent.mouseEnter(screen.getByRole("link", { name: "虚拟书库" }));
-
-    await waitFor(() => expect(listBooks).toHaveBeenCalledWith(expect.objectContaining({
-      limit: 100,
-      sort: "title",
-    })));
+  it("hides the disabled 3D entry in desktop and mobile navigation", () => {
+    renderShell("/library", false);
+    expect(screen.queryByRole("link", {name: "虚拟书库"})).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", {name: "打开导航"}));
+    expect(within(screen.getByRole("navigation", {name: "移动端导航"})).queryByText("虚拟书库")).not.toBeInTheDocument();
   });
 
   it("switches the whole site to the same night theme used by the reader", async () => {

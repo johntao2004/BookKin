@@ -1,3 +1,5 @@
+// 仅在服务端明确未初始化后显示创建表单；状态未知或失败时不尝试创建主人。
+// Shows owner creation only after explicit uninitialized status; unknown or failed checks do not trigger setup.
 import { PasswordRequirements, usePasswordPolicy, passwordRequirements } from "../auth/password-policy";
 import { Alert } from "@/ui/feedback";
 import { Button } from "@/ui/buttons";

@@ -27,6 +27,7 @@ const smoothStep = (value: number) => {
   return unit * unit * (3 - 2 * unit);
 };
 
+// 从书脊积分生成纸张水平行而非统一绕铰链旋转，保持连续曲面并让自由边逐渐跟上翻页。
 /**
  * Builds one horizontal row of a paper sheet. The row is integrated from the
  * spine instead of rotating every point around one hinge, so the sheet keeps a
@@ -55,6 +56,7 @@ export function pageCurlPath({
   let x = anchorX;
   let z = 0;
 
+  // 局部折痕从自由边向书脊移动，已翻和未翻区域保持平坦，避免中途把整行文字压成侧边细条。
   // Move one localized fold from the free edge toward the spine. Keeping the
   // already-turned and not-yet-turned areas flat prevents an entire line of
   // text from being squeezed into an edge-on strip at the middle of the turn.

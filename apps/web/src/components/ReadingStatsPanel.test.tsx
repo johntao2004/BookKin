@@ -1,3 +1,5 @@
+// 覆盖零基数、持平和下降比较及空图表，避免统计显示制造不存在的阅读数据。
+// Covers zero-baseline, flat/declining comparisons and empty charts without inventing reading data.
 import { render, screen } from "@testing-library/react";
 import { TestProviders } from "../test/TestProviders";
 import { formatWeeklyComparison, ReadingStatsPanel } from "./ReadingStatsPanel";

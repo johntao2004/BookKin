@@ -3,6 +3,7 @@ import { makeBox } from './parts';
 
 export const LONG_ROOM_CAPITAL_MAX_WIDTH = 0.62;
 
+// 叶片与卷草轮廓参考公开的 Long Room 照片。局部 +Z 朝向过道；尺寸和雕刻细节均为估计。
 /** Leaf-and-scroll silhouette observed in public Long Room photographs.
  * Local +Z faces the aisle. Dimensions and carving details are estimates. */
 export function createLongRoomCapital(material: THREE.Material) {
@@ -16,6 +17,7 @@ export function createLongRoomCapital(material: THREE.Material) {
     add(makeBox(width, height, depth, material, 0, y, 0), 'Capital neck and layered abacus');
   }
   add(makeBox(0.36, 0.32, 0.25, material, 0, 0.25, 0), 'Capital carving core');
+  // 封闭的浮雕壳体包含扇贝状边缘、凸起主叶脉和卷曲叶尖。
   // Closed relief shells: scalloped margins, raised midrib and curled leaf tips.
   const rows = 24, columns = 10, positions: number[] = [], indices: number[] = [];
   const layerSize = (rows + 1) * (columns + 1);
@@ -54,6 +56,7 @@ export function createLongRoomCapital(material: THREE.Material) {
       leaf.scale.setScalar(scale); leaf.rotation.z = -(i - (count - 1) / 2) * 0.14;
     }
   }
+  // 将叶片浮雕延伸包覆外露侧面，避免在矩形雕刻核心的正面突然终止。
   // Return the leaf relief around the exposed sides, rather than stopping
   // abruptly at the front of the rectangular carving core.
   for (const side of [-1, 1]) for (let row = 0; row < 2; row++) {

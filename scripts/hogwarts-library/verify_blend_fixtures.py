@@ -1,3 +1,5 @@
+# 读取已保存的可编辑网格顶点，独立核对大小吊灯数量和悬挂高度；检查对象是 Blender 源文件。
+# Independently checks fixture counts and suspension heights from saved editable mesh vertices; the inspected artifact is the Blender source file.
 """Independent check of suspension limits from saved editable mesh vertices."""
 from pathlib import Path
 import bpy, json, hashlib

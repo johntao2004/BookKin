@@ -19,12 +19,14 @@ function reloadForStaleChunk(error: unknown) {
     if (Number.isFinite(previous) && Date.now() - previous < chunkReloadWindowMs) return;
     sessionStorage.setItem(chunkReloadKey, String(Date.now()));
   } catch {
+    // 存储受限时仍显示正常的恢复界面。
     // A restricted storage context still gets the regular recovery screen.
     return;
   }
   window.location.reload();
 }
 
+// 捕获意外渲染或延迟模块加载失败，避免整页空白。
 /** Keep an unexpected render or lazy-chunk failure from leaving a blank page. */
 export class AppErrorBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
   state = { failed: false };

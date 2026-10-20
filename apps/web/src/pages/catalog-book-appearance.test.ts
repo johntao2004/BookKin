@@ -1,3 +1,5 @@
+// 检查确定性装帧、书架支撑与互不重叠命中区，纹理变化不能改变真实书籍身份。
+// Checks deterministic bindings, shelf support and disjoint hit lanes without changing catalog identity.
 import * as THREE from 'three';
 import { catalogBindingProfile, coverBindingColor, paintCatalogSpine } from './catalog-book-appearance';
 import { createCatalogBindingBump, createCatalogPaperMap } from './catalog-book-surfaces';

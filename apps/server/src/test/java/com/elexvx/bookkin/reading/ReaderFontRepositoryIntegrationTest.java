@@ -1,3 +1,5 @@
+// 在真实数据库验证待上传字体到期筛选及带时区截止时间，避免清理已完成上传。
+// Uses a real database to check pending-font expiration with a zoned cutoff without selecting completed uploads.
 package com.elexvx.bookkin.reading;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

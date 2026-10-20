@@ -1,3 +1,5 @@
+// 检查历史东侧上层房间下降路径的支撑与平台边缘护栏。
+// Checks support along the historical east-gallery descent and guards on exposed platform edges.
 import * as THREE from 'three';
 import {addEastGalleryConnection} from './longRoomEastGallery';
 import {addLongRoomEastEnd} from './longRoomEastEnd';

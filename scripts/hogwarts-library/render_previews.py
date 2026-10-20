@@ -1,3 +1,5 @@
+# 使用保存的 Blender 几何与相机进行无降噪 Cycles 渲染，并记录输入和图像哈希；不代表运行时 GLB 已验收。
+# Renders saved Blender geometry/cameras with unfiltered Cycles and records input/image hashes; this alone does not validate the runtime GLB.
 """Render saved actual geometry with Cycles; no generated/repainted imagery.
 
 blender -b library-source.blend --python render_previews.py -- \

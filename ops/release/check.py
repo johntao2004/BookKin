@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# 只读检查发布入口、递归 JS/CSS 资产、匿名私有 API 拒绝行为与就绪状态。
+# Performs read-only checks of page routes, recursive JS/CSS assets, unauthenticated private-API rejection and readiness.
+# 只读发布检查；不创建账户，也不修改书库数据。
 """Read-only release checks. Never creates accounts or changes library data."""
 import argparse
 import json
@@ -28,6 +31,7 @@ def page(path):
     return body.decode()
 
 pages = list(ThreadPoolExecutor(max_workers=4).map(page, paths))
+# 检查入口及其导入所引用的每个 JS/CSS 分块，而非只检查 index.html。
 # Check every JS/CSS chunk referenced by the entry and its imports, not just index.html.
 assets = set()
 queue = set(re.findall(r'(?:src|href)="(/assets/[^"?#]+)', pages[0]))

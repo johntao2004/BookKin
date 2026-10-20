@@ -1,3 +1,5 @@
+// 检查历史首段高窗洞口与独立玻璃碰撞，避免可见玻璃被当作可穿过空间。
+// Checks historical high-window openings retain independent glazing collision.
 import * as THREE from 'three';
 import { createWestStairEnclosure } from './longRoomWestEnclosure';
 import { collectCameraColliders, resolveCameraCollision } from '../../virtual-library-collision';

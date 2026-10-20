@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { PALETTE } from '../config';
 
+// 匿名装帧研究，并非对目录中具体书名的重建。共享几何体与表面贴图，使布景书集合保持实例化。
 /** Anonymous binding study, not a reconstruction of individual catalog titles.
  * Shared geometry and surface maps keep the scenery collection instanced. */
 export function createHistoricalBindingGeometry() {
@@ -11,6 +12,7 @@ export function createHistoricalBindingGeometry() {
   shape.quadraticCurveTo(0, 0.56, 0.5, 0.44);
   shape.lineTo(0.5, -0.44);
   shape.quadraticCurveTo(0, -0.56, -0.5, -0.44);
+  // 将书芯的天头和地脚内缩至凸出的封面板与书脊以内。
   // Recess the page head and tail inside the projecting boards and spine.
   const pageOpening = new THREE.Path();
   pageOpening.moveTo(-0.42, -0.38); pageOpening.lineTo(0.42, -0.38);
@@ -31,6 +33,7 @@ export function createHistoricalBindingGeometry() {
   const position = geometry.getAttribute('position'), normal = geometry.getAttribute('normal');
   const uv = geometry.getAttribute('uv');
   for (let i = 0; i < position.count; i++) {
+    // 书柜两侧外露面均呈现弧形装帧。顶部和底部使用贴图的素边条带，避免投射横向书脊凸带。
     // Both exposed case faces show curved bindings. Top and bottom use the
     // texture's plain edge strip rather than projecting horizontal spine bands.
     uv.setXY(i, Math.abs(normal.getY(i)) > 0.9 ? 0.01 : (position.getX(i) + 0.5) * 0.9 + 0.05,
@@ -53,6 +56,7 @@ export function createHistoricalBindingMaterial(variant = 0) {
   return step.value;
 }
 
+// 保持表面完全一致，同时允许场景加载器每处理 16 行就让出执行权。
 /** Preserve the exact surface while allowing the scene loader to yield every 16 rows. */
 export function* createHistoricalBindingMaterialSteps(variant = 0): Generator<void, THREE.MeshStandardMaterial> {
   const width = 128, height = 256;
@@ -93,6 +97,7 @@ export function* createHistoricalBindingMaterialSteps(variant = 0): Generator<vo
   return new THREE.MeshStandardMaterial({map, bumpMap, bumpScale: 0.0007, roughness: 0.88});
 }
 
+// 共享内缩纸页顶面；书芯底部贴在架板上，无需额外表面。
 /** Shared inset paper head; the tail rests on the shelf and needs no extra surface. */
 export function createHistoricalPageEdges() {
   const geometry = new THREE.BufferGeometry();
@@ -116,6 +121,7 @@ export function createHistoricalPageEdges() {
   return {geometry, material};
 }
 
+// 远处装帧以十二个三角形保留实例位置和书脊凸带。
 /** Distant bindings preserve instance placement and spine bands at twelve triangles. */
 export function createDistantHistoricalBindingGeometry() {
   const geometry = new THREE.BoxGeometry(1, 1, 1);

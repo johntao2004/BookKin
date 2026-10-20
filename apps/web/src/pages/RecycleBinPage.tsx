@@ -1,3 +1,5 @@
+// 恢复和清理均经过安全预览，永久清理仍须主人权限与明确确认。
+// Restore and purge use safety previews; permanent purge still requires owner authorization and confirmation.
 import { EMPTY_RECYCLE_BIN_TITLE } from "../ui/empty-state-copy";
 import { BookGridSkeleton } from "../components/BookGridSkeleton";
 import { DeleteForeverOutlined } from "@/ui/icons";

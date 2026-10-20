@@ -4,6 +4,8 @@ import java.time.Duration;
 import java.util.List;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
+// 集中绑定运行配置；空值默认值不是对所有显式配置值的完整校验。
+// Central runtime configuration binding; null defaults are not full validation of every supplied value.
 @ConfigurationProperties("bookkin")
 public record BookKinProperties(
         String publicBaseUrl,

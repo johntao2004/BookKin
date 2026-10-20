@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @Profile("api")
+// 公开读取站点展示和索引策略，修改仅允许主人。
+// Public reads expose site presentation/indexing settings; writes require the owner.
 public class SiteSettingsController {
     private final SiteSettingsService service;
     public SiteSettingsController(SiteSettingsService service) {this.service=service;}

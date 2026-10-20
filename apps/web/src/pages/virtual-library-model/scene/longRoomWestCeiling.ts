@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 
+// 布局依据 Irish Aesthete 于 2019 年拍摄的西楼梯顶棚照片重建：四个朝外的饰牌、斜向卷枝、四组内侧花饰及开敞中心。全部坐标与雕刻轮廓均为估计，并非测量或描摹所得的顶棚。
 /** Layout reconstructed from Irish Aesthete's 2019 west-stair ceiling photographs.
  * Four outward cartouches, diagonal tendrils, four inner floral groups, open centre.
  * All coordinates and carved profiles are estimates, not a measured/traced ceiling. */
@@ -50,6 +51,7 @@ export function createWestStairCeilingRelief(plaster: THREE.Material) {
     const mesh=new THREE.Mesh((bandWidth ? ribbon(path,bandWidth) : new THREE.TubeGeometry(path,64,radius,8,false)),plaster);
     mesh.name=bandWidth?'Modeled rococo ribbon scroll':'Ceiling raised scroll stem';parent.add(mesh);return path;
   };
+  // 先构建一个正向装饰，再旋转共享几何体至四个位置。
   // Construct one cardinal ornament then rotate shared geometry into four positions.
   const cardinal=new THREE.Group();cardinal.name='Outward shell and open cartouche';
   for(const side of [-1,1]) {
@@ -73,9 +75,11 @@ export function createWestStairCeilingRelief(plaster: THREE.Material) {
       leaf(cardinal,p.x,p.y,Math.atan2(-v.x,v.y)-side*0.65,1.25);
     }
   }
+  // 放射状瓣部形成贝壳形外侧冠饰，而非实心圆饰。
   // Radiating lobes describe the shell-shaped outer crest rather than a solid medallion.
   for(let i=-4;i<=4;i++) leaf(cardinal,i*0.018,2.13,-i*0.145,0.78+0.18*(1-Math.abs(i)/4));
   leaf(cardinal,0,1.5,Math.PI,0.58);
+  // 每个大饰牌内各含一朵小花，与内侧四组花枝分开。
   // Each large cartouche contains its own small flower, separate from the four inner sprays.
   for(let i=0;i<8;i++) leaf(cardinal,0,1.83,i*Math.PI/4,0.23);
   const cartoucheBud=new THREE.Mesh(new THREE.SphereGeometry(0.018,16,10),plaster);

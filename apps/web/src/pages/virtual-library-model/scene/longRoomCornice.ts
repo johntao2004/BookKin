@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { LONG_ROOM as L } from '../longRoomLayout';
 import type { LibraryMaterials } from './materials';
 
+// 回廊檐板浮雕参考 Gehl 的轴向照片和官方 Ste Murray 回廊照片。轮廓与间距均由照片估计。
 /** Gallery fascia relief observed in the Gehl axial photograph and official
  * Ste Murray gallery view. Profiles and spacing are photographic estimates. */
 export function addLongRoomGalleryCornice(root: THREE.Group, materials: LibraryMaterials) {

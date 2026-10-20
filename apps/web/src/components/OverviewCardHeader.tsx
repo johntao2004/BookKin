@@ -22,6 +22,7 @@ export function OverviewCardHeader({
         minHeight: `${tokens.typography.fontSize.title}px`,
         alignItems: "center",
         gap: `${tokens.spacing[2]}px`,
+        // 进度卡在各主题均为深色；标题和图标尺寸与其他卡一致，使用高对比文本色而非夜间偏暗的主色。
         // The progress card is a dark surface in every site theme.  Keep its
         // heading/icon at the same size and rhythm as the other cards while
         // switching to the high-contrast text token instead of a theme

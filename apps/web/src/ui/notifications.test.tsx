@@ -1,3 +1,5 @@
+// 验证提示去重、重试入口和自动关闭，更新同一提示不应堆积重复气泡。
+// Checks notice deduplication, retry actions and automatic dismissal without accumulating duplicates.
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import ConfigProvider from "antd/es/config-provider";
 import { vi } from "vitest";

@@ -1,3 +1,5 @@
+// 分类详情按当前分类和筛选条件加载书籍，管理操作另经权限入口。
+// Loads category books for the current category/filters with separately authorized management actions.
 import { BookGridSkeleton } from "../components/BookGridSkeleton";
 import { ArrowBackRounded } from "@/ui/icons";
 import { FilterListRounded } from "@/ui/icons";

@@ -1,3 +1,5 @@
+// 验证服务端分页和当前页刷新，不用本地数组分页伪装完整日志。
+// Checks server pagination and current-page refresh rather than local slicing pretending to cover all logs.
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vitest';
 import { api } from '../api/client';

@@ -1,3 +1,5 @@
+// 重新读取实际 Word/Excel 导出，检查引文、笔记、工作表与日期类型，而不只检查文件存在。
+// Reopens Word/Excel exports to check quotes, notes, sheets and date types rather than mere file creation.
 package com.elexvx.bookkin.annotations;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

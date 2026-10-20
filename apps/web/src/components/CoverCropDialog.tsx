@@ -26,6 +26,7 @@ export function resizeCoverCrop(rect: CropRect, corner: Corner, dx: number, dy: 
   const anchorX = right ? rect.x : rect.x + rect.width;
   const anchorY = bottom ? rect.y : rect.y + rect.height;
   const maximum = Math.min(right ? imageWidth - anchorX : anchorX, (bottom ? imageHeight - anchorY : anchorY) * 2 / 3);
+  // 把指针位移投影到固定 2:3 对角线，保持对角锚点不动。
   // Project pointer movement onto the fixed 2:3 diagonal, keeping the opposite corner anchored.
   const delta = ((right ? dx : -dx) + (bottom ? dy : -dy) * 1.5) / 3.25;
   const width = clamp(rect.width + delta, Math.min(imageWidth, imageHeight * 2 / 3) / 10, maximum);
@@ -33,6 +34,7 @@ export function resizeCoverCrop(rect: CropRect, corner: Corner, dx: number, dy: 
   return { x: right ? anchorX : anchorX - width, y: bottom ? anchorY : anchorY - height, width, height };
 }
 
+// 确认可见裁切之前，原图仅在本地处理。
 /** Keeps the source local until the user confirms the visible crop. */
 export function useCoverCrop() {
   const [file, setFile] = useState<File | null>(null);

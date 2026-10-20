@@ -1,3 +1,5 @@
+// 验证管理员也只能搜索自己的笔记，且 SQL 先限定用户与关键词再限制结果数量。
+// Checks that even administrators search only their own notes and SQL applies ownership/keyword filters before limits.
 package com.elexvx.bookkin.annotations;
 
 import static org.assertj.core.api.Assertions.assertThat;

@@ -1,3 +1,5 @@
+// 用真实临时目录验证路径规范化、保留名称、根边界和软链接逃逸；字符串检查不能替代真实路径解析。
+// Uses real temporary paths for normalization, reserved names, root containment and symlink escape rather than string checks alone.
 package com.elexvx.bookkin.filemanagement;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

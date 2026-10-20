@@ -1,3 +1,5 @@
+// 概览只展示当前用户批注及精确阅读入口，不拼接其他用户私人记录。
+// Shows the current user’s recent annotations and precise reading links, not other users’ private records.
 import { FormatQuoteRounded } from "@/ui/icons";
 import { NotesOutlined } from "@/ui/icons";
 import { Box } from "@/ui/primitives";

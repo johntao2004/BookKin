@@ -143,6 +143,7 @@ function createFloorTexture() {
   return textureFromCanvas(canvas, 2.6, 8.5);
 }
 
+// 依据照片匹配的暖色橡木；每个 2.88 米世界空间贴图单元含十二块木板。
 /** Photo-matched warm oak, with twelve boards in a 2.88 m world-space tile. */
 function createRugTexture() {
   const { canvas, context } = textureCanvas(512, 2048);
@@ -285,6 +286,7 @@ export function createLibraryMaterials(existingWoodMap?: THREE.Texture, includeS
     const finish=createWestOakFinish(materials.wood,'Long Room');
     materials.wood.dispose();materials.woodWarm.dispose();materials.woodDark.dispose();
     Object.assign(materials,finish);
+    // Long Room 的老化内衬比西楼梯扶手更少抛光。
     // The Long Room's aged lining is less polished than the west stair handrails.
     materials.wood.roughness=0.94;materials.woodWarm.roughness=0.88;materials.woodDark.roughness=0.96;
   }

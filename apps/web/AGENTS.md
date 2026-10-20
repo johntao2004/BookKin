@@ -98,7 +98,8 @@ Treat every centered hall classification plaque as a physical, fully opaque back
 
 The restricted archive and director office doors are functional portals into separate, fully modeled original Gothic rooms with a clear return-to-hall action. Preserve the dark-academia atmosphere through original architecture, furniture, lighting, and public-domain assets; never copy protected film-set layouts, franchise crests, names, props, or branding. Do not render a floating bottom mouse-instruction pill in the hall or either room.
 
-Entering `/virtual-library` must not make the user wait for avoidable hidden work. Preload the lazy 3D route and private catalog from authenticated navigation, schedule heavy WebGL setup after the route can paint, and create the restricted archive and director office only when a room is first opened. Preserve this staged-loading contract when adding room detail or assets.
+3D 仅在已登录且站点开关启用的 `/virtual-library` 路由内按需加载；普通页面不得预取 3D 代码、模型或全量目录。离开或关闭时取消场景请求、动画帧和监听器并释放图形资源。沿用主人专属个性化设置管理开关，升级缺字段保持可用，不改变 r42 模型。所有新增注释保持简洁中英配对。
+Load 3D only inside the authenticated, enabled `/virtual-library` route; ordinary pages must not prefetch its code, models, or full catalog. Cancel scene requests, animation frames and listeners and release graphics resources on exit or disable. Reuse owner-only personalization settings; preserve availability when upgrading missing fields and retain the r42 model. Keep new comments concise and paired in Chinese and English.
 
 Inside the restricted archive, keep the central lectern and side barred archive cabinets, but use an original sealed double-door vault as the rear focal feature: layered timber panels, iron reinforcement bands, rivets, crossed chains, and a central lock. Do not restore the pointed inner iron gate or a redundant rear-wall room plaque.
 

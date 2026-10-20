@@ -543,6 +543,7 @@ function mergeBookMeshesForMaterial(
   const geometries = meshes.map((mesh) => {
     mesh.updateMatrix();
     if (!sharedGeometries.has(mesh.geometry)) ownedGeometries.add(mesh.geometry);
+    // RoundedBoxGeometry 与 PlaneGeometry 的索引拓扑不总一致；合并每本书小批次前规范化，避免运行时合并错误。
     // RoundedBoxGeometry and PlaneGeometry do not consistently share index
     // topology. Normalize the small per-book detail batch before merging so
     // the refined binding never emits BufferGeometryUtils errors at runtime.
@@ -586,6 +587,7 @@ function createBookMaterials(anisotropy: number): BookMaterials {
     CATALOG_BOOK_MODEL_SIZE.width - CATALOG_BOOK_DETAIL_LAYOUT.pageBlockInset.width,
     CATALOG_BOOK_MODEL_SIZE.depth - CATALOG_BOOK_DETAIL_LAYOUT.pageBlockInset.depth,
   );
+  // 书头延续同一页叠，仅旋转 UV，不增加另一张纹理或材质。
   // Continue the same leaf stack over the head; rotate UVs, not another map/material.
   const headUV = pageHeadGeometry.getAttribute('uv');
   for (let i = 0; i < headUV.count; i++) headUV.setXY(i, headUV.getY(i), 1 - headUV.getX(i));
@@ -603,6 +605,7 @@ function createBookMaterials(anisotropy: number): BookMaterials {
     coverReferences: new Map<string, number>(),
     coverListeners: new Map<string, Set<(texture: THREE.Texture) => void>>(),
     hitTargetGeometry,
+    // 材质隐藏的 Mesh 仍可被 Three.js 射线命中，可扩大薄书脊点击目标而不增加绘制几何或调用。
     // Three.js still raycasts a mesh whose material is hidden, so this adds no
     // rendered geometry or draw call while giving thin shelf spines a humane target.
     hitTargetMaterial,
@@ -687,6 +690,7 @@ export function getCatalogBookShelfTransform(slot: BookShelfSlot, modelSize: She
   const profile = catalogBindingProfile(id);
   transform.scale.z *= profile.thickness;
   transform.scale.y *= profile.height;
+  // 各书尾落在原书板上，避免较矮书籍悬浮。
   // Rest every tail on its original shelf instead of floating shorter books.
   transform.position.y -= slot.scale.y * (1 - profile.height) / 2;
   return transform;
@@ -811,6 +815,7 @@ function createBook(
   shelfSections: ExpandableShelfSection[],
 ) {
   const { book, slot } = assignment;
+  // 书籍重排时，装帧尺寸和颜色仍绑定书籍身份。
   // Binding dimensions and color stay with the book when its shelf order changes.
   const index = Array.from(book.id).reduce((hash, char) => (Math.imul(hash, 31) + char.charCodeAt(0)) >>> 0, 0);
   const { width, height, depth } = CATALOG_BOOK_MODEL_SIZE;
@@ -826,6 +831,7 @@ function createBook(
   const ownedTextures = new Set<THREE.Texture>();
   const group = new THREE.Group();
 
+  // 各暴露边缘的纸块都向内缩，体现薄封皮而非实心板块。
   // Keep the paper block inset on all exposed edges so the cover reads as a
   // thin binding rather than a single slab.
   const pageBlockWidth = width - details.pageBlockInset.width;
@@ -865,6 +871,7 @@ function createBook(
   pageHead.receiveShadow = true;
   group.add(pageHead);
 
+  // 前后封板留出克制边唇，翻转时保留细铰接槽。
   // Separate front and back boards leave a restrained binding lip around the
   // real catalog cover. Fine hinge grooves remain visible when the book turns.
   for (const side of [-1, 1] as const) {
@@ -1317,6 +1324,7 @@ function createShelfSectionControllers(
       blending: THREE.AdditiveBlending,
       toneMapped: false,
     });
+    // 选择框与书架前板共面，避免额外偏移看起来像悬浮透明板。
     // Keep the selection frame on the same front plane as the shelf boards.
     // The old extra offset made the outline read as a floating acrylic frame
     // in front of the case instead of an in-place shelf highlight.
@@ -1506,6 +1514,7 @@ export function createVirtualLibraryWorld(
   preparedHall?: LongRoomBuilt,
 ): LibraryWorld {
   const built = preparedHall ?? buildLongRoom({}, loader);
+  // 流式控制器跨异步加载拥有模块几何和材质批次。
   // Streaming owns its chunk geometry and material batches across async loads.
   if (!built.root.userData.staticOptimization && !built.root.userData.streamingArchitecture)
     optimizeStaticMeshes(built.root, built.interactiveObjects);
@@ -1519,6 +1528,7 @@ export function createVirtualLibraryWorld(
   const catalogRoot = new THREE.Group();
   catalogRoot.name = "Live catalog book models";
   catalogRoot.userData.isLiveCatalogRoot = true;
+  // 目录为空时共享资源未必被网格引用；仍须让 disposeScene 找到它们，但不添加可见占位物。
   // Shared catalog resources are not necessarily referenced by a mesh when
   // the authorized library is empty. Keep them discoverable by disposeScene
   // without adding a rendered placeholder object to the live hall.
@@ -1565,6 +1575,7 @@ export function createVirtualLibraryWorld(
       if (seenBookIds.has(book.id)) throw new Error(`Duplicate catalog book id: ${book.id}`);
       seenBookIds.add(book.id);
     });
+    // 创建或移除 GPU 书籍模型之前检查分类容量；权威目录仍是全部分页的完整快照。
     // Validate category capacity before creating or removing any GPU-backed
     // catalog model. The authoritative query remains an all-pages snapshot.
     longRoomCatalogSectionCounts(nextBooks, built.shelfSections.length);

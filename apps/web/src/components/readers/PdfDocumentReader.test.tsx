@@ -1,3 +1,5 @@
+// 覆盖重排页裁切、单双页布局及跨原始页回退；上一页尚未测量时应返回等待状态。
+// Covers reflow clipping, single/spread layout and cross-original-page back navigation, returning a pending state when the previous page is not measured.
 import { render, screen, waitFor } from "@testing-library/react";
 import { getDocument } from "pdfjs-dist";
 import { vi } from "vitest";

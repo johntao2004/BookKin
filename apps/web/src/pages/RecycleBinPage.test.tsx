@@ -1,3 +1,5 @@
+// 验证回收书目可检索且恢复先进入安全预览，不能从列表直接执行恢复。
+// Checks searchable recycled books and a safety preview before restoration.
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, vi } from "vitest";
 import { Route, Routes } from "react-router-dom";

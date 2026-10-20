@@ -1,3 +1,5 @@
+// 在可用持久化数据库中验证 SMTP 密码加密保存、空输入保留及读取不回显；环境缺失时会跳过。
+// Uses the configured persistence database to check encrypted SMTP secrets, blank-input preservation and masked reads; missing setup skips the test.
 package com.elexvx.bookkin.auth;
 
 import com.elexvx.bookkin.ai.AiSettingsCrypto;

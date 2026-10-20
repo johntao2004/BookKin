@@ -1,3 +1,5 @@
+// 历史 Long Room 构建回归覆盖结构、碰撞、取消与目录身份；不表示当前主场景启用旧馆。
+// Historical Long Room regressions cover structure, collision, cancellation and catalog identity, not current main-scene activation.
 import {createServiceWalk} from './longRoomServiceWalk';
 import { fagelWalkPoint, FAGEL_WALK_LENGTH } from './longRoomFagelWalk';
 import * as THREE from 'three';

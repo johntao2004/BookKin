@@ -1,3 +1,5 @@
+// 覆盖接触滑动、全线段扫掠、垂直楼板和起点穿透恢复，防止高速穿墙或切换后卡住。
+// Covers contact sliding, full-segment sweeps, floor collisions and initial-penetration recovery against tunneling or stuck transitions.
 import * as THREE from "three";
 import { vi } from "vitest";
 import {

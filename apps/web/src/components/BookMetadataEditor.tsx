@@ -1,3 +1,5 @@
+// 书目编辑与封面消费共用缓存更新；普通乐观保存失败须恢复快照，文件写回另行确认。
+// Metadata/cover consumers share cache updates; failed optimistic saves restore snapshots and writeback requires separate confirmation.
 import { ImageOutlined } from "@/ui/icons";
 import { Chip } from "@/ui/feedback";
 import { MetadataEditorForm } from "./MetadataEditorForm";

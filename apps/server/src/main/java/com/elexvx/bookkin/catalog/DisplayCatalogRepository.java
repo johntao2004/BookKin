@@ -12,6 +12,8 @@ import org.jooq.Record;
 import org.springframework.stereotype.Repository;
 
 @Repository
+// 维护公共展示成员、排序和修订信息，不存放私人阅读位置。
+// Maintains public display membership, ordering and revisions, not private reading positions.
 public class DisplayCatalogRepository {
     private final DSLContext dsl;
 

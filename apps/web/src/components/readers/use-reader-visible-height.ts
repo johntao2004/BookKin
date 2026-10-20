@@ -1,3 +1,5 @@
+// 优先使用 visualViewport 高度，响应移动端可见区域变化并成对移除监听。
+// Prefers visualViewport height, responding to mobile viewport changes and removing listeners on cleanup.
 import { useEffect, useState } from "react";
 
 function currentVisibleHeight() {

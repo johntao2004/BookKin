@@ -1,3 +1,5 @@
+// 覆盖确认重置、失败重试、重新启用和幂等清理，避免过期记录误删重新使用的封面。
+// Covers confirmed reset, retry, reactivation and idempotent cleanup without deleting a reused cover.
 package com.elexvx.bookkin.catalog;
 
 import static org.junit.jupiter.api.Assertions.*;

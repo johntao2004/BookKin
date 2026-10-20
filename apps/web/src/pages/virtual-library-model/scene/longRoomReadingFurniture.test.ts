@@ -1,3 +1,5 @@
+// 检查历史家具保留主/横向通道且碰撞有效，书托确实由桌垫支撑。
+// Checks historical furniture preserves aisles, retains collisions and supports cradles on desk mats.
 import * as THREE from 'three';
 import {createEastReadingFurniture,READING_FURNITURE as F} from './longRoomReadingFurniture';
 import {createLibraryMaterials} from './materials';

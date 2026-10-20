@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { PALETTE } from '../config';
 import { markCameraCollider } from '../../virtual-library-collision';
 
+// 三列五行依据 2019 年测绘 G_E-1（PDF 第 15 页）。洞口尺寸和偏移仍为适配当前围护结构的调整。
 /** Three columns and five rows follow the 2019 survey, G_E-1 (PDF page 15).
  * Opening sizes and offsets remain adaptations to the current enclosure. */
 export const WEST_HIGH_WINDOW={center:0,base:6.3,width:1.55,height:3.25} as const;
@@ -21,6 +22,7 @@ export function createWestHighWindow(timber:THREE.Material,plaster:THREE.Materia
   }
   box('High window projecting sill',width+0.25,0.1,0.42,0,-0.045,0.045,timber);
   box('High window head',width+0.21,0.1,0.18,0,height+0.045,0.16,timber);
+  // 采用独立滑动窗扇，上扇位于窗洞更深处。西侧五行窗分为 2/3 行，东侧六行窗分为 3/3 行。
   // Separate sliding leaves: the upper sash sits farther into the reveal.
   // Five-row western windows split 2/3; six-row eastern windows split 3/3.
   const splitRow=Math.floor(rows/2), clearHeight=height-0.14;

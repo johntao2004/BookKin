@@ -11,6 +11,8 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 @Repository
+// 保存 AI 设置与加密后的提供商凭据，解密和生效配置组装由服务层负责。
+// Persists AI settings and encrypted provider credentials; services handle decryption and effective configuration.
 public class AiSettingsRepository {
     private final DSLContext dsl;
 

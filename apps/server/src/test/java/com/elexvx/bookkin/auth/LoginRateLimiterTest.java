@@ -1,3 +1,5 @@
+// 验证连续失败阈值和键隔离，避免一个登录来源的计数污染其他来源。
+// Checks failure thresholds and key isolation so one login source does not contaminate another’s counter.
 package com.elexvx.bookkin.auth;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;

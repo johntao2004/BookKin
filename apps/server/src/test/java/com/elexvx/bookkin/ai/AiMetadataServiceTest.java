@@ -1,3 +1,5 @@
+// 验证兼容 OpenAI 的结构化候选解析及待审核标记，不把模型建议直接视为已应用元数据。
+// Checks OpenAI-compatible candidate parsing and review-required status rather than treating suggestions as applied metadata.
 package com.elexvx.bookkin.ai;
 
 import static com.elexvx.bookkin.ingestion.upload.BookUploadModels.MetadataSource;

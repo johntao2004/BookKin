@@ -1,3 +1,5 @@
+// 沿真实楼梯路径测试双向步行、侧移与出口衔接，不能用引导动画替代普通键盘移动。
+// Tests bidirectional walking, lateral lanes and exits on real stair paths rather than substituting guided animation for keyboard motion.
 import { readFileSync } from 'node:fs';
 import * as THREE from 'three';
 import {

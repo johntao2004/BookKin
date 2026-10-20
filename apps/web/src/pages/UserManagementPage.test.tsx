@@ -1,3 +1,5 @@
+// 验证登录日志锚点恢复与页签历史，避免内部切换破坏浏览器导航。
+// Checks login-log anchor restoration and tab history without breaking browser navigation.
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { expect, it, vi } from "vitest";
 import { Route, Routes, useLocation, useNavigate } from "react-router-dom";

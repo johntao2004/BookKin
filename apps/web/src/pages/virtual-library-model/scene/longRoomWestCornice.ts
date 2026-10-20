@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { createWestStairFrieze } from './longRoomWestFrieze';
 
+// 2019 年照片可见顶棚周缘重复排列的小浮雕。轮廓、模块间距及叶饰均为估计，并非经测绘的柱式细部。
 /** Small repeated relief visible at the ceiling perimeter in the 2019 photographs.
  * The profile, module pitch and foliation are estimated; this is not a surveyed order. */
 export function createWestCorniceGeometries() {
@@ -49,6 +50,7 @@ export function createWestStairCornice(length:number, plaster:THREE.Material,
   const root=createWestStairFrieze(length,plaster,false);
   root.name='West stair continuous ornamented ceiling cornice';
   root.userData.fidelity='photographic-perimeter-estimated-profile';
+  // 各转角的模块须避开相交墙体突出的檐口。
   // Keep units away from the crossing wall's projecting cornice at each corner.
   const clearLength=length-0.6,count=Math.floor(clearLength/0.28),pitch=clearLength/count;
   for(const [name,shape] of [['Curved plaster cornice brackets',geometry.bracket],

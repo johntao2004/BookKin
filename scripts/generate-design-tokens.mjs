@@ -1,3 +1,5 @@
+// 从唯一设计 Token 数据源解析语义引用，生成 TypeScript/CSS 产物，或以只检查模式检测产物是否过期。
+// Resolves semantic references from the design-token source and generates TypeScript/CSS outputs, or checks whether the outputs are stale.
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";

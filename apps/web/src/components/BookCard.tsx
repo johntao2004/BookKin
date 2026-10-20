@@ -1,3 +1,5 @@
+// 把受管书籍及可用操作映射到共享书卡，文件操作由上层流程处理。
+// Maps managed books/actions to the shared card while parent workflows own file operations.
 import { BookmarkAddOutlined, DeleteOutlined, DriveFileMoveOutlined, EditNoteRounded } from "@/ui/icons";
 import { BookCardPresentation, type BookCardAction } from "./BookCardPresentation";
 import type { Book, FileOperationType } from "../domain/types";

@@ -5,6 +5,8 @@ import org.jooq.DSLContext;
 import org.springframework.stereotype.Service;
 
 @Service
+// 集中持久化操作与登录审计；调用方传入事件内容，不能把密码或令牌写入详情。
+// Persists operation/login audits centrally; callers provide event data and must not put passwords or tokens in details.
 public class AuditService {
     private final DSLContext dsl;
 

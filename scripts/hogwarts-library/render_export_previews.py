@@ -1,3 +1,5 @@
+# 重新导入指定 GLB 后渲染验收视图，记录模型和图像哈希；不能把源场景预览当作导出模型证据。
+# Renders verification views after reimporting the selected GLB and records model/image hashes; source-scene previews are not proof of the exported model.
 """Render ONLY the reimported runtime GLB with the saved camera/light rig.
 
 blender -b library-source.blend --python render_previews.py -- \

@@ -1,3 +1,5 @@
+// 绑定找回邮箱前要求当前密码，并提示用户完成邮件验证。
+// Requires the current password before binding a recovery address and prompts for email verification.
 import { useState, type FormEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../api/client";

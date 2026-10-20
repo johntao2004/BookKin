@@ -1,3 +1,5 @@
+// 验证移动用户卡片保留必要操作，去除重复权限说明不应损害可用性。
+// Checks usable mobile user cards without redundant permission copy.
 import { render, screen } from "@testing-library/react";
 import { TestProviders } from "../test/TestProviders";
 import { UsersPage } from "./UsersPage";

@@ -22,6 +22,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+// 文件与数据库无法共享事务；各操作显式恢复路径并记录失败或回滚状态。
+// Files and database rows cannot share a transaction; operations explicitly compensate paths and record failure/rollback status.
 @Service
 public class FileTransactionExecutor {
     private static final Logger log = LoggerFactory.getLogger(FileTransactionExecutor.class);
@@ -126,6 +128,8 @@ public class FileTransactionExecutor {
         }
     }
 
+    // 先复制刷盘并校验内容与可解析性，再落位目标并回收源文件。
+    // Copy, flush and verify content/readability before placing the destination and trashing the source.
     private String crossRootMove(ExecutionRecord operation, BookFile file, LibraryRoot sourceRoot, LibraryRoot targetRoot,
                                  Path source, Path target, String targetRelative) throws IOException {
         operations.updateStage(operation.id(), "CHECKING_SPACE");
@@ -312,6 +316,8 @@ public class FileTransactionExecutor {
         }
     }
 
+    // 写租约需等待读租约释放；等待有截止时间，避免无限阻塞任务。
+    // Write-lease acquisition waits for readers with a deadline so tasks cannot wait indefinitely.
     private FileLeaseRepository.Lease waitForWriteLease(UUID fileId, UUID operationId) throws InterruptedException {
         long deadline = System.nanoTime() + properties.fileLeaseTimeout().toNanos();
         while (System.nanoTime() < deadline) {
@@ -339,6 +345,8 @@ public class FileTransactionExecutor {
         }
     }
 
+    // 这里使用普通 Files.move；不要仅凭阶段名 ATOMIC_MOVE 宣称原子移动保证。
+    // This uses plain Files.move; an ATOMIC_MOVE stage label alone does not guarantee an atomic move.
     private void moveWithoutOverwrite(Path source, Path target) throws IOException {
         Files.move(source, target);
     }

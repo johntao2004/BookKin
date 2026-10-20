@@ -1,3 +1,5 @@
+// 集中适配提示、进度与状态组件，业务错误通过共用反馈机制展示。
+// Centralizes feedback/progress/status adapters so business errors use the shared feedback mechanism.
 import { FeedbackBubble } from "./notifications";
 import AntAvatar from "antd/es/avatar";
 import AntDivider from "antd/es/divider";

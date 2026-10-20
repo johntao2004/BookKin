@@ -1,3 +1,5 @@
+// 创建或编辑书单的共享表单，将种类、可见性和版本交给对应 API。
+// Shared create/edit booklist form delegates kind, visibility and revision to the corresponding API.
 import { DeleteOutlineRounded } from "@/ui/icons";
 import { Alert } from "@/ui/feedback";
 import { Button } from "@/ui/buttons";

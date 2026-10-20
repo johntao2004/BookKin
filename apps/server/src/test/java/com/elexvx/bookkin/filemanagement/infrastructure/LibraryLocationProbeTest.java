@@ -1,3 +1,5 @@
+// 用临时目录验证只读探测、链接/越界拒绝及替换后指纹变化，不执行登记写入。
+// Uses temporary directories to check read-only probes, link/escape rejection and fingerprint changes without registering roots.
 package com.elexvx.bookkin.filemanagement.infrastructure;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;

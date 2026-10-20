@@ -1,3 +1,5 @@
+// 验证分页大小与偏移量有界，防止日志查询接口接受无界请求。
+// Verifies bounded page size and offsets for login-audit queries.
 package com.elexvx.bookkin.audit;
 import org.junit.jupiter.api.Test;
 import static org.mockito.Mockito.*;

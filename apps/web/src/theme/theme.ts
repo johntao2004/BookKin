@@ -1,3 +1,5 @@
+// 从设计 token 构建各主题语义颜色及 Ant Design 配置，页面不另定义品牌基础色。
+// Builds semantic theme colors and Ant Design configuration from design tokens rather than page-local brand palettes.
 import antdTheme from "antd/es/theme";
 import type { ReaderTheme } from "../components/readers/reader-fonts";
 import type { UiTheme } from "../ui/primitives";

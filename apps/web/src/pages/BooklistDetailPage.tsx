@@ -1,3 +1,5 @@
+// 书单详情将浏览分页与成员管理分离，修改使用当前 revision 而非无条件覆盖。
+// Separates booklist browsing pagination from membership edits using the current revision instead of unconditional overwrite.
 import { BookGridSkeleton } from "../components/BookGridSkeleton";
 import { ArrowBackRounded } from "@/ui/icons";
 import { EditOutlined } from "@/ui/icons";

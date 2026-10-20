@@ -1,3 +1,5 @@
+# 用临时 HTTP 服务模拟正常发布、缺失懒加载资源和私人 API 泄露，验证发布检查会正确失败。
+# Uses a temporary HTTP server for healthy releases, missing lazy chunks and private-API leakage to check release-check failures.
 import http.server
 import json
 import pathlib

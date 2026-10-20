@@ -1,3 +1,5 @@
+// 文章正文与独立阅读记录分开加载，笔记保存沿用该用户的文章状态修订号。
+// Loads article content separately from independent reading state, using the user’s article revision for note saves.
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import {

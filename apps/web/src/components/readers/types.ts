@@ -1,3 +1,5 @@
+// 把正文选区坐标映射到工具栏锚点，并携带可恢复的阅读定位。
+// Maps document selection rectangles to toolbar anchors while carrying restorable reading locators.
 import { tokens } from "../../theme/generated-tokens";
 
 export interface ReaderSelection {

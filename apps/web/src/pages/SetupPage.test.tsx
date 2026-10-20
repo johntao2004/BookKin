@@ -1,3 +1,5 @@
+// 验证已初始化重定向与表单校验，只有确认未初始化才展示创建入口。
+// Checks initialized redirects and form validation, showing setup only after confirmed uninitialized status.
 import { fireEvent, render, screen } from "@testing-library/react";
 import { Route, Routes } from "react-router-dom";
 import { afterEach, vi } from "vitest";

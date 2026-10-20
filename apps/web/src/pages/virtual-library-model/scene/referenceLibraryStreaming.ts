@@ -42,10 +42,12 @@ export interface ReferenceLibraryStreamingOptions {
 }
 export interface ReferenceLibraryStreaming {
   updateView(camera: THREE.Camera, shadowCameras?: readonly THREE.Camera[]): void;
+  // 世界空间目标点；在替代驻留目标就绪前保留上一个驻留目标。
   /** World-space destination. Keep the previous pin until its replacement is ready. */
   ensurePoint(point: Point): Promise<void>;
   retryFailed(): Promise<void>;
   diagnostics(): ReferenceLibraryStreamingDiagnostics;
+  // 立即解除挂载；待未完成解码与共享资源释放结束后兑现 Promise。
   /** Detaches immediately; resolves once pending decodes and shared disposal finish. */
   dispose(): Promise<void>;
 }
@@ -95,6 +97,7 @@ interface ChunkRecord {
 
 function assetUrl(path: string, base: string = REFERENCE_LIBRARY_MANIFEST_URL) {
   const url = new URL(path, new URL(base, 'https://bookkin.invalid'));
+  // 生成的模块和纹理必须位于此本地资产命名空间内。
   // Generated modules and textures must stay in this local asset namespace.
   if (url.origin !== 'https://bookkin.invalid' || !url.pathname.startsWith('/assets/hogwarts-library/')
     || url.hash || [...url.searchParams.keys()].some(key => key !== 'v')
@@ -155,10 +158,12 @@ function disposeGeometry(root: THREE.Object3D, extra = new Set<THREE.BufferGeome
   extra.clear(); root.removeFromParent();
 }
 function observe(action: (() => void) | undefined) {
+  // 界面观察回调不得接管已加载资源，也不得破坏其清理流程。
   // UI observers cannot take ownership of, or break cleanup for, loaded resources.
   try { action?.(); } catch (error) { console.error('Reference library observer failed', error); }
 }
 
+// Three r185 会保留已拒绝的图像与依赖 Promise，并将图像错误转换为空贴图。需保护这些缓存边界，确保重试能真正恢复纹理。升级已安装的 Three 版本时，应继续测试这一小范围适配层。
 /**
  * Three r185 keeps rejected image/dependency promises and converts an image error
  * to a null map. Guard those cache boundaries so retry really restores textures.
@@ -170,12 +175,15 @@ type ParserCaches = GLTFParser & {
   textureCache: Record<string, Promise<THREE.Texture | null>>;
 };
 
+// 共享解析器集中拥有材质和纹理；模块淘汰仅移除几何，不结束整个材质池。
+// A shared parser owns materials and textures centrally; chunk eviction removes geometry without closing the material pool.
 export function createReferenceMaterialPool(parser: GLTFParser) {
   const internal = parser as ParserCaches;
   const materials = new Set<THREE.Material>();
   const textures = new Set<THREE.Texture>();
   const promises = new Map<number, Promise<THREE.Material>>();
   const pending = new Set<Promise<unknown>>();
+  const pendingImageTextures = new Set<THREE.Texture>();
   let closing = false;
   let disposal: Promise<void> | undefined;
   function track<T>(promise: Promise<T>) {
@@ -189,10 +197,33 @@ export function createReferenceMaterialPool(parser: GLTFParser) {
     for (const value of Object.values(material)) if (value instanceof THREE.Texture) textures.add(value);
     return material;
   }
+  function bankImageLoader(loader: Parameters<GLTFParser['loadImageSource']>[1]) {
+    if (!(loader instanceof THREE.TextureLoader)) return loader;
+    // 仅追踪材质库请求，不取消共用加载器中的封面；Track bank requests without cancelling shared catalog loads.
+    const scoped = Object.create(loader) as THREE.TextureLoader;
+    scoped.load = (url, onLoad, onProgress, onError) => {
+      // 缓存命中可能同步回调；A cache hit may settle before load returns its texture.
+      const loading: {texture?: ReturnType<THREE.TextureLoader['load']>} = {};
+      let settled = false;
+      const finish = () => {
+        settled = true;
+        if (loading.texture) pendingImageTextures.delete(loading.texture);
+      };
+      const texture = loader.load(url, value => { finish(); onLoad?.(value); }, onProgress,
+        error => { finish(); onError?.(error); });
+      loading.texture = texture;
+      if (!settled) {
+        pendingImageTextures.add(texture);
+        if (closing) texture.dispose();
+      }
+      return texture;
+    };
+    return scoped;
+  }
   const originalImage = parser.loadImageSource.bind(parser);
   parser.loadImageSource = (source, loader) => {
     if (closing) return Promise.reject(abortError());
-    const original = originalImage(source, loader);
+    const original = originalImage(source, bankImageLoader(loader));
     return track(original.then(texture => { textures.add(texture); return texture; }, error => {
       if (internal.sourceCache[source] === original) delete internal.sourceCache[source];
       throw error;
@@ -229,6 +260,7 @@ export function createReferenceMaterialPool(parser: GLTFParser) {
     if (closing) return Promise.reject(abortError());
     const cached = promises.get(index);
     if (cached) return cached;
+    // 有意调用统一的解析器，而非各模块自己的材质解析器。
     // Deliberately call the canonical parser, not each module's material parser.
     const promise = track(Promise.resolve().then(() => {
       if (closing) throw abortError();
@@ -239,6 +271,7 @@ export function createReferenceMaterialPool(parser: GLTFParser) {
     return promise;
   }
   function assignFinalMaterial(mesh: THREE.Mesh) {
+    // GLTFLoader 会因顶点色或缺少切线而克隆材质。此类变体与原始材质同样使用一个统一的解析器缓存。
     // GLTFLoader clones materials for vertex colors/missing tangents. Use ONE
     // parser cache for those variants as well as for the original material.
     parser.assignFinalMaterial(mesh);
@@ -247,9 +280,12 @@ export function createReferenceMaterialPool(parser: GLTFParser) {
   function abort() {
     if (closing) return;
     closing = true;
+    // 此加载器归资源库所有。中止共享 LoadingManager 也会取消无关的目录纹理加载，因此卸载分块时不要中止它。
     // This loader is owned by the bank. Aborting the shared LoadingManager
     // would also cancel unrelated catalog textures. Do not abort on eviction.
     if (parser.textureLoader instanceof THREE.ImageBitmapLoader) parser.textureLoader.abort();
+    // 自定义加载器通过纹理释放取消单个请求；Custom loaders cancel each request when its texture is disposed.
+    [...pendingImageTextures].forEach(texture => texture.dispose());
   }
   function dispose() {
     if (disposal) return disposal;
@@ -278,6 +314,7 @@ async function loadMaterialBank(manager: THREE.LoadingManager, url: string, sign
   const data = await response.text();
   signal.throwIfAborted();
   const json = JSON.parse(data);
+  // 资源库按需加载纹理；此处若预载隐藏模型，就会破坏流式加载。
   // The bank loads textures lazily. A hidden model here would defeat streaming.
   if (json.meshes?.length || json.nodes?.length || json.buffers?.length || json.images?.some((image: {uri?: string}) => !image.uri)) {
     throw new Error('建筑共享材质库必须只包含材质与外部纹理');
@@ -288,7 +325,10 @@ async function loadMaterialBank(manager: THREE.LoadingManager, url: string, sign
   return createReferenceMaterialPool(gltf.parser);
 }
 
+// 精确空间模块、共享着色资源和有界工作量，不简化模型。
 /** Exact spatial modules, shared shading, bounded work; no model simplification. */
+// 管理模块队列、驻留和资源所有权；材质共享池与几何批处理分别负责释放。
+// Owns module queues, residency and resource lifetimes; the shared material pool and geometry batcher dispose their own resources.
 export async function createReferenceLibraryStreaming(options: ReferenceLibraryStreamingOptions): Promise<ReferenceLibraryStreaming> {
   const {parent, manager, signal} = options;
   signal.throwIfAborted();
@@ -327,6 +367,8 @@ export async function createReferenceLibraryStreaming(options: ReferenceLibraryS
   const wanted = (record: ChunkRecord) => record.manifest.core || (!initialized && record.manifest.startup)
     || record.visible || record.shadowRequired || isPinned(record);
 
+  // 核心、可见、阴影所需和固定目的地模块继续驻留，闲置模块延迟淘汰以减少抖动。
+  // Keep core, visible, shadow-required and pinned-destination chunks; delay idle eviction to reduce churn.
   function updateEviction() {
     if (evictionTimer !== undefined) clearTimeout(evictionTimer);
     evictionTimer = undefined;
@@ -356,6 +398,7 @@ export async function createReferenceLibraryStreaming(options: ReferenceLibraryS
     const bytes = await response.arrayBuffer();
     abort.signal.throwIfAborted();
     if (bytes.byteLength !== record.manifest.bytes) throw new Error(`建筑模块大小与版本不一致: ${record.manifest.id}`);
+    // 局域网 HTTP 可能不提供 SubtleCrypto，但仍执行大小与版本检查；生成的交付清单另外记录全部 SHA-256。
     // LAN HTTP may not expose SubtleCrypto. Size/revision checks still apply;
     // the generated delivery manifest additionally records every SHA-256.
     if (globalThis.crypto?.subtle) {
@@ -398,12 +441,13 @@ export async function createReferenceLibraryStreaming(options: ReferenceLibraryS
         signal: abort.signal,
         onSlice: (milliseconds, stage) => observe(() => options.onSlice?.(milliseconds, stage)),
       });
-      consumed = true; // The batcher owns originals and generated geometry now.
+      consumed = true; /* 批处理器现在拥有原始及生成的几何体。 */ // The batcher owns originals and generated geometry now.
       geometry.clear();
       abort.signal.throwIfAborted();
       record.state = 'resident'; record.lastWantedAt = performance.now();
       observe(() => options.onSlice?.(performance.now() - attachStarted, 'reference-module-attach-wall'));
     } finally {
+      // 在 GLTFLoader 的 Promise.all 中，材质失败可能早于几何解码完成。释放未挂载分块前，先等待这些解码结束。
       // A material failure may precede geometry decoding in GLTFLoader's
       // Promise.all. Settle those decodes before disposing an unmounted chunk.
       while (geometryJobs.size) await Promise.allSettled([...geometryJobs]);
@@ -414,6 +458,7 @@ export async function createReferenceLibraryStreaming(options: ReferenceLibraryS
   function consolidateWhenIdle() {
     if (disposed || options.multiDraw || consolidation || active || queue.length
       || records.some(record => record.state !== 'resident')) return;
+    // 回退材质合并以放弃逐模块卸载换取更少提交。完成这个不可逆的有界步骤后，不得再次修改分块归属。
     // Fallback material merging trades per-module eviction for fewer submissions.
     // Never mutate chunk ownership again after this irreversible, bounded step.
     fallbackResidencyLocked = true; consolidating = true;
@@ -435,6 +480,8 @@ export async function createReferenceLibraryStreaming(options: ReferenceLibraryS
     notify();
   }
 
+  // 队列按优先级调度并限制并发；失败保留诊断，只有显式重试才重新发起。
+  // Prioritize queued loads with bounded concurrency; retain failures for diagnostics and reload only on explicit retry.
   function pump() {
     if (disposed) return;
     queue.sort((a, b) => a.priority - b.priority);
@@ -467,6 +514,7 @@ export async function createReferenceLibraryStreaming(options: ReferenceLibraryS
     if (record.state === 'queued' || record.state === 'loading') { pump(); return record.promise!; }
     record.state = 'queued'; record.error = undefined;
     record.promise = new Promise<void>((resolve, reject) => { record.resolve = resolve; record.reject = reject; });
+    // 后台可见性请求没有等待结果的调用方。为 ensurePoint、startup 和 retry 保留原始拒绝原因，同时避免未处理 Promise 拒绝产生噪声。
     // Background visibility requests have no awaited caller. Retain the original
     // rejection for ensurePoint/startup/retry without unhandled promise noise.
     void record.promise.catch(() => undefined);
@@ -494,6 +542,8 @@ export async function createReferenceLibraryStreaming(options: ReferenceLibraryS
     updateEviction();
   }
 
+  // 新目的地加载成功前保留旧固定区域；修订号防止较慢的旧请求覆盖新目的地。
+  // Keep the previous pin until the new destination loads; generations stop slower old requests from replacing newer pins.
   async function ensurePoint(point: Point) {
     if (disposed) throw abortError();
     if (![point.x, point.y, point.z].every(Number.isFinite)) throw new Error('建筑目标坐标无效');
@@ -552,6 +602,7 @@ export async function createReferenceLibraryStreaming(options: ReferenceLibraryS
     signal.removeEventListener('abort', onAbort);
     if (evictionTimer !== undefined) clearTimeout(evictionTimer);
     for (const record of queue.splice(0)) { record.state = 'unloaded'; record.reject?.(abortError()); }
+    // 立即解除挂载，避免外层场景释放器同时取得贴图所有权。
     // Immediate detach prevents the outer scene disposer from also owning maps.
     batcher.dispose();
     records.filter(record => record.state === 'resident').forEach(record => { record.state = 'unloaded'; });

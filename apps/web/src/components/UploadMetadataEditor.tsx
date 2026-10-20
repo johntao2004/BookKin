@@ -1,3 +1,5 @@
+// 仅在上传处理状态轮询；校对完成或取消后按队列跳到下一本并刷新目录。
+// Polls while upload processing is active, then advances the review queue and refreshes catalogs after commit/cancel.
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";

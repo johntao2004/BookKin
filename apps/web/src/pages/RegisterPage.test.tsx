@@ -1,3 +1,5 @@
+// 验证关闭策略时不展示注册表单，且确认密码一致后才提交成员注册。
+// Checks closed signup hides the form and matching passwords precede member registration.
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { vi, it, expect, beforeEach } from "vitest";
 import { TestProviders } from "../test/TestProviders";

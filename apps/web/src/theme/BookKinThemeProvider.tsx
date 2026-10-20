@@ -1,3 +1,5 @@
+// 统一整站与阅读器主题状态，把持久选择传播至 Ant Design 和共享 UI。
+// Shares theme state across site and reader, propagating persisted choices to Ant Design and shared UI.
 import { FeedbackProvider } from "../ui/notifications";
 import { ConfigProvider } from "../ui/antd";
 import { CssBaseline, UiThemeProvider } from "../ui/primitives";

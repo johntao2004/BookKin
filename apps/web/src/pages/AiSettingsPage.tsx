@@ -1,3 +1,5 @@
+// 编辑提供商配置及启用选择；已保存密钥仅显示配置状态，空输入按 API 约定处理。
+// Edits provider configuration/selection; saved keys expose only configured status and blank inputs follow API semantics.
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Alert } from "@/ui/feedback";

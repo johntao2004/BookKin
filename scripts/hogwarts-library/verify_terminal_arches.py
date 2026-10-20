@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# 测量末端圆拱、曲面拱底、墙侧门柱与地板饰边，并要求旧 GLB 不能通过相同断言。
+# Measures terminal arches, curved soffits, wall jambs and floor-profile joins, requiring the older GLB to fail the same assertions.
 """Check terminal arch openings, curved soffits, wall jambs and floor trim joins."""
 import argparse
 import hashlib

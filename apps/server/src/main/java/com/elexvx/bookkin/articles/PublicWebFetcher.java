@@ -24,6 +24,8 @@ public class PublicWebFetcher {
                     || (b[0] & 255) == 198 && ((b[1] & 255) == 18 || (b[1] & 255) == 19))))
             throw new UnknownHostException("Only public addresses are allowed");
     }
+    // 每次跳转重新校验 HTTPS 地址，连接时校验 DNS 结果，并限制响应字节数。
+    // Revalidate HTTPS on each redirect, validate DNS answers at connection time and bound response bytes.
     public Download get(String input, int limit) {
         try (var client = HttpClients.custom().disableRedirectHandling().disableAutomaticRetries()
             .setConnectionManager(PoolingHttpClientConnectionManagerBuilder.create().setDnsResolver(new SystemDefaultDnsResolver() {

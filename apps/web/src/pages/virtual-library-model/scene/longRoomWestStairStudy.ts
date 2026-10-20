@@ -9,6 +9,7 @@ import { createAccessBalusterGeometry, createAccessHandrail, createAccessHandrai
 import type { LibraryMaterials } from './materials';
 import { markCameraCollider } from '../../virtual-library-collision';
 
+// 依据 Abbott 透视插图推定的工作拓扑，并非实测平面。局部轴线有意不声称对应任何罗盘方位。
 /** Working topology from Abbott's perspective illustrations, not a measured plan.
  * Local axes deliberately have no claimed compass orientation. */
 export const WEST_STAIR_STUDY = {
@@ -21,6 +22,7 @@ export const WEST_STAIR_STUDY = {
   landings: [[-2.08, 2.025, -0.8], [2.08, 3.375, -0.8], [2.08, 5.4, 4.64]],
 } as const;
 
+// 平滑向外弯展，并由水平过渡至倾斜；所有幅度均为估计。
 /** Smooth outward sweep and level-to-raking transition; all amplitudes estimated. */
 export function westStairStartSweep(distance: number) {
   const transition = 4 * WEST_STAIR_STUDY.going;
@@ -29,6 +31,7 @@ export function westStairStartSweep(distance: number) {
     lift: WEST_STAIR_STUDY.rise / WEST_STAIR_STUDY.going * transition / 3 * remaining ** 3 };
 }
 
+// 现状鹅颈形扶手爬升段：升入平台后以水平切线接出。过渡长度与抬升量均由照片估计。
 /** Existing swan-neck ramp: rise into the landing and leave with a level tangent.
  * Transition lengths and lift are photographic estimates. */
 export function westStairLandingLift(flightIndex: number, distance: number) {
@@ -107,6 +110,7 @@ export function* createWestStairStudySteps(materials: Pick<LibraryMaterials, 'fl
     const run = flight.steps * going, height = flight.steps * rise;
     const firstFlight = flight === WEST_STAIR_STUDY.flights[0];
     const flightIndex = WEST_STAIR_STUDY.flights.indexOf(flight);
+    // 填补木衬背后靠墙一侧的间隙，同时保留踏步净宽。
     // Fill the wall-side gap behind the timber lining, keeping the tread width clear.
     addWainscot(start, direction, run, height);
     for (let step = 0; step < flight.steps; step++) {
@@ -115,6 +119,7 @@ export function* createWestStairStudySteps(materials: Pick<LibraryMaterials, 'fl
       const guardCenter=start.clone().addScaledVector(direction,(step+0.5)*going)
         .addScaledVector(right,-width/2+0.04);
       if(firstFlight) guardCenter.addScaledVector(right,-westStairStartSweep((step+0.5)*going).outward);
+      // 基于视点的碰撞检测在较低实体栏杆上方使用站立人体高度的屏障。
       // Eye-based collision uses a standing-body barrier above the low physical rail.
       markCameraCollider(root,{id:`west-flight-guard-${WEST_STAIR_STUDY.flights.indexOf(flight)}-${step}`,shape:'box',
         center:{x:guardCenter.x,y:top+1,z:guardCenter.z},size:{x:0.12,y:2.25,z:going+0.025},
@@ -141,6 +146,7 @@ export function* createWestStairStudySteps(materials: Pick<LibraryMaterials, 'fl
       const riser = box(root, 'West stair closed riser', [width + widening, rise, 0.028],
         [riserCenter.x, top - rise / 2, riserCenter.z], materials.wood);
       riser.rotation.y = tread.rotation.y;
+      // 内侧楼梯井护栏：每根支脚均由相应踏步承托。
       // Inner-well guard: all feet are supported by an individual tread.
       for (const fraction of [0.25, 0.75]) {
         if (firstFlight && step === 0 && fraction === 0.25) continue;
@@ -155,6 +161,7 @@ export function* createWestStairStudySteps(materials: Pick<LibraryMaterials, 'fl
       }
     }
     if (firstFlight) {
+      // 照片中的起步位置有粗壮立柱，而非另一根细栏杆柱。
       // The photograph has a substantial column at the start, not another thin baluster.
       const distance = going * 0.375, sweep = westStairStartSweep(distance);
       const railY = 1.05 + distance * rise / going + sweep.lift;
@@ -182,6 +189,7 @@ export function* createWestStairStudySteps(materials: Pick<LibraryMaterials, 'fl
       }
       handrail.castShadow = handrail.receiveShadow = true; root.add(handrail);
     }
+    // 连续底部支撑踢面，避免形成悬空薄踏步。
     // Continuous underside supports the risers, instead of floating thin treads.
     const section = new THREE.Shape();
     section.moveTo(0, -0.24); section.lineTo(run, height - 0.24);
@@ -195,6 +203,7 @@ export function* createWestStairStudySteps(materials: Pick<LibraryMaterials, 'fl
     soffit.castShadow = soffit.receiveShadow = true; root.add(soffit);
     yield `construction-west-flight-${flightIndex}`;
   }
+  // 水平转折段使护墙板连续绕过两个转向平台。
   // Level returns carry the dado continuously around the two turning platforms.
   for (const [x, y, z, dx, dz, length] of [
     [-2.08, 2.025, 0, 0, -1, 1.6], [-2.88, 2.025, -0.8, 1, 0, 1.6],
@@ -223,9 +232,11 @@ export function* createWestStairStudySteps(materials: Pick<LibraryMaterials, 'fl
       baluster.castShadow = baluster.receiveShadow = true; platformGuards.add(baluster);
     }
   };
+  // 保护朝向楼梯井的外露边缘；远侧墙体与门的几何形态尚未确定。
   // Guard the exposed well-side edge; far-side wall/door geometry is unresolved.
   levelGuard(new THREE.Vector3(1.32, 5.4, 3.84), new THREE.Vector3(1.32, 5.4, 5.38));
   levelGuard(new THREE.Vector3(1.32, 5.4, 5.38), new THREE.Vector3(1.56, 5.4, 5.38));
+  // 一米宽的到达开口是临时连接方案，并非历史门洞测量值。
   // A metre-wide arrival opening is a provisional connection, not a historic door measurement.
   levelGuard(new THREE.Vector3(2.6, 5.4, 5.38), new THREE.Vector3(2.84, 5.4, 5.38));
   for (const [x, y, z] of [[-1.34, 2.025, -0.06], [1.34, 3.375, -0.06]]) {
@@ -233,6 +244,7 @@ export function* createWestStairStudySteps(materials: Pick<LibraryMaterials, 'fl
     post.name = 'West stair turning newel study'; post.position.set(x, y, z); post.scale.set(1.25, 1.33 / 1.05, 1.25);
     post.castShadow = post.receiveShadow = true; platformGuards.add(post);
   }
+  // 圆润的平台接头覆盖相交的水平扶手端部。确切雕刻转角轮廓仍为依据照片作出的近似。
   // Rounded landing junctions cover the intersecting horizontal rail ends.
   // The exact carved turn profile remains a photograph-based approximation.
   for (const [x, y, z] of [[-1.34, 3.355, -0.06], [1.34, 4.705, -0.06]]) {
@@ -255,6 +267,7 @@ export function* createWestStairStudySteps(materials: Pick<LibraryMaterials, 'fl
   return root;
 }
 
+// 同步部件与离线入口使用与渐进构建完全相同的几何体。
 /** Synchronous component/offline entry shares exactly the progressive geometry. */
 export function createWestStairStudy(materials: Pick<LibraryMaterials, 'floor' | 'woodWarm' | 'wood' | 'woodDark' | 'parchment'>, cutaway = true) {
   const steps = createWestStairStudySteps(materials, cutaway);

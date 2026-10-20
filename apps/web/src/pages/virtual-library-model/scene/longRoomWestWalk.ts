@@ -1,3 +1,5 @@
+// 本文件说明适用于该 Long Room 构建路径；下方旧注释的 live 不表示当前主场景已启用此模型。
+// These comments describe this Long Room builder; legacy uses of live below do not assert inclusion in the current main scene.
 import { LONG_ROOM } from '../longRoomLayout';
 import { WEST_CONNECTION } from './longRoomWestConnection';
 import type { CameraPosition } from '../../virtual-library-collision';
@@ -6,6 +8,7 @@ const local=(x:number,y:number,z:number):CameraPosition=>({
   x:x+WEST_CONNECTION.offsetX,y:y+WEST_CONNECTION.offsetY,z:z+WEST_CONNECTION.offsetZ,
 });
 
+// 从 Long Room 地面基准下行至原始楼梯研究的起点。平台保留进入和离开的两段路线，避免沿对角线穿越楼梯井。
 // From Long Room ground reference down to the foot of the original-stair study.
 // Landings retain both approach and departure legs instead of cutting the well diagonally.
 const points:CameraPosition[]=[
@@ -21,6 +24,7 @@ for(let i=1;i<points.length;i++) {
 }
 export const WEST_STAIR_WALK_LENGTH=cumulative[cumulative.length-1];
 
+// 随坡度变化的视线路径；与实体踏步高度的差异不超过一级踢面。
 /** A slope-following eye path; physical tread heights differ by at most one riser. */
 export function westStairWalkPoint(distance:number):CameraPosition {
   const d=Math.max(0,Math.min(WEST_STAIR_WALK_LENGTH,distance));
@@ -37,6 +41,7 @@ for(let i=1;i<henryPoints.length;i++) {
   const a=henryPoints[i-1],b=henryPoints[i];
   henryDistances.push(henryDistances[i-1]+Math.hypot(b.x-a.x,b.z-a.z));
 }
+// 直接切换房间时，从朝向房间的门槛内侧起步，越过此 Long Room 主厅构建路径中封闭的西墙及其隐藏服务通道。
 // Direct room switching starts just inside the room-facing threshold, beyond
 // the live hall's sealed west wall and its hidden service passage.
 export const HENRY_JONES_ROOM_START_DISTANCE=henryDistances[3];

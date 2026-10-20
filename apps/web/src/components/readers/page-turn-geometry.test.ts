@@ -1,3 +1,5 @@
+// 检查连续局部折弯、角点先行和反向镜像，避免把翻页简化成僵硬铰链或撕裂网格。
+// Checks continuous local curling, corner lead and reverse mirroring rather than rigid hinges or torn meshes.
 import { describe, expect, it } from "vitest";
 import { pageCurlPath, pageCurlPointForColumn } from "./page-turn-geometry";
 

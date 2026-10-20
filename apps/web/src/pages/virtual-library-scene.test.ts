@@ -1,3 +1,5 @@
+// 覆盖真实书籍槽位、选中预览与精确恢复，装饰堆叠必须由桌面支撑。
+// Covers catalog slots, selected-book preview and exact restoration, with decorative stacks physically supported by the desk.
 import * as THREE from "three";
 import { LIBRARY } from "./virtual-library-model/config";
 import type { Book } from "../domain/types";

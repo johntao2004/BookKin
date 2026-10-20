@@ -1,3 +1,5 @@
+// 覆盖中英文断行、缩进、列表与空白处理，保留真实段落结构而非机械拼接每行。
+// Covers Chinese/Latin lines, indentation, lists and whitespace while preserving actual paragraph structure.
 import { describe, expect, it } from "vitest";
 import { pdfTextToParagraphs, pdfTextToReadingBlocks, splitPdfInlineFootnoteReferences } from "./pdf-reading-text";
 

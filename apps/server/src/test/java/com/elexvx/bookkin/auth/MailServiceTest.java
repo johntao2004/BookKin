@@ -1,3 +1,5 @@
+// 验证 SMTP 传输与重置链接来源的安全约束，明确区分允许的本机测试与远程不加密连接。
+// Checks SMTP transport and reset-origin constraints, distinguishing explicit loopback testing from unencrypted remote connections.
 package com.elexvx.bookkin.auth;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;

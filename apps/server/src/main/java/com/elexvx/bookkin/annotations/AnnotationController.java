@@ -33,6 +33,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @Profile("api")
 @RequestMapping("/api/v1/annotations")
+// 从认证身份取得批注所有者，列表、创建、删除和导出均沿用该用户边界。
+// Derives annotation ownership from authentication across listing, creation, deletion and export.
 public class AnnotationController {
     private final AnnotationRepository annotations;
     private final UserRepository users;

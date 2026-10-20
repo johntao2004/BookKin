@@ -5,6 +5,7 @@ import type {LibraryMaterials} from './materials';
 import {alignLongRoomBoardGrain} from './longRoomTimber';
 import {mapWestPanelGrain} from './longRoomWestOak';
 
+// XS-6A/6B：成对上层壁龛、四块中央镶板区域及西侧山花。米制尺寸用于将测绘构图适配至放大大厅。
 /** XS-6A/6B: paired upper niches, four central panel fields and west pediment.
  * Metre dimensions adapt the surveyed composition to the enlarged hall. */
 export const UPPER_END = {nicheX:3.25,radius:.95,base:L.galleryY+.2,spring:L.vaultSpring-1.65,
@@ -39,6 +40,7 @@ export function addUpperEndJoinery(parent:THREE.Group,outline:THREE.Shape,materi
     bead.name='Upper niche curved architrave';bead.castShadow=bead.receiveShadow=true;root.add(bead);
     box('Upper niche impost',2.13,.08,.19,x,S.spring,-.065);
     box('Upper niche continuous sill',2.12,.12,.52,x,S.base,.09);
+    // 壁龛上方的镶板具有沿拱形延伸的凹曲下缘。
     // Panels above the niche have a concave lower edge following the arch.
     const panel=new THREE.Shape();const r=S.radius+.14;
     panel.moveTo(x-r,S.top);panel.lineTo(x+r,S.top);panel.lineTo(x+r,S.spring);

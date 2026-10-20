@@ -1,3 +1,5 @@
+// 保留旧展示管理组件的弹窗选书回归；该测试不说明它仍由当前路由挂载。
+// Retains dialog-based selection coverage for the legacy display manager; this does not imply current route inclusion.
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { api } from "../api/client";

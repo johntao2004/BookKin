@@ -1,3 +1,5 @@
+# 在共享构建上下文中补充门洞、拱肩和吊灯的碰撞壳；坐标已完成宽度平移，不能再次套用该变换。
+# Adds doorway, arcade-shoulder and chandelier collision shells in the shared build context; coordinates already include width translation and must not receive it twice.
 # Tight, model-derived flight shells for the actual carved doorway profiles.
 # These are authored in final Three.js coordinates, after the width translation.
 # Ordinary gallery walking remains below all tracery (lowest carving is 9.21).

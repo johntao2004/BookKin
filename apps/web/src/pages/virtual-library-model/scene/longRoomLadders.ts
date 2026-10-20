@@ -3,6 +3,7 @@ import { LONG_ROOM as L, LONG_ROOM_BAY_PITCH as P, LONG_ROOM_FRONTMOST_CASE, lon
 import { markCameraCollider } from '../../virtual-library-collision';
 import type { LibraryMaterials } from './materials';
 
+// 公开开间照片可见窗端书架梯。重复摆放方式与尺寸均为重建估计。
 /** Window-end shelf ladders visible in the public bay photograph.
  * Repeated placements and dimensions are reconstruction estimates. */
 export function addLongRoomShelfLadders(root: THREE.Group, materials: LibraryMaterials) {
@@ -27,6 +28,7 @@ export function* addLongRoomShelfLaddersSteps(
     const hookPoints = [new THREE.Vector3(0, height - 0.1, 0), new THREE.Vector3(0, height + 0.025, -0.03), new THREE.Vector3(0, height + 0.06, -0.10), new THREE.Vector3(0, height - 0.015, -0.15)];
     const hookGeometry=new THREE.TubeGeometry(new THREE.CatmullRomCurve3(hookPoints),24,0.013,12,false);
     for (const side of [-1, 1]) for (let bay = 0; bay < L.alcovesPerSide; bay++) {
+      // 南侧入口壁间设有历史螺旋梯，而非一对书架梯。
       // The south entry alcove contains the historic spiral, not a pair of ladders.
       if (side === -1 && bay === 0) continue;
       for (const face of (level === 0 ? [-1, 1] : [1])) {

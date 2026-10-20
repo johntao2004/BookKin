@@ -1,3 +1,5 @@
+// 使用指定基准账户登录，预热后测量目录与搜索请求的 p50/p95/最大延迟，并按内置阈值判定。
+// Authenticates with a supplied benchmark account, warms up catalog and search requests, reports p50/p95/max latency and applies built-in thresholds.
 const baseUrl = process.env.BOOKKIN_BENCHMARK_URL ?? "http://127.0.0.1:8080/api/v1";
 const username = process.env.BOOKKIN_BENCHMARK_USERNAME;
 const password = process.env.BOOKKIN_BENCHMARK_PASSWORD;

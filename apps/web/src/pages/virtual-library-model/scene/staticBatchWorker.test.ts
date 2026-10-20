@@ -1,3 +1,5 @@
+// 对比同步/Worker 结果并覆盖失败与取消，原缓冲区不能被意外移交或销毁。
+// Compares synchronous/worker output and covers failure/cancellation without transferring or destroying source buffers.
 import * as THREE from 'three';
 import { bakeStaticBatch, type StaticBatchInput } from './staticBatchData';
 import { optimizeStaticMeshes, optimizeStaticMeshesProgressively } from './optimizeScene';

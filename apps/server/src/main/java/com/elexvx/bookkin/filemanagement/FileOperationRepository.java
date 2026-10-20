@@ -15,6 +15,8 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 @Repository
+// 持久化预览、幂等绑定及任务日志；领取任务使用数据库锁避免重复消费同一队列项。
+// Persists previews, idempotency bindings and job journals; database locking coordinates queue claims.
 public class FileOperationRepository {
     private final DSLContext dsl;
     private final BookKinProperties properties;

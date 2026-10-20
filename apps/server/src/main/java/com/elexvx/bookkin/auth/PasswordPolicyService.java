@@ -33,6 +33,8 @@ public class PasswordPolicyService {
         audit.record(actor.id(),"PASSWORD_POLICY_CHANGED","SECURITY","password-policy",null,null,null,null,"SUCCEEDED","{}");
         return policy();
     }
+    // 新密码入口共用当前规则；登录验证已有哈希，不在这里重新判定旧密码复杂度。
+    // New-password entry points share current rules; login verifies existing hashes rather than rechecking old-password complexity here.
     public void validate(String password) { validate(password,policy()); }
     static void validate(String password,Policy policy) {
         var errors=new ArrayList<String>();

@@ -33,6 +33,8 @@ import org.springframework.web.bind.annotation.RestController;
 @Profile("api")
 @RequestMapping("/api/v1/book-uploads")
 @PreAuthorize("hasAnyRole('OWNER','ADMIN')")
+// 管理角色上传协议层，二进制流、校对和确认入库是不同请求阶段。
+// Management upload protocol layer with separate binary transfer, review and commit requests.
 public class BookUploadController {
     private final BookUploadService service;
 

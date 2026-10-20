@@ -8,8 +8,10 @@ import { createWestStairFrieze } from './longRoomWestFrieze';
 import { createWestStairPanel } from './longRoomWestPanels';
 import { markCameraCollider } from '../../virtual-library-collision';
 
+// 用于检验历史楼梯假设的估计围护结构，并非测绘结果。
 /** Estimated enclosure for testing the historic stair hypothesis, not a survey. */
 export function* createWestStairEnclosureSteps(basePlaster: THREE.MeshStandardMaterial, timber: THREE.Material, cutaway: boolean): Generator<string, THREE.Group> {
+  // Casey 2018 展示了冷灰色墙面和更浅的凸起石膏饰面。此饰面独立于主厅共享的书页纸张材质。
   // Casey 2018 shows cool gray wall fields and lighter raised plasterwork.
   // Keep this finish independent of the book-paper material shared by the main hall.
   const neutral = new THREE.Color(PALETTE.parchment).offsetHSL(0, -1, 0);
@@ -26,6 +28,7 @@ export function* createWestStairEnclosureSteps(basePlaster: THREE.MeshStandardMa
   const box = (parent: THREE.Group, name: string, w: number, h: number, d: number, x: number, y: number, z: number, material: THREE.Material) => {
     let geometry: THREE.BufferGeometry = new THREE.BoxGeometry(w,h,d);
     if (name === 'Shallow plaster rustication face') {
+      // 细小的石膏倒圆边缘逐渐承接光照，避免呈现尖锐砖块质感。
       // Small eased plaster edges catch light gradually instead of reading as sharp bricks.
       geometry.dispose();
       const key = [w,h,d].map(value => value.toFixed(6)).join('/');
@@ -71,6 +74,7 @@ export function* createWestStairEnclosureSteps(basePlaster: THREE.MeshStandardMa
       const lower=createWestHighWindow(timber,trim,WEST_LOWER_WINDOW,'west-lower-window-glazing',4,2);
       lower.name='West pavilion lower four-by-two window';group.add(lower);
     }
+    // 连续墙面上的浅贴层形成内凹灰缝；这是石膏仿粗石饰面，并非各自独立的砌块。
     // Shallow applied courses on a continuous wall create recessed joints;
     // they are plaster rustication, not separate freestanding masonry bricks.
     const visibleRects = (left:number,right:number,bottom:number,top:number) => {
@@ -99,6 +103,7 @@ export function* createWestStairEnclosureSteps(basePlaster: THREE.MeshStandardMa
     }
     const frieze=createWestStairFrieze(length,trim);
     frieze.position.y=WEST_LEVELS.frieze; group.add(frieze);
+    // 连续浅檐口封闭墙面与顶棚接缝。
     // A continuous shallow cornice closes the wall/ceiling junction.
     const cornice=createWestStairCornice(length,trim,corniceGeometry);
     cornice.position.y=WEST_LEVELS.ceiling-0.22; group.add(cornice);
@@ -118,6 +123,7 @@ export function* createWestStairEnclosureSteps(basePlaster: THREE.MeshStandardMa
   };
   wall('West study rear wall and lower doorway',6.8,0,-2.05,0,{center:1.9,base:0,width:1.25,height:2.2});
   yield 'construction-west-rear-wall';
+  // G_E-1：第一梯段墙面有两扇高窗，与窄镶板交替排列。
   // G_E-1: the first-flight wall has two high windows, alternating with narrow panels.
   wall('West study side wall',7.65,-3.4,1.775,Math.PI/2,{center:-2.55,base:0,width:1.25,height:2.2},true);
   yield 'construction-west-side-wall';
@@ -133,6 +139,7 @@ export function* createWestStairEnclosureSteps(basePlaster: THREE.MeshStandardMa
     relief.rotation.x = Math.PI / 2; relief.position.set(0,WEST_LEVELS.ceiling-0.01,1.775);
     root.add(relief);
     yield 'construction-west-ceiling-relief';
+    // 局部反射光近似可显现浅雕细节，而不照亮整座大厅。静态建筑只需一张缓存阴影贴图，无需点光源的六面阴影。
     // Local reflected-light approximation reveals shallow carving without illuminating the whole hall.
     // Static architecture needs one cached shadow map, not a six-face point-light shadow.
     const bounce = new THREE.SpotLight(neutral, 55, 12, 0.92, 0.65, 2);
@@ -154,6 +161,7 @@ export function* createWestStairEnclosureSteps(basePlaster: THREE.MeshStandardMa
   return root;
 }
 
+// 同步部件与离线入口使用与渐进构建完全相同的几何体。
 /** Synchronous component/offline entry shares exactly the progressive geometry. */
 export function createWestStairEnclosure(basePlaster: THREE.MeshStandardMaterial, timber: THREE.Material, cutaway: boolean) {
   const steps = createWestStairEnclosureSteps(basePlaster, timber, cutaway);

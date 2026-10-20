@@ -1,3 +1,5 @@
+// 验证主参考馆配置、路线、碰撞与目录一一对应；配置测试不代替导出三角面几何测量。
+// Checks reference-library config, routes, collision and one-to-one catalog identity; configuration tests do not replace exported-triangle measurements.
 import * as THREE from 'three';
 import { readFileSync } from 'node:fs';
 import { collectCameraColliders, markCameraCollider, resolveCameraCollision } from '../../virtual-library-collision';

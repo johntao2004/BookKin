@@ -1,3 +1,5 @@
+// 把批注样式应用到 EPUB 文档范围，清理旧标记后重建，避免叠加重复包装。
+// Applies annotation styles to EPUB ranges, rebuilding after old markers are cleared to avoid repeated wrappers.
 import { annotationColorBackground, annotationColorHex } from "../../domain/annotation-colors";
 import type { Annotation } from "../../domain/types";
 

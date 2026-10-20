@@ -11,6 +11,8 @@ import org.springframework.web.filter.OncePerRequestFilter;
 public class SessionLifetimeFilter extends OncePerRequestFilter {
     private final SessionLifecycleService service;
     public SessionLifetimeFilter(SessionLifecycleService service) {this.service=service;}
+    // API 过期时清除服务端身份；登录和 CSRF 入口仍放行以支持重新认证。
+    // Expired API sessions clear server-side identity; login and CSRF endpoints remain reachable for reauthentication.
     @Override protected void doFilterInternal(HttpServletRequest request,HttpServletResponse response,FilterChain chain) throws ServletException,IOException {
         var session=request.getSession(false);
         if(session!=null && request.getRequestURI().startsWith("/api/") && service.status(session).expiresAt()<=System.currentTimeMillis()) {

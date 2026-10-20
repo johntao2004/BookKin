@@ -62,13 +62,15 @@ export function LibraryPage() {
   const [showBackToTop, setShowBackToTop] = useState(false);
   const overviewStorageKey = `bookkin-library-overview:${user?.id ?? 'anonymous'}`;
   const [overviewHidden, setOverviewHidden] = useState(() => { try { return localStorage.getItem(`bookkin-library-overview:${user?.id ?? 'anonymous'}`) === 'hidden'; } catch { return false; } });
-  const toggleOverview = () => setOverviewHidden(hidden => { const next = !hidden; try { localStorage.setItem(overviewStorageKey, next ? 'hidden' : 'visible'); } catch { /* Layout remains usable without storage. */ } return next; });
+  const toggleOverview = () => setOverviewHidden(hidden => { const next = !hidden; try { localStorage.setItem(overviewStorageKey, next ? 'hidden' : 'visible'); } catch { /* 存储不可用时仍保持布局可操作。 */ /* Layout remains usable without storage. */ } return next; });
   const [notice, setNotice] = useState("");
   const query = params.get("q")?.trim().toLocaleLowerCase("zh-CN") ?? "";
   const deferredQuery = useDeferredValue(query);
   const format = params.get("format") ?? "ALL";
   const sort = (params.get("sort") ?? "recent") as SortKey;
   const canManage = user?.role === "OWNER" || user?.role === "ADMIN";
+  // 查询键包含检索、格式和排序；请求接收取消信号，游标页属于该组查询条件。
+  // The query key includes search, format and sort; requests receive cancellation signals and cursor pages belong to those filters.
   const booksQuery = useInfiniteQuery({
     queryKey: ["books", deferredQuery, format, sort],
     initialPageParam: undefined as string | undefined,
@@ -141,6 +143,7 @@ export function LibraryPage() {
               sm: "repeat(2, minmax(0, 1fr))",
               lg: "repeat(4, minmax(0, 1fr))",
             },
+            // 宽屏单行布局中卡片保持等高，包括加载与空状态。
             // Keep equal card heights in the wide, single-row layout,
             // including loading and empty states.
             gridAutoRows: `${tokens.spacing[24] * 3.5}px`,

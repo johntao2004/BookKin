@@ -1,3 +1,5 @@
+// 保留的旧展示管理组件处理公开书目选择与排序；文件存在不意味着当前 App 路由仍挂载它。
+// This retained legacy component selects/reorders public display books; its existence does not imply current App route inclusion.
 import { EmptyState } from "../ui/empty-state";
 import { Link } from "react-router-dom";
 import { AddRounded } from "@/ui/icons";

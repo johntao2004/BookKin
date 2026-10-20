@@ -1,3 +1,5 @@
+// 管理会话列表从服务端获取到期状态，界面显示不替代会话失效执行。
+// Session management reads server expiry state; presentation does not perform server-side expiration.
 import { EmptyState } from "../ui/empty-state";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";

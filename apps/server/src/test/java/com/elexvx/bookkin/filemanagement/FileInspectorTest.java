@@ -1,3 +1,5 @@
+// 覆盖签名、加密 EPUB 与超大容器描述，确保解析前的输入边界得到验证。
+// Covers signed/encrypted EPUBs and oversized container descriptions to verify parser input limits.
 package com.elexvx.bookkin.filemanagement;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;

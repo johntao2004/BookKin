@@ -1,3 +1,5 @@
+// 用相同与变更内容验证 SHA-256 的稳定性，区分内容身份与文件名或修改时间。
+// Checks SHA-256 stability and content changes, distinguishing content identity from names or timestamps.
 package com.elexvx.bookkin.filemanagement;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

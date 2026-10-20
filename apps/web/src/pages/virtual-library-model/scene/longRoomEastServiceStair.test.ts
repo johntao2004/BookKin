@@ -1,3 +1,5 @@
+// 验证历史多层扇形梯全路线支撑、净高与侧护栏，不只测试首末端。
+// Checks full historical multi-storey winder support, headroom and side guards rather than endpoints alone.
 import * as THREE from 'three';
 import {createEastServiceStair,EAST_SERVICE_STAIR} from './longRoomEastServiceStair';
 import {createLibraryMaterials} from './materials';

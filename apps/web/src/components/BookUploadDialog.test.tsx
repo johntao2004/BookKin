@@ -1,3 +1,5 @@
+// 验证局域网 HTTP 上传与键盘选文件入口，上传成功后进入持久校对路由而非直接假定入库。
+// Checks LAN-HTTP upload and keyboard file selection, leading to persistent review rather than assuming catalog commit.
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
 import { useLocation } from "react-router-dom";

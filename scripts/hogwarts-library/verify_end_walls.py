@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# 读取未压缩 GLB 并提供区域三角面查询，验证端墙分层、碰撞和家具移除；历史布局断言须匹配所测基线。
+# Reads uncompressed GLB regional triangles and verifies end-wall layers, collision and furniture removal; historical layout assertions must match the inspected baseline.
 """Blender-free checks for r7 gallery and end-wall layers, collisions and removed furniture."""
 from __future__ import annotations
 

@@ -1,3 +1,5 @@
+// 分类和书单发现卡片共用封面拼图与可见性展示，不自行授予书籍访问权。
+// Discovery cards share cover mosaics and visibility presentation without granting book access themselves.
 import { BookCardPresentation } from "./BookCardPresentation";
 import { AddRounded } from "@/ui/icons";
 import { AutoStoriesOutlined } from "@/ui/icons";

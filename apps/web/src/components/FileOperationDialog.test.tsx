@@ -1,3 +1,5 @@
+// 覆盖移动/重命名预览、回收二次确认及失败恢复，避免错误后永久停在忙状态。
+// Covers move/rename previews, second trash confirmation and recovery from failed execution without a stuck busy state.
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { vi } from "vitest";
 import { api } from "../api/client";

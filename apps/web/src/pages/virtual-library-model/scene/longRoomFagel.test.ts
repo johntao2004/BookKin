@@ -1,3 +1,5 @@
+// 检查历史 Fagel 中央通路穿过隔断，同时仍阻挡书柜实体。
+// Checks the historical Fagel central route crosses partitions while bookcases remain solid.
 import * as THREE from 'three';
 import {createFagelRoom} from './longRoomFagel';
 import {createLibraryMaterials} from './materials';

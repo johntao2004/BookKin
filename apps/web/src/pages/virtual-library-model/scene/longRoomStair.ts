@@ -8,6 +8,7 @@ export interface LongRoomStairOptions {
   entryAngle?: number;
 }
 
+// 依据 Skyden67 的壁间照片独立重建。尺寸为可调整的工作估计；这并非西侧附楼的橡木楼梯。
 /** Independent reconstruction from Skyden67's alcove photograph. Dimensions are
  * adjustable working estimates; this is not the west pavilion's oak staircase. */
 export function createLongRoomSpiralStair(material: THREE.Material, options: LongRoomStairOptions = {}) {
@@ -39,6 +40,7 @@ export function createLongRoomSpiralStair(material: THREE.Material, options: Lon
   tread.absarc(0, 0, radius, 0, turn, false);
   tread.absarc(0, 0, inner, turn, 0, true); tread.closePath();
   const treadGeometry = new THREE.ExtrudeGeometry(tread, { depth: 0.035, bevelEnabled: false, curveSegments: 8 });
+  // 局部 XY 扇形转换为 XZ 踏步，其顶面精确位于踏步标高。
   // Local XY sector becomes an XZ tread with its top exactly on the step datum.
   treadGeometry.rotateX(Math.PI / 2);
   const riser = new THREE.Shape();
@@ -64,6 +66,7 @@ export function createLongRoomSpiralStair(material: THREE.Material, options: Lon
     if(i<count-1) {
       const railBase = onCircle(a, y);
       add(new THREE.CylinderGeometry(0.012, 0.012, 0.92, 6), 'Outer upright', railBase.x, y + 0.46, railBase.z);
+      // 成对卷饰位于切向栏杆平面内，而非悬空球体。
       // Paired scrolls lie in the tangential railing plane, not as floating balls.
       for (const direction of [-1, 1]) {
         const points = Array.from({length: 25}, (_, j) => {
@@ -86,6 +89,7 @@ export function createLongRoomSpiralStair(material: THREE.Material, options: Lon
   add(tube(railPoints, 0.026, count * 5), 'Continuous helical handrail');
   const stats = optimizeStaticMeshes(root, []);
   root.userData.staticOptimization = stats;
+  // 批处理已将可复用踏步缓冲区复制进最终几何体。
   // Batching has copied the reusable step buffers into its final geometry.
   treadGeometry.dispose(); riserGeometry.dispose();
   return root;

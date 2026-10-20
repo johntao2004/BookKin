@@ -1,3 +1,5 @@
+// 验证接触暗化只影响地面接点，不污染开放通道、上层家具或木纹 UV。
+// Checks contact darkening does not contaminate open aisles, upper furniture or wood UVs.
 import * as THREE from 'three';
 import {addLongRoomFloorOcclusion} from './longRoomFloorOcclusion';
 import {LONG_ROOM as L} from '../longRoomLayout';

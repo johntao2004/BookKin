@@ -14,6 +14,8 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 @Repository
+// 书籍与文件的跨模块网关；列表附带当前用户进度，文件状态更新不搬动文件本身。
+// Cross-module book/file gateway; listings include user progress, while file-row updates do not move filesystem content.
 public class BookRepository {
     private final DSLContext dsl;
 

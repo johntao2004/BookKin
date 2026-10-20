@@ -13,6 +13,8 @@ import java.nio.file.StandardOpenOption;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
 
+// 当前写回保留操作级暂存快照用于补偿，成功后清理；不是可浏览的持久历史版本。
+// Current writeback retains a temporary operation snapshot for compensation and removes it on success, not browsable persistent history.
 @Service
 public class MetadataWriteService {
     private final BookMetadataRepository metadataRepository;
@@ -30,6 +32,8 @@ public class MetadataWriteService {
         this.pdfWriter = pdfWriter;
     }
 
+    // 写临时文件、验证可读并刷盘后才替换原文件；调用方数据库更新失败时仍可恢复快照。
+    // Replace the original only after validating and flushing the temporary file; callers can restore the snapshot if catalog updates fail.
     public WriteResult write(UUID operationId, BookFile file, LibraryRoot root, Path source) throws IOException {
         var inspection = inspector.inspect(source, file.format());
         if (!inspection.parseable() || inspection.encrypted() || inspection.drmProtected() || inspection.digitallySigned()) {

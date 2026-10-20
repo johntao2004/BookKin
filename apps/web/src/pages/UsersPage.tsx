@@ -1,3 +1,5 @@
+// 账户管理提交创建、状态与凭据操作；临时密码展示不进入普通持久偏好。
+// Account management submits creation/status/credential actions; temporary credentials are not ordinary persisted preferences.
 import { EmptyState } from "../ui/empty-state";
 import { RevokeSessionsDialog } from "../components/RevokeSessionsDialog";
 import { DataTable, TableAction } from "@/ui/antd";

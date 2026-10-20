@@ -46,6 +46,8 @@ public class CatalogIngestionRepository {
                 """, scanId, rootId, normalizedPaths.toArray(String[]::new));
     }
 
+    // 每份文件独立提交；一份书解析或入库失败不回滚已处理的其他书籍。
+    // Each file commits independently so one ingestion failure does not roll back previously processed books.
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public UpsertResult upsert(UUID rootId, String relativePath, String normalizedPath, BookFormat format,
                                BasicFileAttributes attributes, String quickFingerprint, String fingerprint,
@@ -133,6 +135,8 @@ public class CatalogIngestionRepository {
         return record == null ? null : record.get(0, UUID.class);
     }
 
+    // 扫描与上传共用事务级内容锁；相似书名提示不替代完全内容去重。
+    // Scanning and uploads share a transaction-scoped content lock; title similarity does not replace exact-content deduplication.
     private void lockFingerprint(String fingerprint) {
         dsl.fetchOne("select pg_advisory_xact_lock(hashtextextended(?, 0))", fingerprint);
     }
@@ -188,6 +192,8 @@ public class CatalogIngestionRepository {
                 inspection.encrypted(), inspection.drmProtected(), inspection.digitallySigned(), scanId, pageCount, wordCount);
     }
 
+    // 扫描字段受 metadata_overrides 保护；作者、标签和丛书在各自辅助方法中执行同类检查。
+    // Scan fields respect metadata_overrides; contributor, tag and series helpers apply their own corresponding checks.
     private void updateFromScan(UUID bookId, ExtractedBook metadata) {
         dsl.execute("""
                 update books set

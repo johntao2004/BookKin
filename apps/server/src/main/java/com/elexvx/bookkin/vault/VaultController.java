@@ -7,6 +7,8 @@ import org.springframework.http.*;
 import jakarta.servlet.http.HttpServletRequest;
 
 @RestController @Profile("api") @RequestMapping("/api/v1/vault")
+// 传递密文信封、分块和 revision；身份隔离及存储规则交给 VaultService。
+// Transfers ciphertext envelopes, chunks and revisions while VaultService enforces identity isolation and storage rules.
 public class VaultController {
  private final VaultService service;public VaultController(VaultService service){this.service=service;}
  @GetMapping("/config") public Object config(Principal p){return service.config(p);}

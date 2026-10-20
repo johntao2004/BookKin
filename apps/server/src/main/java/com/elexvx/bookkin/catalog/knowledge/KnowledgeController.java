@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @Profile("api")
 @RequestMapping("/api/v1/knowledge")
+// 知识图谱读取与显式生成入口；生成受管理角色限制。
+// Endpoints for graph reads and explicit generation; generation is restricted to management roles.
 public class KnowledgeController {
     private final KnowledgeService service;
     public KnowledgeController(KnowledgeService service) { this.service = service; }

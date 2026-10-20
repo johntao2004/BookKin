@@ -15,6 +15,8 @@ import org.springframework.stereotype.Component;
 
 @Component
 @Profile("worker")
+// Worker 定期处理过期回收、版本及封面资源；清理路径仍需指纹和边界检查。
+// Worker retention sweeps handle expired trash, versions and covers while retaining path/fingerprint checks.
 public class RetentionWorker {
     private static final Logger log = LoggerFactory.getLogger(RetentionWorker.class);
     private final RecycleBinRepository recycleBin;
@@ -59,6 +61,7 @@ public class RetentionWorker {
         enforceCoverRetention();
     }
 
+    // 已确认的封面重置及时清理，不等每日保留期任务。
     /** Confirmed cover resets should not wait for the daily retention sweep. */
     @Scheduled(fixedDelay = 60_000)
     public synchronized void enforceCoverRetention() {

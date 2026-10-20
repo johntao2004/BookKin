@@ -40,10 +40,12 @@ export interface ReferenceLibraryBuilt extends LongRoomBuilt {
   disposeArchitecture: () => Promise<void>;
 }
 
+// 将显式建筑分区标识与书籍 ID 分开。
 /** Keep explicit architectural section identities separate from book IDs. */
 export function createReferenceCatalogAnchors() {
   const shelfSections: ExpandableShelfSection[] = [];
   const catalogSlots: LongRoomSlot[] = [];
+  // 分配槽位时，先安排可到达的地面层开间，再安排上层回廊书柜。
   // Put accessible ground-floor bays before upper gallery cases in allocation.
   for (const level of [0, 1]) for (const side of [-1, 1]) {
     for (const [bay, z] of REFERENCE_BAY_BOUNDARIES.entries()) for (const face of [1, -1] as const) {
@@ -83,6 +85,7 @@ export function createReferenceCatalogAnchors() {
   return {shelfSections, catalogSlots};
 }
 
+// 将书柜占用的核心范围设为贯通两侧书架前缘的实体，包括位于薄共用背板前方的真实书籍。
 /** Keep the occupied cabinet core solid through both shelf fronts, including
  * real books in front of the thin shared back panel. */
 export function referenceCameraColliderDescriptors(config: ReferenceSceneConfig) {
@@ -91,6 +94,7 @@ export function referenceCameraColliderDescriptors(config: ReferenceSceneConfig)
     : collider);
 }
 
+// 拒绝格式错误的生成配置，避免安装失效的碰撞结构。
 /** Reject malformed generated config rather than installing broken collision. */
 export function validateReferenceConfig(value: unknown): asserts value is ReferenceSceneConfig {
   if (!value || typeof value !== 'object') throw new Error('建筑配置不可读取');
@@ -147,6 +151,7 @@ export function addReferenceLighting(root: THREE.Group, config: ReferenceSceneCo
   directional.forEach((entry, index) => {
     const light = new THREE.DirectionalLight(entry.color, entry.intensity);
     light.position.set(...entry.position); light.target.position.set(...entry.target);
+    // 仅使用一张有界阴影贴图；密集装饰灯采用自发光几何体。
     // One bounded shadow map; dense decorative lights are emissive geometry.
     light.castShadow = index === 0;
     if (light.castShadow) {
@@ -156,6 +161,7 @@ export function addReferenceLighting(root: THREE.Group, config: ReferenceSceneCo
     }
     root.add(light, light.target);
   });
+  // 有限面积的窗户光源近似两侧漫射天空光，而非两颗相向太阳。LTC 面光源不投射阴影：这是柔和日光近似，并非烘焙全局光照。中央吊灯保留局部阴影。
   // Finite window emitters model bilateral diffuse sky, rather than opposing suns.
   // LTC area lights do not cast shadows: this is soft daylight approximation,
   // not baked global illumination. The central chandelier retains local shadows.
@@ -216,6 +222,7 @@ export async function buildReferenceLibraryProgressively(
     return {root, materials, ...anchors, catalogTerminal, interactiveObjects: [catalogTerminal],
       animateEnvironment: () => undefined, referenceConfig: config, streaming,
       disposeArchitecture: () => {
+        // 建筑着色资源归控制器所有。立即解除挂载，避免通用场景释放流程在请求结束前销毁它们。
         // The controller owns architectural shading resources. Detach immediately
         // so generic scene disposal cannot destroy them before requests settle.
         architecture.removeFromParent();

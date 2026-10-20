@@ -1,3 +1,5 @@
+# 校验 GLB 字节、索引、有限属性、退化面及指定模型契约；硬编码版本和历史尺寸需匹配目标资产，不能当成通用验收。
+# Checks GLB bytes, indices, finite attributes, degenerate faces and a specific model contract; hard-coded revisions/dimensions must match the asset rather than serving as universal acceptance.
 """Read the actual GLB bytes and verify the architecture export contract."""
 from pathlib import Path
 import struct,json,math,hashlib,sys

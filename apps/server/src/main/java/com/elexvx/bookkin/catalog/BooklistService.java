@@ -9,6 +9,8 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+// 区分可见性与可编辑性，并把成员变化交给带 revision 的仓储操作。
+// Separates visibility from edit permission and delegates membership changes to revision-checked repository operations.
 @Service
 public class BooklistService {
     private final BooklistRepository booklists;

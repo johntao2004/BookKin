@@ -1,3 +1,5 @@
+// 覆盖乐观保存、文件写回确认、公开状态与重置封面取消，区分普通资料保存和后果较大的动作。
+// Covers optimistic saves, writeback confirmation, visibility and cancelled cover resets, separating ordinary edits from consequential actions.
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, vi } from "vitest";
 import { api } from "../api/client";

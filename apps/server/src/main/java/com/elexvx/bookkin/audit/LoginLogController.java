@@ -6,6 +6,8 @@ import org.springframework.web.bind.annotation.*;
 @Profile("api")
 @RequestMapping("/api/v1/users/login-logs")
 @PreAuthorize("hasAnyRole('OWNER','ADMIN')")
+// 管理角色读取登录审计分页，不暴露密码或认证令牌。
+// Management roles read paginated login audits without passwords or authentication tokens.
 public class LoginLogController {
  private final AuditService audit;
  public LoginLogController(AuditService audit) { this.audit = audit; }

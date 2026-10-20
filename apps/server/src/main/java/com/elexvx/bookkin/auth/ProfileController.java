@@ -17,6 +17,8 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @Profile("api")
 @RequestMapping("/api/v1/auth/profile")
+// 个人资料更新后重新保存当前安全上下文，使改名后的会话身份同步。
+// Refreshes the current security context after profile updates to align session identity with username changes.
 public class ProfileController {
     private final ProfileService profiles;
     private final AuthenticationManager authentication;

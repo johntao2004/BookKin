@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { PALETTE } from '../config';
 
+// 独立生成纵向顶棚木板，不包含地板端部接缝。板宽与表面变化均为依据照片进行的重建估计。
 /** Longitudinal ceiling boards, independently generated without floor end joints.
  * Board widths and surface variation are photographic reconstruction estimates. */
 export function createLongRoomCeilingMaterial(base: THREE.MeshStandardMaterial) {
@@ -15,6 +16,7 @@ export function createLongRoomCeilingMaterial(base: THREE.MeshStandardMaterial) 
     const wave = Math.sin(v + board) * 1.3 + Math.sin(v * 3 + board * 2.1) * 0.35;
     const grain = Math.sin((within + wave) * (1.25 + board * 0.013)) * 0.021
       + Math.sin((within - wave) * 3.55) * 0.012;
+    // 周期性低频磨损沿各木板变化，不在连续筒拱内衬中引入横向板缝。
     // Periodic, low-frequency wear varies along each board without introducing
     // transverse plank joints into the continuous barrel lining.
     const wear = Math.sin(v * 2 + board * 1.73 + within * 0.04) * 0.025
@@ -33,6 +35,7 @@ export function createLongRoomCeilingMaterial(base: THREE.MeshStandardMaterial) 
   const map = new THREE.DataTexture(albedo, width, height);
   map.colorSpace = THREE.LinearSRGBColorSpace;
   const bump = new THREE.DataTexture(relief, width, height, THREE.RedFormat);
+  // 粗糙度读取绿色通道；提供 RGBA 贴图，而非仅含红色通道的贴图。
   // Roughness uses the green channel; provide RGBA rather than a red-only map.
   const roughnessMap = new THREE.DataTexture(roughness, width, height);
   for (const texture of [map, bump, roughnessMap]) {
@@ -46,6 +49,7 @@ export function createLongRoomCeilingMaterial(base: THREE.MeshStandardMaterial) 
   return material;
 }
 
+// 局部 UV 使用米制尺度：木纹沿木板最长方向延伸，绝不沿厚度方向。
 /** Metric local UVs: grain follows a board's longest dimension, never its thickness. */
 export function alignLongRoomBoardGrain(mesh: THREE.Mesh<THREE.BoxGeometry>) {
   const p = mesh.geometry.parameters;
@@ -57,6 +61,7 @@ export function alignLongRoomBoardGrain(mesh: THREE.Mesh<THREE.BoxGeometry>) {
   for (let i = 0; i < position.count; i++) {
     const faceAxis = [Math.abs(normal.getX(i)), Math.abs(normal.getY(i)), Math.abs(normal.getZ(i))].indexOf(1);
     const faceAxes = [0, 1, 2].filter(axis => axis !== faceAxis);
+    // 端面木纹同样需要两个非常量坐标；将所有面投影到宽面会令侧面与端面 UV 退化为拉伸的单像素。
     // End grain also needs two non-constant coordinates; projecting every face
     // onto the broad face collapses side/end UVs into stretched single pixels.
     const grainAxis = faceAxis === along ? faceAxes[1] : along;

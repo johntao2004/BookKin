@@ -1,3 +1,5 @@
+// 以脚本、事件、可执行 URL、ZIP 逃逸和外链图片作为负例，保护确认前的导入预览。
+// Uses scripts, handlers, executable URLs, ZIP escape and external images as negative cases for safe import previews.
 import { it, expect } from "vitest";
 import { safeHtml, importArticle } from "./import";
 import JSZip from "jszip";

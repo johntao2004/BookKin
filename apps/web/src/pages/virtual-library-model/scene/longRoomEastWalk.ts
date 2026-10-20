@@ -1,3 +1,5 @@
+// 历史 Long Room 东梯路径按累计弧长插值；此定义不决定主场景是否开放该路线。
+// The historical Long Room east-stair path interpolates cumulative length; this definition does not expose the route in the main scene.
 import {LONG_ROOM} from '../longRoomLayout';
 import {EAST_STAIR as S} from './longRoomEastStair';
 import type {CameraPosition} from '../../virtual-library-collision';

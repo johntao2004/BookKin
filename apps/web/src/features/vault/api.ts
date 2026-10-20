@@ -1,3 +1,5 @@
+// 专区 API 仅传输信封、密文和修订信息；解密与口令派生在浏览器执行。
+// Vault APIs transport envelopes, ciphertext and revisions; decryption and password derivation stay in the browser.
 import { request } from "../../api/client";
 export interface VaultObject {
   id: string;

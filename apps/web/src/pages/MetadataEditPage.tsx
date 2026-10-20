@@ -10,6 +10,7 @@ import { BookMetadataEditor } from "../components/BookMetadataEditor";
 import { PageContainer, PageHeader } from "../components/PageHeader";
 import { UploadMetadataEditor } from "../components/UploadMetadataEditor";
 
+// 已入库编辑和上传校对共用页面壳及表单。
 /** One page shell and one form for stored books and upload review. */
 export function MetadataEditPage() {
   const { uploadId, bookId = "" } = useParams();

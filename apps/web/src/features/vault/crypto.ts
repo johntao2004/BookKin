@@ -1,3 +1,5 @@
+// 浏览器端信封与分块加密，AAD 绑定用途及对象；依赖安全上下文中的 Web Crypto。
+// Browser envelope/chunk encryption binds purpose and objects through AAD and requires secure-context Web Crypto.
 export const CHUNK_SIZE = 1024 * 1024;
 const encoder = new TextEncoder();
 const random = (size: number) => crypto.getRandomValues(new Uint8Array(size));

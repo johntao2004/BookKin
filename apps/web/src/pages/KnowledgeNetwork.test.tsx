@@ -1,3 +1,5 @@
+// 覆盖首帧前关闭与渲染器初始化中卸载，避免迟到回调或资源销毁竞态。
+// Covers closing before the first frame and unmounting during renderer initialization against late callbacks and disposal races.
 import { act, render } from '@testing-library/react';
 import { StrictMode } from 'react';
 import { KnowledgeNetwork } from './KnowledgeNetwork';

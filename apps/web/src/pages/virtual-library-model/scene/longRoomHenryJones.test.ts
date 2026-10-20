@@ -1,3 +1,5 @@
+// 验证历史纪念铭牌位于门上且不挡入口，不把装饰定位作为入口碰撞。
+// Checks historical memorial plaques remain above the door without blocking entry.
 import * as THREE from 'three';
 import {expect,it} from 'vitest';
 import {collectCameraColliders,resolveCameraCollision} from '../../virtual-library-collision';

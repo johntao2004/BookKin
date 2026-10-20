@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 
+// 依据照片与文字进行的特征研究；模块尺寸未经测绘。
 /** Photographic/textual character study; module dimensions are not surveyed. */
 export function createWestStairFrieze(length: number, plaster: THREE.Material, withScrolls = true) {
   const root = new THREE.Group(); root.name = 'West study running scroll frieze';
@@ -9,6 +10,7 @@ export function createWestStairFrieze(length: number, plaster: THREE.Material, w
   section.lineTo(0.13,0.145); section.quadraticCurveTo(0.16,0.17,0.18,0.185);
   section.lineTo(0.21,0.185); section.lineTo(0.21,0.12); section.closePath();
   const backing = new THREE.ExtrudeGeometry(section,{depth:length,steps:1,bevelEnabled:false,curveSegments:8});
+  // 截面坐标表示高度与浮雕深度；挤出方向横贯墙面。
   // Section coordinates describe height and relief depth; extrusion spans the wall.
   backing.applyMatrix4(new THREE.Matrix4().makeBasis(
     new THREE.Vector3(0,1,0),new THREE.Vector3(0,0,1),new THREE.Vector3(1,0,0),
@@ -22,6 +24,7 @@ export function createWestStairFrieze(length: number, plaster: THREE.Material, w
     new THREE.Vector3(-0.16,0.12,0),new THREE.Vector3(0.025,0.12,0),
   );
   const points = stem.getPoints(32);
+  // 逐渐收紧的卷曲形成弧形轮廓，而非叠加圆圈或方块。
   // A tightening curl has a curved silhouette, unlike stacked circles or square blocks.
   for(let i=1;i<=56;i++) {
     const t=i/56, angle=Math.PI/2-t*Math.PI*1.7, radius=0.095*(1-t)+0.014*t;

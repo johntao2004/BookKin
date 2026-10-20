@@ -1,3 +1,5 @@
+// 验证元数据与公开状态一起变更，并确保无效元数据不会先改变公开范围。
+// Checks coordinated metadata/visibility changes and prevents invalid metadata from changing visibility first.
 package com.elexvx.bookkin.catalog;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;

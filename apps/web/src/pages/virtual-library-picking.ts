@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 
+// 拾取依据真实渲染表面而非相机碰撞盒，因为栏杆或拱门开口可能允许看到后方书架。
 // Match rendered surfaces rather than camera collision boxes: a guard or arch
 // may have openings through which a bookcase really is visible.
 const PICK_SURFACE_EPSILON = 0.001;
@@ -19,6 +20,7 @@ function isOpaqueSurface(hit: THREE.Intersection) {
     && !(material.transparent && material.opacity < 1);
 }
 
+// 隐藏交互代理不会让不透明墙或地板变得可点击穿透。
 /** A hidden interaction proxy never makes an opaque wall/floor clickable. */
 export function isUnoccludedSceneHit(
   raycaster: THREE.Raycaster,
@@ -30,6 +32,7 @@ export function isUnoccludedSceneHit(
   try {
     raycaster.far = Math.min(originalFar, hit.distance - PICK_SURFACE_EPSILON);
     if (raycaster.far <= raycaster.near) return true;
+    // traverseVisible 同时忽略不可见父组，单独 Raycaster 不会；每次遍历当前树避免流式加载或批处理留下旧遮挡几何。
     // traverseVisible also skips invisible parent groups; Raycaster alone does
     // not. Resolve the live tree each time so streaming/batching cannot leave
     // stale geometry in the occlusion set.

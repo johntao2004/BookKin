@@ -1,3 +1,5 @@
+// 统一抽屉与对话框结构及视口边界，关闭回调不等同于业务提交。
+// Unifies drawer/dialog structure and viewport bounds; closing is not a business commit.
 import AntDrawer from "antd/es/drawer";
 import AntModal from "antd/es/modal";
 import type { CSSProperties, ReactNode } from "react";

@@ -1,3 +1,5 @@
+// 验证创建者编辑与拖动排序入口，避免重复的上下移动按钮。
+// Checks creator editing and drag sorting without redundant up/down controls.
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it } from "vitest";

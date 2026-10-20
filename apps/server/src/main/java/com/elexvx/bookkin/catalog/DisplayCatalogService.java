@@ -10,6 +10,8 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+// 公共目录可见性独立于私人阅读数据；取消公开不删除原书或个人记录。
+// Public catalog visibility is separate from private reading data; unpublishing does not delete the book or personal records.
 @Service
 public class DisplayCatalogService {
     private final DisplayCatalogRepository display;

@@ -13,6 +13,8 @@ import org.springframework.transaction.PlatformTransactionManager;
 
 @Configuration
 @Profile("worker")
+// 把扫描协调器包装为 Spring Batch 单步任务，扫描计数映射到任务统计。
+// Wraps the scan coordinator in a single Spring Batch step and maps scan counts to execution metrics.
 public class LibraryScanBatchConfiguration {
     @Bean
     Step libraryScanStep(JobRepository jobRepository, PlatformTransactionManager transactionManager,

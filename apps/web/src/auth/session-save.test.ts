@@ -1,3 +1,5 @@
+// 覆盖用户分区、失败保留、退出等待和串行写入，防止跨用户重放或旧响应覆盖新进度。
+// Covers user partitioning, failure retention, exit flushing and serialized writes against cross-user replay or stale progress.
 import { beforeEach, expect, it, vi } from "vitest";
 import { persistPosition, replayPositions, setPersistenceUser, trackSessionSave, registerSessionSaver, prepareSessionExit } from "./session-save";
 beforeEach(()=>{localStorage.clear();setPersistenceUser("reader-a");});

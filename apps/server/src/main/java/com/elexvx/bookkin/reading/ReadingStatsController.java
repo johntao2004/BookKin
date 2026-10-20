@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @Profile("api")
 @RequestMapping("/api/v1/reading-stats")
+// 按当前认证用户返回周统计，不接受请求参数指定他人身份。
+// Returns weekly statistics for the authenticated user, not a caller-selected user identity.
 public class ReadingStatsController {
     private final ReadingRepository reading;
     private final UserRepository users;

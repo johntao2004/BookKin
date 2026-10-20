@@ -1,3 +1,5 @@
+// 按书籍身份去重合并分页并限制入场错峰延迟，尊重减少动画偏好。
+// Deduplicates paginated items by identity, bounds reveal staggering and respects reduced-motion preferences.
 import { Box } from "@/ui/primitives";
 import { keyframes } from "@/ui/primitives";
 import type { PropsWithChildren } from "react";

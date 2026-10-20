@@ -80,6 +80,7 @@ function buildLines(items: unknown[]): ReadingLine[] {
 function reflowParagraphs(lines: ReadingLine[]): string[] {
   if (lines.length === 0) return [];
 
+  // PDF 行距独立于字号，因此估计页面常规基线间距，而不是把每行都拆成独立段落。
   // PDF line spacing is independent of font size (e.g. 12pt text on 28pt
   // baselines). Learn the page's regular spacing instead of splitting each line.
   const gaps = lines.slice(1).flatMap((line, index) => {

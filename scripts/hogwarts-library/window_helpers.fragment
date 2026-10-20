@@ -1,4 +1,8 @@
+# 构造真实凹入窗洞与共享边界玻璃；下层变体只变换本次新顶点，避免再次移动已有窗与墙体。
+# Builds recessed windows with shared-edge glazing; the lower-storey variant remaps only newly added vertices to avoid moving existing windows or walls again.
 # Original recessed collegiate windows. Coordinates before the side-module shift.
+# 逐个凸边界半平面裁剪多边形，保留共享边缘，避免用透明矩形假装拱形玻璃。
+# Clips polygons against each convex boundary half-plane, retaining shared edges rather than faking arched glazing with transparent rectangles.
 def clip_window_polygon(subject, boundary):
  for a,b in zip(boundary,boundary[1:]+boundary[:1]):
   def distance(p):return (b[0]-a[0])*(p[1]-a[1])-(b[1]-a[1])*(p[0]-a[0])

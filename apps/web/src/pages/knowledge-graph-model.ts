@@ -11,6 +11,7 @@ export interface KnowledgeGraphData {
 }
 export const knowledgeKey = (name: string) => name.normalize('NFKC').trim().replace(/\s+/g, ' ').toLocaleLowerCase();
 
+// 每个节点都须有原文证据；边表示同书共现，不表示推断的因果关系。
 /** Every node has source-text evidence. Edges mean co-occurrence in a book, not inferred causality. */
 export function buildKnowledgeGraph(knowledge: BookKnowledge[], bookIds: Set<string>): KnowledgeGraphData {
   const nodes = new Map<string, KnowledgeNode>();

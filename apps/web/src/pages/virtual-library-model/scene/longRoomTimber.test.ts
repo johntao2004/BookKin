@@ -1,3 +1,5 @@
+// 验证同一历史场景共享小纹理而不同构建可独立释放，并保持真实木纹比例。
+// Checks per-hall texture sharing with independently disposable builds and consistent physical grain scale.
 import * as THREE from 'three';
 import {createLibraryMaterials} from './materials';
 import {mapWestPanelGrain} from './longRoomWestOak';

@@ -1,3 +1,5 @@
+// 管理本仓库前后端预览进程的启动、状态与停止，校验健康状态和 PID 归属并拒绝替换未知端口服务。
+// Starts, checks and stops repository-owned preview supervisors, verifying health and PID ownership while refusing to replace unknown services.
 import { spawn, execFileSync } from 'node:child_process';
 import { mkdir, open, readFile, writeFile, unlink } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
@@ -68,6 +70,7 @@ if (command === 'stop') {
     if (ready) { console.log(`${service.name}: reusing healthy service`); continue; }
     let pid = await managedPid(service);
     if (!pid) {
+      // 不得替换占用前端端口的其他服务，因为它可能连接着不同的后端。
       // An occupied frontend port is not ours to replace (it may point to a different backend).
       if (service.name === 'web-supervisor' && await fetch(`http://127.0.0.1:${webPort}/login`, {signal: AbortSignal.timeout(5000)}).then(() => true).catch(() => false)) {
         throw new Error(`Port ${webPort} is occupied. Choose BOOKKIN_WEB_PORT or check BOOKKIN_API_PROXY_TARGET.`);

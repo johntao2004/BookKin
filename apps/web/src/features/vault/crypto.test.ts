@@ -1,3 +1,5 @@
+// 覆盖错误密钥、篡改、分块重排/截断和笔记归属认证，区分保密性与完整性校验。
+// Covers wrong keys, tampering, reordered/truncated chunks and note ownership authentication, separating secrecy from integrity.
 import { describe, it, expect, vi, afterAll } from "vitest";
 import { webcrypto } from "node:crypto";
 vi.stubGlobal("crypto", webcrypto);

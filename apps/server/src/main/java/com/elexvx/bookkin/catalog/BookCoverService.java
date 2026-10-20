@@ -25,6 +25,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 @Service
+// 规范化自定义封面并登记资源；重置撤销自定义引用并触发待清理处理。
+// Normalizes custom covers and registers assets; reset retires custom references and triggers cleanup handling.
 public class BookCoverService {
     private final BookRepository books;
     private final BookCoverRepository covers;

@@ -1,3 +1,5 @@
+// 验证方向、阴影与透明背景回退的关键帧计算；不把计算结果当成真实浏览器截图。
+// Checks direction, shadow and transparent-background fallback keyframes, not actual browser-rendered screenshots.
 import { describe, expect, it } from "vitest";
 import { tokens } from "../../theme/generated-tokens";
 import {

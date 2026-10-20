@@ -2,6 +2,8 @@ package com.elexvx.bookkin.auth;
 import org.jooq.DSLContext;
 import org.springframework.stereotype.Repository;
 @Repository
+// 注册开关的持久化与行锁入口，供配置修改和注册检查使用。
+// Persists and locks the signup policy for configuration changes and registration checks.
 public class RegistrationPolicyRepository {
  private final DSLContext dsl;
  public RegistrationPolicyRepository(DSLContext dsl) { this.dsl = dsl; }

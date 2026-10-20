@@ -1,3 +1,5 @@
+// 批量重命名界面仍逐份文件取得安全预览并提交任务，不直接操作 NAS 路径。
+// Batch rename still previews and submits individual file operations instead of directly mutating NAS paths.
 import { CheckCircleOutlined } from "@/ui/icons";
 import { DriveFileRenameOutlineRounded } from "@/ui/icons";
 import { GppGoodOutlined } from "@/ui/icons";

@@ -1,3 +1,5 @@
+// 验证离开编辑页后仍能看到后台保存失败，避免乐观导航吞掉错误。
+// Checks background save failures remain visible after leaving the editor so optimistic navigation cannot hide errors.
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { Route, Routes } from "react-router-dom";

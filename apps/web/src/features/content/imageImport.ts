@@ -1,3 +1,5 @@
+// 本地文章图片加载辅助，解码错误向调用者报告，不自动上传原图。
+// Local article-image loading helper reports decode errors without automatically uploading the source image.
 export async function readArticleImage(file: File): Promise<HTMLImageElement> {
   if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
     throw new Error('请选择 JPEG、PNG 或 WebP 图片。');

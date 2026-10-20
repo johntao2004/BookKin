@@ -11,6 +11,8 @@ import org.jooq.DSLContext;
 import org.jooq.Record;
 import org.springframework.stereotype.Repository;
 
+// 所有批注查询与删除都绑定 userId；管理角色不构成他人私人笔记访问权。
+// Annotation queries and deletes bind userId; a management role does not grant access to another reader’s private notes.
 @Repository
 public class AnnotationRepository {
     private final DSLContext dsl;
@@ -35,6 +37,7 @@ public class AnnotationRepository {
     }
 
     public List<Annotation> search(UUID userId, UUID bookId, String query) {
+        // 先按所有权与文本过滤，再限制结果数量，让较旧私人笔记可检索且不泄露其他读者数据。
         // Apply ownership and text matching before limiting results, so older
         // private notes are searchable without exposing another reader's data.
         return dsl.fetch("""
@@ -46,6 +49,8 @@ public class AnnotationRepository {
                 """, userId, bookId, bookId, query).map(this::map);
     }
 
+    // 用最新批注时间和书籍 ID 组成稳定排序游标，多取一条判断是否有下一页。
+    // Use latest annotation time plus book ID as the ordering cursor, fetching one extra row to detect another page.
     public AnnotationBookPage listBooks(UUID userId, String query, String cursor, int requestedLimit) {
         int limit = Math.max(1, Math.min(100, requestedLimit));
         AnnotationBookCursor decoded = AnnotationBookCursor.decode(cursor);

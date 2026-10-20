@@ -1,3 +1,5 @@
+// 集中空态标题以保持各页面一致，加载或错误状态不应仅因空数组就使用这些标题。
+// Centralizes empty-state titles; loading/errors should not appear empty merely because an array has no entries yet.
 export const EMPTY_CATALOG_TITLE = "暂无书籍";
 export const EMPTY_READING_NOTES_TITLE = "暂无阅读笔记";
 export const EMPTY_BOOKLISTS_TITLE = "暂无书单";

@@ -24,12 +24,14 @@ export function unpackGeometry(data: GeometryData, copyBuffers = false) {
   }
   return geometry;
 }
+// 输入必须拥有其缓冲区：postMessage 先对源数据执行结构化克隆。
 /** Input must own its buffers: postMessage structured-clones the sources first. */
 export function bakeStaticBatch(input: StaticBatchInput[]): GeometryData | null {
   const geometries: THREE.BufferGeometry[] = [];
   let merged: THREE.BufferGeometry | null = null;
   try {
     for (const item of input) {
+      // 结构化克隆会保留模板实例之间共享的数组引用。每次变换必须拥有自己的副本，避免再次烘焙相邻实例的数据。
       // Structured clone preserves shared array references between template
       // instances. Each transform must own a copy rather than rebake a neighbour.
       const geometry = unpackGeometry(item.geometry, true); geometries.push(geometry);

@@ -1,3 +1,5 @@
+// 验证字体失效回退、延迟加载与翻页开关持久化，避免未完成字体查询就丢失用户选择。
+// Checks disabled-font fallback, delayed font loading and persisted page-turn choice without dropping a selection prematurely.
 import { describe, expect, it, beforeEach } from "vitest";
 import { DEFAULT_READER_SETTINGS, PRESET_READER_FONTS, readReaderSettings, readerFontFamily } from "./reader-fonts";
 

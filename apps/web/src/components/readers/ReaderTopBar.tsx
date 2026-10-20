@@ -1,3 +1,5 @@
+// 阅读器共用导航与工具入口，动作由父级传入以保持 EPUB/PDF 行为一致。
+// Shared reader navigation/tools delegate actions to parents for consistent EPUB/PDF behavior.
 import { ArrowBackRounded } from "@/ui/icons";
 import { BookmarkBorderRounded } from "@/ui/icons";
 import { BookmarkRounded } from "@/ui/icons";

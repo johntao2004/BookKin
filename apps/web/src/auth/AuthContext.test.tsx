@@ -1,3 +1,5 @@
+// 验证路由守卫的 401、403 与允许角色分支，不把客户端守卫当作服务端授权替代。
+// Checks 401, 403 and allowed-role route branches without treating client guards as server authorization.
 import { fireEvent, render, screen } from "@testing-library/react";
 import { Route, Routes, useLocation } from "react-router-dom";
 import { beforeEach, describe, expect, it } from "vitest";

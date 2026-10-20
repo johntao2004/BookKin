@@ -108,6 +108,7 @@ function pageBackgroundColor(source: HTMLCanvasElement) {
       ?.getImageData(0, 0, 1, 1).data;
     if (pixel) return new Color(`rgb(${pixel[0]}, ${pixel[1]}, ${pixel[2]})`);
   } catch {
+    // 跨域图像可能使截图不可读，纸张侧折边仍可回退到语义画布颜色。
     // Cross-origin images can make a snapshot unreadable. The semantic canvas
     // color is still a safe paper-color fallback for the edge-on fold.
   }

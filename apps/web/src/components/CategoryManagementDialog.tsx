@@ -1,3 +1,5 @@
+// 集中维护分类表单、排序与删除状态，关闭时清理未完成的界面编辑。
+// Centralizes category forms, ordering and deletion state, clearing unfinished UI edits on close.
 import { AddRounded } from "@/ui/icons";
 import { ArrowDownwardRounded } from "@/ui/icons";
 import { ArrowUpwardRounded } from "@/ui/icons";

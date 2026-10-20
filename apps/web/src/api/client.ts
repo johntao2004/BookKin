@@ -72,9 +72,12 @@ async function ensureCsrfToken(signal?: AbortSignal): Promise<string> {
   return csrfToken;
 }
 
+// 功能接口失败不能证明会话过期；缺失路由或上游错误处理也可能意外返回 401。
 // A failed feature endpoint is not proof that the session itself expired.
 // Missing routes and upstream error handlers can also return an unexpected 401.
 let sessionExpiryCheck: Promise<boolean> | undefined;
+// 功能接口 401 需由会话接口再次确认；共享进行中的检查避免并发探测。
+// A feature-endpoint 401 requires session-endpoint confirmation; share the in-flight probe across callers.
 function confirmSessionExpired(): Promise<boolean> {
   if (!sessionExpiryCheck) {
     sessionExpiryCheck = fetch("/api/v1/auth/session", {
@@ -85,6 +88,8 @@ function confirmSessionExpired(): Promise<boolean> {
   return sessionExpiryCheck;
 }
 
+// 统一传输层处理 Cookie、CSRF、超时与错误；下方还包含独立的演示数据分支。
+// The shared transport handles cookies, CSRF, timeouts and errors; separate demo-data branches also live below.
 export async function request<T>(path: string, init: RequestInit = {}, options: { timeoutMs?: number } = {}): Promise<T> {
   const method = (init.method ?? "GET").toUpperCase();
   const needsCsrf = !["GET", "HEAD", "OPTIONS"].includes(method);
@@ -107,6 +112,8 @@ export async function request<T>(path: string, init: RequestInit = {}, options: 
   try {
     requestCsrfToken = needsCsrf ? await ensureCsrfToken(signal) : undefined;
     let response = await send(requestCsrfToken);
+    // 写请求 403 仅刷新 CSRF 后重试一次；业务幂等性仍需由对应接口保证。
+    // A mutating 403 refreshes CSRF and retries once; each endpoint still owns its business idempotency.
     if (response.status === 403 && needsCsrf) {
       csrfToken = undefined;
       requestCsrfToken = await ensureCsrfToken(signal);
@@ -361,8 +368,8 @@ const libraryRoots: LibraryRoot[] = [
   },
 ];
 
-export interface SiteSettings { name: string; tagline: string; description: string; keywords: string; publicUrl: string; allowIndexing: boolean; icpNumber: string; policeNumber: string; copyright: string; contactEmail: string; }
-export const DEFAULT_SITE_SETTINGS: SiteSettings = {name:"BookKin",tagline:"电子图书馆",description:"你的 NAS 私人电子图书馆",keywords:"",publicUrl:"",allowIndexing:false,icpNumber:"",policeNumber:"",copyright:"",contactEmail:""};
+export interface SiteSettings { name: string; tagline: string; description: string; keywords: string; publicUrl: string; allowIndexing: boolean; virtualLibraryEnabled: boolean; icpNumber: string; policeNumber: string; copyright: string; contactEmail: string; }
+export const DEFAULT_SITE_SETTINGS: SiteSettings = {name:"BookKin",tagline:"电子图书馆",description:"你的 NAS 私人电子图书馆",keywords:"",publicUrl:"",allowIndexing:false,virtualLibraryEnabled:true,icpNumber:"",policeNumber:"",copyright:"",contactEmail:""};
 let demoSiteSettings = {...DEFAULT_SITE_SETTINGS};
 
 export interface PasswordPolicy { minLength: number; requireUppercase: boolean; requireLowercase: boolean; requireDigit: boolean; requireSpecial: boolean; }
@@ -372,7 +379,8 @@ export interface MailSettings {
   password: string; sender: string; publicUrl: string; passwordConfigured: boolean;
 }
 export const api = {
-  siteSettings: async (): Promise<SiteSettings> => demoMode ? {...demoSiteSettings} : request("/site-settings"),
+  siteSettings: async (signal?: AbortSignal): Promise<SiteSettings> => demoMode ? {...demoSiteSettings}
+    : {...DEFAULT_SITE_SETTINGS, ...await request<SiteSettings>("/site-settings", {signal})},
   async saveSiteSettings(input: SiteSettings): Promise<SiteSettings> {
     if (demoMode) {demoSiteSettings={...input}; return {...input};}
     return request("/site-settings", {method:"PUT",body:JSON.stringify(input)});

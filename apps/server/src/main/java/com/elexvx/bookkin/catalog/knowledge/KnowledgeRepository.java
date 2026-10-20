@@ -12,6 +12,8 @@ import org.springframework.stereotype.Repository;
 import tools.jackson.databind.ObjectMapper;
 
 @Repository
+// 记录提取任务和有出处的知识点，使用任务标识协调完成或失败结果。
+// Stores extraction jobs and sourced knowledge points, using operation identifiers to coordinate completion/failure.
 public class KnowledgeRepository {
     private final DSLContext dsl;
     private final ObjectMapper json;

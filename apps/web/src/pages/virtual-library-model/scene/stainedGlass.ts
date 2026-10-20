@@ -1,3 +1,5 @@
+// 构建原创彩绘玻璃纹理与材质，按窗面或门上亮窗选择变体。
+// Builds original stained-glass textures/materials with window and transom variants.
 import * as THREE from "three";
 import { tokens } from "../../../theme/generated-tokens";
 

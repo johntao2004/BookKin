@@ -13,6 +13,8 @@ import org.apache.pdfbox.Loader;
 import org.springframework.stereotype.Component;
 
 @Component
+// 区分可解析性与加密、DRM、数字签名标志，后者限制写回资格。
+// Separates parseability from encryption, DRM and digital-signature flags that constrain writeback eligibility.
 public class FileInspector {
     private static final int MAX_XML_BYTES = 5 * 1024 * 1024;
     private static final int MAX_EPUB_ENTRIES = 20_000;

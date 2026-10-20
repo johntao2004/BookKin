@@ -1,3 +1,5 @@
+// 文章列表、导入和校对抽屉共享刷新流程，管理动作由角色与服务端共同约束。
+// Article listing/import/review share refresh flows, with management actions constrained by roles and the server.
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import {

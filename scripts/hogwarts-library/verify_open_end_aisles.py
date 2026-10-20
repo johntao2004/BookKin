@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# 检查导出端部屏风已移除而画作和结构仍保留；仅测量指定区域，不自动修复资产。
+# Checks removed end screens and retained artwork/structure in the exported geometry, measuring specified regions without repairing assets.
 """Check actual exported end-screen removal and retained paintings/structure."""
 import argparse
 import hashlib

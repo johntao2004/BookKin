@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# 构建可编辑 Blender 场景、碰撞与书架契约并导出 GLB；建筑缩放与人尺度物件的刚性位移分开处理。
+# Builds the editable Blender scene, collision/shelf contracts and GLB export, separating architectural scaling from rigid human-scale feature translations.
 """BookKin reference reconstruction. Blender 4.3.2; project-scale estimates.
 Run: blender -b -t 2 --python scripts/hogwarts-library/build_library.py -- --stage full
 Architectural coordinates are Three.js (x, y up, z). Blender uses (x, -z, y).
@@ -31,6 +33,8 @@ FULL=args.stage=='full'
 MATS={};BUILD={};COLLISIONS=[];ROUTES={};CAMERAS={};MODULE='Architecture';COLLECTIONS={}
 # Architectural elevations grow; tagged human-scale objects translate rigidly.
 HEIGHT_SCALE=1.2;HEIGHT_ANCHOR=None;COLLISION_HEIGHT_ANCHORS={}
+# 所有建模辅助函数输入采用 Three.js 的 Y 向上坐标；只在入网格时换成 Blender 的 Z 向上坐标。
+# Model helpers accept Three.js Y-up coordinates; conversion to Blender Z-up happens when vertices enter the mesh.
 def V(p):return (p[0],-p[2],p[1])
 def rgb(h):return tuple((int(h[i:i+2],16)/255)**2.2 for i in (0,2,4))
 def material(name,color,rough=.5,metal=0,emission=0,texture=None):
@@ -79,6 +83,8 @@ class Mesh:
    axes=sorted(range(3),key=lambda a:spans[a],reverse=True);long,short=axes[:2]
    uv=[(p[short]*1.4,p[long]*.35) for p in vs]
   self.uv.extend(uv);self.s.append(smooth)
+# 按当前模块与材质收集顶点，保留编辑层次；最终运行时导出才跨模块合并同材质网格。
+# Collect vertices by current module/material to retain editability; cross-module material merging occurs only for the final runtime export.
 def builder(mat):
  key=(MODULE,mat)
  if key not in BUILD:BUILD[key]=Mesh()
@@ -440,6 +446,8 @@ def turned_guard(name,points,y=6.2,shared_start=False):
   box(OAK,(x,y+1.22,z),(.34,.12,.34),.015)
  GUARD_JOINERY.append({'id':name,'floorY':y*HEIGHT_SCALE,'sharedStart':shared_start,'newels':[dict(zip(('x','z'),p)) for p in posts],'runs':runs,'spindleRadiusMax':.06,'spindleBase':.20,'spindleHeight':.85,'handrailCenterY':1.12,'handrailBottomY':1.045,'handrailTopY':1.205,'bottomRailTopY':.20})
 # Preserve the local dimensions of gallery guardrails at raised anchors.
+# 临时设置刚性物件的高度锚点，并在结束时恢复上下文；后续建筑增高不会拉伸这些局部尺寸。
+# Temporarily sets a rigid feature’s height anchor and restores the context afterward so architectural height scaling preserves its local dimensions.
 def anchored_feature(fn,anchor_of):
  def wrapped(*a,**kw):
   global HEIGHT_ANCHOR
@@ -1201,6 +1209,8 @@ for side in(-1,1):
  outer=next(c for c in COLLISIONS if c['id']==f'outer-wall-{side}')
  assert outer['size']['z']==HALL_LENGTH
 CROSSWALK_CHECKS={'length':HALL_LENGTH,'endA':-END_Z,'endB':END_Z,'endExtension':END_EXTENSION,'innerZ':CROSSWALK_INNER_Z,'outerZ':END_Z,'depth':CROSSWALK_DEPTH,'centralWidth':17.6,'sideGallerySeamX':8.8,'centralXMin':-10.1,'centralXMax':10.1,'bodyRadius':.3,'requiredBodyClearBand':2.0,'passed':True}
+# 坐标和碰撞必须采用同一最终高度变换；带锚点的物件只随锚点竖移，其余建筑才按比例增高。
+# Geometry and colliders share the final height transform: anchored features translate with their anchors while architectural geometry scales.
 # Apply one architectural height transform to the finalized source coordinates.
 # Rigid local anchors preserve furniture, paintings and guardrail sizes.
 for data in BUILD.values():
@@ -1225,6 +1235,8 @@ for route in ROUTES.values():
 for key in ('smallFixtureMaximumY','galleryUndersideY','mainFixtureMaximumY'):FIXTURE_CHECKS[key]*=HEIGHT_SCALE
 # Assemble editable modules into collections, preserving meaningful names and UVs.
 MESH_INTEGRITY=[]
+# 网格校验不得静默修复拓扑；异常应阻止导出，避免生成物与已验证输入不一致。
+# Mesh validation must not silently repair topology; failures stop export rather than changing verified input geometry.
 def create_mesh(name,data,mat,collection):
  # Weld coincident vertices so tube/ring normals really interpolate and glTF can share vertices.
  unique=[];remap=[];lookup={}
@@ -1333,6 +1345,8 @@ for name,(pos,target,lens) in camera_defs.items():
  pos=[pos[0],pos[1]*HEIGHT_SCALE,pos[2]];target=[target[0],target[1]*HEIGHT_SCALE,target[2]]
  data=bpy.data.cameras.new(name);data.lens=lens;data.clip_start=.05;data.clip_end=250;ob=bpy.data.objects.new(name,data);camcol.objects.link(ob);ob.location=V(pos);ob.rotation_euler=(Vector(V(target))-ob.location).to_track_quat('-Z','Y').to_euler();CAMERAS[name]={'position':dict(zip('xyz',pos)),'target':dict(zip('xyz',target)),'lensMm':lens,'sensorWidthMm':36,'approximateMatch':True}
 scene.camera=bpy.data.objects['ground-to-a']
+# 以下配置声明供运行时消费的尺寸和碰撞契约，本身不是从导出三角面测得的验收证据。
+# The following runtime dimensions/collision configuration declares a contract; it is not verification evidence measured from exported triangles.
 # Data contract is independent from the display mesh and measured nowhere.
 config={'revision':REVISION,'version':1,'coordinateSystem':'Three.js x width, y up, z length; meters are project scale estimates','source':'User-supplied Hogwarts Legacy screenshots, S01–S09; 5 unique original 2048×1152 PNGs plus PDF previews','dimensions':{'width':HALL_WIDTH,'length':HALL_LENGTH,'groundY':0,'galleryY':6.2,'outerWallX':OUTER_WALL_X,'centralVoidX':8.8,'vaultSpringY':13.8,'vaultCrownY':18.7,'endA':-END_Z,'endB':END_Z},'bays':BAYS,'boundaries':BOUNDS,'shelves':{'lower':{'xMin':9.45,'xMax':16.0,'baseY':.25,'pitch':.77,'rows':6},'upper':{'xMin':11.10,'xMax':16.18,'baseY':6.45,'pitch':.88,'rows':6},'depth':SHELF_DEPTH,'frontOffset':SHELF_DEPTH/2,'boardThickness':SHELF_BOARD,'stileWidth':CASE_STILE_WIDTH,'upperPassageStileShift':UPPER_PASSAGE_STILE_SHIFT,'backThickness':SHELF_BACK,'bookDepth':BOOK_DEPTH,'bookCenterOffset':BOOK_CENTER,'bookRearGap':BOOK_REAR_GAP,'bookFrontInset':BOOK_FRONT_INSET,'omittedCases':[]},'stairs':ROUTES,'collisions':COLLISIONS,'cameras':CAMERAS,'previewLighting':{'engine':'Cycles CPU','threads':2,'samples':args.samples,'viewTransform':'AgX','look':'Medium High Contrast','exposure':.6,'note':'Area lights and world are preview-only, not included in GLB. Browser lighting must be configured independently.'},'estimates':['All dimensions and counts, including six bays, are adjustable project-scale estimates, not a survey.','Upper transverse-case orientation and inner-gallery passage remain an interpretation of partial views.','Spiral turns, tread count, handedness and landing apertures are circulation adaptations pending close views.','End B room depth and polygon balcony angles are estimates.','The A-end canvas uses a newly generated painterly interpretation of the supplied portrait, not extracted game artwork or a verified character likeness; the former gallery sculptures and their niche/base assemblies have been removed.','Window count and glass, inaccessible rear chambers, joinery details and full ornament profiles are not observed completely.'],'omissions':['No anonymous filler books; shelves are reserved for real catalog objects.','No screenshots applied as architectural planes, logos, NPCs, stationery or filler catalog books.','No claimed baked lighting, target-computer frame rate or surveyed accuracy.','Exact sculptural likeness, game-specific heraldry and unseen carvings are not reproduced.']}
 for key in ('galleryY','vaultSpringY','vaultCrownY'):config['dimensions'][key]*=HEIGHT_SCALE

@@ -1,3 +1,5 @@
+// 覆盖四角缩放、图片边界和 800×1200 导出，并确认取消不生成也不上传封面。
+// Covers corner resizing, image bounds and 800×1200 export, with cancellation producing no upload.
 import { fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { TestProviders } from "../test/TestProviders";

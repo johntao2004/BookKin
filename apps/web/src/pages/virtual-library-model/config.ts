@@ -108,6 +108,7 @@ export interface LibraryConfig {
   };
 }
 
+// 圆塔比例来自给定平面与剖面；主要半径和楼层统一配置，细化时不必重建各独立网格。
 /**
  * Circular tower proportions derived from the supplied plan and section.
  * Every major radius and vertical level is controlled here so the model can

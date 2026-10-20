@@ -1,3 +1,5 @@
+// 验证 56 个书柜、双面六层及书籍脚下支撑，目录排布不能越过真实书架空腔。
+// Checks 56 cases, two faces/six rows and book support without exceeding real shelf cavities.
 import * as THREE from 'three';
 import { readFileSync } from 'node:fs';
 import {

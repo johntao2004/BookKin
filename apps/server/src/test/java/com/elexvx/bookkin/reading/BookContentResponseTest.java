@@ -1,3 +1,5 @@
+// 验证普通范围、后缀范围、非法范围和 HEAD 响应，确保状态头与实际传输字节一致。
+// Checks normal/suffix/invalid ranges and HEAD responses so headers match actual transferred bytes.
 package com.elexvx.bookkin.reading;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;

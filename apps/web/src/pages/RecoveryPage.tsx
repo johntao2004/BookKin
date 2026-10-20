@@ -1,3 +1,5 @@
+// 从恢复链接读取一次性用途令牌，验证或重置后按服务端结果更新界面。
+// Reads purpose-specific one-time tokens from recovery links and follows server verification/reset results.
 import { PasswordRequirements, usePasswordPolicy, passwordRequirements } from "../auth/password-policy";
 import { useState, type FormEvent } from "react";
 import { Link, useLocation } from "react-router-dom";

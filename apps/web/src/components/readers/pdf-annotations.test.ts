@@ -1,3 +1,5 @@
+// 验证现有 PDF 文本层立即呈现新批注，含虚拟页 locator，避免必须刷新才可见。
+// Checks immediate annotation styling on existing PDF text layers, including virtual-page locators, without requiring refresh.
 import { applyPdfTextAnnotations } from "./pdf-annotations";
 import type { Annotation } from "../../domain/types";
 

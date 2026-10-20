@@ -1,3 +1,5 @@
+// 主人配置 SMTP 并显式发送测试邮件，已保存密码不会从设置读取响应回填。
+// Owner SMTP configuration sends test mail explicitly and never refills saved passwords from settings responses.
 import { useState, type FormEvent } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, type MailSettings } from "../api/client";

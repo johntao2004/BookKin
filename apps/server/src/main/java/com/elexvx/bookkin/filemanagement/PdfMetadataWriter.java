@@ -10,6 +10,8 @@ import org.apache.pdfbox.pdmodel.common.PDMetadata;
 import org.springframework.stereotype.Component;
 
 @Component
+// 把更新元数据写入 PDF 副本；不负责外层文件租约、预览或原文件替换。
+// Writes updated metadata to a PDF copy; outer layers own leases, previews and original-file replacement.
 public class PdfMetadataWriter {
     public void write(Path source, Path target, BookMetadata metadata) throws IOException {
         try (var document = Loader.loadPDF(source.toFile())) {

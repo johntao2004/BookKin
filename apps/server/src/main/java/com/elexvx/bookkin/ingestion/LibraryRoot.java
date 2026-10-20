@@ -1,3 +1,5 @@
+// 根目录快照包含配置路径、真实路径及探测能力；能力检查时间说明其可能过期，不能替代执行时校验。
+// Root snapshots retain configured/canonical paths and probed capabilities; timestamps expose staleness, so execution still validates.
 package com.elexvx.bookkin.ingestion;
 
 import java.time.OffsetDateTime;

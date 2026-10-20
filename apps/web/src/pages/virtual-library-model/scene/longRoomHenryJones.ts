@@ -1,3 +1,5 @@
+// 本文件说明适用于该 Long Room 构建路径；下方旧注释的 live 不表示当前主场景已启用此模型。
+// These comments describe this Long Room builder; legacy uses of live below do not assert inclusion in the current main scene.
 import { WEST_LEVELS } from './longRoomWestLevels';
 import * as THREE from 'three';
 import type { LibraryMaterials } from './materials';
@@ -6,6 +8,7 @@ import { createLongRoomSashes } from './longRoomSash';
 import { PALETTE } from '../config';
 import { createHenryJonesMemorialDisplay } from './longRoomHenryMemorial';
 
+// Y1.002 确定了南侧房间及其 49 平方米面积。下方形状、高度与窗户为配合改编楼梯的工作估计，并非测绘尺寸。
 /** Y1.002 establishes the south-side room and 49 m² area. Shape/height/windows
  * below are working estimates fitted to the adapted stair, not survey dimensions. */
 export const HENRY_JONES = {
@@ -31,6 +34,7 @@ export function createHenryJonesRoom(materials: LibraryMaterials, options: { inc
   box('Henry Jones supported doorway threshold',[0.76,0.18,H.doorWidth],[3.2,H.floorY-0.09,H.doorZ],materials.woodWarm);
   box('Henry Jones plaster ceiling',[width+0.24,0.18,depth+0.24],[centerX,H.floorY+H.height+0.09,centerZ],plaster);
   if (options.includeNorthWall) {
+    // 此 Long Room 连接构建路径由相邻楼梯围护提供这段边界。独立牌匾审阅需要同一面墙，使纪念牌呈现为装在真实门洞上方，而非悬浮在审阅背景前。
     // The live connection supplies this boundary from the adjoining stair
     // enclosure. The standalone plaque review needs the same wall so the
     // memorial is read as mounted above a real doorway rather than floating
@@ -56,6 +60,7 @@ export function createHenryJonesRoom(materials: LibraryMaterials, options: { inc
     head.castShadow=head.receiveShadow=true; root.add(head);
   }
   box('Henry Jones east wall',[width, H.height,0.24],[centerX,H.floorY+H.height/2,H.frontZ],plaster,true);
+  // 楼梯围护提供一直延伸至共用顶棚的共享墙体。
   // The stair enclosure supplies the shared wall up to the common ceiling.
   const daylight = new THREE.MeshStandardMaterial({color:PALETTE.parchment,emissive:PALETTE.parchment,emissiveIntensity:0.3,roughness:0.8});
   const sash = createLongRoomSashes(3.1,materials.woodWarm,daylight);
@@ -78,6 +83,7 @@ export function createHenryJonesRoom(materials: LibraryMaterials, options: { inc
       const frame=sash.clone(); frame.position.set(rotate?x-0.08:x+c,H.floorY+sill,rotate?z+c:z+0.08);
       if(rotate)frame.rotation.y=-Math.PI/2;
       frame.name=name+' window';root.add(frame);
+      // 玻璃虽能透入日光，在导航碰撞中仍视为实体。
       // Glazing is solid to navigation even though its view admits daylight.
       box(name+' window barrier',rotate?[0.08,3.1,openingWidth]:[openingWidth,3.1,0.08],
         [rotate?x:x+c,H.floorY+sill+1.55,rotate?z+c:z],daylight,true);
@@ -85,6 +91,7 @@ export function createHenryJonesRoom(materials: LibraryMaterials, options: { inc
   };
   wall('Henry Jones south',depth,[-2.5,0,2.5],H.southX,centerZ,true);
   wall('Henry Jones west',width,[0],centerX,H.backZ,false);
+  // 中性照明是临时的反弹光估计，并非经过校准的日光。
   // Neutral illumination is a temporary bounce estimate, not calibrated daylight.
   const light=new THREE.PointLight(PALETTE.parchment,24,10,2);
   light.position.set(centerX,H.floorY+3.5,centerZ);root.add(light);

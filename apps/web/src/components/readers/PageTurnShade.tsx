@@ -1,3 +1,5 @@
+// 阅读翻页装饰层，视觉反馈不负责改变定位或写入阅读进度。
+// Decorative page-turn layer; visual feedback does not own navigation locators or progress persistence.
 import { Box } from "@/ui/primitives";
 import { alpha } from "@/ui/primitives";
 

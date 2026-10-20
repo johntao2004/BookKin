@@ -1,3 +1,5 @@
+// 验证阅读主题映射到整站语义 token，避免颜色模式只影响阅读正文。
+// Checks reader themes map to whole-site semantic tokens rather than only reading content.
 import { tokens } from "./generated-tokens";
 import { createBookKinTheme } from "./theme";
 

@@ -1,3 +1,5 @@
+// 验证修改路径会使旧目录预览失效，必须重新探测再登记。
+// Checks that changing a path invalidates its old preview and requires a fresh probe before registration.
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, it, expect, vi } from "vitest";

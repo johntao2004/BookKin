@@ -1,3 +1,5 @@
+// 先确认会话并保留尝试访问目标，已登录用户不重复显示登录表单。
+// Confirms session state and preserves the attempted destination before deciding whether to show login.
 import { VisibilityOffOutlined } from "@/ui/icons";
 import { VisibilityOutlined } from "@/ui/icons";
 import { Alert } from "@/ui/feedback";

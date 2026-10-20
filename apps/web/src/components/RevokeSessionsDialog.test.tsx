@@ -1,3 +1,5 @@
+// 验证明确确认才撤销会话，取消路径必须没有撤销请求。
+// Checks session revocation requires confirmation and cancellation sends no revocation request.
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { expect,it,vi } from "vitest";
 import { TestProviders } from "../test/TestProviders";

@@ -1,3 +1,5 @@
+// 检查历史西侧天花朝向室内、适合空间并保留参考中的开放中心。
+// Checks the historical west ceiling faces the room, fits the space and retains the reference’s open center.
 import * as THREE from 'three';
 import { createWestStairCeilingRelief } from './longRoomWestCeiling';
 

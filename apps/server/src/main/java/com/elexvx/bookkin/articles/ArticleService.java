@@ -18,6 +18,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+// 协调公开文章、受控导入、图片清洗及用户阅读记录；正文清洗不依赖前端可信。
+// Coordinates public articles, controlled imports, image sanitization and user reading state without trusting client sanitization.
 public class ArticleService {
     private final java.util.concurrent.ConcurrentHashMap<UUID,Long> fetchTimes=new java.util.concurrent.ConcurrentHashMap<>();
     private final DSLContext db; private final UserRepository users; private final PublicWebFetcher web;
@@ -97,6 +99,7 @@ public class ArticleService {
     }
     public UUID asset(byte[] bytes,Principal principal) throws IOException {
         var user=manager(principal);if(bytes.length>5*1024*1024)throw new IOException("Image too large");
+        // 先限制尺寸再解码；保存规范化的无主动内容位图。
         // Decode only after dimensions have been bounded; persist a normalized raster without active content.
         try(var stream=ImageIO.createImageInputStream(new ByteArrayInputStream(bytes))) {
             var readers=ImageIO.getImageReaders(stream);if(!readers.hasNext())throw new IOException("Unsupported image");

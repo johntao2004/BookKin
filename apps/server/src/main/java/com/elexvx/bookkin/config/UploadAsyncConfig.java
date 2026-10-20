@@ -9,6 +9,8 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 @EnableAsync
 @Configuration
 public class UploadAsyncConfig {
+    // 解析执行器固定两线程且队列有上限；与 HTTP 上传传输并发是不同层次。
+    // The parsing executor has two threads and a bounded queue; this is separate from HTTP upload concurrency.
     @Bean("bookUploadExecutor")
     Executor bookUploadExecutor() {
         var executor = new ThreadPoolTaskExecutor();

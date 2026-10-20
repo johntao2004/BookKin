@@ -1,3 +1,5 @@
+# 根据每层真实窗洞生成浏览器面光源配置；不修改几何，也不复用 Blender 预览灯光。
+# Derives browser area lights from each storey’s window openings without changing geometry or reusing Blender preview lighting.
 """Browser-only overcast daylight; geometry and Blender preview are independent."""
 
 

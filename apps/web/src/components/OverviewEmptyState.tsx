@@ -1,3 +1,5 @@
+// 概览卡空态保留共享高度与标题对齐，文案由具体业务模块提供。
+// Overview empty states preserve shared sizing/alignment while business modules supply their copy.
 import { EmptyStateIllustration } from "../ui/empty-state";
 import { Box } from "@/ui/primitives";
 import { Stack } from "@/ui/primitives";

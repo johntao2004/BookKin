@@ -29,6 +29,8 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 @Service
+// 流式接收字体，校验大小、签名及指纹，未完成上传的字体不可启用。
+// Streams fonts with size, signature and fingerprint checks; incomplete uploads cannot be enabled.
 public class ReaderFontService {
     private final ReaderFontRepository fonts;
     private final UserRepository users;
@@ -166,6 +168,7 @@ public class ReaderFontService {
                 deleteQuietly(safeChild(root, font.stagingPath()));
                 fonts.delete(font.id());
             } catch (RuntimeException ignored) {
+                // 过期会话清理失败可留待后续任务重试同一路径。
                 // A stale session is best-effort cleanup; a future run retries the exact path.
             }
         });

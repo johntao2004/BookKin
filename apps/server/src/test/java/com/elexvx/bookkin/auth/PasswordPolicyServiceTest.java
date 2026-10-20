@@ -1,3 +1,5 @@
+// 覆盖启用规则、长度、禁用项与临时密码生成，确保生成端和校验端采用一致策略。
+// Covers enabled rules, length, disabled checks and temporary-password generation under one consistent policy.
 package com.elexvx.bookkin.auth;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;

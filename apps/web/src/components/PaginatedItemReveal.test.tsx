@@ -1,3 +1,5 @@
+// 验证跨页去重不打乱原顺序，并只为后来加载的条目添加渐入标记。
+// Checks deduplication preserves source order and marks only later-loaded entries for staggered reveal.
 import { render, screen } from "@testing-library/react";
 import { flattenUniquePaginatedItems, PaginatedItemReveal, revealDelay } from "./PaginatedItemReveal";
 

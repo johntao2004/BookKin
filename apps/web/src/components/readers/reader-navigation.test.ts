@@ -1,3 +1,5 @@
+// 覆盖水平手势阈值与可编辑元素，避免阅读导航劫持输入操作。
+// Covers horizontal gesture thresholds and editable controls so reading navigation does not hijack input.
 import { describe, expect, it } from "vitest";
 import { isEditableReaderTarget, isReaderSwipe, READER_SWIPE_THRESHOLD } from "./reader-navigation";
 

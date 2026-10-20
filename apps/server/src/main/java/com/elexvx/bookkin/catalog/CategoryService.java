@@ -10,6 +10,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+// 集中校验分类管理身份，读取按访客或登录用户切换可见范围。
+// Centralizes category management authorization and switches read visibility for guests versus signed-in users.
 public class CategoryService {
     private final CategoryRepository categories;
     private final BookRepository books;

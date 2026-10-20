@@ -1,3 +1,5 @@
+// 验证火焰在炉膛范围内且批处理后仍可动画，更新不能移动基座或边界。
+// Checks fire remains within the hearth and animates after batching without moving its base or bounds.
 import * as THREE from 'three';
 import { createFireplaceFire } from './fireplaceFire';
 import { optimizeStaticMeshes } from './optimizeScene';

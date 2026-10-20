@@ -1,3 +1,5 @@
+// 验证有限采样保留页码/章节证据且不改原书，并拒绝外部实体、ZIP 逃逸与超大章节。
+// Checks bounded sampling preserves page/chapter evidence without changing originals and rejects entities, ZIP escape and oversized chapters.
 package com.elexvx.bookkin.filemanagement.infrastructure;
 
 import static org.junit.jupiter.api.Assertions.*;

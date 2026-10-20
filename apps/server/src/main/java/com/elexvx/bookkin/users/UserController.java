@@ -26,6 +26,8 @@ import org.springframework.web.bind.annotation.RestController;
 @Profile("api")
 @RequestMapping("/api/v1/users")
 @PreAuthorize("hasAnyRole('OWNER','ADMIN')")
+// 管理账户状态、临时密码和撤销会话，角色组合的额外限制在各操作中检查。
+// Manages account status, temporary passwords and session revocation with additional role checks per operation.
 public class UserController {
     private final UserRepository users;
     private final com.elexvx.bookkin.auth.SessionLifecycleService sessions;

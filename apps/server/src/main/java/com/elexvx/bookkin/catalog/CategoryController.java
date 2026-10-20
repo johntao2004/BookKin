@@ -24,6 +24,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @Profile("api")
 @RequestMapping("/api/v1")
+// 分类浏览允许按访问身份过滤，分类维护入口要求主人或管理员。
+// Category browsing filters by viewer identity; maintenance endpoints require owner/admin roles.
 public class CategoryController {
     private final CategoryService categories;
 

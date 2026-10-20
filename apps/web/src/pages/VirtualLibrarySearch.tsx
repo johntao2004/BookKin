@@ -1,3 +1,5 @@
+// 对已授权目录快照做本地检索，选择结果交给场景定位或阅读导航。
+// Searches the authorized catalog snapshot locally and delegates selections to scene focus or reader navigation.
 import { Empty, Input, Modal } from 'antd';
 import { useMemo, useRef, useState } from 'react';
 import type { InputRef } from 'antd';

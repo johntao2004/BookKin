@@ -1,11 +1,13 @@
 import * as THREE from 'three';
 
+// 依据 2021 年回廊照片重建车旋栏杆柱。替换直线锥形轮廓时保留现有高度和最大半径。
 /** Turned gallery baluster reconstructed from the 2021 gallery photograph.
  * Preserve the existing height and maximum radius while replacing straight tapers. */
 export function createLongRoomBaluster() {
   const knots = [[0.05, 0], [0.07, 0.05], [0.038, 0.1], [0.034, 0.24], [0.065, 0.32],
     [0.045, 0.46], [0.026, 0.62], [0.05, 0.72], [0.062, 0.78]];
   const secants = knots.slice(1).map(([r, y], i) => (r - knots[i][0]) / (y - knots[i][1]));
+  // 使用单调切线，避免鼓部过宽或挤出负半径。
   // Monotone tangents avoid over-wide lobes or pinched negative radii.
   const slopes = knots.map((_, i) => {
     if (i === 0 || i === knots.length - 1) return 0;
@@ -31,6 +33,7 @@ export function createLongRoomBaluster() {
   return geometry;
 }
 
+// 将车旋构件嵌合在共享下横杆顶面（+0.17）与扶手底面（+0.985）之间，避免两端留下无支撑间隙。
 /** Fit the turned member between the shared lower rail top (+0.17) and
  * handrail underside (+0.985), instead of leaving unsupported end gaps. */
 export function galleryBalusterPlacement(x:number,floor:number,z:number) {

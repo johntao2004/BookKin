@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { type ReadingState } from "./api";
+// 独立阅读状态不依赖书库持久化、统计、localStorage 或会话保存队列。
 /** No dependency on book persistence, analytics, localStorage or session-save queues. */
 export function useIndependentReading(
   initial: ReadingState,

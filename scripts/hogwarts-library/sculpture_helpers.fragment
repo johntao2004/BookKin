@@ -1,3 +1,5 @@
+# 历史学者雕像构建片段依赖外部网格辅助函数和当前模块；保留定义不代表当前主模型启用这些雕像。
+# Historical scholar-sculpture helpers depend on shared mesh functions and the current module; retaining the definitions does not enable these figures in the current main model.
 # Original gallery sculptures modeled from the supplied reference silhouettes.
 # Paste/exec after the shared mesh helpers. Requires math, Vector, face, quad,
 # box, tube; STONE/OAK/DARK are fallbacks. No imported mesh or image geometry.

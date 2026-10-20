@@ -1,3 +1,5 @@
+// 真实书卡与骨架共用响应式列规则，宽屏稀疏结果也保留空轨道。
+// Real cards and skeletons share responsive grid columns, preserving empty tracks for sparse wide-screen results.
 import { tokens } from "../theme/generated-tokens";
 
 export const bookGridSx = {

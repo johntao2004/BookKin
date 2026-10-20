@@ -4,6 +4,7 @@ import { markCameraCollider } from '../../virtual-library-collision';
 import type { LibraryMaterials } from './materials';
 import { makeBox } from './parts';
 
+// 原创学院哥特式结构，所有尺寸以场景米为单位。
 /** Original collegiate Gothic construction. All dimensions are in scene metres. */
 export const SCHOLASTIC_LAYOUT = {
   vaultSpring: LIBRARY.tower.mainHeight - 0.95,
@@ -14,6 +15,7 @@ export const SCHOLASTIC_LAYOUT = {
 const v = (x: number, y: number, z: number) => new THREE.Vector3(x, y, z);
 const polar = (r: number, y: number, a: number) => v(Math.cos(a) * r, y, Math.sin(a) * r);
 
+// 具有线脚的三瓣拱肋，而非低多边形圆柱。
 /** A moulded, three-lobed rib, rather than a low-poly cylinder. */
 function rib(points: THREE.Vector3[], material: THREE.Material, radius = 0.09) {
   const curve = new THREE.CatmullRomCurve3(points, false, 'centripetal');
@@ -34,6 +36,7 @@ export function createScholasticVault(materials: LibraryMaterials) {
   const { vaultSpring: spring, vaultRise: rise, ribCount } = SCHOLASTIC_LAYOUT;
   const radius = LIBRARY.tower.innerRadius + 0.3;
   const heightAt = (r: number) => spring + rise * (1 - Math.pow(r / radius, 1.65));
+  // 连续的弧形木衬完整封闭屋顶，从斜向观察也不会露空。
   // A continuous curved timber lining closes the complete roof, including oblique views.
   const lining = materials.wood.clone();
   lining.side = THREE.DoubleSide;
@@ -45,6 +48,7 @@ export function createScholasticVault(materials: LibraryMaterials) {
   shell.name = 'Continuous curved oak vault lining';
   shell.receiveShadow = true;
   group.add(shell);
+  // 借鉴 Long Room 的横向木构开间，并适配圆形外轮廓。保持屋顶表面和安装高度不变，使回廊与链条仍正确连接。
   // Long Room-inspired transverse timber bays, adapted to the circular envelope.
   // Keep the same roof surface and mounting height so the galleries and chain stay attached.
   const heightAtPoint = (x: number, z: number) => heightAt(Math.hypot(x, z));
@@ -59,6 +63,7 @@ export function createScholasticVault(materials: LibraryMaterials) {
     arch.name = `Long Room transverse oak arch ${bay}`;
     group.add(arch);
   }
+  // 细密纵向压条使橡木内衬呈现拼装板材质感，而非平滑穹面。
   // Fine longitudinal battens make the oak lining read as fitted boards, not a flat dome.
   for (let board = 1; board < 40; board++) {
     const x = radius * (2 * board / 40 - 1);
@@ -88,6 +93,7 @@ export function createScholasticVault(materials: LibraryMaterials) {
   return group;
 }
 
+// 按房间尺度构建拱肋，依托现有墙体边界，并保持在头顶上方。
 /** Room-scale ribs, grounded in the existing wall envelope and above head height. */
 export function addScholasticRoomCeiling(root: THREE.Group, materials: LibraryMaterials) {
   for (const z of [-4.6, -1.2, 2.2]) {

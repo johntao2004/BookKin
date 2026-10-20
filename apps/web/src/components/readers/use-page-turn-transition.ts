@@ -36,6 +36,7 @@ const finishAnimation = async (animation: Animation) => {
   try {
     await animation.finished;
   } catch {
+    // 新翻页或组件清理可能取消当前动画。
     // A newer page turn or component cleanup may cancel the current animation.
   }
 };
@@ -354,6 +355,7 @@ export function usePageTurnTransition(
           snapshot: backSnapshot,
         };
       }).catch(() => {
+        // 复杂文档无法捕获背面截图时，仍用正面纹理完成卷页。
         // The page still curls correctly with the front texture if a complex
         // embedded document cannot be captured for the paper's reverse side.
       });

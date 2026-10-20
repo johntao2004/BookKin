@@ -14,6 +14,8 @@ import org.springframework.security.web.context.HttpSessionSecurityContextReposi
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.http.HttpMethod;
 
+// 统一配置会话、CSRF 与请求级权限；细粒度限制仍由方法和服务执行。
+// Configures sessions, CSRF and request authorization; methods and services enforce finer restrictions.
 @Configuration
 @Profile("api")
 @EnableMethodSecurity
@@ -21,6 +23,8 @@ public class SecurityConfig {
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http, HttpSessionSecurityContextRepository repository,
                                             MustChangePasswordFilter mustChangePasswordFilter, SessionLifetimeFilter sessionLifetimeFilter) throws Exception {
+        // SPA 从可读 Cookie 取得 CSRF 值；会话 Cookie 不由此处管理。
+        // The SPA reads the CSRF cookie; this setting does not control the session cookie.
         var csrf = CookieCsrfTokenRepository.withHttpOnlyFalse();
         csrf.setCookieName("XSRF-TOKEN");
         csrf.setHeaderName("X-XSRF-TOKEN");
@@ -30,6 +34,8 @@ public class SecurityConfig {
                 .csrf(configurer -> configurer.csrfTokenRepository(csrf).spa())
                 .securityContext(context -> context.securityContextRepository(repository).requireExplicitSave(true))
                 .sessionManagement(session -> session.sessionFixation(fixation -> fixation.migrateSession()))
+                // 页面壳允许加载不代表 API 公开；以下匹配按顺序区分页面、公开读取和受保护操作。
+                // Serving the page shell does not expose its API; ordered matchers separate pages, public reads and protected operations.
                 .authorizeHttpRequests(requests -> requests
                         .requestMatchers("/", "/index.html", "/login", "/recover", "/forgot-password", "/register", "/setup", "/change-password", "/library", "/library/**", "/categories", "/categories/**",
                                 "/booklists", "/booklists/**", "/settings", "/settings/display-books", "/display-books", "/recycle-bin",

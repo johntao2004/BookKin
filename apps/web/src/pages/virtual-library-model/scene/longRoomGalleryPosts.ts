@@ -3,6 +3,7 @@ import { LONG_ROOM as L, LONG_ROOM_BAY_PITCH as P, EAST_GALLERY_CONNECTION as E 
 import type { LibraryMaterials } from './materials';
 import { alignLongRoomBoardGrain } from './longRoomTimber';
 
+// 2021 年 Palais Princier 细部照片可见带镶板的回廊墩柱。轮廓及其在适配开间网格中的重复方式均由照片估计。
 /** Panelled gallery piers visible in the 2021 Palais Princier detail.
  * Profiles and repetition on the adapted bay grid are photographic estimates. */
 export function addLongRoomGalleryPosts(root: THREE.Group, materials: LibraryMaterials, side: number) {

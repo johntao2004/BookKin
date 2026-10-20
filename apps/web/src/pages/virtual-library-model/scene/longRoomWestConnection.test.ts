@@ -1,3 +1,5 @@
+// 验证历史西楼梯上口与主馆零高度对齐，连接开放且受地面支撑。
+// Checks the historical west stair threshold aligns to hall zero with an open supported connection.
 import * as THREE from 'three';
 import { expect,it } from 'vitest';
 import { createLibraryMaterials } from './materials';

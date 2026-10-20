@@ -1,3 +1,5 @@
+// 验证密码策略真实持久化和重新加载，测试使用隔离状态，不把修改线上配置作为测试前提。
+// Checks actual policy persistence/reload with isolated state rather than requiring live configuration changes.
 package com.elexvx.bookkin.auth;
 import com.elexvx.bookkin.users.*;
 import com.elexvx.bookkin.audit.AuditService;

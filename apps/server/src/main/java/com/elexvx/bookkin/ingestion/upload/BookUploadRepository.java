@@ -16,6 +16,8 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 @Repository
+// 保存上传状态机、草稿及候选缓存；暂存文件二进制不写入这些记录。
+// Persists upload state, drafts and candidate cache without storing staged file binaries in these rows.
 public class BookUploadRepository {
     private static final String SELECT = """
             select u.*, r.name as root_name, u.detected_metadata::text as detected_text,

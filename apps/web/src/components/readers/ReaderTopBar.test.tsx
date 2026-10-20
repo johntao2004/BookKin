@@ -1,3 +1,5 @@
+// 检查紧凑阅读菜单与桌面操作行可达，并沿用全局页面框架。
+// Checks compact-reader menu and desktop-action reachability within the shared page frame.
 import { fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { TestProviders } from "../../test/TestProviders";

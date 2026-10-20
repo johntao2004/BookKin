@@ -1,3 +1,5 @@
+# 在 Blender 重导入的 GLB 上射线检查行走净空，并绑定模块逐三角面保真证明；本脚本固定 r27 契约，复用前需核对版本。
+# Ray-checks walking clearance on reimported GLB geometry and binds the module-preservation proof; this script fixes the r27 contract, so verify revision compatibility before reuse.
 """Blender ray verification of final exported geometry, not source-presence claims.
 Run: blender -b --python scripts/hogwarts-library/verify_walk_clearance.py
 The modular exact-triangle proof binds these exported-source samples to all13GLBs.

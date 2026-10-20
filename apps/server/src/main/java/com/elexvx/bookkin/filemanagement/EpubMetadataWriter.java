@@ -25,6 +25,8 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 @Component
+// 生成修改元数据后的 EPUB 副本；原文件替换与失败补偿由外层写回服务负责。
+// Produces an EPUB copy with updated metadata; the outer writeback service handles replacement and compensation.
 public class EpubMetadataWriter {
     private static final String DC = "http://purl.org/dc/elements/1.1/";
     private static final long MAX_COVER_BYTES = 20L * 1024 * 1024;

@@ -1,3 +1,5 @@
+// 覆盖 URL hash、浏览器历史、延迟挂载与角色限制，未选面板不应偷偷挂载。
+// Covers URL hashes, history, active-only mounting and roles so inactive panels do not mount silently.
 import { beforeEach, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { Routes, Route, useLocation, useNavigate } from "react-router-dom";

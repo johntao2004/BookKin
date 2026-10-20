@@ -1,3 +1,5 @@
+// 覆盖选中文字后的私人批注、即时样式与工具栏定位，区分 UI 反馈和持久化动作。
+// Covers private annotations, immediate styling and toolbar placement after selection, separating UI feedback from persistence.
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, vi } from "vitest";
 import { Route, Routes } from "react-router-dom";

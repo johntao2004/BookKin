@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @Profile("api")
 @RequestMapping("/api/v1")
+// 分别提供当前会话状态、管理列表与主人策略更新，不把客户端时钟当服务端有效期。
+// Exposes current session status, management listings and owner policy changes using server lifetime information.
 public class SessionLifecycleController {
     private final SessionLifecycleService service;
     public SessionLifecycleController(SessionLifecycleService service) {this.service=service;}

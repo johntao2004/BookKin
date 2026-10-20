@@ -1,5 +1,6 @@
 import {LONG_ROOM} from '../longRoomLayout';
 type Point={x:number;y:number;z:number};
+// 使用楼梯构建器自身的采样点，让引导相机沿其踏步行进。
 /** Use the stair builder's own samples, so the guided camera follows its treads. */
 export function createServiceWalk(samples:readonly Point[]) {
  const points=samples.map(p=>({...p,z:p.z+LONG_ROOM.length/2}));

@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import type { Book } from '../domain/types';
 import { tokens } from '../theme/generated-tokens';
 
+// 仅估计装帧外观，不据此推断页数或版本尺寸。
 /** Visual binding estimates only; no page count or edition size is inferred. */
 export function catalogBindingProfile(id: string) {
   const hash = Array.from(id).reduce((value, c) => (Math.imul(value, 31) + c.charCodeAt(0)) >>> 0, 0);
@@ -11,6 +12,7 @@ export function catalogBindingProfile(id: string) {
   return {seed, thickness: 0.40 + (seed % 27) / 100, height: 0.89 + ((seed >>> 8) % 12) / 100};
 }
 
+// 仅采样已加载的目录封面；不可读或跨域失败时保留确定性布面回退，不中断选书。
 /** Sample only an already-loaded catalog cover. Unreadable/CORS images retain
  * the deterministic cloth fallback and never interrupt book selection. */
 export function coverBindingColor(image: CanvasImageSource | undefined, fallback: string) {
@@ -22,6 +24,7 @@ export function coverBindingColor(image: CanvasImageSource | undefined, fallback
     if (!ctx) return new THREE.Color(fallback);
     ctx.drawImage(image, 0, 0, 24, 32);
     const pixels = ctx.getImageData(0, 0, 24, 32).data;
+    // 从封面边缘采样，侧重书衣或纸材颜色而非中央插画。
     // Perimeter sampling follows jacket/cover stock rather than central artwork.
     let r = 0, g = 0, b = 0, count = 0;
     for (let y = 2; y < 30; y++) for (let x = 1; x < 23; x++) {
@@ -35,6 +38,7 @@ export function coverBindingColor(image: CanvasImageSource | undefined, fallback
   } catch { return new THREE.Color(fallback); }
 }
 
+// 使用实际完整书名与作者，不虚构出版社；字体按标题自适应，避免重复的大号截断字形。
 /** Full title and actual author, restrained printing, no invented publisher.
  * Font scale adapts to each title rather than repeating oversized truncated glyphs. */
 export function paintCatalogSpine(canvas: HTMLCanvasElement, book: Pick<Book, 'title' | 'author'>, color: THREE.Color) {
@@ -52,6 +56,7 @@ export function paintCatalogSpine(canvas: HTMLCanvasElement, book: Pick<Book, 't
   ctx.fillStyle = luminance > 0.34 ? tokens.color.primitive.ink900 : tokens.color.primitive.cream200;
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   const glyphs = Array.from(book.title.trim());
+  // 优先保留完整书名，极长书名分为多个窄竖列。
   // Prefer a complete title; very long titles use multiple narrow vertical columns.
   const columns = Math.max(1, Math.ceil(glyphs.length / 18));
   const perColumn = Math.ceil(glyphs.length / columns);

@@ -4,6 +4,7 @@ import type {LibraryMaterials} from './materials';
 import {markCameraCollider} from '../../virtual-library-collision';
 import {alignLongRoomBoardGrain} from './longRoomTimber';
 
+// 2017 年 University Times 的 EPB 照片包含木桌、灰色桌垫、深绿色座椅和成对泡沫书托。摆放遵循 Y1.003 的南侧陈设区域；数量、尺寸与隐藏结构均为估计。
 /** 2017 University Times EPB photograph: timber tables, grey desk mats,
  * dark green seats and paired foam book supports. Placement follows the south
  * fitting zone of Y1.003; count, sizes and hidden construction are estimates. */
@@ -43,6 +44,7 @@ export function createEastReadingFurniture(materials:LibraryMaterials,floor:numb
    timber('Reading table apron',0.065,0.14,3.22,x+side*0.365,0.65,2.8);
    for(const end of [-1,1])timber('Reading table leg',0.075,0.7,0.075,x+side*0.355,0.35,2.8+end*1.55);
   }
+  // 即使可见桌面低于相机碰撞半径范围，视线高度的代理碰撞体仍可防止穿过家具。
   // Eye-level proxy prevents walking through furniture even though the visible
   // table itself is below the camera's collision radius.
   markCameraCollider(root,{id:`east-reading-table-${x}`,shape:'box',center:{x,y:1.1,z:2.8},size:{x:0.9,y:2.2,z:3.4}});

@@ -1,8 +1,11 @@
+// 本文件说明适用于该 Long Room 构建路径；下方旧注释的 live 不表示当前主场景已启用此模型。
+// These comments describe this Long Room builder; legacy uses of live below do not assert inclusion in the current main scene.
 import * as THREE from 'three';
 import { LONG_ROOM as L, LONG_ROOM_BAY_PITCH as P, isLongRoomLiveCaseOmitted,
   isLongRoomLiveShelfFaceOmitted } from '../longRoomLayout';
 import { PALETTE } from '../config';
 
+// 仅采用照片中可辨识的小写字母序列。较高层排与书架区字母在顺序核实前保持未分配。
 /** Photographically legible lower-case sequences only. Higher rows and stall
  * letters remain unassigned until their order can be verified. */
 export function shouldRenderLongRoomShelfMarks(side: number, bay: number, includeRetiredStairBay = false) {
@@ -34,9 +37,11 @@ export function addLongRoomShelfMarks(root: THREE.Group, includeRetiredStairBay 
   for (const side of [-1, 1]) for (let bay = 0; bay < L.alcovesPerSide; bay++) {
     if (!shouldRenderLongRoomShelfMarks(side, bay, includeRetiredStairBay)) continue;
     const x = side * (L.aisleHalfWidth + 0.15), z = L.length / 2 - L.endMargin - bay * P;
+    // 已检查的游客照片能确定的是下层。
     // Lower level is the one established by the inspected visitor photographs.
     for (let row = 0; row < markRows; row++) for (const face of [-1, 1]) {
       if (!shouldRenderLongRoomShelfFaceMarks(side, bay, face, includeRetiredStairBay)) continue;
+      // 将标记居中放置在与现有书柜几何体一致的架格内；此前固定间距属于已停用的十层布局，会在该模型现有的六层架板之间产生错位。
       // Keep the mark centred in the same shelf bay as the current case
       // geometry; the previous fixed pitch belonged to the retired 10-row
       // layout and drifted between the six live shelf boards.

@@ -17,6 +17,7 @@ import { tokens } from "../theme/generated-tokens";
 import { EMPTY_CATALOG_TITLE } from "../ui/empty-state-copy";
 import type { Book } from "../domain/types";
 import { resolveCameraCollision } from "./virtual-library-collision";
+import { createVirtualLibraryTextureLoader } from "./virtual-library-texture-loader";
 import {
   cameraRelativeWalkDelta,
   resolveGuidedStairCollision,
@@ -104,6 +105,7 @@ export function virtualLibraryBookPreviewViewportWidth(width: number, height: nu
     : width;
 }
 
+// 整书架需要较宽视角时，仍保持紧凑预览的可读性。
 /** Keep compact previews readable even when a whole bookcase needs a wide FOV. */
 export function virtualLibraryCompactPreviewMultiplier({
   width, height, bookWidth, bookHeight, depth, fov, zoom,
@@ -253,10 +255,23 @@ export function VirtualLibraryExperience() {
     const host = sceneHostRef.current;
     if (!canvas || !host) return undefined;
     let cleanupScene: (() => void) | undefined;
+    let releaseDetachedContext: (() => void) | undefined;
+    let disposed = false;
     const construction = new AbortController();
     catalogSyncRef.current = () => undefined;
+    const detachSceneActions = () => {
+      categoryNavigation.detach();
+      bookNavigation.detach();
+      roomNavigationRef.current = () => undefined;
+      stairAccessRef.current = () => undefined;
+      walkRef.current = () => undefined;
+      catalogShelfRef.current = () => undefined;
+      catalogSyncRef.current = () => undefined;
+      architectureRetryRef.current = () => undefined;
+    };
 
     const initializeScene = async (): Promise<(() => void) | undefined> => {
+      if (construction.signal.aborted) return undefined;
       if (typeof WebGLRenderingContext === "undefined" && typeof WebGL2RenderingContext === "undefined") {
         setSceneError(true);
         return undefined;
@@ -275,6 +290,10 @@ export function VirtualLibraryExperience() {
         return undefined;
       }
 
+      // 重试及严格模式复用画布；Retries and StrictMode reuse the connected canvas.
+      releaseDetachedContext = () => queueMicrotask(() => {
+        if (!canvas.isConnected) renderer.forceContextLoss();
+      });
       setSceneError(false);
       setStairWalking(false);
       renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -282,6 +301,7 @@ export function VirtualLibraryExperience() {
       renderer.toneMappingExposure = LIBRARY.atmosphere.exposure;
       renderer.shadowMap.enabled = true;
       renderer.shadowMap.type = THREE.PCFShadowMap;
+      // 静态建筑和灯光的阴影图可在仅相机移动时复用。
       // Architecture and lights are static. Camera-only navigation reuses the map.
       renderer.shadowMap.autoUpdate = false;
       renderer.shadowMap.needsUpdate = true;
@@ -292,7 +312,9 @@ export function VirtualLibraryExperience() {
       scene.fog = new THREE.FogExp2(tokens.color.primitive.ink900, 0.0025);
       const camera = new THREE.PerspectiveCamera(58, 1, 0.08, 120);
       let renderUntil = performance.now() + 1800;
-      const invalidateScene = () => { renderUntil = performance.now() + 1800; };
+      const invalidateScene = () => {
+        if (!disposed && !construction.signal.aborted) renderUntil = performance.now() + 1800;
+      };
       const invalidateShadows = () => { renderer.shadowMap.needsUpdate = true; invalidateScene(); };
       let architectureSignature = '';
       let revealDeferredBooks = () => undefined;
@@ -315,13 +337,53 @@ export function VirtualLibraryExperience() {
       let rendererPixelRatio = 0;
 
       const worldBuildStarted = performance.now();
-      const textureLoader = new THREE.TextureLoader(loadingManager);
+      const textureLoader = createVirtualLibraryTextureLoader(loadingManager, construction.signal);
+      loadingManager.addHandler(/\.(?:png|jpe?g|webp)(?:\?|$)/i, textureLoader);
       let longestBuildSlice = 0, westBuildMaxSlice = 0, westBuildCpuMs = 0;
       const batchPhases: Record<string, {count: number; totalMs: number; maxMs: number}> = {};
       let preparedHall!: Awaited<ReturnType<typeof buildReferenceLibraryProgressively>>;
+      let releasedHall: THREE.Group | undefined;
+      let rendererReleased = false;
+      let sceneReleased = false;
+      const releaseGraphics = () => {
+        loadingManager.onLoad = () => undefined;
+        loadingManager.onProgress = () => undefined;
+        loadingManager.onError = () => undefined;
+        loadingManager.abort();
+        if (preparedHall && releasedHall !== preparedHall.root) {
+          releasedHall = preparedHall.root;
+          void preparedHall.disposeArchitecture();
+          scene.add(preparedHall.root);
+        }
+        if (!sceneReleased || scene.children.length) {
+          sceneReleased = true;
+          disposeScene(scene);
+          scene.clear();
+        }
+        if (!rendererReleased) {
+          rendererReleased = true;
+          renderer.dispose();
+        }
+      };
+      // 初始化等待中也立即释放；Release resources even while initialization awaits data.
+      construction.signal.addEventListener('abort', releaseGraphics, {once: true});
+      const failScene = (error?: unknown) => {
+        const active = !disposed && !construction.signal.aborted;
+        disposed = true;
+        construction.abort();
+        if (active) detachSceneActions();
+        cleanupScene?.();
+        // 延迟完成的建筑也归还资源；Release architecture returned after an earlier abort.
+        releaseGraphics();
+        if (active) {
+          if (error instanceof Error) setSceneErrorMessage(error.message);
+          setSceneError(true);
+        }
+      };
       try {
         preparedHall = await buildReferenceLibraryProgressively(textureLoader, construction.signal,
           (milliseconds, stage) => {
+            if (construction.signal.aborted) return;
             if (stage.endsWith('-wall') || stage.endsWith('-elapsed')) {
               canvas.dataset.lastModuleWallStage = stage;
               canvas.dataset.lastModuleWallMs = milliseconds.toFixed(1);
@@ -355,18 +417,13 @@ export function VirtualLibraryExperience() {
             }, onError: error => {
               if (!construction.signal.aborted) setArchitectureError(error.message);
             }});
+        construction.signal.throwIfAborted();
+        // 从阅读器返回的位置必须由对应完整模型模块支持。
         // Reader-return destinations must be fully backed by their exact modules.
         if (restoredView.current) await preparedHall.streaming.ensurePoint(restoredView.current);
+        construction.signal.throwIfAborted();
       } catch (error) {
-        if (preparedHall) {
-          await preparedHall.disposeArchitecture();
-          scene.add(preparedHall.root); disposeScene(scene);
-        }
-        renderer.dispose();
-        if (!construction.signal.aborted) {
-          setSceneErrorMessage(error instanceof Error ? error.message : "建筑模型加载失败，请重试。");
-          setSceneError(true);
-        }
+        failScene(error);
         return undefined;
       }
       renderer.toneMappingExposure = preparedHall.referenceConfig.lighting.exposure;
@@ -388,11 +445,8 @@ export function VirtualLibraryExperience() {
           Math.min(12, renderer.capabilities.getMaxAnisotropy()),
           preparedHall,
         );
-      } catch {
-        await preparedHall.disposeArchitecture();
-        scene.add(preparedHall.root); disposeScene(scene);
-        renderer.dispose();
-        if (!construction.signal.aborted) setSceneError(true);
+      } catch (error) {
+        failScene(error);
         return undefined;
       }
       let selectedSceneBook: SceneBook | null = null;
@@ -427,6 +481,7 @@ export function VirtualLibraryExperience() {
         canvas.dataset.bookPresentation = selectedSceneBook ? "inspection" : "shelved";
       };
       const syncSceneCatalog = (nextBooks: readonly Book[]) => {
+        if (disposed || construction.signal.aborted) return;
         let result;
         try {
           result = world.syncCatalogBooks(nextBooks);
@@ -521,7 +576,6 @@ export function VirtualLibraryExperience() {
       } | null = null;
       const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       let frame = 0;
-      let disposed = false;
 
       const updateCameraSettings = () => {
         const compactViewport = virtualLibraryUsesCompactViewport(viewportWidth, viewportHeight);
@@ -628,6 +682,7 @@ export function VirtualLibraryExperience() {
             y: point.y + WALKING_EYE_HEIGHT,
             z: point.z + galleryWalkOffset.z,
           };
+          // 从上一帧眼睛位置做扫掠，不从地面或环绕相机起点检测。
           // Sweep from the previous eye, not from the ground or the orbit camera.
           const safe = resolveGuidedStairCollision(galleryPreviousEye ?? resolved, resolved, colliders, stairObstacles,
             {x: point.x, y: point.y + WALKING_EYE_HEIGHT, z: point.z});
@@ -720,6 +775,7 @@ export function VirtualLibraryExperience() {
         let clearThrough = 0, blockedFrom = Infinity;
         const visibleHit = (hit: THREE.Intersection) => {
           if (!isSceneObjectVisible(hit.object)) return false;
+          // 所有目标共用一条射线，复用已验证的遮挡距离，避免对每个代理重复遍历整栋建筑。
           // All targets share this ray. Reuse its proven clear/blocked range
           // instead of testing the complete architecture for every proxy.
           if (hit.distance <= clearThrough) return true;
@@ -730,6 +786,7 @@ export function VirtualLibraryExperience() {
           return clear;
         };
         const terminalHit = raycaster.intersectObject(world.catalogTerminal, true)[0];
+        // 共享可见性检测已拒绝不透明建筑，再检测父节点会碰到不可见目录代理而误遮挡指针下的水晶球。
         // The shared visibility check already rejects opaque architecture.
         // Recasting the parent also sees non-visible catalog proxies and can
         // incorrectly hide the crystal that is visibly under the pointer.
@@ -739,6 +796,7 @@ export function VirtualLibraryExperience() {
         const bookHit = raycaster.intersectObjects(world.interactiveMeshes, false)
           .find(hit => {
             const target = findSceneBook(hit.object);
+            // 被检查的书在独立前景通道渲染，室内建筑不应禁用它的旋转或打开交互。
             // The inspected book renders in its own foreground pass, so room
             // architecture must not disable its rotate/open interaction.
             return target && isSceneObjectVisible(target.group)
@@ -805,6 +863,7 @@ export function VirtualLibraryExperience() {
         cameraTargetYCurrent = cameraTargetYRef.current;
         cameraPitchCurrent = cameraPitchTargetRef.current;
         cameraRadiusCurrent = cameraBaseRadius / sceneZoomRef.current;
+        // 关闭书架后按新放置恢复大厅姿态；从近景扫掠会撞上刚关闭的书架。
         // Restore the hall pose as a fresh placement. Sweeping from the
         // close-up shelf position would collide with the shelf we just closed.
         hasPositionedCamera = false;
@@ -1067,6 +1126,7 @@ export function VirtualLibraryExperience() {
           const deltaY = event.clientY - pointerState.lastY;
           pointerState.lastX = event.clientX;
           pointerState.lastY = event.clientY;
+          // 大厅探索在当前眼睛位置转向；绕大厅中心旋转会改变高度并把视点带进构件。
           // Hall exploration turns at the current eye position. Orbiting around
           // the hall centre also changes elevation and carries the eye into joinery.
           if (activeRoomRef.current === "hall" && expandedShelfSectionIdRef.current === null
@@ -1296,6 +1356,7 @@ export function VirtualLibraryExperience() {
         if (event.key !== "Escape") return;
         spatialRequest++; setSpatialLoading(false);
         if (galleryDistance !== null) {
+          // 停止时保持已通过碰撞检查的踏步位置，不把访客重置到建筑中心。
           // Stop on the already collision-resolved tread instead of resetting
           // the visitor into the centre of the building.
           freeEye = camera.position.clone();
@@ -1596,47 +1657,22 @@ export function VirtualLibraryExperience() {
 
       let resizeFrame = 0;
       const scheduleResize = () => {
-        if (resizeFrame) return;
+        if (disposed || resizeFrame) return;
         resizeFrame = window.requestAnimationFrame(() => {
           resizeFrame = 0;
-          resize();
+          if (!disposed) resize();
         });
       };
       const resizeObserver = typeof ResizeObserver === "undefined"
         ? null
         : new ResizeObserver(scheduleResize);
-      resizeObserver?.observe(host);
-      resize();
-      window.addEventListener("resize", scheduleResize);
-      window.visualViewport?.addEventListener("resize", scheduleResize);
-      document.addEventListener("visibilitychange", onVisibilityChange);
-      canvas.addEventListener("pointerdown", onPointerDown);
-      canvas.addEventListener("pointermove", onPointerMove);
-      canvas.addEventListener("pointerup", endPointer);
-      canvas.addEventListener("pointercancel", endPointer);
-      canvas.addEventListener("pointerleave", onPointerLeave);
-      window.addEventListener("pointerup", endPointer);
-      window.addEventListener("pointercancel", endPointer);
-      window.addEventListener("keydown", onKeyDown);
-      window.addEventListener("keyup", onKeyUp);
-      window.addEventListener("blur", clearMovementKeys);
-      canvas.addEventListener("blur", clearMovementKeys);
-      canvas.addEventListener("wheel", onWheel, { passive: false });
-      const shaderCompileStarted = performance.now();
-      void renderer.compileAsync(scene, camera).then(() => {
-        if (disposed) return;
-        canvas.dataset.shaderCompileMs = (performance.now() - shaderCompileStarted).toFixed(1);
-        categoryNavigation.attach(focusCategory);
-        bookNavigation.attach(focusBook);
-        if (document.activeElement === document.body) canvas.focus({ preventScroll: true });
-        invalidateScene();
-        frame = window.requestAnimationFrame(animate);
-      }).catch(() => {
-        if (!disposed) setSceneError(true);
-      });
-
-      return () => {
+      let sceneStopped = false;
+      const stopScene = () => {
+        if (sceneStopped) return;
+        sceneStopped = true;
         disposed = true;
+        construction.abort();
+        detachSceneActions();
         window.cancelAnimationFrame(frame);
         window.cancelAnimationFrame(resizeFrame);
         resizeObserver?.disconnect();
@@ -1700,8 +1736,9 @@ export function VirtualLibraryExperience() {
         catalogSyncRef.current = () => undefined;
         architectureRetryRef.current = () => undefined;
         architectureWaitingBooks.clear(); revealDeferredBooks = () => undefined;
+        // 通用目录资源清理之前先分离控制器拥有的几何和材质。
         // Detach controller-owned geometry/materials before generic catalog cleanup.
-        void preparedHall.disposeArchitecture();
+        releaseGraphics();
         delete canvas.dataset.architectureDiagnostics;
         delete canvas.dataset.lightingDiagnostics;
         delete canvas.dataset.shadowUpdates;
@@ -1710,10 +1747,37 @@ export function VirtualLibraryExperience() {
         delete canvas.dataset.viewportWidth;
         delete canvas.dataset.viewportHeight;
         delete canvas.dataset.renderPixelRatio;
-        disposeScene(scene);
-
-        renderer.dispose();
       };
+      cleanupScene = stopScene;
+      resizeObserver?.observe(host);
+      resize();
+      window.addEventListener("resize", scheduleResize);
+      window.visualViewport?.addEventListener("resize", scheduleResize);
+      document.addEventListener("visibilitychange", onVisibilityChange);
+      canvas.addEventListener("pointerdown", onPointerDown);
+      canvas.addEventListener("pointermove", onPointerMove);
+      canvas.addEventListener("pointerup", endPointer);
+      canvas.addEventListener("pointercancel", endPointer);
+      canvas.addEventListener("pointerleave", onPointerLeave);
+      window.addEventListener("pointerup", endPointer);
+      window.addEventListener("pointercancel", endPointer);
+      window.addEventListener("keydown", onKeyDown);
+      window.addEventListener("keyup", onKeyUp);
+      window.addEventListener("blur", clearMovementKeys);
+      canvas.addEventListener("blur", clearMovementKeys);
+      canvas.addEventListener("wheel", onWheel, { passive: false });
+      const shaderCompileStarted = performance.now();
+      void renderer.compileAsync(scene, camera).then(() => {
+        if (disposed) return;
+        canvas.dataset.shaderCompileMs = (performance.now() - shaderCompileStarted).toFixed(1);
+        categoryNavigation.attach(focusCategory);
+        bookNavigation.attach(focusBook);
+        if (document.activeElement === document.body) canvas.focus({ preventScroll: true });
+        invalidateScene();
+        frame = window.requestAnimationFrame(animate);
+      }).catch(failScene);
+
+      return stopScene;
     };
 
     const initializationFrame = window.requestAnimationFrame(() => {
@@ -1729,16 +1793,22 @@ export function VirtualLibraryExperience() {
         if (construction.signal.aborted) cleanup?.();
         else cleanupScene = cleanup;
       }).catch(() => {
-        if (!construction.signal.aborted) setSceneError(true);
+        const active = !disposed && !construction.signal.aborted;
+        disposed = true;
+        construction.abort();
+        if (active) detachSceneActions();
+        cleanupScene?.();
+        if (active) setSceneError(true);
       });
     });
 
     return () => {
+      disposed = true;
       window.cancelAnimationFrame(initializationFrame);
       construction.abort();
-      categoryNavigation.detach();
-      bookNavigation.detach();
+      detachSceneActions();
       cleanupScene?.();
+      releaseDetachedContext?.();
     };
   }, [categoryNavigation, bookNavigation, sceneAttempt]);
 

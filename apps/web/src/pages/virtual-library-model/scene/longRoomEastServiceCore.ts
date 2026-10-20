@@ -5,6 +5,7 @@ import {EAST_SERVICE_ACCESS as A} from '../longRoomLayout';
 import {createEastServiceStair} from './longRoomEastServiceStair';
 import {markCameraCollider} from '../../virtual-library-collision';
 
+// 仅连接一层至二层；资料中的其他楼层仅供审阅。
 /** First-to-second-floor connection only. Other source storeys remain review-only. */
 export function createEastServiceCore(materials:LibraryMaterials) {
  const root=new THREE.Group();root.name='East first to second floor service core';
@@ -18,9 +19,11 @@ export function createEastServiceCore(materials:LibraryMaterials) {
  for(const x of [C.north,C.south])box('Lower service core side wall',0.12,U.floor,C.east-C.west,x,U.floor/2,(C.east+C.west)/2);
  box('Lower service core east wall',C.south-C.north,U.floor,0.12,(C.south+C.north)/2,U.floor/2,C.east);
  box('Service stair entry threshold',A.width,0.16,1.5,A.x,-0.08,0.55,materials.floor);
+ // 北侧区域仍为电梯预留；封闭通往井道空洞的入口。
  // The northern portion remains reserved for the lift; close access to its void.
  box('Service core lift reservation',1.38,U.ceiling,C.east-C.west,-8.35,U.ceiling/2,(C.east+C.west)/2);
  const route=stair.userData.walkingSamples as {x:number;y:number;z:number}[];
+ // 书柜加深后，起点须避开过道端壁柱的相机净空，同时保持在服务门洞靠大厅一侧。
  // Start beyond the aisle-end pilaster's camera clearance after the cases
  // were deepened, while remaining on the hall side of the service doorway.
  root.userData.walkingSamples=[{x:A.x,y:0,z:-0.6},{x:A.x,y:0,z:1.1},...route,

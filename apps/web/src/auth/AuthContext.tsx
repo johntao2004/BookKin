@@ -43,6 +43,8 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const queryClient = useQueryClient();
   const identity = useRef(user?.id ?? null);
 
+  // 身份变化时清空查询缓存，防止下一位用户短暂看到前一位的私有数据。
+  // Clear query caches on identity changes to avoid showing the previous user’s private data.
   const persist = useCallback((next: SessionUser | null) => {
     if (identity.current !== (next?.id ?? null)) {
       queryClient.clear();
@@ -56,13 +58,15 @@ export function AuthProvider({ children }: PropsWithChildren) {
       try {
         if (next) sessionStorage.setItem(storageKey, JSON.stringify(next));
         else sessionStorage.removeItem(storageKey);
-      } catch { /* Storage restrictions must not turn successful authentication into a failure. */ }
+      } catch { /* 存储限制不应把已成功认证变成失败。 */ /* Storage restrictions must not turn successful authentication into a failure. */ }
     }
   }, [queryClient]);
 
   useEffect(() => {
     if (api.isDemo) return;
     let active = true;
+    // 迟到的会话探测不得覆盖后续登录或退出结果；同时检查挂载状态和身份修订号。
+    // A late session probe must not overwrite a later login/logout; check both mount state and auth revision.
     const revision = authRevision.current;
     setReady(false);
     setSessionError(null);
@@ -104,7 +108,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
       exiting=true;
       await Promise.race([prepareSessionExit(), new Promise(resolve=>window.setTimeout(resolve,5000))]);
       if(stopped)return;
-      try { await api.logout(); } catch { /* Expired/offline sessions still leave the local session. */ } finally { if(!stopped) { authRevision.current+=1; persist(null); setReady(true); } }
+      try { await api.logout(); } catch { /* 过期或离线仍退出本地会话。 */ /* Expired/offline sessions still leave the local session. */ } finally { if(!stopped) { authRevision.current+=1; persist(null); setReady(true); } }
     };
     const check = async () => {
       try {
@@ -113,7 +117,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
         window.clearTimeout(timer);
         const remaining=state.expiresAt-state.serverTime;
         timer=window.setTimeout(()=>void exit(),state.revocationRequested?0:Math.max(0,Math.min(remaining-10000,2_147_483_647)));
-      } catch { /* Transient network failures retain durable progress and retry. */ }
+      } catch { /* 暂时网络失败保留持久进度，后续继续重试。 */ /* Transient network failures retain durable progress and retry. */ }
     };
     void check();
     const interval=window.setInterval(()=>void check(),10000);
@@ -163,6 +167,8 @@ export function useAuth() {
   return value;
 }
 
+// 先确认会话再挂载受保护内容；前端角色检查不能替代服务端授权。
+// Confirm the session before mounting protected content; client role checks do not replace server authorization.
 export function RequireAuth({ children, roles }: PropsWithChildren<{ roles?: UserRole[] }>) {
   const { user, ready, sessionError, retrySession } = useAuth();
   const location = useLocation();

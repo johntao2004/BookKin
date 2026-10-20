@@ -3,6 +3,7 @@ import { resolveCameraCollision, type CameraPosition, type CameraCollider, type 
 export type VirtualLibraryMovementKey = "forward" | "backward" | "left" | "right" | "up" | "down";
 
 export const WALKING_EYE_HEIGHT = 1.78;
+// 人体下方保留 25 厘米跨步余量；40 级梯的踏步高约 18.6 厘米，单个眼球碰撞会漏过栏杆、桌椅。
 // Keep a 25 cm step allowance under the body. The taller 40-tread stair has
 // 18.6 cm risers; a spherical eye alone misses rails, desks and chair backs.
 export const WALKING_CAMERA_CLEARANCE: Readonly<CameraCollisionClearance> = {
@@ -55,6 +56,7 @@ export function clampVirtualLibraryFlightHeight(
   return Math.min(Math.max(desiredHeight, minimumHeight), Math.max(minimumHeight, maximumHeight));
 }
 
+// 返回相机相对的平面位移，并把斜向速度归一化。
 /** Returns a camera-relative planar displacement with normalized diagonal speed. */
 export function cameraRelativeWalkDelta(
   yaw: number,
@@ -74,11 +76,13 @@ export function cameraRelativeWalkDelta(
   };
 }
 
+// 只有预设踏步与出口支撑面允许由路径控制脚部落点。
 /** Only authored tread/exit support surfaces may use route-owned foot placement. */
 export function isGuidedStairSupport(collider: CameraCollider) {
   return collider.id.startsWith("stair-tread-") || collider.id.startsWith("stair-exit-infill-");
 }
 
+// 楼梯路径控制踏步落点，人体检测栏杆和建筑、眼睛检测全部几何，避免保守盒状人体被后续台阶卡住，同时保持头侧净距及平台支撑。
 /** The exported stair route owns foot placement on the treads. Test the whole
  * body against its guards/architecture, and the eye against all geometry.
  * This prevents the conservative box-shaped body from snagging on the next
@@ -93,6 +97,7 @@ export function resolveGuidedStairCollision(
   const onSupportedPath = Math.hypot(desired.x - supportedEye.x, desired.z - supportedEye.z) <= 0.12
     && Math.abs(desired.y - supportedEye.y) < 0.000001
     && Math.hypot(desired.x - previous.x, desired.y - previous.y, desired.z - previous.z) <= 0.12;
+  // 脚部例外仅用于已知路径上的小步；大跳跃、侧向偏离和竖直飞行仍检查全部实体。
   // The foot-placement exception belongs only to small steps along the known
   // route. Large jumps, lateral departures and vertical flight use every solid.
   if (!onSupportedPath) return resolveCameraCollision(previous, desired, colliders, WALKING_CAMERA_CLEARANCE);
@@ -107,6 +112,7 @@ export function resolveGuidedStairCollision(
 
 type StairRoutes = Readonly<Record<'left' | 'right', readonly CameraPosition[]>>;
 
+// 根据平面位置及当前脚高选择局部踏步支撑，防止底层和顶层重叠转弯把地面访客直接吸附到二楼。
 /** Local tread support, selected by both plan position and current foot height.
  * Height gating prevents the nearly overlapping bottom/top turns from snapping
  * a ground-floor visitor directly onto the gallery. */
@@ -128,6 +134,7 @@ function stairWalkingHeight(previous: CameraPosition, desired: CameraPosition, r
   return closest?.height ?? null;
 }
 
+// 把真实键盘、滚轮或按钮步行拆成短且受支撑的步长；不启动导引动画、不修改偏航或移除栏杆碰撞。
 /** Resolve real keyboard/wheel/button walking in short supported steps. This
  * never starts the guided animation, changes yaw, or removes guard collision. */
 export function resolveReferenceWalkingCollision(
@@ -141,6 +148,7 @@ export function resolveReferenceWalkingCollision(
   if (!followStairs) return resolveCameraCollision(previous, desired, colliders, WALKING_CAMERA_CLEARANCE);
   const distance = Math.hypot(desired.x - previous.x, desired.z - previous.z);
   const steps = Math.max(1, Math.ceil(distance / 0.055));
+  // 每小段从上次接受位置扫掠，避免大幅按钮或滚轮移动穿过柱、栏杆及建筑。
   // Sweep each slice from the last accepted point; a large button/wheel move
   // cannot tunnel through the pillar, rails or intervening architecture.
   let resolved = resolveCameraCollision(previous, previous, [], WALKING_CAMERA_CLEARANCE);
@@ -155,6 +163,7 @@ export function resolveReferenceWalkingCollision(
     }
     next.y = floor + WALKING_EYE_HEIGHT;
     const body = resolveCameraCollision(resolved, next, obstacles, WALKING_CAMERA_CLEARANCE);
+    // 沿栏杆滑动后仍有踏步支撑即可接受；拒绝所有侧向微调会把键盘用户卡在可通行的平台。
     // Sliding along a rail is valid if the resolved position still has tread
     // support. Rejecting every small sideways correction traps keyboard users
     // at the landing even though the authored centre line is traversable.

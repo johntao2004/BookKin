@@ -38,6 +38,8 @@ import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTSectPr;
 import org.springframework.stereotype.Service;
 
 @Service
+// 把已筛选批注转换为 DOCX/XLSX；用户访问控制由调用方在传入数据前执行。
+// Converts selected annotations to DOCX/XLSX; callers enforce user access before passing the data.
 public class AnnotationExportService {
     static final String DOCX_MEDIA_TYPE = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
     static final String XLSX_MEDIA_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";

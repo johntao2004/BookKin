@@ -1,3 +1,5 @@
+// 验证图标间距、链接导航和纯图标可访问目标，统一适配层不能吞掉动作语义。
+// Checks icon spacing, link navigation and accessible icon-only targets without losing action semantics.
 import { fireEvent, render, screen } from '@testing-library/react';
 import { Link } from 'react-router-dom';
 import { TestProviders } from '../test/TestProviders';

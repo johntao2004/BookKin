@@ -1,4 +1,6 @@
-import { useSiteSettings, SiteMetadata, SiteFooter } from "../site/site-settings";
+// 共享导航与账号操作壳，显示权限取自认证状态而非代替服务端权限检查。
+// Shared navigation/account shell derives display permissions from auth state without replacing server authorization.
+import { useSiteSettingsQuery, SiteMetadata, SiteFooter } from "../site/site-settings";
 import { pageWidthSx, topNavigationSurfaceSx } from "./PageHeader";
 import { CategoryOutlined } from "@/ui/icons";
 import { CollectionsBookmarkOutlined } from "@/ui/icons";
@@ -27,15 +29,10 @@ import { Stack } from "@/ui/primitives";
 import { TextField } from "@/ui/forms";
 import { Toolbar } from "@/ui/primitives";
 import { Typography } from "@/ui/primitives";
-import { useQueryClient } from "@tanstack/react-query";
-import { useCallback, useEffect, useRef, useState, type PropsWithChildren } from "react";
+import { useEffect, useRef, useState, type PropsWithChildren } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
-import {
-  refreshVirtualLibraryBooks,
-  VIRTUAL_LIBRARY_BOOKS_QUERY_KEY,
-  VIRTUAL_LIBRARY_BOOKS_STALE_TIME,
-} from "../pages/virtual-library-query";
+import { DEFAULT_SITE_SETTINGS } from "../api/client";
 import type { ReaderTheme } from "./readers/reader-fonts";
 import { tokens } from "../theme/generated-tokens";
 import { useBookKinTheme } from "../theme/BookKinThemeProvider";
@@ -74,10 +71,10 @@ const headerControlSx = {
 };
 
 export function AppShell({ children }: PropsWithChildren) {
-  const site = useSiteSettings();
+  const siteQuery = useSiteSettingsQuery();
+  const site = siteQuery.data ?? DEFAULT_SITE_SETTINGS;
   const { user, logout } = useAuth();
   const [logoutError, setLogoutError] = useState("");
-  const queryClient = useQueryClient();
   const { mode: bookKinTheme, setMode: setBookKinTheme } = useBookKinTheme();
   const location = useLocation();
   const navigate = useNavigate();
@@ -87,7 +84,7 @@ export function AppShell({ children }: PropsWithChildren) {
   const [themeMenuOpen, setThemeMenuOpen] = useState(false);
   const themeMenuSelectionRef = useRef(false);
   const libraryNavigation = user
-    ? navigation
+    ? navigation.filter(item => item.path !== "/virtual-library" || (siteQuery.isSuccess && site.virtualLibraryEnabled))
     : navigation.filter((item) => ["/library", "/articles", "/categories", "/booklists"].includes(item.path));
   const searchLabel = "搜索书籍、笔记、书单";
   const searchableLibrary = true;
@@ -103,26 +100,6 @@ export function AppShell({ children }: PropsWithChildren) {
     ? location.pathname === path || location.pathname.startsWith(`${path}/`)
     : location.pathname === path;
 
-  const prepareVirtualLibrary = useCallback(() => {
-    if (!user) return;
-    void import("../pages/VirtualLibraryExperience").catch(() => undefined);
-    void queryClient.prefetchQuery({
-      queryKey: VIRTUAL_LIBRARY_BOOKS_QUERY_KEY,
-      queryFn: ({ signal }) => refreshVirtualLibraryBooks(queryClient, signal),
-      staleTime: VIRTUAL_LIBRARY_BOOKS_STALE_TIME,
-    });
-  }, [queryClient, user]);
-
-  useEffect(() => {
-    if (!user || readerRoute || location.pathname === "/virtual-library") return undefined;
-    if ("requestIdleCallback" in window) {
-      const idleId = window.requestIdleCallback(prepareVirtualLibrary, { timeout: 1_800 });
-      return () => window.cancelIdleCallback(idleId);
-    }
-    const timeoutId = globalThis.setTimeout(prepareVirtualLibrary, 650);
-    return () => globalThis.clearTimeout(timeoutId);
-  }, [location.pathname, prepareVirtualLibrary, readerRoute, user]);
-
   const updateQuery = (value: string) => setQuery(value);
 
   const linkButton = (item: (typeof navigation)[number]) => (
@@ -131,9 +108,6 @@ export function AppShell({ children }: PropsWithChildren) {
       key={item.path}
       component={NavLink}
       to={item.path}
-      onMouseEnter={item.path === "/virtual-library" ? prepareVirtualLibrary : undefined}
-      onFocus={item.path === "/virtual-library" ? prepareVirtualLibrary : undefined}
-      onTouchStart={item.path === "/virtual-library" ? prepareVirtualLibrary : undefined}
       color="inherit"
       className="bk-nav-link"
       sx={{
@@ -365,9 +339,6 @@ export function AppShell({ children }: PropsWithChildren) {
                 <ListItemButton
                   key={item.path}
                   selected={isActivePath(item.path)}
-                  onMouseEnter={item.path === "/virtual-library" ? prepareVirtualLibrary : undefined}
-                  onFocus={item.path === "/virtual-library" ? prepareVirtualLibrary : undefined}
-                  onTouchStart={item.path === "/virtual-library" ? prepareVirtualLibrary : undefined}
                   onClick={() => { setDrawerOpen(false); navigate(item.path); }}
                   sx={{ minWidth: 0, minHeight: `${tokens.layout.touchTarget}px`, px: { xs: `${tokens.spacing[1]}px`, sm: `${tokens.spacing[3]}px` } }}
                 >

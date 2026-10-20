@@ -1,3 +1,5 @@
+// 覆盖四卡概览、筛选 URL、隐藏偏好和空阅读状态，保持目录操作与概览显隐互不干扰。
+// Covers overview cards, filter URLs, hidden-state preference and empty reading states while keeping catalog actions independent from overview visibility.
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, vi } from "vitest";
 import { useLocation } from "react-router-dom";

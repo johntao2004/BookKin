@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# 锁定发布操作，核验制品与迁移边界，备份数据库并切换 API/Worker 镜像；验收失败时回退应用镜像。
+# Locks deployment, checks artifacts and migration boundaries, backs up the database and switches API/Worker images, with application-image rollback on failed checks.
+# 在 FNOS 上以 root 身份运行：bash install.sh /vol1/bookkin/releases <version directory>。
 # Run on FNOS as root: bash install.sh /vol1/bookkin/releases <version directory>
 set -euo pipefail
 LIVE=${1:?live compose directory required}
@@ -26,12 +29,15 @@ if previous != candidate:
         raise SystemExit('Schema changed: use a reviewed migration/recovery plan instead of automatic image rollback')
     print('Reviewed additive migration: existing tables unchanged; rollback retains new settings tables.')
 PYCODE
+# 仅生成一次并持续复用；已存在加密数据时拒绝替换密钥。
 # Generate once, reuse forever. Refuse replacement when encrypted data already exists.
 ENCRYPTED=$(docker compose exec -T postgres psql -U bookkin -d bookkin -Atc "SELECT count(*) FROM ai_provider_settings WHERE api_key_ciphertext IS NOT NULL")
 python3 "$CANDIDATE/init-secrets.py" "$LIVE/.env" "$ENCRYPTED"
+# 构建时不修改正在使用的 JAR；两个服务使用同一不可变镜像。
 # Build without modifying the live JAR; both services receive the same immutable image.
 printf 'FROM eclipse-temurin:21-jre-noble\nWORKDIR /app\nCOPY --chmod=0644 bookkin.jar /app/bookkin.jar\nENV JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=75 -Djava.io.tmpdir=/tmp/bookkin"\nENTRYPOINT ["java","-jar","/app/bookkin.jar"]\n' > "$CANDIDATE/Dockerfile"
 docker build --tag "$IMAGE" "$CANDIDATE"
+# 任何新版本启动前先保护数据库状态；不重建数据卷。
 # Protect database state before any version starts. Data volumes are never recreated.
 mkdir -p backups
 chmod 700 backups
@@ -51,12 +57,14 @@ rollback() {
   printf 'services:\n  app:\n    image: %s\n  worker:\n    image: %s\n' "$PREVIOUS" "$PREVIOUS" > "$CANDIDATE/rollback.yaml"
   docker compose -f compose.yaml -f "$CANDIDATE/rollback.yaml" up -d --no-build --no-deps app worker
 }
+# 仅接受未变化的数据库结构，或与已审阅内容精确一致的新增式迁移。镜像回滚保留新增表，旧代码不会访问这些表。
 # Only unchanged schema or an exact reviewed additive migration is accepted.
 # Image rollback retains the additive tables; older code does not access them.
 if ! docker compose -f compose.yaml -f "$OVERRIDE" up -d --no-build --no-deps app worker || ! wait_ready || ! python3 "$CANDIDATE/check.py" http://127.0.0.1 --routes "$CANDIDATE/routes.json"; then
   rollback
   exit 1
 fi
+# 确保 NAS 后续重启时，普通 Compose 命令仍使用已验收镜像。
 # Keep the normal compose command on the accepted image after future NAS restarts.
 docker tag "$IMAGE" bookkin:local
 cp "$CANDIDATE/bookkin.jar" bookkin.jar.next

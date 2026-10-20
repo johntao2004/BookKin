@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# 检查双侧两层共 24 个真实窗洞及对应面光源；可用旧模型证明新增六窗，而非只核对配置数量。
+# Checks 24 physical openings across both sides/storeys and their area lights, optionally proving six new openings against a baseline rather than only counting configuration entries.
 """Measure mirrored window apertures on both floors, including a negative control."""
 import argparse
 import hashlib

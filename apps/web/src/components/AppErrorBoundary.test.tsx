@@ -1,3 +1,5 @@
+// 模拟渲染异常并检查可恢复界面，避免组件失败后只留下空白页面。
+// Simulates render failure and checks a recovery surface rather than a blank page.
 import { render, screen } from "@testing-library/react";
 import { expect, it, vi } from "vitest";
 import { TestProviders } from "../test/TestProviders";

@@ -1,3 +1,4 @@
+// 按九张参考视图重建的项目尺度估计，并非游戏实测尺寸；Blender 使用相同约定，导出 Y 轴向上。
 /**
  * Project-scale estimates reconstructed from the nine supplied views, not
  * surveyed game dimensions. Blender uses the same contract and exports Y-up.
@@ -6,6 +7,7 @@ export const REFERENCE_LIBRARY_ASSET_REVISION = '20261020-terminal-arches-r42';
 
 export const REFERENCE_LIBRARY = {
   length: 40,
+  // 延长两端大厅和窗边通道，中央六跨保持不变。
   // Extend both end halls and window-side aisles; the six central bays stay fixed.
   width: 40.0,
   height: 22.44,
@@ -19,6 +21,7 @@ export const REFERENCE_LIBRARY = {
   caseOuterX: 16.0,
   caseDepth: 0.82,
   shelfFrontOffset: 0.41,
+  // 突出檐口深于书板，完整标牌应装在最外侧木构截面之外。
   // The projecting cornice is deeper than the boards: (caseDepth + .08) * 1.25 / 2.
   // Mount the entire solid plaque beyond that outermost timber profile.
   categoryPlaqueFrontOffset: (0.82 + 0.08) * 1.25 / 2,
@@ -28,7 +31,7 @@ export const REFERENCE_LIBRARY = {
   shelfRows: 6,
   booksPerRow: 20,
   shelfBoardThickness: 0.168,
-  shelfBackThickness: 0.16, // Cabinet depth, not a vertical dimension.
+  shelfBackThickness: 0.16, /* 这是柜体深度，不是竖直尺寸。 */ // Cabinet depth, not a vertical dimension.
   bookRearGap: 0.024,
   bookFrontInset: 0.018,
   lowerShelfBase: 0.30,
@@ -37,8 +40,8 @@ export const REFERENCE_LIBRARY = {
   upperShelfPitch: 1.056,
   vaultSpring: 16.56,
   sideVaultSpring: 14.58,
-  sideVaultRadius: 2.45, // Horizontal bay half-width.
-  sideVaultRise: 2.94, // Vertical rise; never reuse the horizontal radius.
+  sideVaultRadius: 2.45, /* 横向跨间半宽。 */ // Horizontal bay half-width.
+  sideVaultRise: 2.94, /* 竖向拱高，不能复用横向半径。 */ // Vertical rise; never reuse the horizontal radius.
   camera: { targetY: 4.2, targetZ: -3.5, radius: 19, pitch: -0.1277 },
   book: { spineWidth: 0.16, height: 0.48, coverWidth: 0.30 },
   manifestUrl: `/assets/hogwarts-library/library-manifest.json?v=${REFERENCE_LIBRARY_ASSET_REVISION}`,
@@ -56,6 +59,7 @@ export function referenceLibraryRoofY(x: number, z = 0) {
     return REFERENCE_LIBRARY.vaultSpring + (REFERENCE_LIBRARY.height - REFERENCE_LIBRARY.vaultSpring)
       * Math.sqrt(Math.max(0, 1 - normalized * normalized));
   }
+  // 侧桶拱横跨大厅，顶面高度随纵向位置变化；固定起拱高度会让飞行在每跨两端穿过曲面。
   // Side barrels run across the hall, so their ceiling depends on the bay's
   // longitudinal position. A constant spring height lets flight cross the
   // curved surface near either end of every bay.
@@ -65,6 +69,7 @@ export function referenceLibraryRoofY(x: number, z = 0) {
   const normalized = Math.min(1, bayDistance / (endBay ? 2.5 : REFERENCE_LIBRARY.sideVaultRadius));
   const sideRoof = REFERENCE_LIBRARY.sideVaultSpring + REFERENCE_LIBRARY.sideVaultRise
     * Math.sqrt(Math.max(0, 1 - normalized * normalized));
+  // 窄木封边从主拱起点过渡至侧桶拱；飞行高度需低于真实过渡，包括较低两端。
   // The narrow timber flashing rises/falls from the main spring to each side
   // barrel. Keep flight below that actual transition, including its low ends.
   if (Math.abs(x) < 8.97) {

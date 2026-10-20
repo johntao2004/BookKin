@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# 使用固定随机种子与周期噪声生成可重复平铺的 PBR 纹理；颜色、粗糙度和切线法线按各自数据语义保存。
+# Generates repeatable tiled PBR textures with seeded periodic noise, preserving the distinct semantics of color, roughness and tangent-normal data.
 """Original deterministic, periodic PBR tiles for BookKin's library.
 
 Uses only NumPy/Pillow and seeded mathematical fields: no scans, downloaded
@@ -37,6 +39,8 @@ def warp_u(field, offset):
     return (1 - blend) * field[rows, lo % size] + blend * field[rows, (lo + 1) % size]
 
 
+# 法线差分跨纹理边界周期回绕；输出是 OpenGL +Y 切线法线，不是几何位移或烘焙光照。
+# Normal differences wrap periodically at texture boundaries; output is OpenGL +Y tangent normals, not displacement or baked lighting.
 def normal_map(height, target_rms, maximum_slope):
     """OpenGL (+Y) tangent normals; image rows run opposite texture +V.
 

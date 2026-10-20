@@ -1,3 +1,5 @@
+// 按书籍组织当前用户笔记并提供导出，列表与搜索通过私人批注接口。
+// Organizes the current user’s notes by book and supports exports through private annotation APIs.
 import { ArrowBackRounded } from "@/ui/icons";
 import { DescriptionOutlined } from "@/ui/icons";
 import { FormatQuoteRounded } from "@/ui/icons";

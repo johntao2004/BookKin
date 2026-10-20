@@ -48,6 +48,7 @@ export function CategoriesPage() {
     enabled: ready,
   });
   const categories = categoriesQuery.data?.items ?? [];
+  // 分类列表加载期间保持管理入口；响应到达后以服务端权限为准，角色回退仅防止页头跳动。
   // Keep the management action available while the category list is loading.
   // The server response remains authoritative once it arrives, while the
   // role fallback prevents the header from shifting and makes the action

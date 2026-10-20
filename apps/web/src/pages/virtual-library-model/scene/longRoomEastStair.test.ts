@@ -1,3 +1,5 @@
+// 检查历史两段楼梯与弯曲回转的连续支撑，并保留已关闭旧梯井的封闭约束。
+// Checks historical flights/curved return support and the closure contract of the retired lower stairwell.
 import {createEastStairEnclosure} from './longRoomEastEnclosure';
 import {createFagelRoom} from './longRoomFagel';
 import * as THREE from 'three';

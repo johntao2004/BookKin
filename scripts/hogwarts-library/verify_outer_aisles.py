@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# 对两侧上下层走廊测量净宽、人体包络、地面与屋顶连续性，并同时检查碰撞；尺寸判定来自实际几何。
+# Measures clear width, body clearance and floor/roof continuity on both storeys and sides, also checking colliders; dimensional results come from actual geometry.
 """Blender-free verification of the r20 outer window aisles.
 
 For each of the four aisles (left/right, lower/upper) this reads the actual

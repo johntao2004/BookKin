@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import {LONG_ROOM as L} from '../longRoomLayout';
 
+// 依据地面静态木构件占地生成仅限接触区域的环境遮蔽。它近似被遮挡的间接光，并非测量光照或太阳阴影。局部栅格化限制烘焙成本，不增加渲染通道或叠加网格。
 /** Contact-only ambient shading from static ground-level timber footprints.
  * This approximates occluded indirect light, not surveyed lighting or a sun shadow.
  * Local rasterization bounds the bake cost; no extra render pass or overlay mesh. */
@@ -12,6 +13,7 @@ export function addLongRoomFloorOcclusion(root:THREE.Group) {
  const footprints:THREE.Box3[]=[];
  root.traverse(object=>{
   if(!(object instanceof THREE.Mesh)||!(object.geometry instanceof THREE.BoxGeometry)||object===floor)return;
+  // 仅对实际接触主地面标高的静态构件生成接触环境遮蔽。
   // Only static members that actually touch the main-floor datum cast contact AO.
   object.geometry.computeBoundingBox();const bounds=object.geometry.boundingBox!.clone().applyMatrix4(object.matrixWorld);
   if(Math.abs(bounds.min.y)>0.015||bounds.max.y<0.08||bounds.min.x>L.width/2||bounds.max.x<-L.width/2||bounds.min.z>L.length/2||bounds.max.z<-L.length/2)return;

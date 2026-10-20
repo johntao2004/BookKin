@@ -21,6 +21,7 @@ export function shouldOpenInspectedBook({
   );
 }
 
+// 聚焦期间仅当前书架可交互；命中其他书架视为空白，让短点击关闭焦点而非静默切换。
 /**
  * While a shelf is focused, only that shelf remains an actionable 3D target.
  * A hit on another shelf is treated as blank space so a short click can close

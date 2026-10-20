@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# 测量 A 端画框可见性、拱支撑与开口，并在提供旧模型时验证负对照；测量范围限于约定探针。
+# Measures A-end frame visibility, arch support and openings, with a negative control when a baseline is supplied; coverage is limited to the defined probes.
 """Measure exported A-end frame visibility, supported arches and clear openings."""
 from pathlib import Path
 import argparse

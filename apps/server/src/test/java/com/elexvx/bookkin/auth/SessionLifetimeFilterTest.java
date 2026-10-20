@@ -1,3 +1,5 @@
+// 服务端过期不依赖客户端计时器；撤销宽限窗口仍允许阅读保存，二者分别验证。
+// Separately checks server expiration without client timers and reading saves during the revocation grace window.
 package com.elexvx.bookkin.auth;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.*;

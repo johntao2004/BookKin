@@ -11,6 +11,7 @@ import java.time.Duration;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
 
+// 从受管文件提取有界只读知识文本的窄接口网关。
 /** Narrow gateway for bounded read-only knowledge extraction from a managed file. */
 @Service
 public class KnowledgeTextGateway {

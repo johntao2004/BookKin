@@ -19,6 +19,8 @@ public final class FileOperationModels {
             Map<String, Object> metadata,
             UUID recycleBinEntryId) {}
 
+    // 执行只引用已保存预览与指纹，避免由客户端重新定义已预览操作。
+    // Execution references a stored preview and fingerprint instead of redefining the previewed operation on the client.
     public record ExecuteRequest(@NotNull UUID previewToken, @NotNull String expectedFingerprint) {}
 
     public record FileConflict(String code, String message, String path) {}

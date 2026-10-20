@@ -1,3 +1,5 @@
+// 管理二次解锁与专区对象，解密主密钥只交给本地加密阅读流程。
+// Manages secondary unlock and vault objects, passing decrypted master keys only to local encrypted-reading flows.
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   _AntButton as Button,

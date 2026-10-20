@@ -10,6 +10,8 @@ import java.util.HexFormat;
 import org.springframework.stereotype.Component;
 
 @Component
+// 流式计算文件 SHA-256 指纹，供预览、执行及入库校验使用。
+// Streams file bytes into SHA-256 fingerprints for preview, execution and ingestion checks.
 public class FileFingerprints {
     public String sha256(Path path) throws IOException {
         MessageDigest digest;

@@ -1,8 +1,10 @@
+// 单位为米；历史尺寸和用户要求的放大体验分开保留，细节仍为照片估计，证据见原注释引用。
 /** Metres. Historical dimensions are retained separately from the requested enlarged experience.
  * Detail dimensions remain photographic estimates; see docs/verification/trinity-long-room/reference.md.
  */
 export const TRINITY_MEASURED_DIMENSIONS = { length: 63.7, width: 12.2, height: 14.2 } as const;
 
+// 这是测量尺度方案审阅后要求的放大版本参数。
 /** User requested a materially larger hall after reviewing the measured-scale version. */
 export const LONG_ROOM = {
   length: 90,
@@ -12,6 +14,7 @@ export const LONG_ROOM = {
   endMargin: 1.65,
   galleryY: 5.95,
   aisleHalfWidth: 7.1,
+  // 把中庭侧栏杆向内收，保证书柜壁柱加人体净距后仍有可步行通道。
   // Pull the void-side rail inward so the upper cases retain a genuinely
   // walkable strip after camera-body clearance around their pilasters.
   galleryInnerX: 5,
@@ -24,6 +27,7 @@ export const LONG_ROOM = {
   camera: { targetY: 6.8, targetZ: 21.3, radius: 20.8, pitch: -0.22 },
 } as const;
 
+// 适配后的东端通行参数，楼层基准按 Y1.003/Y2.001；桥深和三级过渡踏步为放大方案估计。
 /** Adapted east end circulation; floor datum follows Y1.003/Y2.001.
  * Bridge depth and the three transition treads are estimates for the enlarged hall. */
 export const EAST_SERVICE_ACCESS={x:-6.9,width:1.05,height:2.35} as const;
@@ -38,6 +42,7 @@ export function longRoomShelfSectionId(side: number, bay: number) {
     + (side === -1 ? 0 : 1);
 }
 
+// 本布局为历史螺旋梯保留的壁龛不设书架；不据此推断当前主场景采用该历史布局。
 /** The one live alcove reserved for the historic spiral has no bookcase. */
 export const LONG_ROOM_STAIR_ALCOVE = {
   side: -1,
@@ -45,6 +50,7 @@ export const LONG_ROOM_STAIR_ALCOVE = {
   sectionId: longRoomShelfSectionId(-1, 0),
 } as const;
 
+// 下一横向书架从相邻壁龛使用，其 +z 面作为已清空梯间的背板。
 /** The next transverse case remains useful from the following alcove, while
  * its +z face borders the cleared stair bay and reads as a finished back. */
 export const LONG_ROOM_STAIR_ADJACENT_CASE = {
@@ -54,6 +60,7 @@ export const LONG_ROOM_STAIR_ADJACENT_CASE = {
   sectionId: longRoomShelfSectionId(LONG_ROOM_STAIR_ALCOVE.side, LONG_ROOM_STAIR_ALCOVE.bay + 1),
 } as const;
 
+// 该历史布局保留入口端北侧开口，使窗跨和二楼栏杆不被柜体遮住。
 /** The entrance-end north case selected in the live review is intentionally
  * open so the first window bay and gallery rail are not hidden behind casework. */
 export const LONG_ROOM_FRONTMOST_CASE = {
@@ -88,12 +95,14 @@ export function longRoomLiveCatalogSectionIndex(sectionId: number) {
 export const LONG_ROOM_LIVE_SHELF_SECTION_COUNT = LONG_ROOM.alcovesPerSide * 2
   - LONG_ROOM_OMITTED_LIVE_CASES.length;
 
+// 依据公开参观图像估计南入口螺旋梯；+z 向东、+x 向北，开口外保留二楼通道，梯子靠通道边对齐下层书架线。
 /** South-entry spiral observed in the public tour; all dimensions/anchors estimated.
  * World axes: +z east, +x north. Keep the clear gallery walking strip outside this opening.
  * The stair's aisle-side edge aligns with the lower-case line instead of sitting against the rear wall. */
 const HISTORIC_SPIRAL_DIAMETER = 1.8;
 export const HISTORIC_SPIRAL = {
   x: -LONG_ROOM.aisleHalfWidth - HISTORIC_SPIRAL_DIAMETER / 2,
+  // 加深下一跨书柜后，保留人体净距并让梯子留在窗侧壁龛内。
   // Keep the visitor body-clearance zone outside the newly deepened case at
   // the next bay boundary while retaining the stair inside its window alcove.
   z: longRoomBayZ(LONG_ROOM_STAIR_ALCOVE.bay) + 0.36,
@@ -102,10 +111,12 @@ export const HISTORIC_SPIRAL = {
   landingWidth: 0.9,
 } as const;
 
+// 导引路径沿照片重建的铁梯，尺寸仍为估计。
 /** Guided ascent follows the photo-derived iron stair; dimensions remain estimates. */
 const spiralSteps=Math.ceil(LONG_ROOM.galleryY/0.185),spiralTurn=Math.PI*2/14;
 export const HISTORIC_SPIRAL_ENTRY=-(spiralSteps-0.5)*spiralTurn;
 const entryCenter=HISTORIC_SPIRAL_ENTRY+spiralTurn/2;
+// 导引线靠加宽二楼通道中央，避开中庭侧栏杆与突出书柜壁柱。
 // Keep the guided line near the middle of the widened upper-gallery strip,
 // clear of both the void-side rail and the projecting case pilasters.
 const GALLERY_ROUTE_X = 6;
@@ -149,6 +160,7 @@ export function galleryWalkPoint(distance: number) {
   return { ...GALLERY_WALK[0] };
 }
 
+// 历史西端 Y1.003 库房导引线路与二楼路径共用前段，末段穿过适配开口并下行三级估计踏步。
 /** Guided route into the west Y1.003 storage rooms. The gallery prefix is
  * shared with the normal second-floor route; the final section crosses the
  * adapted end opening and descends the three estimated transition treads. */

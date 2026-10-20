@@ -1,3 +1,5 @@
+// 验证上传草稿恢复时保留已保存的公开选择，避免重新加载后悄悄改变可见性。
+// Checks restored upload drafts retain saved visibility rather than silently resetting it.
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { api } from '../api/client';
 import type { BookUpload } from '../domain/types';

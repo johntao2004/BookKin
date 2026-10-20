@@ -12,6 +12,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
 @Component
+// 进程内滑动时间窗限流；重启或多实例不会共享这些内存计数。
+// Process-local sliding-window rate limiting; counters are not shared across restarts or instances.
 public class LoginRateLimiter {
     private static final int LIMIT = 8;
     private static final Duration WINDOW = Duration.ofMinutes(15);

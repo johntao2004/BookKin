@@ -3,10 +3,12 @@ import { LONG_ROOM as L, LONG_ROOM_BAY_PITCH, LONG_ROOM_FRONTMOST_CASE, LONG_ROO
 import { PALETTE } from '../config';
 import type { LibraryMaterials } from './materials';
 
+// 应放大体验要求增设可见照明，并非测绘所得的历史灯具。
 /** Visible lighting adaptation requested for the enlarged experience, not surveyed historic fittings. */
 export function addLongRoomLamps(root: THREE.Group, materials: LibraryMaterials, includeRetiredCases = false) {
   const bulb = new THREE.MeshStandardMaterial({color: PALETTE.parchment, emissive: PALETTE.parchment, emissiveIntensity: 2.5, roughness: 0.25});
   const glass = new THREE.MeshPhysicalMaterial({color: PALETTE.parchment, transparent: true, opacity: 0.22, roughness: 0.18, depthWrite: false});
+  // 每种曲面仅构建一次；全部二十盏灯具共享几何体和材质。
   // Construct each curved surface once; all twenty fittings share geometry and materials.
   const template = new THREE.Group();
   template.name = 'Curved brass and glass wall lamp';
@@ -36,6 +38,7 @@ export function addLongRoomLamps(root: THREE.Group, materials: LibraryMaterials,
     fixture.position.set(side * (L.aisleHalfWidth - 0.12), level * L.galleryY + 3.8,
       longRoomBayZ(bay) + LONG_ROOM_BAY_PITCH / 2);
     fixture.rotation.y = -side * Math.PI / 2;
+    // 保留四个真实光源；新增灯具不增加着色器光源循环或阴影贴图。
     // Retain four real lights; the additional fittings do not add shader light loops or shadow maps.
     if (level === 0 && (bay === 0 || bay === 12)) {
       const light = new THREE.PointLight(PALETTE.parchment, 38, 8, 2); light.position.set(0, 0.29, 0.55); fixture.add(light);

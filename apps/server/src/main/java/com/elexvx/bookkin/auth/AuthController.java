@@ -65,6 +65,8 @@ public class AuthController {
         return new SetupStatus(users.count() > 0);
     }
 
+    // 初始化同时受来源地址和数据库首次创建锁约束，不能只依赖 setup-status 页面检查。
+    // Setup relies on both the remote address and database first-owner lock, not only the setup-status UI check.
     @PostMapping("/setup")
     SessionUser setup(@Valid @RequestBody SetupRequest input, HttpServletRequest request, HttpServletResponse response) {
         if (!isTrustedSetupAddress(request.getRemoteAddr())) {
@@ -130,6 +132,8 @@ public class AuthController {
         return users.findByUsername(principal.getName()).orElseThrow();
     }
 
+    // 手动认证必须轮换会话并显式保存上下文，与 requireExplicitSave 配置配套。
+    // Manual authentication rotates the session and explicitly saves its context to match requireExplicitSave.
     private void authenticateAndSave(String username, String password, HttpServletRequest request, HttpServletResponse response) {
         var authentication = authenticationManager.authenticate(UsernamePasswordAuthenticationToken.unauthenticated(username, password));
         var previous = request.getSession(false);
@@ -142,6 +146,8 @@ public class AuthController {
         contextRepository.saveContext(context, request, response);
     }
 
+    // 这里只解析字面 IP，不信任用户提供的主机名或转发头。
+    // Only literal IP addresses are parsed here, not caller-provided hostnames or forwarding headers.
     static boolean isTrustedSetupAddress(String remoteAddress) {
         if (remoteAddress == null) return false;
         String literal = remoteAddress.contains("%") ? remoteAddress.substring(0, remoteAddress.indexOf('%')) : remoteAddress;

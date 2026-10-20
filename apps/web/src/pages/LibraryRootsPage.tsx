@@ -1,3 +1,5 @@
+// 管理书库目录的预览、登记与能力检查，路径和指纹验证最终由服务端执行。
+// Manages root preview, registration and capability probes with final path/fingerprint validation on the server.
 import { EmptyState } from "../ui/empty-state";
 import { useState } from "react";
 import { Dialog, DialogTitle, DialogContent, DialogActions } from "@/ui/overlays";

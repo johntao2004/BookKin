@@ -1,3 +1,5 @@
+// 验证像素倍率有界且无效输入有安全回退，兼顾高清文字和画布内存上限。
+// Checks bounded pixel ratio and invalid-input fallbacks for sharp text within canvas memory limits.
 import { describe, expect, it } from "vitest";
 import { pageTurnPixelRatio } from "./page-turn-rendering";
 

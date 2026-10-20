@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { PALETTE } from '../config';
 
+// 火焰采用有界体积，观看者绕炉膛移动时仍保持纵深。
 /** A bounded volume: the fire keeps its depth as the viewer orbits the hearth. */
 export function createFireplaceFire() {
   const group = new THREE.Group();
@@ -93,6 +94,7 @@ export function createFireplaceFire() {
   });
   const volume = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), material);
   volume.name = 'Volumetric hearth flames';
+  // 整个火焰体积位于炉栅后方，并保持在砌体开口内部。
   // Entire volume stays behind the grate and inside the masonry opening.
   volume.scale.set(1.66, 1.32, 0.4);
   volume.position.set(0, 1.08, -0.61);

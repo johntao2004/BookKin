@@ -4,6 +4,7 @@ import { REFERENCE_LIBRARY } from './virtual-library-model/hogwartsLibraryLayout
 
 type ShelfFrame = Pick<ShelfCategoryInfo, 'centerX' | 'centerZ' | 'angle' | 'targetY' | 'height' | 'width'>;
 
+// 实际书架正面位置，涵盖二楼高度和双面方向。
 /** The actual shelf front, including upper-floor elevation and either face. */
 export function getReferenceShelfFrame(info: ShelfFrame) {
   if (info.centerX === undefined || info.centerZ === undefined) return [];
@@ -16,6 +17,7 @@ export function getReferenceShelfFrame(info: ShelfFrame) {
   )));
 }
 
+// 碰撞解析后再适配取景，端墙可能缩短名义观看距离。
 /** Fit after collision resolution; end walls can shorten the nominal radius. */
 export function getReferenceShelfFocusFov(camera: THREE.PerspectiveCamera, info: ShelfFrame) {
   camera.updateMatrixWorld(true);

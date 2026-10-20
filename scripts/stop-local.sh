@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# 根据 PID 与命令行身份停止本仓库快照启动的 API/Worker，避免终止被复用 PID 指向的其他进程。
+# Stops API/Worker processes owned by this repository's runtime snapshots, checking command identity to avoid terminating reused PIDs.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

@@ -61,6 +61,7 @@ export interface Book {
   fingerprint: string;
   status: BookFileStatus;
   tags: string[];
+  // 持久化的国际主题代码，使用 Thema 1.6。
   /** Persisted international subject codes (Thema 1.6). */
   subjectCodes?: string[];
 }
@@ -156,6 +157,7 @@ export interface BookMetadata {
   series?: string;
   seriesIndex?: number;
   tags: string[];
+  // 保存具体 Thema 子代码，第一项为主要主题。
   /** Specific Thema child codes; the first one is the primary subject. */
   subjectCodes?: string[];
   coverCacheKey?: string;

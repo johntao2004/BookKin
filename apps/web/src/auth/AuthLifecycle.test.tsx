@@ -1,3 +1,5 @@
+// 用长会话策略检查浏览器计时器边界，避免 30 天延时整数溢出造成提前退出。
+// Checks browser timer bounds for long session policies so a 30-day delay does not overflow into early logout.
 import { act, cleanup, render } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";

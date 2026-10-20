@@ -1,3 +1,5 @@
+// 公共首页只消费公开展示目录，管理入口不改变匿名数据可见范围。
+// The public homepage consumes display-catalog data only; management links do not expand anonymous visibility.
 import { BookGridSkeleton } from "../components/BookGridSkeleton";
 import { Alert } from "@/ui/feedback";
 import { Box } from "@/ui/primitives";

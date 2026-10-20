@@ -1,3 +1,5 @@
+// 专区阅读使用本地解密内容和独立阅读状态，不接入普通书库进度接口。
+// Vault reading uses locally decrypted content and independent state rather than catalog progress APIs.
 import {
   lazy,
   Suspense,

@@ -1,3 +1,5 @@
+// 协调字体登记、文件上传及启用状态，上传完成前不把条目视作可用字体。
+// Coordinates font registration, binary upload and enablement without treating incomplete uploads as usable fonts.
 import { EmptyState } from "../ui/empty-state";
 import { PageContainer } from "../components/PageHeader";
 import { CloudUploadOutlined } from "@/ui/icons";

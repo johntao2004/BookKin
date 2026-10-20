@@ -1,3 +1,5 @@
+// 个人账户资料与凭据操作集中入口，修改使用当前用户身份。
+// Central entry for personal profile/credential operations under the current user identity.
 import { useState, type FormEvent } from "react";
 import { TextField } from "../ui/forms";
 import { Alert } from "../ui/feedback";

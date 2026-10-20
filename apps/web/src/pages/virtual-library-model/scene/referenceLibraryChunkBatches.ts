@@ -91,6 +91,7 @@ function unsupportedReason(mesh: THREE.Mesh, matrix: THREE.Matrix4) {
   if (Object.values(mesh.geometry.attributes).some(attribute => !(attribute instanceof THREE.BufferAttribute)
     || attribute instanceof THREE.InstancedBufferAttribute || attribute instanceof THREE.Float16BufferAttribute
     || attribute.gpuType !== THREE.FloatType)) return 'specialized-attributes';
+  // 原生 BatchedMesh 回调必须继续掌控其绘制列表。
   // Native BatchedMesh callbacks must remain in control of its draw list.
   if (mesh.onBeforeRender !== THREE.Mesh.prototype.onBeforeRender || mesh.onBeforeShadow !== THREE.Mesh.prototype.onBeforeShadow) return 'custom-render-callback';
   return null;
@@ -98,6 +99,7 @@ function unsupportedReason(mesh: THREE.Mesh, matrix: THREE.Matrix4) {
 
 interface MergeSource { mesh: THREE.Mesh; matrix: THREE.Matrix4; chunk: Chunk }
 
+// 直接拼接类型化数组，避免复制每个源对象，也避免通用几何合并所用的临时 JavaScript number[] 索引列表。
 /** Direct typed-array concatenation avoids cloning every source and avoids the
  * temporary JavaScript number[] index list used by a generic geometry merge. */
 function mergeSources(sources: MergeSource[]) {
@@ -118,6 +120,7 @@ function mergeSources(sources: MergeSource[]) {
     const identity = new THREE.Matrix4();
     for (const {mesh, matrix} of sources) {
       const count = mesh.geometry.getAttribute('position').count;
+      // 此视图不拥有新分配的类型化数组；仅变换当前源对象对应的切片。
       // This view owns no new typed arrays. Transform only this source's slice.
       const view = new THREE.BufferGeometry();
       for (const [name, value] of Object.entries(mesh.geometry.attributes)) {
@@ -139,6 +142,7 @@ function mergeSources(sources: MergeSource[]) {
   } catch (error) { geometry.dispose(); throw error; }
 }
 
+// 仅拥有静态分块几何体，不拥有共享材质或纹理。add() 成功后接管传入的组，其几何体不得在此辅助器之外共享。分块变换与可见性均为快照，修改时须移除后重新添加。只可在两次渲染之间调用。multiDraw 必须来自实际渲染器的 WEBGL_multi_draw 能力检测，不可按浏览器名称猜测。
 /**
  * Owns static chunk geometries, never shared materials or textures. add() consumes
  * the supplied group on success. Its geometry must not be shared outside this
@@ -146,6 +150,8 @@ function mergeSources(sources: MergeSource[]) {
  * Call only between renders. multiDraw must come from the actual renderer's
  * WEBGL_multi_draw capability, not a browser-name guess.
  */
+// 负责几何批次与实例槽位，材质由外层共享池管理；释放几何不能连带释放共享贴图。
+// Owns geometry batches and instance slots; the outer pool owns materials, so geometry disposal must not dispose shared textures.
 export function createReferenceChunkBatcher(parent: THREE.Group, options: {
   multiDraw: boolean;
   materialCapacityLimits?: readonly {name: string; vertices: number; indices: number}[]
@@ -186,6 +192,7 @@ export function createReferenceChunkBatcher(parent: THREE.Group, options: {
       pools.delete(pool.key);
       return;
     }
+    // 单独调用 deleteGeometry 既不会复用空洞，也不会释放几何缓冲区。
     // deleteGeometry alone neither reuses holes nor releases geometry buffers.
     pool.mesh.optimize();
     const vertices = pool.vertices * 2 <= pool.vertexCapacity ? Math.ceil(pool.vertices * 1.25) : pool.vertexCapacity;
@@ -196,6 +203,7 @@ export function createReferenceChunkBatcher(parent: THREE.Group, options: {
       pool.vertexCapacity = vertices;
       pool.indexCapacity = indices;
     }
+    // 实例 ID 保持稳定。其小型数据纹理保留峰值容量，直到整个池被释放；诊断信息会显示这一点。
     // Instance IDs stay stable. Their small data textures retain peak capacity
     // until the entire pool is disposed; this is exposed in diagnostics.
     refreshBounds(pool);
@@ -205,7 +213,7 @@ export function createReferenceChunkBatcher(parent: THREE.Group, options: {
     const affected = new Set<Pool>();
     for (const allocation of allocations) {
       const {pool, geometryId, vertices, indices} = allocation;
-      pool.mesh.deleteGeometry(geometryId); // Also deletes its associated instance.
+      pool.mesh.deleteGeometry(geometryId); /* 同时删除其关联实例。 */ // Also deletes its associated instance.
       pool.vertices -= vertices;
       pool.indices -= indices;
       pool.instances--;
@@ -284,6 +292,7 @@ export function createReferenceChunkBatcher(parent: THREE.Group, options: {
         chunk.triangles += stats.triangles; chunk.primitives += stats.primitives;
         chunk.drawSubmissions += stats.drawSubmissions;
         if (!object.geometry.boundingBox) object.geometry.computeBoundingBox();
+        // GLTFLoader 也会直接依据访问器的包围范围计算保守包围球。只有包围盒时，避免 BatchedMesh 再次扫描全部顶点。
         // GLTFLoader also derives its conservative sphere directly from accessor
         // bounds. Avoid BatchedMesh rescanning every vertex when only a box exists.
         if (!object.geometry.boundingSphere && object.geometry.boundingBox) {
@@ -319,6 +328,7 @@ export function createReferenceChunkBatcher(parent: THREE.Group, options: {
             try {
               const instanceId = pool.mesh.addInstance(geometryId);
               pool.mesh.setMatrixAt(instanceId, matrix);
+              // 渐进复制期间原对象始终可见。待所有材质处理成功后一次性替换，避免出现重复绘制的一帧。
               // Originals remain visible throughout a progressive copy. Swap
               // once, after every material succeeds, without a duplicate frame.
               pool.mesh.setVisibleAt(instanceId, false);
@@ -335,6 +345,7 @@ export function createReferenceChunkBatcher(parent: THREE.Group, options: {
           if (disposed) throw new Error('Reference chunk batcher was disposed during progressive addition');
         }
         for (const {pool, instanceId, visible} of visibility) pool.mesh.setVisibleAt(instanceId, visible);
+        // 仅在全部复制及包围范围计算成功后释放原对象，使 add 失败时调用方仍可使用源组。
         // Only release the originals after every copy and bounds calculation
         // succeeded, so a failed add leaves the caller's source group usable.
         sources.forEach(({mesh}) => mesh.removeFromParent());
@@ -360,9 +371,10 @@ export function createReferenceChunkBatcher(parent: THREE.Group, options: {
 
   function add(id: string, group: THREE.Group) {
     const steps = addSteps(id, group);
-    while (!steps.next().done) { /* Synchronous compatibility path. */ }
+    while (!steps.next().done) { /* 同步兼容路径。 */ /* Synchronous compatibility path. */ }
   }
 
+  // 串行异步添加会在每个材质复制之间让出执行权。与 add() 一样，失败或被释放但尚未提交的组仍归调用方所有。
   /** Serialized async additions yield between individual material copies. A
    * failed/disposed uncommitted group remains caller-owned, as with add(). */
   function addProgressively(id: string, group: THREE.Group, progress: {
@@ -375,6 +387,7 @@ export function createReferenceChunkBatcher(parent: THREE.Group, options: {
       const advance = () => {
         const started = performance.now();
         const step = steps.next();
+        // 观察回调仅在提交之前、仍可回滚时执行。
         // Observers run only while rollback is still possible, before commit.
         if (!step.done) progress.onSlice?.(performance.now() - started, 'reference-chunk-material-copy');
         return step;
@@ -388,9 +401,10 @@ export function createReferenceChunkBatcher(parent: THREE.Group, options: {
           step = advance();
         }
       } catch (error) {
+        // 向暂停的事务抛出异常，使其 catch 执行回滚；仅调用 generator.return() 会执行 finally，却不会删除副本。
         // Throw into a paused transaction so its catch performs rollback; a
         // plain generator.return() would run finally without deleting copies.
-        try { steps.throw(error); } catch { /* Preserve the original failure. */ }
+        try { steps.throw(error); } catch { /* 保留原始失败原因。 */ /* Preserve the original failure. */ }
         throw error;
       } finally { steps.return(); }
     });
@@ -439,6 +453,7 @@ export function createReferenceChunkBatcher(parent: THREE.Group, options: {
         bounds: pool.mesh.boundingBox ? describeBounds(pool.mesh.boundingBox) : null};
     });
     for (const array of arrays) backingBuffers.add(array.buffer);
+    // 公式与已安装的 Three.js 0.185.1 BatchedMesh 一致。这些 CPU 数组及数据纹理独立于几何体，不代表 GPU 内存实测值。实例容量有意保持可见，不予隐藏。
     // Formula matches the installed Three.js 0.185.1 BatchedMesh. These CPU
     // arrays/data textures are separate from geometry, and are not a GPU-memory
     // measurement. Instance capacity is intentionally visible rather than hidden.
@@ -451,6 +466,7 @@ export function createReferenceChunkBatcher(parent: THREE.Group, options: {
       mode: options.multiDraw ? 'multi-draw' as const : 'independent-meshes' as const,
       residentModules: chunks.size, residentTriangles, residentPrimitives,
       batchCount: pools.size + consolidatedMeshes.size, fallbackPrimitives,
+      // 建筑为不透明几何体。此值是单个渲染通道的拓扑与提交次数边界，并非 renderer.info.render.calls，也不是整帧或阴影总数。
       // Architecture is opaque. This is a topology/submission bound for ONE
       // pass, not renderer.info.render.calls or a frame/shadow total.
       possiblePrimitiveDrawCount: [...pools.values()].reduce((sum, pool) => sum + pool.instances, 0) + fallbackPrimitives,
@@ -466,6 +482,7 @@ export function createReferenceChunkBatcher(parent: THREE.Group, options: {
     };
   }
 
+  // 一次性全驻留回退方案：有意牺牲逐分块裁剪和卸载，以换取按材质统计的提交次数。每种材质原子提交后让出执行权。失败时现有混合场景仍可使用但会锁定；调用方可保留它或释放后重载，不得修改过期元数据。
   /** One-shot, full-resident fallback. It intentionally trades per-chunk culling
    * and eviction for material-level submission counts. Each material is committed
    * atomically, then yields. On failure the existing mixed scene stays usable but
@@ -489,6 +506,7 @@ export function createReferenceChunkBatcher(parent: THREE.Group, options: {
           if (unsupportedReason(object, matrix)) return;
           let visible = object.visible;
           for (let owner = object.parent; owner && owner !== parent; owner = owner.parent) visible &&= owner.visible;
+          // 隐藏或静态部件保持独立；合并不得使它们意外显现。
           // Hidden/static pieces remain separate; merging must not reveal them.
           if (!visible) return;
           const key = signature(object), request = requests.get(key) ?? [];
@@ -524,6 +542,7 @@ export function createReferenceChunkBatcher(parent: THREE.Group, options: {
           for (const geometry of candidates) {
             if (![...chunks.values()].some(chunk => chunk.geometries.has(geometry))) geometry.dispose();
           }
+          // 必须移除引用：仅调用 dispose() 无法释放仍被待处理请求列表引用的 CPU 数组。
           // Dropping references matters: dispose() alone does not release CPU
           // arrays still reachable from our pending request list.
           sources.length = 0;
@@ -538,6 +557,7 @@ export function createReferenceChunkBatcher(parent: THREE.Group, options: {
   function dispose() {
     if (disposed) return;
     pendingRoot?.removeFromParent();
+    // 一次性释放池；反复调用 remove() 会压紧马上就要废弃的数据。
     // Dispose pools once; repeated remove() would compact soon-to-be-dead data.
     for (const pool of pools.values()) { pool.mesh.removeFromParent(); pool.mesh.dispose(); }
     pools.clear();

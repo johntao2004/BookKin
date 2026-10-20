@@ -10,6 +10,8 @@ import org.jooq.Record;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+// 用户模块查询与命令网关；对外返回领域对象，保留 SQL 记录映射在模块内。
+// User-module query/command gateway; returns domain objects and keeps SQL record mapping internal.
 @Repository
 public class UserRepository {
     private final DSLContext dsl;
@@ -65,6 +67,8 @@ public class UserRepository {
 
     @Transactional
     public Optional<BookKinUser> createOwnerIfEmpty(String username, String displayName, String hash) {
+        // 事务级锁把“检查空库”和“创建主人”串行化，避免并发初始化。
+        // A transaction-scoped lock serializes the empty-user check and owner creation across concurrent setup requests.
         dsl.execute("select pg_advisory_xact_lock(hashtext('bookkin-owner-initialization'))");
         if (count() > 0) return Optional.empty();
         return Optional.of(create(username, displayName, hash, UserRole.OWNER, false));

@@ -1,3 +1,5 @@
+// 覆盖共享材质所有权、属性保真、淘汰压缩与失败回滚，防止重复释放或复活已删除模块。
+// Covers material ownership, attribute preservation, compaction and failed-add rollback against double disposal or revived chunks.
 import * as THREE from 'three';
 import { createReferenceChunkBatcher } from './referenceLibraryChunkBatches';
 

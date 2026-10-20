@@ -1,3 +1,5 @@
+// 提供确定性的浏览器 API 替身供 jsdom 使用；模拟观察器不代表真实布局、剪贴板或媒体查询能力。
+// Provides deterministic browser API doubles for jsdom, not proof of real layout, clipboard or media-query behavior.
 import "@testing-library/jest-dom/vitest";
 
 Object.defineProperty(window, "matchMedia", {

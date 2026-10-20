@@ -1,3 +1,5 @@
+// 明确区分未认证与角色不足，并保留恢复导航目标。
+// Distinguishes missing authentication from insufficient roles while preserving a recovery destination.
 import { LockOutlined } from "@/ui/icons";
 import { Button } from "@/ui/buttons";
 import { Stack } from "@/ui/primitives";

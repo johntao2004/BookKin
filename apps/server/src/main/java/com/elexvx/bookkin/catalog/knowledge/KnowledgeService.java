@@ -9,6 +9,8 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 
 @Service
+// 采样后调用 AI，保存前再次比较文件身份与指纹，防止把旧正文结果附到新文件。
+// Calls AI on sampled text and rechecks file identity/fingerprint before saving results against potentially changed content.
 public class KnowledgeService {
     private final BookRepository books;
     private final KnowledgeRepository knowledge;

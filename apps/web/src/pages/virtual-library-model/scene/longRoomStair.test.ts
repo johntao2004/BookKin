@@ -1,3 +1,5 @@
+// 验证不同历史房间尺度下仍保留人体级踏步与净高，而不是把楼梯整体等比缩放。
+// Checks human-scale tread rise and headroom across historical room sizes rather than uniform stair scaling.
 import * as THREE from 'three';
 import { createLongRoomSpiralStair } from './longRoomStair';
 

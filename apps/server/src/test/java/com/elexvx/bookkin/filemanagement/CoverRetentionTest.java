@@ -1,3 +1,5 @@
+// 使用临时文件覆盖指纹冲突、路径越界及软链接，确认清理失败保留可重试状态。
+// Uses temporary files for fingerprint conflicts, path escape and symlinks, preserving retryable state on cleanup failure.
 package com.elexvx.bookkin.filemanagement;
 
 import static org.junit.jupiter.api.Assertions.*;

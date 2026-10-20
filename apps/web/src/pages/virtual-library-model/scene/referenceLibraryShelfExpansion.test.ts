@@ -1,3 +1,5 @@
+// 验证扩宽后的书架、外侧通道与端廊连通，同时阻止越过连续外墙。
+// Checks expanded shelves, outer-aisle/end-crosswalk connectivity and continuous outer-wall containment.
 /**
  * Regression guard for contract "20261019-wide-shelves-r20": bookcase faces get
  * wider (lower 6.55 m, upper 5.08 m), the hall reaches x = ±20.0 and every

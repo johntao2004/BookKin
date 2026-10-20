@@ -1,3 +1,5 @@
+// 测量真实内容宽度而非仅窗口宽度，布局未变时复用状态并清理观察器。
+// Measures actual content width rather than only window width, reusing unchanged state and cleaning up observers.
 import { useEffect, useState, type RefObject } from "react";
 import { readerPageLayout, type ReaderPageLayout } from "./reader-layout";
 

@@ -11,6 +11,8 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 @Repository
+// 分类及多对多书籍归属的存储层，公开浏览与完整目录使用不同可见范围。
+// Stores categories and many-to-many book membership with distinct public and full-catalog visibility.
 public class CategoryRepository {
     private final DSLContext dsl;
 

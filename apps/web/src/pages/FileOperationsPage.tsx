@@ -1,3 +1,5 @@
+// 轮询显示后台文件任务阶段与结果，排队或执行中状态不当作完成。
+// Polls background file-operation stages/results without treating queued or running work as complete.
 import { EmptyState } from "../ui/empty-state";
 import { Alert } from "@/ui/feedback";
 import { RefreshButton } from "@/ui/buttons";

@@ -1,3 +1,5 @@
+// 把服务端密码规则转为即时提示；客户端通过不替代提交时服务端校验。
+// Turns server password policy into immediate feedback; client validation does not replace server checks.
 import { useQuery } from "@tanstack/react-query";
 import { api, type PasswordPolicy } from "../api/client";
 import { Stack, Typography } from "../ui/primitives";

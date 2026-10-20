@@ -1,3 +1,5 @@
+// 把批注颜色标识映射到共享色值与背景透明度，未知值沿用既定回退。
+// Maps annotation color identifiers to shared colors/opacity with defined fallbacks for unknown values.
 import type { AnnotationColor, HighlightColor } from "./types";
 import { tokens } from "../theme/generated-tokens";
 

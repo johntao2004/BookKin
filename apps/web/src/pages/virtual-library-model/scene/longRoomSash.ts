@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 
+// 依据照片估计重建两扇闭合、错位的九格窗扇。局部 XY 为洞口平面，+Z 朝向房间；不模拟开启机构。
 /** Photographic reconstruction estimate: two closed, staggered nine-light sashes.
  * Local XY is the opening, +Z faces the room. No opening mechanism is simulated.
  */
@@ -24,6 +25,7 @@ export function createLongRoomSashes(height: number, wood: THREE.Material, glass
       box(timber, clearWidth, bar, 0.05, 0, rail + clearHeight * fraction);
     }
     for (let row = 0; row < 3; row++) for (let column = 0; column < 3; column++) {
+      // 玻璃片嵌入窗格条后方，共用边缘不留漏光缝隙。
       // Panes tuck behind the glazing bars; shared edges do not leave light leaks.
       box(panes, clearWidth / 3, clearHeight / 3, 0.012,
         -clearWidth / 2 + clearWidth * (column + 0.5) / 3,
@@ -39,6 +41,7 @@ export function createLongRoomSashes(height: number, wood: THREE.Material, glass
   return root;
 }
 
+// 依据木作照片而非测绘截面估计细小倒圆边缘。倒角保持在现有窗扇与玻璃的范围内。
 /** Small eased edges, estimated from the photographed joinery rather than a
  * surveyed section. The bevel stays inside the existing sash/pane envelope. */
 function createSashTimber(width:number,height:number,depth:number) {

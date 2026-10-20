@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# 与增高前 GLB 比较指定材质的顶点，消除约定的刚性竖移后检查尺寸；历史地球仪位置假设需与所选基线一致。
+# Compares material-selected vertices with the pre-height-change GLB after prescribed rigid Y offsets; historical globe-placement assumptions must match the selected baseline.
 """Compare real exported feature coordinates with the pre-height-change GLB."""
 import argparse
 import hashlib

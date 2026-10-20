@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 
+// 依据照片估计的三分格窗洞侧壁，不表示存在可操作的窗板开合机构。
 /** Photo-estimated three-field window return; no operable shutter mechanism is implied. */
 export function createLongRoomWindowReveal(height: number, material: THREE.Material) {
   const group = new THREE.Group();
@@ -18,6 +19,7 @@ export function createLongRoomWindowReveal(height: number, material: THREE.Mater
     panel.name = 'Recessed window return field'; panel.position.y = (bottom + top) / 2;
     panel.castShadow = panel.receiveShadow = true; group.add(panel);
 
+    // 窄圆角企口从窗框向内凹区域逐级降低。该轮廓由照片估计，并非实测历史木作截面。
     // A narrow rounded rebate steps down from the frame to the recessed field.
     // The profile is a photo estimate, not a measured historic joinery section.
     const halfOpening = width / 2 - border;
@@ -37,6 +39,7 @@ export function createLongRoomWindowReveal(height: number, material: THREE.Mater
       bevelSize: 0.005, bevelSegments: 5, steps: 1,
     });
     rebateGeometry.translate(0, 0, 0.013);
+    // 每扇窗两端的窗洞侧壁分别从相反方向观看。
     // Returns are viewed from opposite sides on either edge of each window.
     for (const side of [-1, 1]) {
       const moulding = new THREE.Mesh(rebateGeometry, material);

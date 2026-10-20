@@ -1,3 +1,5 @@
+// 用户管理的嵌套页签壳，按 URL 选中操作、登录及安全相关面板。
+// Nested user-management tab shell selects operation, login and security panels from the URL.
 import { lazy, Suspense, useContext } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { Tabs, Skeleton } from "../ui/antd";

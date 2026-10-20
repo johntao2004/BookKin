@@ -1,3 +1,5 @@
+// 知识图谱仅显示已提取证据，分析由用户显式触发而非打开页面自动运行。
+// Shows extracted evidence only; analysis starts explicitly rather than automatically on page entry.
 import { type NetworkGraphOptions } from '@ant-design/graphs';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useRef, useState } from 'react';

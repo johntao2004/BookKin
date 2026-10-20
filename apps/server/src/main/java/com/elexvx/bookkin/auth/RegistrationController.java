@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @Profile("api")
 @RequestMapping("/api/v1")
+// 提供注册状态和管理策略；注册请求经限流后交给服务决定是否可创建成员。
+// Exposes registration status/policy; rate-limited signup delegates member creation eligibility to the service.
 public class RegistrationController {
  private final RegistrationService service;
  private final LoginRateLimiter limiter;

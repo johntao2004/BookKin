@@ -20,6 +20,8 @@ import org.springframework.web.bind.annotation.RestController;
 @Profile("api")
 @RequestMapping("/api/v1/ai")
 @PreAuthorize("hasAnyRole('OWNER','ADMIN')")
+// AI 平台与设置的管理入口，类级角色限制覆盖各端点。
+// Management entry point for AI providers/settings; the class-level role restriction covers its endpoints.
 public class AiController {
     private final AiMetadataService ai;
     private final AiSettingsService settings;

@@ -1,3 +1,5 @@
+// 本文件说明适用于该 Long Room 构建路径；下方旧注释的 live 不表示当前主场景已启用此模型。
+// These comments describe this Long Room builder; legacy uses of live below do not assert inclusion in the current main scene.
 import {createWestUpperRooms} from './longRoomWestUpperRooms';
 import { createHenryJonesRoom } from './longRoomHenryJones';
 import * as THREE from 'three';
@@ -7,6 +9,7 @@ import { addLongRoomWestEnd } from './longRoomEastEnd';
 import { createWestStairStudySteps } from './longRoomWestStairStudy';
 import type { LibraryMaterials } from './materials';
 
+// 临时连接方案，将历史楼梯到达点设在 Long Room 地板零标高。用于引导导航；附楼位置尚未测量。
 /** Provisional connection, with the historic stair arrival at Long Room floor zero.
  * Used for guided navigation; the pavilion placement remains unmeasured. */
 export const WEST_CONNECTION = {
@@ -50,6 +53,7 @@ export function createWestConnectionStudy(materials: LibraryMaterials, includeHa
   return step.value;
 }
 
+// 按用户要求采用平层连接：此 Long Room 主厅构建路径不包含楼梯井或地下层。
 /** User-requested level connection: no stairwell or lower storey in the live hall. */
 function createWestLevelPassage(materials:LibraryMaterials) {
   const root=new THREE.Group();root.name='West level passage without lower storey';

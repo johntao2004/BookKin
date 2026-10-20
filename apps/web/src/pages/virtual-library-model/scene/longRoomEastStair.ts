@@ -1,7 +1,10 @@
+// 本文件说明适用于该 Long Room 构建路径；下方旧注释的 live 不表示当前主场景已启用此模型。
+// These comments describe this Long Room builder; legacy uses of live below do not assert inclusion in the current main scene.
 import * as THREE from 'three';
 import type { LibraryMaterials } from './materials';
 import { markCameraCollider } from '../../virtual-library-collision';
 
+// Y1.002 和测绘 XS-3A/3B 确定了东侧楼梯位置及实体栏板。4.58 米层高有资料支持；踏步数量、半径和厚度为估计。此楼梯挂接于东侧围护构建路径，尚未提供引导下行入口。
 /** Y1.002 and survey XS-3A/3B establish the east stair location and solid parapets.
  * The 4.58 m floor rise is source-backed; tread count, radii and thickness are estimates.
  * Attached to the live east enclosure; a guided descent is not yet exposed. */

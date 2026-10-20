@@ -1,3 +1,5 @@
+// 设置绝对会话时长并使用服务器返回值更新，客户端倒计时不替代服务端过期检查。
+// Edits absolute session lifetime using server results; client countdowns do not replace server expiry checks.
 import { ActionToolbar } from "../components/PageHeader";
 import { useState, type FormEvent } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";

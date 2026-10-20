@@ -19,6 +19,8 @@ import org.springframework.stereotype.Component;
 
 @Component
 @Profile({"api", "worker"})
+// 探测根目录可读写性并维护内部目录，结果更新根状态而非修改原书。
+// Probes root capabilities and maintains internal directories, updating root status rather than original books.
 public class LibraryRootCapabilityService  {
     private static final Logger log = LoggerFactory.getLogger(LibraryRootCapabilityService.class);
     private final LibraryRootRepository roots;

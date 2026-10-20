@@ -1,3 +1,5 @@
+// 验证历史上层房间门洞贯穿两层墙体且保留实体门侧，楼板与护栏支撑连通。
+// Checks historical upper-room doorways cross both walls while retaining solid jambs, connected floors and guards.
 import {addLongRoomEastEnd} from './longRoomEastEnd';
 import {LONG_ROOM as L} from '../longRoomLayout';
 import * as THREE from 'three';

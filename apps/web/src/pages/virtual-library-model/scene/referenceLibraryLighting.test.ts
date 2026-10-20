@@ -1,3 +1,5 @@
+// 验证两侧两层 24 处窗光和吊灯局部阴影，兼容缺少面光源字段的旧配置。
+// Checks 24 window lights and local chandelier shadows while retaining compatibility with older lighting configuration.
 import * as THREE from 'three';
 import { readFileSync } from 'node:fs';
 import { addReferenceLighting, validateReferenceConfig } from './referenceLibrary';

@@ -1,3 +1,5 @@
+// 验证用户名为纯文本且复制仅包含只读密码，完成操作关闭弹层。
+// Checks plain-text username display, password-only copying and Done dismissal.
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { expect, it, vi } from "vitest";
 import { TestProviders } from "../test/TestProviders";

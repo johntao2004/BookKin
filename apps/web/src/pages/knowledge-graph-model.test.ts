@@ -1,3 +1,5 @@
+// 验证只从有证据知识合并概念和共现关系，排除不可用书籍与元数据冒充知识。
+// Checks evidence-backed concept/co-occurrence merging while excluding unavailable books and metadata masquerading as knowledge.
 import type { Book, BookKnowledge } from '../domain/types';
 import { buildKnowledgeGraph, filterBooksByNode, searchKnowledgeBooks } from './knowledge-graph-model';
 const book = (id: string): Book => ({ id, title: `书籍${id}`, author: '作者', tags: ['普通标签'], description: '', format: 'EPUB', coverUrl: '', progress: 0, addedAt: '', libraryRoot: '', relativePath: '', fingerprint: '', status: 'AVAILABLE' });

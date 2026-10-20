@@ -1,7 +1,9 @@
 import * as THREE from 'three';
 
+// 依据照片的带线脚木截面；尺寸为适配大厅而作的估计。
 /** Photo-based moulded timber section; dimensions are estimates for the adapted hall. */
 export function createLongRoomVaultRib(radius: number, spring: number) {
+  // 轴向偏移与向内深度：阶梯状肩部围合内凹檐板。
   // Axial offset and inward depth: stepped shoulders frame a recessed fascia.
   const profile = [
     [-0.20, 0], [-0.20, 0.055], [-0.195, 0.075], [-0.18, 0.085],
@@ -38,6 +40,7 @@ export function createLongRoomVaultRib(radius: number, spring: number) {
       positions.push(side * (radius - depth), spring, z); normals.push(0, -1, 0); uv.push(z / 0.6, depth / 0.6);
     }
     for (const [a, b, c] of capTriangles) {
+      // 两侧起拱端均朝下嵌入支撑木作。
       // Both spring ends face down into their supporting joinery.
       const [za, da] = profile[a], [zb, db] = profile[b], [zc, dc] = profile[c];
       const normalY = side * ((zb - za) * (da - dc) - (zc - za) * (da - db));

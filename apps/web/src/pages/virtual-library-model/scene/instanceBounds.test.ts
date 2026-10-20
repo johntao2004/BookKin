@@ -1,3 +1,5 @@
+// 覆盖多种仿射变换及绑定 LOD，包围范围只包含实际实例而非未使用容量。
+// Covers affine transforms and binding LODs, bounding actual instances rather than unused capacity.
 import * as THREE from 'three';
 import { instanceBounds } from './instanceBounds';
 import { createHistoricalBindingGeometry, createDistantHistoricalBindingGeometry, createHistoricalPageEdges } from './longRoomBindings';

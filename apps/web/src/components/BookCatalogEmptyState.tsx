@@ -1,3 +1,5 @@
+// 书籍集合统一空态容器，调用方负责区分加载、失败与确实为空。
+// Shared catalog empty-state surface; callers distinguish loading, failure and genuinely empty results.
 import { EmptyState } from "../ui/empty-state";
 import { Stack } from "@/ui/primitives";
 import type { ReactNode } from "react";

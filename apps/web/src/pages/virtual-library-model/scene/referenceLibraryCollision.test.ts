@@ -1,3 +1,5 @@
+// 按当前场景描述验证封闭门、移除构件和站立人体通行，保留必要墙体与画作阻挡。
+// Checks closed doors, removed features and standing-body routes while retaining required wall/artwork collision.
 import * as THREE from 'three';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { collectCameraColliders, markCameraCollider, resolveCameraCollision } from '../../virtual-library-collision';

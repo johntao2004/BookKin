@@ -86,6 +86,8 @@ export default function PdfDocumentReader({ bookId, annotations, theme, fontSize
   const textLayerRef = useRef<HTMLDivElement | null>(null);
   const [document, setDocument] = useState<PDFDocumentProxy | null>(null);
   const [pageNumber, setPageNumber] = useState(1);
+  // PDF 原始页与重排后的虚拟页分开管理；locator 的 offset 指向原始页内分页。
+  // Track original PDF pages separately from reflowed virtual pages; locator offset identifies pagination within an original page.
   const [virtualPageIndex, setVirtualPageIndex] = useState(0);
   const [virtualPageCount, setVirtualPageCount] = useState(1);
   const [scale, setScale] = useState(1.25);
@@ -148,6 +150,8 @@ export default function PdfDocumentReader({ bookId, annotations, theme, fontSize
     setReadingBlocks([]);
     setTextLoading(true);
     setError("");
+    // 每本书独立拥有 PDF 加载任务；切换或卸载时销毁任务并忽略迟到响应。
+    // Each book owns its PDF loading task; switching or unmounting destroys it and ignores late responses.
     const task = getDocument(dataRange ? { range: dataRange, disableAutoFetch: true, disableStream: true, rangeChunkSize: 1024 * 1024 } : { url: contentUrl ?? `/api/v1/books/${bookId}/content`, withCredentials: true, rangeChunkSize: 1024 * 1024 });
     void Promise.all([task.promise, readOnly ? Promise.resolve(null) : api.getReadingPosition(bookId)]).then(([loaded, position]) => {
       if (disposed) return;
@@ -230,6 +234,8 @@ export default function PdfDocumentReader({ bookId, annotations, theme, fontSize
 
   useEffect(() => {
     if (!document || pendingPreviousPageNumber !== null) return;
+    // 跨原始页的上一页布局未确定时不写进度，避免把临时 offset 当成最终位置。
+    // Do not save progress before the previous original page layout resolves, avoiding persistence of a provisional offset.
     const locator = `pdf:page=${pageNumber}&offset=${virtualPageIndex}`;
     const progress = Math.max(0, Math.min(1, (pageNumber - 1 + (virtualPageIndex + 0.5) / Math.max(1, virtualPageCount)) / document.numPages));
     onPosition(locator, progress);
@@ -501,6 +507,7 @@ function PdfPagedText({ textRef, blocks, pageNumber, theme, fontFamily, fontSize
         overflow: "visible",
         transform: columnWidth === null ? `translateX(-${pageIndex * 100}%)` : `translateX(-${pageIndex * pageStride}px)`,
         transition: "none",
+        // 由浏览器按文本需要生成完整列宽，避免固定列数在窄屏把横排中文挤成近似竖排。
         // Let the browser create only as many full-width columns as the text
         // needs. A fixed column count made each column just a few pixels wide
         // on narrow reader viewports, which made horizontal Chinese text look

@@ -1,3 +1,5 @@
+// 加载可编辑书单并提交单本书加入操作，保存结果通过查询缓存刷新传播。
+// Loads editable booklists and submits a book addition, propagating results through query refreshes.
 import { EmptyState } from "../ui/empty-state";
 import { AddRounded } from "@/ui/icons";
 import { LibraryAddOutlined } from "@/ui/icons";

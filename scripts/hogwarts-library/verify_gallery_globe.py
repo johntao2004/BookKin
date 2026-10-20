@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# 检查导出地球仪包围范围、单一碰撞体和脚下平台支撑，确保移位后仍是完整刚性物件。
+# Checks the exported globe bounds, single collider and platform support after relocation as a complete rigid feature.
 """Verify the actual exported globe is rigid and supported on the portrait platform."""
 import json
 from pathlib import Path

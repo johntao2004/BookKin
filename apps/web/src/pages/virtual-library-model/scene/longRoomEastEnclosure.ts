@@ -1,3 +1,5 @@
+// 本文件说明适用于该 Long Room 构建路径；下方旧注释的 live 不表示当前主场景已启用此模型。
+// These comments describe this Long Room builder; legacy uses of live below do not assert inclusion in the current main scene.
 import {EAST_UPPER_ROOM as U} from './longRoomEastUpperRoom';
 import {EAST_SERVICE_ACCESS as A} from '../longRoomLayout';
 import * as THREE from 'three';
@@ -7,6 +9,7 @@ import {createWestHighWindow} from './longRoomWestWindow';
 import {markCameraCollider} from '../../virtual-library-collision';
 import {WEST_LEVELS} from './longRoomWestLevels';
 
+// 历史下层围护仅供独立研究；依用户要求，此 Long Room 主厅构建路径的附楼在大厅零标高处封闭。
 /** Historical lower enclosure is available only for isolated studies; the live
  * pavilion is closed at hall floor zero by user request. */
 export function createEastStairEnclosure(materials:LibraryMaterials, includeLower = true) {
@@ -22,6 +25,7 @@ export function createEastStairEnclosure(materials:LibraryMaterials, includeLowe
     return mesh;
   };
   box('East stair ground floor',includeLower ? 11.45 : 7.33,0.18,8,includeLower ? -3.605 : -5.665,bottom-0.09,4.5);
+  // 在下层顶棚中预留独立服务楼梯的开口。
   // Reserve the independent service stair opening through the lower ceiling.
   const C=U.core;
   for(const [x0,x1,z0,z1] of [[-9.33,-2,0.38,C.west],[-9.33,-2,C.east,8.62],[-9.33,C.north,C.west,C.east],[C.south,-2,C.west,C.east]])
@@ -30,6 +34,7 @@ export function createEastStairEnclosure(materials:LibraryMaterials, includeLowe
     box('East stair west enclosure',b-a,top-bottom,0.24,(a+b)/2,(top+bottom)/2,0.5);
   box('East service entry lower wall',A.width,-bottom,0.24,A.x,bottom/2,0.5);
   box('East service entry head',A.width,top-A.height,0.24,A.x,(top+A.height)/2,0.5);
+  // 在展览空间重建前，地面层到达区域保持封闭。
   // Ground-level arrival remains enclosed until the exhibition is reconstructed.
   box('East lower arrival south boundary',0.24,-bottom,8,2.12,bottom/2,4.5);
   box('East lower arrival west boundary',4.24,-bottom,0.24,0,bottom/2,0.5);
@@ -48,6 +53,7 @@ export function createEastStairEnclosure(materials:LibraryMaterials, includeLowe
   };
   windows('East stair north windows',8,[-2.5,0,2.5],-9.33,4.5,Math.PI/2);
   windows('East stair east windows',7.33,[-1.8,1.8],-5.665,8.5,Math.PI);
+  // 下部实墙维持房间边界，并留出通往底层平台的开口。
   // The lower solid wall keeps the room boundary; an opening admits the bottom landing.
   for(const [a,b] of [[0.5,2.95],[4.65,8.5]])box('East lower stair threshold pier',0.24,-bottom,b-a,-2.12,bottom/2,(a+b)/2);
   if (includeLower) box('East lower stair threshold head',0.24,2.23,1.7,-2.12,-1.115,3.8);

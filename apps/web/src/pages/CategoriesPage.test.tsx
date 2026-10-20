@@ -1,3 +1,5 @@
+// 覆盖匿名权限、加载/失败状态、创建与 URL 参数保留，避免未知数据被误作空分类。
+// Covers anonymous rights, loading/errors, creation and URL preservation without treating unknown data as empty categories.
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useLocation } from "react-router-dom";

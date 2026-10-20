@@ -1,3 +1,5 @@
+// 应用路由组合层，区分公开页面、认证内容和管理角色入口。
+// Composes application routes with distinct public, authenticated and management entry points.
 const ArticlesPage = lazy(() => import("./pages/ArticlesPage").then(m => ({default:m.ArticlesPage})));
 const ArticleReaderPage = lazy(() => import("./pages/ArticleReaderPage").then(m => ({default:m.ArticleReaderPage})));
 const VaultPage = lazy(() => import("./pages/VaultPage").then(m => ({default:m.VaultPage})));
@@ -10,6 +12,7 @@ import { lazy, Suspense } from "react";
 import { Navigate, Outlet, Route, Routes } from "react-router-dom";
 import { RequireAuth } from "./auth/AuthContext";
 import { AppShell } from "./components/AppShell";
+import { VirtualLibraryRoute } from "./pages/VirtualLibraryRoute";
 
 const UsersPage = lazy(() => import("./pages/UserManagementPage").then(module => ({ default: module.UserManagementPage })));
 const SettingsPage = lazy(() => import("./pages/SettingsPage").then(module => ({ default: module.SettingsPage })));
@@ -29,7 +32,6 @@ const NotFoundPage = lazy(() => import("./pages/NotFoundPage").then((module) => 
 const ReaderPage = lazy(() => import("./pages/ReaderPage").then((module) => ({ default: module.ReaderPage })));
 const RecycleBinPage = lazy(() => import("./pages/RecycleBinPage").then((module) => ({ default: module.RecycleBinPage })));
 const SetupPage = lazy(() => import("./pages/SetupPage").then((module) => ({ default: module.SetupPage })));
-const VirtualLibraryPage = lazy(() => import("./pages/VirtualLibraryExperience").then((module) => ({ default: module.VirtualLibraryExperience })));
 
 function ProtectedShell() {
   return <RequireAuth><AppShell><Outlet /></AppShell></RequireAuth>;
@@ -69,7 +71,7 @@ export default function App() {
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/library/all" element={<LibraryPage />} />
           <Route path="/knowledge-graph" element={<KnowledgeGraphPage />} />
-          <Route path="/virtual-library" element={<VirtualLibraryPage />} />
+          <Route path="/virtual-library" element={<VirtualLibraryRoute />} />
           <Route path="/display-books" element={<Navigate to="/library/all" replace />} />
           <Route path="/settings/display-books" element={<Navigate to="/library/all" replace />} />
           <Route path="/recycle-bin" element={<RequireAuth roles={["OWNER", "ADMIN"]}><RecycleBinPage /></RequireAuth>} />

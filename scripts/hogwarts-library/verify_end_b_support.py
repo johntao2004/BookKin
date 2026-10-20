@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# 对 B 端阳台支撑、墙板与相关构件进行实际三角面探测；历史 r18 支撑契约不等同于当前删改后的设计要求。
+# Probes actual B-end balcony-support, panel and feature triangles; the historical r18 support contract is not automatically the current design contract after removals.
 """Verify the exported r18 B-end balcony support and lower wall panels."""
 from __future__ import annotations
 

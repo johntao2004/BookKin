@@ -1,3 +1,5 @@
+// 组合用户安全设置入口，不把前端可见开关当作权限授权。
+// Composes user-security controls without treating visible UI switches as authorization.
 import { SessionPolicySettings } from "./SessionPolicySettings";
 import { PasswordPolicySettings } from "./PasswordPolicySettings";
 import { useState } from "react";

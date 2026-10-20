@@ -1,3 +1,5 @@
+// 书单发现页按查询展示可见结果，创建与编辑通过共享表单完成。
+// Lists visible booklists for the query and uses shared forms for creation/editing.
 import { EMPTY_BOOKLISTS_TITLE } from "../ui/empty-state-copy";
 import { AddRounded } from "@/ui/icons";
 import { Alert } from "@/ui/feedback";

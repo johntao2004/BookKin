@@ -20,6 +20,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @Profile("api")
 @RequestMapping("/api/v1/books")
+// 私有目录读取入口，把当前用户传入查询以关联其阅读进度。
+// Private catalog read endpoints pass the current user into queries for personal reading progress.
 public class BookController {
     private final BookRepository books;
     private final UserRepository users;

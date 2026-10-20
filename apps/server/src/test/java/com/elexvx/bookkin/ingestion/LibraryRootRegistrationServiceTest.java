@@ -1,3 +1,5 @@
+// 覆盖幂等重放、预览后目录变化和嵌套根拒绝，避免过期预览产生登记写入。
+// Covers idempotent replay, changed directories and nested-root rejection so stale previews cannot authorize registration.
 package com.elexvx.bookkin.ingestion;
 import com.elexvx.bookkin.filemanagement.infrastructure.LibraryLocationProbe;
 import org.junit.jupiter.api.Test;

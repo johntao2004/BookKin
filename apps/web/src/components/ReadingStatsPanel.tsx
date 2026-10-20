@@ -1,3 +1,5 @@
+// 展示服务端周阅读统计与前周比较，加载或失败不可误显示为已确认零值。
+// Presents server weekly reading totals/comparisons, keeping loading or failure distinct from confirmed zero values.
 import { AccessTimeRounded } from "@/ui/icons";
 import { Alert } from "@/ui/feedback";
 import { Box } from "@/ui/primitives";

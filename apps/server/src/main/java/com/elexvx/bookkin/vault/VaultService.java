@@ -9,6 +9,8 @@ import org.jooq.DSLContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+// 服务端按认证用户隔离密文与分块；信封和状态作为客户端生成数据存储。
+// The server isolates ciphertext/chunks by authenticated user; envelopes and state are stored as client-generated data.
 @Service
 public class VaultService {
  private final DSLContext db;private final UserRepository users;private final PrivateContentStore files;
@@ -43,6 +45,8 @@ public class VaultService {
   get(id,p);var r=db.fetchOne("select storage_id from vault_chunks where user_id=? and object_id=? and chunk_index=?",user(p),id,index);
   if(r==null)throw ApiException.notFound("CHUNK_MISSING","分块尚未上传，请重新导入。");return files.resource("vault",user(p),r.get("storage_id",UUID.class));
  }
+ // revision 比较与更新在一条 SQL 中完成，冲突要求客户端刷新而非覆盖。
+ // Revision comparison and update share one SQL statement; conflicts require client refresh instead of overwrite.
  @Transactional public void state(UUID id,String state,long revision,Principal p){
   if(state==null||state.length()>2_000_000)throw ApiException.badRequest("STATE_SIZE","加密记录过大。");
   if(db.execute("update vault_objects set state=?,revision=revision+1 where user_id=? and id=? and revision=?",state,user(p),id,revision)!=1)
@@ -51,6 +55,8 @@ public class VaultService {
  @Transactional public void delete(UUID id,Principal p)throws Exception{
   get(id,p);var rows=db.fetch("select storage_id from vault_chunks where user_id=? and object_id=?",user(p),id);
   db.execute("delete from vault_objects where user_id=? and id=?",user(p),id);
+  // 此处意图是清除失去引用的密文；文件与数据库不共用事务，清理失败仍需关注，不能据下方描述推断无风险。
+  // 清理风险说明 / Cleanup caveat: filesystem deletion and database writes are not one transaction; failed cleanup still needs attention despite the older claim below.
   // Orphan ciphertext after a failed filesystem cleanup is harmless and remains inaccessible.
   for(var row:rows)files.delete("vault",user(p),row.get("storage_id",UUID.class));
  }

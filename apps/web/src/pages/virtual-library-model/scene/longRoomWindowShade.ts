@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { PALETTE } from '../config';
 
+// 独立重建 Dominik Gehl 开间照片中可见的下层半透明窗帘。褶皱与尺寸均为估计，并非扫描结果。
 /** Independent reconstruction of the translucent lower-window blind visible in
  * Dominik Gehl's bay photograph. Folds and dimensions are estimates, not a scan. */
 export function createWindowShadeMaterial() {
@@ -9,6 +10,7 @@ export function createWindowShadeMaterial() {
   const color = new THREE.Color();
   for (let y = 0; y < height; y++) for (let x = 0; x < width; x++) {
     const u = x / (width - 1), v = y / (height - 1);
+    // 柔和的透射窗格阴影，并强化重叠合缝横框的阴影。
     // Soft transmitted sash shadows, with a stronger overlapping meeting rail.
     let shadow = 0;
     for (const bar of [1 / 3, 2 / 3]) shadow += 0.15 * Math.exp(-Math.pow((u - bar) / 0.034, 2));
@@ -31,6 +33,7 @@ export function createWindowShade(width: number, height: number, material: THREE
     const u = column / columns, v = row / rows;
     const drape = Math.sin(Math.PI * v);
     const fold = drape * (0.018 * Math.sin(u * Math.PI * 6 + v * 2) + 0.028 * Math.sin(u * Math.PI));
+    // 薄片位于局部 XY 平面，沿 Z 轴朝向室内。顶部两角始终固定在卷轴上。
     // Local XY sheet, facing the room along Z. Top corners remain pinned to the roller.
     positions.push((u - 0.5) * width, v * height - 0.028 * Math.sin(Math.PI * u) * (1 - v), fold);
     uv.push(u, v);
@@ -42,6 +45,7 @@ export function createWindowShade(width: number, height: number, material: THREE
   const geometry = new THREE.BufferGeometry(); geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
   geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); geometry.setIndex(indices); geometry.computeVertexNormals();
   const sheet = new THREE.Mesh(geometry, material); sheet.name = 'Lower window softly draped light-filtering blind';
+  // 遮挡穿过织物的直射阳光。大厅漫射日光与此材质的自发光织纹近似透射散射光；若允许直射光穿过，会在室内投射清晰的窗格网影。
   // Block the direct sun through the fabric. The hall's diffuse daylight and
   // this material's emissive weave approximate transmitted, scattered light;
   // letting the direct beam through would project a sharp sash grid indoors.

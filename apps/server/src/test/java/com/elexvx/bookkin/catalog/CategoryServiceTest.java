@@ -1,3 +1,5 @@
+// 覆盖匿名与管理视角、成员禁止维护及多分类替换，避免把浏览权限误作管理权限。
+// Covers anonymous/management views, denied member edits and multi-category replacement without conflating browse and maintenance rights.
 package com.elexvx.bookkin.catalog;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

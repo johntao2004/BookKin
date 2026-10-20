@@ -5,6 +5,7 @@ import { makeBox } from './parts';
 import { createSwiftHeadGeometry } from './longRoomSwiftHead';
 import { addSwiftEyes } from './longRoomSwiftEyes';
 
+// 半身像列的比例研究。各人物的肖像相似度仍需扫描或参考资料完善。
 /** Proportional study for the bust row. Individual portrait likenesses still require scan/reference work. */
 export function createLongRoomBust(materials: LibraryMaterials, variant: number,
   marble = new THREE.MeshStandardMaterial({ color: PALETTE.parchment, roughness: 0.84 }), portrait: 'generic' | 'swift' | 'shakespeare' = 'generic') {
@@ -33,6 +34,7 @@ export function createLongRoomBust(materials: LibraryMaterials, variant: number,
     stone(new THREE.CylinderGeometry(0.17, 0.22, 0.07, 24), 0, 1.42, 0);
     stone(new THREE.CylinderGeometry(0.115, 0.16, 0.16, 24), 0, 1.52, 0);
   }
+  // 采用渐缩胸部、宽肩和窄领部，而非球形躯干。
   // A tapered chest, broad shoulders and narrow collar instead of a sphere torso.
   const rings = swift ? [[1.58,0.16,0.1],[1.62,0.21,0.13],[1.72,0.32,0.16],
     [1.82,0.39,0.17],[1.89,0.31,0.15],[1.96,0.14,0.1],[1.99,0.095,0.08]] : [[1.58,0.13,0.1],[1.62,0.21,0.13],[1.7,0.3,0.16],
@@ -77,6 +79,7 @@ export function createLongRoomBust(materials: LibraryMaterials, variant: number,
         - 0.08 * gaussian(x, y, 0, -0.55, 0.25, 0.04);
       z += relief;
       if (shakespeare) {
+        // 雕刻细节保留在连续面部表面上，避免使用悬空管体或球体。
         // Carving stays in the continuous face surface instead of floating tubes/balls.
         z += 0.12 * gaussian(x, y, -0.32, 0.29, 0.23, 0.075)
           + 0.12 * gaussian(x, y, 0.32, 0.29, 0.23, 0.075)
@@ -97,6 +100,7 @@ export function createLongRoomBust(materials: LibraryMaterials, variant: number,
   head.computeVertexNormals();
   stone(head, 0, 2.08, 0, 0.17, swift ? 0.218 : shakespeare ? 0.235 : 0.235 + variant % 3 * 0.008, 0.16);
   for (const side of [-1, 1]) stone(new THREE.SphereGeometry(1, 12, 10), side * 0.148, 2.065, -0.01, 0.034, 0.067, 0.028);
+  // 连续头皮上雕出波浪发纹。脱离表面的珠列会形成不自然的冠状轮廓，且不贴合下方头骨。
   // Continuous scalp with carved waves. Detached bead rows produced an
   // artificial crown silhouette and did not follow the underlying skull.
   const hairPositions: number[] = [], hairIndices: number[] = [];
@@ -132,6 +136,7 @@ export function createLongRoomBust(materials: LibraryMaterials, variant: number,
 
 
 function addSwiftCap(root: THREE.Group, material: THREE.Material) {
+  // 照片中的帽子包覆至耳后，具有高耸的不对称帽顶和折叠布带，而非硬质圆形帽檐。
   // The photographic cap wraps down behind the ears, with a tall asymmetric
   // crown and a folded cloth band rather than a rigid circular brim.
   const columns = 80, rows = 40;

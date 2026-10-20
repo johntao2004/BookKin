@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# 探测共享拱肩和端墙连接，并要求当前模型通过、指定旧模型失败及 18 个碰撞连接存在。
+# Probes shared arcade shoulders and end-wall ties, requiring current geometry to pass, the specified baseline to fail and 18 collision ties to exist.
 """Measure solid shared arcade shoulders and both terminal wall ties in the GLB."""
 import argparse
 import hashlib

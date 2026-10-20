@@ -1,3 +1,5 @@
+// 区分可见与可编辑权限，并验证公开书单不能绕过书籍公开范围。
+// Separates visibility from edit rights and checks that public booklists cannot bypass book visibility.
 package com.elexvx.bookkin.catalog;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

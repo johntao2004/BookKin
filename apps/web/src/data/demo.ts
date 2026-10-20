@@ -1,3 +1,5 @@
+// 这些为前端演示样本，不是生产书库、真实用户或数据库初始化结果；真实数据来自 API。
+// These frontend demo fixtures are not production books, real users or database initialization results; real data comes from APIs.
 import type { Book, ManagedUser, RecycleBinEntry } from "../domain/types";
 
 const covers = [

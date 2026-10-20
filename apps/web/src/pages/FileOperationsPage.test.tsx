@@ -1,3 +1,5 @@
+// 覆盖后台任务表格与空态，完成任务不重复显示无用阶段信息。
+// Covers background task rows and empty states without redundant stage details after completion.
 import { render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, vi } from "vitest";
 import { api } from "../api/client";

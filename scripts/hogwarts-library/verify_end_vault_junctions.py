@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# 拒绝与 A 端弧形拱底相交的凸起画墙补片，要求当前模型通过且改动前模型失败。
+# Rejects raised A-end picture-wall patches intersecting the curved soffit, requiring current geometry to pass and pre-change geometry to fail.
 """Reject raised picture-wall patches that intersect the A-end curved soffit."""
 import argparse
 import hashlib

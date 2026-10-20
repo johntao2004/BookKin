@@ -28,6 +28,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
+// 预览负责收集冲突，执行入口验证预览后入队；实际 NAS 写入由 Worker 执行。
+// Preview collects conflicts and execution validates then queues it; the worker performs actual NAS writes.
 @Service
 public class FileOperationService {
     private final BookRepository books;
@@ -135,6 +137,8 @@ public class FileOperationService {
                 targetDisplay, input.expectedFingerprint(), requiredBytes, conflicts, warnings, null, null);
     }
 
+    // 幂等键按操作者隔离且绑定同一预览与指纹，不能重复用于不同请求。
+    // Idempotency keys are actor-scoped and bound to the same preview and fingerprint, not reusable for another request.
     public Operation execute(ExecuteRequest input, String idempotencyKey, Principal principal) {
         if (idempotencyKey == null || idempotencyKey.isBlank() || idempotencyKey.length() > 160) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "IDEMPOTENCY_KEY_REQUIRED", "必须提供有效的幂等键。");
@@ -153,6 +157,8 @@ public class FileOperationService {
         if (!preview.expectedFingerprint().equals(input.expectedFingerprint())) throw ApiException.conflict("FINGERPRINT_MISMATCH", "提交的文件指纹与预览不一致。");
 
         try {
+            // 预览和提交之间存在时间窗口，提交前必须重读源文件指纹。
+            // Preview and submission are separated in time, so reread the source fingerprint before queuing.
             String actual = fingerprints.sha256(previewSource(preview));
             if (!actual.equals(preview.expectedFingerprint())) throw ApiException.conflict("SOURCE_CHANGED", "预览后文件又被修改，请重新预览。");
         } catch (IOException exception) {

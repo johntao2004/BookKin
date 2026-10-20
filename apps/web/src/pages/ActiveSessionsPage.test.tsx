@@ -1,3 +1,5 @@
+// 验证会话列表显示管理信息但不暴露 Cookie 会话标识。
+// Checks session-management listings do not expose cookie session identifiers.
 import { fireEvent,render,screen,within } from "@testing-library/react";
 import { expect,it,vi } from "vitest";
 import { TestProviders } from "../test/TestProviders";
