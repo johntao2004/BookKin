@@ -21,6 +21,24 @@ import { mapValues } from '../runtime';
 export interface MetadataRequest {
     /**
      *
+     * @type {boolean}
+     * @memberof MetadataRequest
+     */
+    publiclyVisible?: boolean;
+    /**
+     *
+     * @type {string}
+     * @memberof MetadataRequest
+     */
+    authorBiography?: string | null;
+    /**
+     *
+     * @type {string}
+     * @memberof MetadataRequest
+     */
+    tableOfContents?: string | null;
+    /**
+     *
      * @type {string}
      * @memberof MetadataRequest
      */
@@ -92,7 +110,7 @@ export interface MetadataRequest {
      */
     tags?: Array<string>;
     /**
-     * Thema 1.6 subject codes.
+     *
      * @type {Array<string>}
      * @memberof MetadataRequest
      */
@@ -140,6 +158,9 @@ export function MetadataRequestFromJSONTyped(json: any, ignoreDiscriminator: boo
     }
     return {
 
+        'publiclyVisible': json['publiclyVisible'] == null ? undefined : json['publiclyVisible'],
+        'authorBiography': json['authorBiography'] === undefined ? undefined : json['authorBiography'] === null ? null : json['authorBiography'],
+        'tableOfContents': json['tableOfContents'] === undefined ? undefined : json['tableOfContents'] === null ? null : json['tableOfContents'],
         'title': json['title'] == null ? undefined : json['title'],
         'subtitle': json['subtitle'] == null ? undefined : json['subtitle'],
         'authors': json['authors'] == null ? undefined : json['authors'],
@@ -171,6 +192,9 @@ export function MetadataRequestToJSONTyped(value?: MetadataRequest | null, ignor
 
     return {
 
+        'publiclyVisible': value['publiclyVisible'],
+        'authorBiography': value['authorBiography'],
+        'tableOfContents': value['tableOfContents'],
         'title': value['title'],
         'subtitle': value['subtitle'],
         'authors': value['authors'],

@@ -1,0 +1,27 @@
+[
+  {
+    "role": "ADMIN",
+    "login": true,
+    "uploadedBook": true,
+    "metadataSaved": true,
+    "userPage2Rows": 4,
+    "roleChangeButtons": 0,
+    "roleSettingsStatus": 403,
+    "loginLogPage2": true,
+    "privateNotesIsolation": true,
+    "historyPagination": true,
+    "sessionsPagination": true
+  },
+  {
+    "role": "MEMBER",
+    "login": true,
+    "uploadButtons": 0,
+    "metadataButtons": 0,
+    "fileButtons": 0,
+    "deleteButtons": 0,
+    "metadataRouteStatus": 403,
+    "usersRouteStatus": 403,
+    "privateBooklistCreated": true,
+    "notesPage2Rows": 1
+  }
+]

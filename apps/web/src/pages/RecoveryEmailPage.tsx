@@ -23,7 +23,7 @@ export function RecoveryEmailPage() {
     }}>
       <TextField label="找回邮箱" required type="email" value={email} onChange={(e: React.ChangeEvent<HTMLInputElement>)=>setEmail(e.target.value)} />
       <TextField label="当前密码" required type="password" autoComplete="current-password" value={password} onChange={(e: React.ChangeEvent<HTMLInputElement>)=>setPassword(e.target.value)} />
-      <FormActions><Button variant="contained" type="submit" disabled={busy} sx={{ width: { xs: "100%", sm: "auto" } }}>发送验证链接</Button></FormActions>
+      <FormActions><Button variant="contained" type="submit" disabled={busy} sx={{ width: { xs: "100%", sm: "auto" } }}>发送验证</Button></FormActions>
     </Stack>
     {sent && <Alert severity="success">验证链接已发送，请在 30 分钟内打开邮件并确认绑定。</Alert>}
     {error && <Alert severity="error">{error}</Alert>}

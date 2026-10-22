@@ -1,13 +1,14 @@
+import { paginationControlProps, useTablePagination } from "../ui/table-pagination";
+import { Pagination } from "../ui/antd";
+import { usePermissions } from "../auth/permissions";
+import { UserRoleControl } from "../components/UserRoleControl";
 // 账户管理提交创建、状态与凭据操作；临时密码展示不进入普通持久偏好。
 // Account management submits creation/status/credential actions; temporary credentials are not ordinary persisted preferences.
 import { EmptyState } from "../ui/empty-state";
 import { RevokeSessionsDialog } from "../components/RevokeSessionsDialog";
 import { DataTable, TableAction } from "@/ui/antd";
-import { AddRounded } from "@/ui/icons";
 import { IconButton } from "@/ui/buttons";
 import { ContentCopyRounded } from "@/ui/icons";
-import { LockResetRounded } from "@/ui/icons";
-import { LogoutRounded } from "@/ui/icons";
 import { Alert } from "@/ui/feedback";
 import { Avatar } from "@/ui/feedback";
 import { Box } from "@/ui/primitives";
@@ -42,8 +43,11 @@ const dialogViewportMaxHeight = `calc(100dvh - ${tokens.spacing[6]}px)`;
 export function UsersPage() {
   const embedded = useContext(EmbeddedSettingsContext);
   const { user: sessionUser } = useAuth();
+  const { can } = usePermissions();
   const client = useQueryClient();
   const usersQuery = useQuery({ queryKey: ["users"], queryFn: api.listUsers });
+  const { pagination, offset, pageSize } = useTablePagination(usersQuery.data?.length ?? 0);
+  const mobilePagination = paginationControlProps(pagination);
   const [createOpen, setCreateOpen] = useState(false);
   const [credentials, setCredentials] = useState<{ username: string; temporaryPassword: string } | null>(null);
   const [notice, setNotice] = useState("");
@@ -70,10 +74,10 @@ export function UsersPage() {
 
   return (
     <PageContainer>
-      {embedded ? <Stack sx={{ mb: 2 }}><ActionToolbar><Button variant="contained" startIcon={<AddRounded />} onClick={() => setCreateOpen(true)}>创建用户</Button></ActionToolbar></Stack> : <PageHeader
+      {embedded ? <Stack sx={{ mb: 2 }}><ActionToolbar><Button variant="contained" disabled={!can("settings.users.create")} onClick={() => setCreateOpen(true)}>创建用户</Button></ActionToolbar></Stack> : <PageHeader
         eyebrow="ACCESS CONTROL"
         title="用户管理"
-        action={<Button variant="contained" startIcon={<AddRounded />} onClick={() => setCreateOpen(true)}>创建用户</Button>}
+        action={<Button variant="contained" disabled={!can("settings.users.create")} onClick={() => setCreateOpen(true)}>创建用户</Button>}
       />}
 
       {usersQuery.isPending ? <Stack sx={{ alignItems: "center", py: 10 }}><CircularProgress /></Stack> : (
@@ -84,21 +88,24 @@ export function UsersPage() {
               locale={{ emptyText: <EmptyState compact title="暂无用户" /> }}
               rowKey="id"
               size="middle"
-              pagination={false}
+              pagination={pagination}
               dataSource={usersQuery.data ?? []}
-              scroll={{ x: tokens.spacing[24] * 10 }}
+              scroll={{ x: tokens.spacing[24] * 8 }}
               columns={[
-                { title: "用户", key: "identity", width: tokens.spacing[24] * 2.5, render: (_, user) => <UserIdentity user={user} sessionUser={sessionUser} /> },
-                { title: "角色", key: "role", width: tokens.spacing[24] * 1.25, render: (_, user) => <UserRoleChip user={user} /> },
-                { title: "状态", key: "status", width: tokens.spacing[24] * 1.5, render: (_, user) => <UserStatus user={user} /> },
-                { title: "最后登录", dataIndex: "lastLoginAt", width: tokens.spacing[24] * 2.5, render: (value) => formatLastLogin(value) },
-                { title: "启用", key: "enabled", width: tokens.spacing[24], render: (_, user) => (
-                  <Switch checked={user.status === "ACTIVE"} disabled={!canToggleAccount(user, sessionUser)} onChange={() => void toggle(user)} slotProps={{ input: { "aria-label": `${user.status === "ACTIVE" ? "停用" : "启用"}${user.displayName}` } }} />
+                { title: "用户", key: "identity", render: (_, user) => <UserIdentity user={user} sessionUser={sessionUser} /> },
+                { title: "角色", key: "role", render: (_, user) => <UserRoleChip user={user} /> },
+                { title: "状态", key: "status", render: (_, user) => <UserStatus user={user} /> },
+                { title: "最后登录", dataIndex: "lastLoginAt", render: (value) => <Box component="span" sx={{ whiteSpace: "nowrap" }}>{formatLastLogin(value)}</Box> },
+                { title: "启用", key: "enabled", width: tokens.spacing[16], render: (_, user) => (
+                  <Switch checked={user.status === "ACTIVE"} disabled={!can("settings.users.manage") || !canToggleAccount(user, sessionUser)} onChange={() => void toggle(user)} slotProps={{ input: { "aria-label": `${user.status === "ACTIVE" ? "停用" : "启用"}${user.displayName}` } }} />
                 ) },
-                { title: "账户操作", key: "actions", width: tokens.spacing[24] * 2.5, render: (_, user) => canManageAccountActions(user, sessionUser) ? (
-                  <Stack direction="row" spacing={2}>
-                    <TableAction onClick={() => void resetPassword(user)}>临时密码</TableAction>
-                    <TableAction onClick={() => setRevokeTarget(user)}>退出全部会话</TableAction>
+                { title: "账户操作", key: "actions", width: "25%", render: (_, user) => (can("roles.manage") && user.role !== "OWNER") || (can("settings.users.manage") && canManageAccountActions(user, sessionUser)) ? (
+                  <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
+                    <UserRoleControl user={user} />
+                    {can("settings.users.manage") && canManageAccountActions(user, sessionUser) && <>
+                      <TableAction onClick={() => void resetPassword(user)}>临时密码</TableAction>
+                      <TableAction onClick={() => setRevokeTarget(user)}>退出全部会话</TableAction>
+                    </>}
                   </Stack>
                 ) : "—" },
               ]}
@@ -106,7 +113,7 @@ export function UsersPage() {
           </Box>
           <Stack component="section" aria-label="移动端用户列表" spacing={2} sx={{ display: { xs: "flex", sm: "none" } }}>
             {usersQuery.isSuccess && usersQuery.data.length === 0 && <EmptyState compact title="暂无用户" />}
-            {(usersQuery.data ?? []).map((user) => (
+            {(usersQuery.data ?? []).slice(offset, offset + pageSize).map((user) => (
               <UserCard
                 key={user.id}
                 user={user}
@@ -116,6 +123,7 @@ export function UsersPage() {
                 onToggle={toggle}
               />
             ))}
+            <Pagination {...mobilePagination} />
           </Stack>
         </>
       )}
@@ -144,6 +152,7 @@ function UserCard({ user, sessionUser, onResetPassword, onRevokeSessions, onTogg
   onRevokeSessions: (user: ManagedUser) => Promise<void>;
   onToggle: (user: ManagedUser) => Promise<void>;
 }) {
+  const { can } = usePermissions();
   return (
     <Box component="article" sx={{ p: { xs: `${tokens.spacing[4]}px`, sm: `${tokens.spacing[5]}px` }, bgcolor: "background.paper", border: 1, borderColor: "divider", borderRadius: `${tokens.radius.xl}px` }}>
       <Stack direction="row" spacing={2} sx={{ alignItems: "flex-start", justifyContent: "space-between", minWidth: 0 }}>
@@ -162,15 +171,16 @@ function UserCard({ user, sessionUser, onResetPassword, onRevokeSessions, onTogg
         </Stack>
       </Stack>
       <Stack spacing={1.25} sx={{ mt: `${tokens.spacing[4]}px` }}>
-        {canManageAccountActions(user, sessionUser) && (
+        <UserRoleControl user={user} />
+        {can("settings.users.manage") && canManageAccountActions(user, sessionUser) && (
           <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ width: "100%" }}>
-            <Button size="small" startIcon={<LockResetRounded />} onClick={() => void onResetPassword(user)} sx={{ width: { xs: "100%", sm: "auto" } }}>临时密码</Button>
-            <Button size="small" startIcon={<LogoutRounded />} onClick={() => void onRevokeSessions(user)} sx={{ width: { xs: "100%", sm: "auto" } }}>退出全部会话</Button>
+            <Button size="small" onClick={() => void onResetPassword(user)} sx={{ width: { xs: "100%", sm: "auto" } }}>临时密码</Button>
+            <Button size="small" onClick={() => void onRevokeSessions(user)} sx={{ width: { xs: "100%", sm: "auto" } }}>退出全部会话</Button>
           </Stack>
         )}
         <Stack direction="row" spacing={1} sx={{ alignItems: "center", justifyContent: "space-between" }}>
           <Typography variant="body2" color="text.secondary">账户状态</Typography>
-          <Switch checked={user.status === "ACTIVE"} disabled={!canToggleAccount(user, sessionUser)} onChange={() => void onToggle(user)} slotProps={{ input: { "aria-label": `${user.status === "ACTIVE" ? "停用" : "启用"}${user.displayName}` } }} />
+          <Switch checked={user.status === "ACTIVE"} disabled={!can("settings.users.manage") || !canToggleAccount(user, sessionUser)} onChange={() => void onToggle(user)} slotProps={{ input: { "aria-label": `${user.status === "ACTIVE" ? "停用" : "启用"}${user.displayName}` } }} />
         </Stack>
       </Stack>
     </Box>
@@ -181,7 +191,7 @@ function UserIdentity({ user, sessionUser }: { user: ManagedUser; sessionUser: S
   return (
     <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", minWidth: 0 }}>
       <Avatar sx={{ flexShrink: 0, bgcolor: user.role === "OWNER" ? "primary.main" : "secondary.main" }}>{user.displayName.slice(0, 1)}</Avatar>
-      <Box sx={{ minWidth: 0 }}><Typography sx={{ fontWeight: 600, overflowWrap: "anywhere" }}>{user.displayName}{user.id === sessionUser?.id && "（你）"}</Typography><Typography variant="body2" color="text.secondary" sx={{ overflowWrap: "anywhere" }}>@{user.username}</Typography></Box>
+      <Box sx={{ minWidth: 0 }}><Typography sx={{ fontWeight: 600, overflowWrap: "anywhere" }}>{user.displayName}{user.id === sessionUser?.id && "（你）"}</Typography></Box>
     </Stack>
   );
 }
@@ -191,7 +201,7 @@ function UserRoleChip({ user }: { user: ManagedUser }) {
 }
 
 function UserStatus({ user }: { user: ManagedUser }) {
-  return <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}><Box sx={{ width: 8, height: 8, flexShrink: 0, borderRadius: "50%", bgcolor: user.status === "ACTIVE" ? "success.main" : "text.disabled" }} /><Typography variant="body2">{user.status === "ACTIVE" ? (user.mustChangePassword ? "等待首次改密" : "正常") : "已停用"}</Typography></Stack>;
+  return <Stack direction="row" spacing={1} sx={{ alignItems: "center", whiteSpace: "nowrap" }}><Box sx={{ width: 8, height: 8, flexShrink: 0, borderRadius: "50%", bgcolor: user.status === "ACTIVE" ? "success.main" : "text.disabled" }} /><Typography variant="body2">{user.status === "ACTIVE" ? (user.mustChangePassword ? "等待首次改密" : "正常") : "已停用"}</Typography></Stack>;
 }
 
 function formatLastLogin(value?: string) {
@@ -238,7 +248,7 @@ function CreateUserDialog({ open, allowAdmin, onClose, onCreated }: {
           <FormControl><InputLabel id="new-user-role">角色</InputLabel><Select labelId="new-user-role" label="角色" value={form.role} onChange={(event: any) => setForm({ ...form, role: event.target.value as "ADMIN" | "MEMBER" })}><MenuItem value="MEMBER">成员 · 只读藏书</MenuItem>{allowAdmin && <MenuItem value="ADMIN">管理员 · 可管理书库</MenuItem>}</Select></FormControl>
           {error && <Alert severity="error">{error}</Alert>}
         </Stack></DialogContent>
-        <DialogActions sx={{ flexShrink: 0, flexWrap: "wrap", p: { xs: 2, sm: 3 } }}><Button onClick={onClose} color="inherit" sx={{ width: { xs: "100%", sm: "auto" } }}>取消</Button><Button type="submit" variant="contained" disabled={loading} sx={{ width: { xs: "100%", sm: "auto" } }}>{loading ? "正在创建…" : "创建并生成临时密码"}</Button></DialogActions>
+        <DialogActions sx={{ flexShrink: 0, flexWrap: "wrap", p: { xs: 2, sm: 3 } }}><Button onClick={onClose} color="inherit" sx={{ width: { xs: "100%", sm: "auto" } }}>取消</Button><Button type="submit" variant="contained" disabled={loading} sx={{ width: { xs: "100%", sm: "auto" } }}>{loading ? "正在创建…" : "创建账户"}</Button></DialogActions>
       </Stack>
     </Dialog>
   );

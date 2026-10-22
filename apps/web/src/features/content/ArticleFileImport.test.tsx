@@ -7,6 +7,7 @@ afterEach(cleanup);
 it("opens the chooser and imports its selection, allowing the same file again", async () => {
   const onImport = vi.fn().mockResolvedValue(undefined);
   render(<ArticleFileImport disabled={false} onImport={onImport} onError={vi.fn()} />);
+  expect(screen.getByRole("region", { name: "正文文件" })).toBeInTheDocument();
   const input = screen.getByLabelText("导入文章文件");
   const click = vi.spyOn(input, "click");
   fireEvent.click(screen.getByRole("button"));
@@ -28,17 +29,4 @@ it("imports dropped files, rejects multiple files and ignores drops while disabl
   view.rerender(<ArticleFileImport disabled onImport={onImport} onError={onError} />);
   fireEvent.drop(screen.getByRole("button"), { dataTransfer: { files: [file] } });
   expect(onImport).toHaveBeenCalledOnce();
-});
-it("supports image chooser and drop through the same insertion handler", async () => {
-  const onImport = vi.fn().mockResolvedValue(undefined);
-  render(<ArticleFileImport kind="image" disabled={false} onImport={onImport} onError={vi.fn()} />);
-  const input = screen.getByLabelText("插入文章图片");
-  const click = vi.spyOn(input, "click");
-  fireEvent.click(screen.getByRole("button"));
-  expect(click).toHaveBeenCalledOnce();
-  const file = new File(["image"], "图片.png", { type: "image/png" });
-  fireEvent.change(input, {target: {files: [file]}});
-  await waitFor(() => expect(onImport).toHaveBeenCalledTimes(1));
-  fireEvent.drop(screen.getByRole("button"), {dataTransfer: {files: [file]}});
-  await waitFor(() => expect(onImport).toHaveBeenCalledTimes(2));
 });

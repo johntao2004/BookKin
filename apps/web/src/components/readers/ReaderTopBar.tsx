@@ -26,7 +26,8 @@ import { READER_PROGRESS_HEIGHT } from "./reader-layout";
 interface ReaderTopBarProps {
   title: string;
   subtitle: string;
-  format: BookFormat;
+  format: BookFormat | "ARTICLE";
+  notesLabel?: string;
   progressPercent: number;
   tableOfContentsAvailable: boolean;
   bookmarked: boolean;
@@ -38,6 +39,7 @@ interface ReaderTopBarProps {
   onOpenSettings: MouseEventHandler<HTMLButtonElement>;
   onOpenNotes: () => void;
   privateActions?: boolean;
+  notesAvailable?: boolean;
 }
 
 export function ReaderTopBar({
@@ -55,11 +57,13 @@ export function ReaderTopBar({
   onOpenSettings,
   onOpenNotes,
   privateActions = true,
+  notesLabel = "本书笔记",
+  notesAvailable = privateActions,
 }: ReaderTopBarProps) {
   const safeProgress = Math.max(0, Math.min(100, progressPercent));
   const [moreAnchor, setMoreAnchor] = useState<HTMLElement | null>(null);
   const compactChrome = !useMediaQuery(`(min-width: ${tokens.layout.breakpointMobile}px)`);
-  const hasSecondaryActions = tableOfContentsAvailable || privateActions;
+  const hasSecondaryActions = tableOfContentsAvailable || privateActions || notesAvailable;
   const closeMore = () => setMoreAnchor(null);
   const touchIconSx = { width: tokens.layout.touchTarget, height: tokens.layout.touchTarget };
 
@@ -114,7 +118,7 @@ export function ReaderTopBar({
           )}
           {privateActions && <Tooltip title={bookmarked ? "移除书签" : "添加书签"}>
             <span>
-              <IconButton disabled={bookmarkBusy} onClick={onToggleBookmark} color="inherit" aria-label="切换书签" sx={touchIconSx}>
+              <IconButton disabled={bookmarkBusy} onClick={onToggleBookmark} color="inherit" aria-label="切换书签" aria-pressed={bookmarked} sx={touchIconSx}>
                 {bookmarked ? <BookmarkRounded color="primary" /> : <BookmarkBorderRounded />}
               </IconButton>
             </span>
@@ -122,7 +126,7 @@ export function ReaderTopBar({
           <Tooltip title="阅读设置">
             <IconButton onClick={onOpenSettings} color="inherit" aria-label="阅读设置" sx={touchIconSx}><SettingsBrightnessOutlined /></IconButton>
           </Tooltip>
-          {privateActions && <Tooltip title="本书笔记">
+          {notesAvailable && <Tooltip title={notesLabel}>
             <IconButton onClick={onOpenNotes} color="inherit" aria-label="打开笔记" sx={touchIconSx}><NotesOutlined /></IconButton>
           </Tooltip>}
         </Stack>}
@@ -138,9 +142,9 @@ export function ReaderTopBar({
       >
         {tableOfContentsAvailable && <MenuItem onClick={() => { closeMore(); onOpenTableOfContents(); }}>目录</MenuItem>}
         {privateActions && (
-          <MenuItem onClick={() => { closeMore(); onToggleBookmark(); }}>{bookmarked ? "移除书签" : "添加书签"}</MenuItem>
+          <MenuItem disabled={bookmarkBusy} onClick={() => { closeMore(); onToggleBookmark(); }}>{bookmarked ? "移除书签" : "添加书签"}</MenuItem>
         )}
-        {privateActions && <MenuItem onClick={() => { closeMore(); onOpenNotes(); }}>本书笔记</MenuItem>}
+        {notesAvailable && <MenuItem onClick={() => { closeMore(); onOpenNotes(); }}>{notesLabel}</MenuItem>}
       </Menu>
     </AppBar>
   );

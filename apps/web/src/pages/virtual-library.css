@@ -503,7 +503,6 @@
   border: 0;
 }
 .virtual-library-search-modal .virtual-library-search-input {
-  min-height: var(--layout-touch-target);
   border-radius: var(--radius-md);
 }
 .virtual-library-search-modal .virtual-library-search-results {

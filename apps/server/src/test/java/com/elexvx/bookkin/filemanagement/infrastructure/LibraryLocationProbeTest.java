@@ -10,7 +10,7 @@ class LibraryLocationProbeTest {
  @Test void checksWithoutChangingFiles() throws Exception {
   Path base = temporary.toRealPath(); Path root = Files.createDirectory(base.resolve("books"));
   Path original = Files.writeString(root.resolve("original.epub"), "unchanged");
-  var probe = new LibraryLocationProbe(base.toString());
+  var probe = new LibraryLocationProbe(base.toString(), new PrivateContentStore(base.resolve("content").toString(), "", ""));
   var result = probe.inspect(root.toString());
   assertThat(result.path()).isEqualTo(root.toString());
   assertThat(probe.inspect(root.toString()).fingerprint()).isEqualTo(result.fingerprint());
@@ -18,7 +18,7 @@ class LibraryLocationProbeTest {
   try(var files = Files.list(root)) { assertThat(files.count()).isEqualTo(1); }
  }
  @Test void rejectsEscapesMissingAndLinks() throws Exception {
-  Path base = temporary.toRealPath(); var probe = new LibraryLocationProbe(base.toString());
+  Path base = temporary.toRealPath(); var probe = new LibraryLocationProbe(base.toString(), new PrivateContentStore(base.resolve("content").toString(), "", ""));
   Path root = Files.createDirectory(base.resolve("books"));
   Path link = Files.createSymbolicLink(base.resolve("link"), root);
   for(String path : new String[]{base.toString(), base.resolve("missing").toString(), base.resolve("../outside").toString(), link.toString(), "relative"}) {
@@ -27,7 +27,7 @@ class LibraryLocationProbeTest {
  }
  @Test void replacementChangesFingerprint() throws Exception {
   Path base = temporary.toRealPath(); Path root = Files.createDirectory(base.resolve("books"));
-  var probe = new LibraryLocationProbe(base.toString()); var before = probe.inspect(root.toString());
+  var probe = new LibraryLocationProbe(base.toString(), new PrivateContentStore(base.resolve("content").toString(), "", "")); var before = probe.inspect(root.toString());
   Files.move(root, base.resolve("old")); Files.createDirectory(root);
   assertThat(probe.inspect(root.toString()).fingerprint()).isNotEqualTo(before.fingerprint());
  }

@@ -1,6 +1,5 @@
-// 创建或编辑书单的共享表单，将种类、可见性和版本交给对应 API。
+// 创建或编辑书目的共享表单，将种类、可见性和版本交给对应 API。
 // Shared create/edit booklist form delegates kind, visibility and revision to the corresponding API.
-import { DeleteOutlineRounded } from "@/ui/icons";
 import { Alert } from "@/ui/feedback";
 import { Button } from "@/ui/buttons";
 import { Dialog } from "@/ui/overlays";
@@ -50,7 +49,7 @@ export function BooklistFormDialog({ open, initial, onClose, onSaved, onDeleted 
       const result = initial
         ? await api.updateBooklist(initial.id, { title, description, visibility, revision: initial.revision })
         : await api.createBooklist({ title, description, kind: "PERSONAL", visibility });
-      onSaved(result, initial ? "书单资料已更新" : "书单已创建");
+      onSaved(result, initial ? "书目资料已更新" : "书目已创建");
     } catch (reason) {
       setError(errorMessage(reason));
     } finally {
@@ -64,7 +63,7 @@ export function BooklistFormDialog({ open, initial, onClose, onSaved, onDeleted 
     setError("");
     try {
       await api.deleteBooklist(initial.id, initial.revision);
-      onDeleted("书单已删除；书籍和 NAS 文件未受影响");
+      onDeleted("书目已删除；书籍和 NAS 文件未受影响");
     } catch (reason) {
       setError(errorMessage(reason));
       setConfirmDelete(false);
@@ -76,12 +75,12 @@ export function BooklistFormDialog({ open, initial, onClose, onSaved, onDeleted 
   return (
     <>
       <Dialog open={open && !confirmDelete} onClose={busy ? undefined : onClose} fullWidth maxWidth="sm">
-        <DialogTitle>{initial ? "编辑书单" : "新建书单"}</DialogTitle>
+        <DialogTitle>{initial ? "编辑书目" : "新建书目"}</DialogTitle>
         <DialogContent>
           <Stack sx={{ gap: `${tokens.spacing[5]}px`, pt: `${tokens.spacing[2]}px` }}>
             {error ? <Alert severity="error">{error}</Alert> : null}
-            <TextField autoFocus label="书单名称" value={title} onChange={(event: any) => setTitle(event.target.value)} slotProps={{ htmlInput: { maxLength: 240 } }} />
-            <TextField label="书单说明" value={description} onChange={(event: any) => setDescription(event.target.value)} multiline minRows={4} slotProps={{ htmlInput: { maxLength: 4000 } }} />
+            <TextField autoFocus label="书目名称" value={title} onChange={(event: any) => setTitle(event.target.value)} slotProps={{ htmlInput: { maxLength: 240 } }} />
+            <TextField label="书目说明" value={description} onChange={(event: any) => setDescription(event.target.value)} multiline minRows={4} slotProps={{ htmlInput: { maxLength: 4000 } }} />
             <FormControl>
               <InputLabel id="booklist-visibility-label">谁可以看</InputLabel>
               <Select labelId="booklist-visibility-label" label="谁可以看" value={visibility} onChange={(event: any) => setVisibility(event.target.value as BooklistVisibility)}>
@@ -90,13 +89,13 @@ export function BooklistFormDialog({ open, initial, onClose, onSaved, onDeleted 
                 <MenuItem value="PUBLIC">任何访客</MenuItem>
               </Select>
             </FormControl>
-            {visibility === "PUBLIC" ? <Alert severity="info">公开书单只能包含已经进入公共书目池的书籍。</Alert> : null}
+            {visibility === "PUBLIC" ? <Alert severity="info">公开书目只能包含已经进入公共书目池的书籍。</Alert> : null}
           </Stack>
         </DialogContent>
         <DialogActions>
-          {initial && onDeleted ? <Button color="error" startIcon={<DeleteOutlineRounded />} disabled={busy} onClick={() => setConfirmDelete(true)} sx={{ mr: "auto" }}>删除书单</Button> : null}
+          {initial && onDeleted ? <Button color="error" disabled={busy} onClick={() => setConfirmDelete(true)} sx={{ mr: "auto" }}>删除书目</Button> : null}
           <Button onClick={onClose} disabled={busy}>取消</Button>
-          <Button variant="contained" onClick={() => void save()} disabled={!title.trim() || busy}>{initial ? "保存" : "创建书单"}</Button>
+          <Button variant="contained" onClick={() => void save()} disabled={!title.trim() || busy}>{initial ? "保存" : "创建书目"}</Button>
         </DialogActions>
       </Dialog>
 
@@ -104,11 +103,11 @@ export function BooklistFormDialog({ open, initial, onClose, onSaved, onDeleted 
         <DialogTitle>删除“{initial?.title}”？</DialogTitle>
         <DialogContent>
           {error ? <Alert severity="error" sx={{ mb: `${tokens.spacing[4]}px` }}>{error}</Alert> : null}
-          <Typography>这里只会删除书单和排序关系。书籍、阅读记录和 NAS 原文件都会保留。</Typography>
+          <Typography>这里只会删除书目和排序关系。书籍、阅读记录和 NAS 原文件都会保留。</Typography>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setConfirmDelete(false)} disabled={busy}>取消</Button>
-          <Button color="error" variant="contained" onClick={() => void remove()} disabled={busy}>删除书单</Button>
+          <Button color="error" variant="contained" onClick={() => void remove()} disabled={busy}>删除书目</Button>
         </DialogActions>
       </Dialog>
     </>

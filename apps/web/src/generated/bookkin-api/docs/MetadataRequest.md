@@ -6,6 +6,9 @@
 
 Name | Type
 ------------ | -------------
+`publiclyVisible` | boolean
+`authorBiography` | string
+`tableOfContents` | string
 `title` | string
 `subtitle` | string
 `authors` | Array&lt;string&gt;
@@ -31,6 +34,9 @@ import type { MetadataRequest } from ''
 
 // TODO: Update the object below with actual values
 const example = {
+  "publiclyVisible": null,
+  "authorBiography": null,
+  "tableOfContents": null,
   "title": null,
   "subtitle": null,
   "authors": null,

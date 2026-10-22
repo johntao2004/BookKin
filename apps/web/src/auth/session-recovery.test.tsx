@@ -18,7 +18,7 @@ beforeEach(() => { vi.clearAllMocks(); sessionStorage.clear(); });
 it('offers retry after session transport failure without mounting private content', async () => {
   vi.mocked(api.getSession).mockRejectedValueOnce(new Error('书库服务暂时不可用')).mockResolvedValueOnce(user);
   mount();
-  fireEvent.click(await screen.findByRole('button', { name: '重试连接' }));
+  fireEvent.click(await screen.findByRole('button', { name: '重试' }));
   expect(screen.queryByText('私有书库')).not.toBeInTheDocument();
   expect(await screen.findByText('私有书库')).toBeInTheDocument();
 });

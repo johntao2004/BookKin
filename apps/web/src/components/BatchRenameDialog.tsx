@@ -1,8 +1,6 @@
+import { BookCover } from "./BookCover";
 // 批量重命名界面仍逐份文件取得安全预览并提交任务，不直接操作 NAS 路径。
 // Batch rename still previews and submits individual file operations instead of directly mutating NAS paths.
-import { CheckCircleOutlined } from "@/ui/icons";
-import { DriveFileRenameOutlineRounded } from "@/ui/icons";
-import { GppGoodOutlined } from "@/ui/icons";
 import { Alert } from "@/ui/feedback";
 import { Box } from "@/ui/primitives";
 import { Button } from "@/ui/buttons";
@@ -93,19 +91,19 @@ export function BatchRenameDialog({ open, books, onClose, onCompleted }: {
       <DialogContent>
         {plans.length === 0 ? <Stack spacing={2.5} sx={{ pt: 1 }}>
           <TextField label="命名模板" value={template} onChange={(event: any) => setTemplate(event.target.value)} helperText="可用变量：{author}、{series}、{title}、{ext}。缺少系列时使用“未分类”。" />
-          <Stack direction={{ xs: "column", sm: "row" }} sx={{ justifyContent: "space-between", alignItems: { sm: "center" }, gap: 1 }}><Typography sx={{ fontWeight: 700 }}>选择当前已加载的藏书（最多 50 本）</Typography><FormControlLabel control={<Checkbox checked={selectedBooks.length > 0 && selectedBooks.length === Math.min(books.length, 50)} onChange={(event: any) => setSelectedIds(event.target.checked ? books.slice(0, 50).map((book) => book.id) : [])} />} label="全选当前页" /></Stack>
+          <Stack direction={{ xs: "column", sm: "row" }} sx={{ justifyContent: "space-between", alignItems: { sm: "center" }, gap: 1 }}><Stack direction="row" spacing={2} sx={{ alignItems: "center" }}><Typography sx={{ fontWeight: 700 }}>选择当前已加载的藏书（最多 50 本）</Typography><Typography variant="body2" color="text.secondary">已选 {selectedBooks.length} 本</Typography></Stack><FormControlLabel control={<Checkbox checked={selectedBooks.length > 0 && selectedBooks.length === Math.min(books.length, 50)} onChange={(event: any) => setSelectedIds(event.target.checked ? books.slice(0, 50).map((book) => book.id) : [])} />} label="全选当前页" /></Stack>
           <Stack divider={<Divider flexItem />} sx={{ border: 1, borderColor: "divider", borderRadius: 2, maxHeight: 380, overflow: "auto" }}>
-            {books.map((book) => <Stack key={book.id} direction="row" spacing={1.5} sx={{ alignItems: "center", px: 2, py: 1.25 }}><Checkbox checked={selectedIds.includes(book.id)} onChange={() => toggle(book.id)} slotProps={{ input: { "aria-label": `选择${book.title}` } }} /><Box component="img" src={book.coverUrl} alt="" sx={{ width: 34, aspectRatio: "2/3", objectFit: "cover", borderRadius: 0.5 }} /><Box sx={{ minWidth: 0 }}><Typography noWrap sx={{ fontWeight: 700 }}>{book.title}</Typography><Typography variant="body2" color="text.secondary" noWrap>{book.author} · {book.relativePath}</Typography></Box></Stack>)}
+            {books.map((book) => <Stack key={book.id} direction="row" spacing={1.5} sx={{ alignItems: "center", px: 2, py: 1.25 }}><Checkbox checked={selectedIds.includes(book.id)} onChange={() => toggle(book.id)} slotProps={{ input: { "aria-label": `选择${book.title}` } }} /><BookCover src={book.coverUrl} alt="" sx={{ width: `${tokens.spacing[10]}px` }} /><Box sx={{ minWidth: 0 }}><Typography noWrap sx={{ fontWeight: 700 }}>{book.title}</Typography><Typography variant="body2" color="text.secondary" noWrap>{book.author} · {book.relativePath}</Typography></Box></Stack>)}
           </Stack>
         </Stack> : <Stack spacing={2} sx={{ pt: 1 }}>
-          <Alert severity={executableCount === plans.length ? "success" : "warning"} icon={<CheckCircleOutlined />}>已生成 {plans.length} 项变更，其中 {executableCount} 项可以提交。存在冲突的项目不会执行。</Alert>
+          <Alert severity={executableCount === plans.length ? "success" : "warning"}>已生成 {plans.length} 项变更，其中 {executableCount} 项可以提交。存在冲突的项目不会执行。</Alert>
           <Stack divider={<Divider flexItem />} sx={{ border: 1, borderColor: "divider", borderRadius: 2 }}>
             {plans.map((plan) => <Box key={plan.book.id} sx={{ p: 2.25 }}><Typography sx={{ fontWeight: 700 }}>{plan.book.title}</Typography><Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.75 }}>原：{plan.book.libraryRoot}/{plan.book.relativePath}</Typography><Typography variant="caption" sx={{ display: "block", fontFamily: tokens.typography.fontFamily.mono, overflowWrap: "anywhere" }}>新：{plan.book.libraryRoot}/{plan.targetPath}</Typography>{plan.error && <Alert severity="error" sx={{ mt: 1 }}>{plan.error}</Alert>}{plan.preview?.conflicts.map((conflict) => <Alert key={conflict.code} severity="error" sx={{ mt: 1 }}>{conflict.message}</Alert>)}</Box>)}
           </Stack>
         </Stack>}
         {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
       </DialogContent>
-      <DialogActions sx={{ p: 3 }}><Button color="inherit" onClick={onClose} disabled={busy}>取消</Button>{plans.length > 0 && <Button color="inherit" onClick={() => setPlans([])} disabled={busy}>返回修改</Button>}<Box sx={{ flex: 1 }} />{plans.length === 0 ? <Button variant="contained" startIcon={busy ? <CircularProgress size={18} color="inherit" /> : <GppGoodOutlined />} disabled={busy || selectedBooks.length === 0 || !template.trim()} onClick={preview}>{busy ? "正在检查…" : `预览 ${selectedBooks.length} 项变更`}</Button> : <Button variant="contained" startIcon={<DriveFileRenameOutlineRounded />} disabled={busy || executableCount === 0} onClick={execute}>{busy ? "正在提交…" : `提交 ${executableCount} 个任务`}</Button>}</DialogActions>
+      <DialogActions sx={{ p: 3 }}><Button color="inherit" onClick={onClose} disabled={busy}>取消</Button>{plans.length > 0 && <Button color="inherit" onClick={() => setPlans([])} disabled={busy}>返回修改</Button>}<Box sx={{ flex: 1 }} />{plans.length === 0 ? <Button variant="contained" startIcon={busy ? <CircularProgress size={18} color="inherit" /> : undefined} disabled={busy || selectedBooks.length === 0 || !template.trim()} onClick={preview}>{busy ? "正在检查…" : "预览"}</Button> : <Button variant="contained" disabled={busy || executableCount === 0} onClick={execute}>{busy ? "正在提交…" : "提交"}</Button>}</DialogActions>
     </Dialog>
   );
 }

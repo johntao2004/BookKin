@@ -29,6 +29,30 @@ import {
 export interface BookMetadataDraft {
     /**
      *
+     * @type {boolean}
+     * @memberof BookMetadataDraft
+     */
+    publiclyVisible?: boolean;
+    /**
+     *
+     * @type {Array<string>}
+     * @memberof BookMetadataDraft
+     */
+    subjectCodes?: Array<string>;
+    /**
+     *
+     * @type {string}
+     * @memberof BookMetadataDraft
+     */
+    authorBiography?: string | null;
+    /**
+     *
+     * @type {string}
+     * @memberof BookMetadataDraft
+     */
+    tableOfContents?: string | null;
+    /**
+     *
      * @type {string}
      * @memberof BookMetadataDraft
      */
@@ -148,6 +172,10 @@ export function BookMetadataDraftFromJSONTyped(json: any, ignoreDiscriminator: b
     }
     return {
 
+        'publiclyVisible': json['publiclyVisible'] == null ? undefined : json['publiclyVisible'],
+        'subjectCodes': json['subjectCodes'] == null ? undefined : json['subjectCodes'],
+        'authorBiography': json['authorBiography'] === undefined ? undefined : json['authorBiography'] === null ? null : json['authorBiography'],
+        'tableOfContents': json['tableOfContents'] === undefined ? undefined : json['tableOfContents'] === null ? null : json['tableOfContents'],
         'title': json['title'],
         'subtitle': json['subtitle'] === undefined ? undefined : json['subtitle'] === null ? null : json['subtitle'],
         'authors': json['authors'],
@@ -178,6 +206,10 @@ export function BookMetadataDraftToJSONTyped(value?: BookMetadataDraft | null, i
 
     return {
 
+        'publiclyVisible': value['publiclyVisible'],
+        'subjectCodes': value['subjectCodes'],
+        'authorBiography': value['authorBiography'],
+        'tableOfContents': value['tableOfContents'],
         'title': value['title'],
         'subtitle': value['subtitle'],
         'authors': value['authors'],

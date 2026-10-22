@@ -33,7 +33,11 @@ public class BookRepository {
                 record.get("reading_updated_at", OffsetDateTime.class));
     }
 
-    public BookPage list(UUID userId, String query, BookFormat format, BookSort sort, String cursor, int requestedLimit) {
+    public BookPage list(UUID userId, String query, BookFormat format, UUID categoryId, BookSort sort, String cursor, int requestedLimit) {
+        return list(userId, query, format, categoryId, sort, cursor, requestedLimit, null);
+    }
+    public BookPage list(UUID userId, String query, BookFormat format, UUID categoryId, BookSort sort, String cursor, int requestedLimit, String subjectCode) {
+        String subject = ThemaSubjects.filter(subjectCode);
         int limit = Math.max(1, Math.min(100, requestedLimit));
         BookSort selectedSort = sort == null ? BookSort.RECENT : sort;
         Cursor decoded = Cursor.decode(cursor, selectedSort);
@@ -57,25 +61,27 @@ public class BookRepository {
                   left join reading_positions rp on rp.book_id = b.id and rp.user_id = ?
                  where (?::text is null or b.title % ? or b.primary_author % ? or b.title ilike ? or b.primary_author ilike ?
                    or exists (select 1 from book_tags bt join tags t on t.id = bt.tag_id where bt.book_id = b.id and t.name ilike ?))
+                   and (?::uuid is null or exists (select 1 from book_categories bc where bc.book_id = b.id and bc.category_id = ?))
+                   and (?::text is null or exists (select 1 from unnest(case when cardinality(b.subject_codes)=0 then array['UNCLASSIFIED']::text[] else b.subject_codes end) code where starts_with(code, ?)))
                 """;
         var records = switch (selectedSort) {
             case RECENT -> dsl.fetch(base + """
                      and (?::timestamptz is null or (b.created_at, b.id) < (?::timestamptz, ?::uuid))
                      order by b.created_at desc, b.id desc limit ?
                     """, formatName, formatName, userId, normalizedQuery, rawQuery, rawQuery, normalizedQuery,
-                    normalizedQuery, normalizedQuery, decoded == null ? null : decoded.key(),
+                    normalizedQuery, normalizedQuery, categoryId, categoryId, subject, subject, decoded == null ? null : decoded.key(),
                     decoded == null ? null : decoded.key(), decoded == null ? null : decoded.id(), limit + 1);
             case TITLE -> dsl.fetch(base + """
                      and (?::text is null or (b.sort_title, b.id) > (?::text, ?::uuid))
                      order by b.sort_title, b.id limit ?
                     """, formatName, formatName, userId, normalizedQuery, rawQuery, rawQuery, normalizedQuery,
-                    normalizedQuery, normalizedQuery, decoded == null ? null : decoded.key(),
+                    normalizedQuery, normalizedQuery, categoryId, categoryId, subject, subject, decoded == null ? null : decoded.key(),
                     decoded == null ? null : decoded.key(), decoded == null ? null : decoded.id(), limit + 1);
             case AUTHOR -> dsl.fetch(base + """
                      and (?::text is null or (lower(b.primary_author), b.id) > (?::text, ?::uuid))
                      order by lower(b.primary_author), b.id limit ?
                     """, formatName, formatName, userId, normalizedQuery, rawQuery, rawQuery, normalizedQuery,
-                    normalizedQuery, normalizedQuery, decoded == null ? null : decoded.key(),
+                    normalizedQuery, normalizedQuery, categoryId, categoryId, subject, subject, decoded == null ? null : decoded.key(),
                     decoded == null ? null : decoded.key(), decoded == null ? null : decoded.id(), limit + 1);
         };
         boolean hasMore = records.size() > limit;
@@ -109,6 +115,26 @@ public class BookRepository {
                 """, userId, bookId).map(this::mapSummary);
     }
 
+    // 概览的窄查询网关：只返回当前用户读过且仍有可用文件的书籍。
+    // Narrow overview gateway: current-user reading history with an available book file.
+    public List<UUID> recentlyReadIds(UUID userId) {
+        return dsl.fetch("""
+                select rp.book_id from reading_positions rp
+                 where rp.user_id = ? and length(trim(rp.locator)) > 0
+                   and exists (select 1 from book_files f where f.book_id = rp.book_id and f.status = 'AVAILABLE')
+                 order by rp.updated_at desc, rp.book_id desc limit 3
+                """, userId).getValues("book_id", UUID.class);
+    }
+
+    public Optional<BookSummary> newestAddedBetween(UUID userId, OffsetDateTime start, OffsetDateTime endExclusive) {
+        return dsl.fetchOptional("""
+                select b.id from books b
+                 where b.created_at >= ?::timestamptz and b.created_at < ?::timestamptz
+                   and exists (select 1 from book_files f where f.book_id = b.id and f.status = 'AVAILABLE')
+                 order by b.created_at desc, b.id desc limit 1
+                """, start, endExclusive).flatMap(row -> findSummary(userId, row.get("id", UUID.class)));
+    }
+
     public Optional<BookFile> findFile(UUID id) {
         return dsl.fetchOptional("select * from book_files where id = ?", id).map(record -> new BookFile(
                 record.get("id", UUID.class), record.get("book_id", UUID.class), record.get("library_root_id", UUID.class),
@@ -130,6 +156,14 @@ public class BookRepository {
         var record = dsl.fetchOne("select exists(select 1 from books where id = ?)", bookId);
         return record != null && Boolean.TRUE.equals(record.get(0, Boolean.class));
     }
+
+    /** Narrow module gateway for reading-post source labels, without files or private reading state. */
+    public Optional<BookReference> reference(UUID bookId) {
+        return dsl.fetchOptional("select id, title from books where id = ?", bookId)
+                .map(row -> new BookReference(row.get("id", UUID.class), row.get("title", String.class)));
+    }
+
+    public record BookReference(UUID id, String title) {}
 
     public Optional<CoverLocation> findCover(UUID bookId) {
         return dsl.fetchOptional("""

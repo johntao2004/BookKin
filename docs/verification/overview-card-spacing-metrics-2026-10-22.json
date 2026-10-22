@@ -1,0 +1,74 @@
+[
+  {
+    "contentGap": 16,
+    "headingInset": [
+      55,
+      25
+    ],
+    "label": "featured-book-title",
+    "padding": [
+      "24px",
+      "24px",
+      "24px",
+      "24px"
+    ],
+    "size": [
+      515.5,
+      336
+    ]
+  },
+  {
+    "contentGap": 16,
+    "headingInset": [
+      55,
+      25
+    ],
+    "label": "recent-annotations-title",
+    "padding": [
+      "24px",
+      "24px",
+      "24px",
+      "24px"
+    ],
+    "size": [
+      515.5,
+      336
+    ]
+  },
+  {
+    "contentGap": 16,
+    "headingInset": [
+      55,
+      25
+    ],
+    "label": "reading-time-title",
+    "padding": [
+      "24px",
+      "24px",
+      "24px",
+      "24px"
+    ],
+    "size": [
+      515.5,
+      336
+    ]
+  },
+  {
+    "contentGap": 16,
+    "headingInset": [
+      55,
+      25
+    ],
+    "label": "recent-reading-card-title",
+    "padding": [
+      "24px",
+      "24px",
+      "24px",
+      "24px"
+    ],
+    "size": [
+      515.5,
+      336
+    ]
+  }
+]

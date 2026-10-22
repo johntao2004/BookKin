@@ -25,9 +25,9 @@ it.each([true, false])('defaults to public, respects the per-book switch (%s), a
   expect(screen.queryByText('hidden-original.pdf')).not.toBeInTheDocument();
   expect(screen.queryByText('sha256:private-fingerprint')).not.toBeInTheDocument();
   expect(screen.queryByLabelText('目标路径')).not.toBeInTheDocument();
-  const actions = screen.getByRole('button', {name: '重新在线补全'}).parentElement!;
-  expect(within(actions).getByRole('button', {name: '取消本次上传'})).toHaveClass('ant-btn-dangerous');
-  fireEvent.click(screen.getByRole('button', {name: '保存并完成'}));
+  const actions = screen.getByRole('button', {name: '在线补全'}).parentElement!;
+  expect(within(actions).getByRole('button', {name: '取消上传'})).toHaveClass('ant-btn-dangerous');
+  fireEvent.click(screen.getByRole('button', {name: '确认入库'}));
   await waitFor(() => expect(commit).toHaveBeenCalledWith('upload-review', visible));
 });
 

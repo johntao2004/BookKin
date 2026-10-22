@@ -37,6 +37,7 @@ import org.w3c.dom.Element;
 public class BookMetadataExtractor {
     private static final int MAX_XML_BYTES = 5 * 1024 * 1024;
     private static final int MAX_COVER_BYTES = 25 * 1024 * 1024;
+    private final com.elexvx.bookkin.filemanagement.infrastructure.BookBibliographyReader bibliography = new com.elexvx.bookkin.filemanagement.infrastructure.BookBibliographyReader();
     private static final long MAX_TEXT_BYTES = 100L * 1024 * 1024;
 
     public ExtractedBook extract(Path file, BookFormat format, Path root, String cacheKey) throws IOException {
@@ -49,7 +50,7 @@ public class BookMetadataExtractor {
         return new ExtractedBook(extracted.title(), extracted.subtitle(), extracted.authors(), extracted.translators(),
                 extracted.description(), extracted.language(), extracted.publisher(), extracted.publishedDate(),
                 extracted.isbn(), extracted.series(), extracted.seriesIndex(), extracted.tags(), generated,
-                extracted.pageCount(), extracted.wordCount());
+                extracted.pageCount(), extracted.wordCount(), extracted.subjectCodes(), extracted.authorBiography(), extracted.tableOfContents());
     }
 
     private ExtractedBook epub(Path file, Path root, String cacheKey) throws IOException {
@@ -65,12 +66,14 @@ public class BookMetadataExtractor {
             String publisher = text(metadata, "publisher");
             String published = text(metadata, "date");
             String isbn = isbn(metadata);
-            List<String> tags = texts(metadata, "subject");
+            List<String> subjectCodes = bibliography.themaSubjects(metadata);
+            List<String> tags = texts(metadata, "subject").stream().filter(value -> !subjectCodes.contains(value)).toList();
             String series = firstNonBlank(metaContent(metadata, "calibre:series"), collection(metadata));
             BigDecimal seriesIndex = decimal(firstNonBlank(metaContent(metadata, "calibre:series_index"), refinedMeta(metadata, "group-position")));
             String cover = extractEpubCover(zip, document, opfPath, root, cacheKey);
             return new ExtractedBook(title, subtitle, contributors.authors(), contributors.translators(), description,
-                    language, publisher, published, isbn, series, seriesIndex, tags, cover, null, countEpubWords(zip));
+                    language, publisher, published, isbn, series, seriesIndex, tags, cover, null, countEpubWords(zip), subjectCodes,
+                    metaContent(metadata, "bookkin:authorBiography"), firstNonBlank(metaContent(metadata, "bookkin:tableOfContents"), bibliography.epubContents(zip, document, opfPath)));
         } catch (IOException exception) {
             throw exception;
         } catch (Exception exception) {
@@ -120,9 +123,13 @@ public class BookMetadataExtractor {
                 cover = relative(root, target);
             }
             return new ExtractedBook(firstNonBlank(title, filenameTitle(file)), null, authors, List.of(), description,
-                    language, publisher, published, isbn, null, null, tags, cover, document.getNumberOfPages(), null);
+                    language, publisher, published, isbn, null, null, tags, cover, document.getNumberOfPages(), null,
+                    com.elexvx.bookkin.catalog.ThemaSubjects.extract(splitTags(info.getCustomMetadataValue("Thema"))),
+                    info.getCustomMetadataValue("BookKinAuthorBiography"),
+                    firstNonBlank(info.getCustomMetadataValue("BookKinTableOfContents"), bibliography.pdfContents(document)));
         }
     }
+
 
     private CreatorGroups contributors(Element metadata) {
         if (metadata == null) return new CreatorGroups(List.of(), List.of());

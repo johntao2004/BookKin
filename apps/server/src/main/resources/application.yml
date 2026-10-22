@@ -31,6 +31,7 @@ server:
     session:
       cookie:
         name: BOOKKIN_SESSION
+        max-age: 30d
         http-only: true
         same-site: strict
         secure: ${BOOKKIN_COOKIE_SECURE:false}
@@ -47,6 +48,7 @@ management:
       show-details: when_authorized
 
 bookkin:
+  two-factor-encryption-key: ${BOOKKIN_TWO_FACTOR_ENCRYPTION_KEY:}
   public-base-url: ${BOOKKIN_PUBLIC_BASE_URL:http://localhost:8080}
   file-operation-preview-ttl: 5m
   file-lease-timeout: 30s

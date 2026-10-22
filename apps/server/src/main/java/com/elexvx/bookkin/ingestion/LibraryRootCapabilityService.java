@@ -1,6 +1,7 @@
 package com.elexvx.bookkin.ingestion;
 
 import com.elexvx.bookkin.config.BookKinProperties;
+import com.elexvx.bookkin.filemanagement.infrastructure.PrivateContentStore;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
@@ -25,10 +26,12 @@ public class LibraryRootCapabilityService  {
     private static final Logger log = LoggerFactory.getLogger(LibraryRootCapabilityService.class);
     private final LibraryRootRepository roots;
     private final BookKinProperties properties;
+    private final PrivateContentStore content;
 
-    public LibraryRootCapabilityService(LibraryRootRepository roots, BookKinProperties properties) {
+    public LibraryRootCapabilityService(LibraryRootRepository roots, BookKinProperties properties, PrivateContentStore content) {
         this.roots = roots;
         this.properties = properties;
+        this.content = content;
     }
 
     public void checkAll() { roots.findAll().forEach(this::check); }
@@ -47,6 +50,7 @@ public class LibraryRootCapabilityService  {
                 return;
             }
             Path real = configured.toRealPath();
+            if (content.overlaps(real)) throw new java.io.IOException("书籍书库与文章或禁书区目录重叠");
             canonical = real.toString();
             readable = true;
             freeBytes = Files.getFileStore(real).getUsableSpace();

@@ -112,6 +112,13 @@ public class UserRepository {
         return findById(id).orElseThrow();
     }
 
+    public BookKinUser changeRole(UUID id, UserRole expected, UserRole role) {
+        if (role == UserRole.OWNER || expected == UserRole.OWNER) throw com.elexvx.bookkin.common.ApiException.forbidden("OWNER_ROLE_FIXED", "主人角色不能更改。");
+        if (dsl.execute("update app_users set role = ?, updated_at = now() where id = ? and role = ? and role <> 'OWNER'", role.name(), id, expected.name()) != 1)
+            throw com.elexvx.bookkin.common.ApiException.conflict("USER_ROLE_CONFLICT", "用户角色已变化，请刷新后重试。");
+        return findById(id).orElseThrow();
+    }
+
     private BookKinUser map(Record record) {
         return new BookKinUser(
                 record.get("id", UUID.class),

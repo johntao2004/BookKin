@@ -5,8 +5,10 @@ All URIs are relative to */api/v1*
 | Method | HTTP request | Description |
 |------------- | ------------- | -------------|
 | [**getBook**](CatalogApi.md#getbook) | **GET** /books/{id} |  |
+| [**getBookBibliographySource**](CatalogApi.md#getbookbibliographysource) | **GET** /books/{id}/bibliography-source |  |
 | [**getBookCover**](CatalogApi.md#getbookcover) | **GET** /books/{id}/cover |  |
 | [**getBookMetadata**](CatalogApi.md#getbookmetadata) | **GET** /books/{id}/metadata |  |
+| [**getCatalogRevision**](CatalogApi.md#getcatalogrevision) | **GET** /books/revision |  |
 | [**listBooks**](CatalogApi.md#listbooks) | **GET** /books |  |
 | [**replaceBookCover**](CatalogApi.md#replacebookcover) | **PUT** /books/{id}/cover |  |
 | [**restoreBookCover**](CatalogApi.md#restorebookcover) | **DELETE** /books/{id}/cover |  |
@@ -79,6 +81,75 @@ example().catch(console.error);
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 | **200** | Book |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
+
+## getBookBibliographySource
+
+> GetBookBibliographySource200Response getBookBibliographySource(id)
+
+
+
+### Example
+
+```ts
+import {
+  Configuration,
+  CatalogApi,
+} from '';
+import type { GetBookBibliographySourceRequest } from '';
+
+async function example() {
+  console.log("🚀 Testing  SDK...");
+  const config = new Configuration({
+    // To configure API key authorization: sessionCookie
+    apiKey: "YOUR API KEY",
+  });
+  const api = new CatalogApi(config);
+
+  const body = {
+    // string
+    id: 38400000-8cf0-11bd-b23e-10b96e4ef00d,
+  } satisfies GetBookBibliographySourceRequest;
+
+  try {
+    const data = await api.getBookBibliographySource(body);
+    console.log(data);
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+// Run the test
+example().catch(console.error);
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **id** | `string` |  | [Defaults to `undefined`] |
+
+### Return type
+
+[**GetBookBibliographySource200Response**](GetBookBibliographySource200Response.md)
+
+### Authorization
+
+[sessionCookie](../README.md#sessionCookie)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: `application/json`
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | Read-only source bibliography, protected by catalog role and file fingerprint |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
@@ -221,9 +292,70 @@ example().catch(console.error);
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 
+## getCatalogRevision
+
+> GetCatalogRevision200Response getCatalogRevision()
+
+
+
+### Example
+
+```ts
+import {
+  Configuration,
+  CatalogApi,
+} from '';
+import type { GetCatalogRevisionRequest } from '';
+
+async function example() {
+  console.log("🚀 Testing  SDK...");
+  const config = new Configuration({
+    // To configure API key authorization: sessionCookie
+    apiKey: "YOUR API KEY",
+  });
+  const api = new CatalogApi(config);
+
+  try {
+    const data = await api.getCatalogRevision();
+    console.log(data);
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+// Run the test
+example().catch(console.error);
+```
+
+### Parameters
+
+This endpoint does not need any parameter.
+
+### Return type
+
+[**GetCatalogRevision200Response**](GetCatalogRevision200Response.md)
+
+### Authorization
+
+[sessionCookie](../README.md#sessionCookie)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: `application/json`
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | Catalog revision and the current user\&#39;s latest reading update |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
+
 ## listBooks
 
-> BookPage listBooks(q, format, sort, cursor, limit)
+> BookPage listBooks(q, format, subjectCode, categoryId, sort, cursor, limit)
 
 
 
@@ -249,6 +381,10 @@ async function example() {
     q: q_example,
     // BookFormat (optional)
     format: ...,
+    // string | Thema subject prefix or UNCLASSIFIED (optional)
+    subjectCode: subjectCode_example,
+    // string (optional)
+    categoryId: 38400000-8cf0-11bd-b23e-10b96e4ef00d,
     // 'RECENT' | 'TITLE' | 'AUTHOR' (optional)
     sort: sort_example,
     // string (optional)
@@ -276,6 +412,8 @@ example().catch(console.error);
 |------------- | ------------- | ------------- | -------------|
 | **q** | `string` |  | [Optional] [Defaults to `undefined`] |
 | **format** | `BookFormat` |  | [Optional] [Defaults to `undefined`] [Enum: EPUB, PDF] |
+| **subjectCode** | `string` | Thema subject prefix or UNCLASSIFIED | [Optional] [Defaults to `undefined`] |
+| **categoryId** | `string` |  | [Optional] [Defaults to `undefined`] |
 | **sort** | `RECENT`, `TITLE`, `AUTHOR` |  | [Optional] [Defaults to `&#39;RECENT&#39;`] [Enum: RECENT, TITLE, AUTHOR] |
 | **cursor** | `string` |  | [Optional] [Defaults to `undefined`] |
 | **limit** | `number` |  | [Optional] [Defaults to `60`] |

@@ -6,6 +6,10 @@
 
 Name | Type
 ------------ | -------------
+`publiclyVisible` | boolean
+`subjectCodes` | Array&lt;string&gt;
+`authorBiography` | string
+`tableOfContents` | string
 `title` | string
 `subtitle` | string
 `authors` | Array&lt;string&gt;
@@ -30,6 +34,10 @@ import type { BookMetadataDraft } from ''
 
 // TODO: Update the object below with actual values
 const example = {
+  "publiclyVisible": null,
+  "subjectCodes": null,
+  "authorBiography": null,
+  "tableOfContents": null,
   "title": null,
   "subtitle": null,
   "authors": null,

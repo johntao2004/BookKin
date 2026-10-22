@@ -32,6 +32,7 @@ import org.springframework.stereotype.Service;
 // Preview collects conflicts and execution validates then queues it; the worker performs actual NAS writes.
 @Service
 public class FileOperationService {
+    private final com.elexvx.bookkin.auth.RolePermissionService permissions;
     private final BookRepository books;
     private final LibraryRootRepository roots;
     private final UserRepository users;
@@ -44,7 +45,8 @@ public class FileOperationService {
     public FileOperationService(BookRepository books, LibraryRootRepository roots, UserRepository users,
                                 FileOperationRepository operations, PathPolicy pathPolicy,
                                 FileFingerprints fingerprints, FileLeaseRepository leases,
-                                RecycleBinRepository recycleBin) {
+                                RecycleBinRepository recycleBin, com.elexvx.bookkin.auth.RolePermissionService permissions) {
+        this.permissions = permissions;
         this.books = books;
         this.roots = roots;
         this.users = users;
@@ -57,6 +59,7 @@ public class FileOperationService {
 
     public Preview preview(PreviewRequest input, Principal principal) {
         var actor = users.findByUsername(principal.getName()).orElseThrow();
+        requirePermission(principal, input.type());
         if (input.type() == FileOperationType.PURGE && actor.role() != UserRole.OWNER) {
             throw ApiException.forbidden("OWNER_REQUIRED", "只有主人可以永久清理文件。");
         }
@@ -146,11 +149,13 @@ public class FileOperationService {
         var actor = users.findByUsername(principal.getName()).orElseThrow();
         var existing = operations.findIdempotency(actor.id(), idempotencyKey);
         if (existing.isPresent()) {
+            requirePermission(principal, existing.get().type());
             requireSameRequest(existing.get(), input);
             return existing.get().operation();
         }
         var preview = operations.findPreview(input.previewToken())
                 .orElseThrow(() -> ApiException.notFound("PREVIEW_NOT_FOUND", "预览不存在或已被使用。"));
+        requirePermission(principal, preview.type());
         if (!preview.requestedBy().equals(actor.id())) throw ApiException.forbidden("PREVIEW_OWNER_MISMATCH", "不能执行其他用户的预览。");
         if (preview.expiresAt().isBefore(OffsetDateTime.now())) throw ApiException.conflict("PREVIEW_EXPIRED", "预览已过期，请重新检查。");
         if (!"[]".equals(preview.conflictsJson())) throw ApiException.conflict("PREVIEW_HAS_CONFLICTS", "预览仍有冲突，不能执行。");
@@ -185,6 +190,7 @@ public class FileOperationService {
         var actor = users.findByUsername(principal.getName()).orElseThrow();
         var existing = operations.findIdempotency(actor.id(), idempotencyKey);
         if (existing.isPresent()) {
+            requirePermission(principal, existing.get().type());
             requireSameRequest(existing.get(), input);
             if (!Objects.equals(existing.get().recycleBinEntryId(), entryId) || existing.get().type() != type) {
                 throw ApiException.conflict("IDEMPOTENCY_KEY_REUSED", "同一幂等键不能用于不同的回收站操作。");
@@ -197,6 +203,18 @@ public class FileOperationService {
             throw ApiException.conflict("PREVIEW_TARGET_MISMATCH", "预览与当前回收站操作不匹配。");
         }
         return execute(input, idempotencyKey, principal);
+    }
+
+    private void requirePermission(Principal principal, FileOperationType type) {
+        permissions.require(principal, switch (type) {
+            case TRASH -> "library.trash";
+            case RESTORE -> "settings.recycle.restore";
+            case PURGE -> "settings.recycle.purge";
+            default -> "library.files";
+        });
+        if (type == FileOperationType.MOVE) {
+            throw ApiException.forbidden("BOOK_MOVE_DISABLED", "暂不支持移动书籍。");
+        }
     }
 
     private void requireSameRequest(FileOperationRepository.IdempotencyRecord existing, ExecuteRequest input) {

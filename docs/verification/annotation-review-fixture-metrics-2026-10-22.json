@@ -1,0 +1,29 @@
+{
+  "fixture": true,
+  "height": 336,
+  "horizontalOverflow": false,
+  "links": [
+    "/reader/qa-book-1?locator=pdf%3Apage%3D2",
+    "/reader/qa-book-2?locator=pdf%3Apage%3D3",
+    "/reader/qa-book-3?locator=pdf%3Apage%3D4"
+  ],
+  "overflow": false,
+  "rows": [
+    {
+      "height": 65.7890625,
+      "overflow": false
+    },
+    {
+      "height": 69.7890625,
+      "overflow": false
+    },
+    {
+      "height": 69.7890625,
+      "overflow": false
+    }
+  ],
+  "viewport": {
+    "height": 720,
+    "width": 1280
+  }
+}

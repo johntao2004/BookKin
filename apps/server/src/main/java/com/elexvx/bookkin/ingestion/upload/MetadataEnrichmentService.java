@@ -122,7 +122,7 @@ public class MetadataEnrichmentService {
         });
     }
 
-    private MetadataDraft fillBlanks(MetadataDraft local, List<MetadataCandidate> candidates) {
+    MetadataDraft fillBlanks(MetadataDraft local, List<MetadataCandidate> candidates) {
         String title = local.title();
         String subtitle = local.subtitle();
         List<String> authors = unknownAuthors(local.authors()) ? List.of() : local.authors();
@@ -133,17 +133,17 @@ public class MetadataEnrichmentService {
         List<String> tags = local.tags();
         Map<String, MetadataSource> sources = new HashMap<>(local.sources());
         for (MetadataCandidate candidate : candidates) {
-            if (blank(title) && !blank(candidate.title())) { title = candidate.title(); sources.put("title", candidate.provider()); }
-            if (blank(subtitle) && !blank(candidate.subtitle())) { subtitle = candidate.subtitle(); sources.put("subtitle", candidate.provider()); }
-            if (authors.isEmpty() && candidate.authors() != null && !candidate.authors().isEmpty()) { authors = candidate.authors(); sources.put("authors", candidate.provider()); }
-            if (blank(publisher) && !blank(candidate.publisher())) { publisher = candidate.publisher(); sources.put("publisher", candidate.provider()); }
-            if (blank(date) && !blank(candidate.publishedDate())) { date = candidate.publishedDate(); sources.put("publishedDate", candidate.provider()); }
-            if (blank(isbn) && !blank(candidate.isbn())) { isbn = candidate.isbn(); sources.put("isbn", candidate.provider()); }
-            if (blank(description) && !blank(candidate.description())) { description = candidate.description(); sources.put("description", candidate.provider()); }
-            if (tags.isEmpty() && candidate.tags() != null && !candidate.tags().isEmpty()) { tags = candidate.tags(); sources.put("tags", candidate.provider()); }
+            if (sources.get("title") != MetadataSource.MANUAL && blank(title) && !blank(candidate.title())) { title = candidate.title(); sources.put("title", candidate.provider()); }
+            if (sources.get("subtitle") != MetadataSource.MANUAL && blank(subtitle) && !blank(candidate.subtitle())) { subtitle = candidate.subtitle(); sources.put("subtitle", candidate.provider()); }
+            if (sources.get("authors") != MetadataSource.MANUAL && authors.isEmpty() && candidate.authors() != null && !candidate.authors().isEmpty()) { authors = candidate.authors(); sources.put("authors", candidate.provider()); }
+            if (sources.get("publisher") != MetadataSource.MANUAL && blank(publisher) && !blank(candidate.publisher())) { publisher = candidate.publisher(); sources.put("publisher", candidate.provider()); }
+            if (sources.get("publishedDate") != MetadataSource.MANUAL && blank(date) && !blank(candidate.publishedDate())) { date = candidate.publishedDate(); sources.put("publishedDate", candidate.provider()); }
+            if (sources.get("isbn") != MetadataSource.MANUAL && blank(isbn) && !blank(candidate.isbn())) { isbn = candidate.isbn(); sources.put("isbn", candidate.provider()); }
+            if (sources.get("description") != MetadataSource.MANUAL && blank(description) && !blank(candidate.description())) { description = candidate.description(); sources.put("description", candidate.provider()); }
+            if (sources.get("tags") != MetadataSource.MANUAL && tags.isEmpty() && candidate.tags() != null && !candidate.tags().isEmpty()) { tags = candidate.tags(); sources.put("tags", candidate.provider()); }
         }
         return new MetadataDraft(title, subtitle, authors.isEmpty() ? local.authors() : authors, local.translators(), local.language(), publisher, date, isbn,
-                description, local.series(), local.seriesIndex(), tags, local.pageCount(), local.wordCount(), sources, local.targetPath());
+                description, local.series(), local.seriesIndex(), tags, local.pageCount(), local.wordCount(), sources, local.targetPath(), local.publiclyVisible(), local.subjectCodes(), local.authorBiography(), local.tableOfContents());
     }
 
     private boolean needsAiHelp(MetadataDraft local, List<MetadataCandidate> candidates) {

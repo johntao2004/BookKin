@@ -43,9 +43,14 @@ public class DisplayCatalogController {
 
     @GetMapping
     DisplayCatalogRepository.DisplayBookPage list(@RequestParam(required = false) String q,
+                                                   @RequestParam(required = false) UUID categoryId,
+                                                   @RequestParam(required = false) String subjectCode,
+                                                   @RequestParam(required = false) BookFormat format,
+                                                   @RequestParam(required = false) BookSort sort,
                                                    @RequestParam(required = false) String cursor,
                                                    @RequestParam(defaultValue = "60") int limit) {
-        return display.list(q, cursor, limit);
+        return subjectCode == null ? display.list(q, categoryId, format, sort, cursor, limit)
+                : display.list(q, categoryId, format, sort, cursor, limit, subjectCode);
     }
 
     @GetMapping("/{id}")

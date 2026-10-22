@@ -1,3 +1,4 @@
+import { matchesThema } from "../domain/thema-filter";
 import { pendingPosition, persistPosition, replayPositions, trackSessionSave } from "../auth/session-save";
 import { randomId } from "../utils/random-id";
 import { demoBooks, demoRecycleBin, demoUsers } from "../data/demo";
@@ -25,10 +26,12 @@ import type {
   FileOperationPreview,
   FileOperationType,
   LibraryRoot,
+  ContentStorageArea,
   ManagedUser,
   Annotation,
   AnnotationBookPage,
   ReadingPosition,
+  ReadingOverview,
   ReaderFont,
   WeeklyReadingStats,
   RecycleBinEntry,
@@ -41,17 +44,22 @@ const demoMode = import.meta.env.VITE_DEMO_MODE === "true";
 
 const pause = (duration = 180) => new Promise((resolve) => window.setTimeout(resolve, duration));
 
-export class ApiRequestError extends Error {
-  constructor(message: string, public readonly status: number) { super(message); }
-}
+import { ApiRequestError } from "./errors";
+export { ApiRequestError } from "./errors";
 
 const AUTH_TIMEOUT_MS = 15_000;
 const CONNECTION_ERROR = "无法连接书库服务，请检查网络或确认服务已启动后重试。";
 async function responseError(response: Response): Promise<ApiRequestError> {
-  if (response.status >= 500) return new ApiRequestError("书库服务暂时不可用，请稍后重试。", response.status);
-  const problem = await response.json().catch(() => ({}));
-  return new ApiRequestError(problem.detail ?? problem.title
-    ?? (response.status === 401 ? "登录已过期，请重新登录。" : "请求失败，请稍后重试。"), response.status);
+  const payload = await response.json().catch(() => ({}));
+  const problem = payload && typeof payload === "object" ? payload : {};
+  const code = typeof problem.code === "string" && /^[A-Z0-9_]{1,100}$/.test(problem.code) ? problem.code : `HTTP_${response.status}`;
+  const trace = problem.traceId ?? response.headers.get("X-Request-ID");
+  const traceId = typeof trace === "string" && /^[a-z0-9_-]{8,128}$/i.test(trace) ? trace : undefined;
+  const knownProblem = typeof problem.type === "string" && problem.type.startsWith("urn:bookkin:error:");
+  const detail = response.status < 500 || knownProblem ? problem.detail ?? problem.title : undefined;
+  return new ApiRequestError(typeof detail === "string" ? detail
+    : response.status >= 500 ? "书库服务暂时不可用，请稍后重试。"
+      : response.status === 401 ? "登录已过期，请重新登录。" : "请求失败，请稍后重试。", response.status, code, traceId);
 }
 
 let csrfToken: string | undefined;
@@ -488,11 +496,13 @@ export const api = {
     return { userId: users[0]?.id ?? "demo", revision: revision >>> 0, readingUpdatedAt: null };
   },
 
-  async listBooks(input: { q?: string; format?: "EPUB" | "PDF"; sort?: "recent" | "title" | "author"; cursor?: string; limit?: number; signal?: AbortSignal } = {}): Promise<BookPage> {
+  async listBooks(input: { q?: string; format?: "EPUB" | "PDF"; categoryId?: string; subjectCode?: string; sort?: "recent" | "title" | "author"; cursor?: string; limit?: number; signal?: AbortSignal } = {}): Promise<BookPage> {
     if (!demoMode) {
       const params = new URLSearchParams({ limit: String(input.limit ?? 36) });
       if (input.q) params.set("q", input.q);
       if (input.format) params.set("format", input.format);
+      if (input.categoryId) params.set("categoryId", input.categoryId);
+      if (input.subjectCode) params.set("subjectCode", input.subjectCode);
       if (input.sort) params.set("sort", input.sort.toUpperCase());
       if (input.cursor) params.set("cursor", input.cursor);
       return request(`/books?${params.toString()}`, { signal: input.signal });
@@ -501,7 +511,9 @@ export const api = {
     if (input.signal?.aborted) throw new DOMException("请求已取消", "AbortError");
     const query = input.q?.trim().toLocaleLowerCase("zh-CN") ?? "";
     const filtered = books.filter((book) => book.status === "AVAILABLE"
+      && matchesThema(book.subjectCodes, input.subjectCode)
       && (!input.format || book.format === input.format)
+      && (!input.categoryId || categories.some((category) => category.id === input.categoryId && category.bookIds.includes(book.id)))
       && (!query || `${book.title} ${book.author} ${book.tags.join(" ")}`.toLocaleLowerCase("zh-CN").includes(query)));
     filtered.sort((left, right) => {
       if (input.sort === "title") return left.title.localeCompare(right.title, "zh-CN");
@@ -776,20 +788,34 @@ export const api = {
     return demoBooklist(updated, user);
   },
 
-  async listDisplayBooks(input: { q?: string; cursor?: string; limit?: number; signal?: AbortSignal } = {}): Promise<DisplayBookPage> {
+  async listDisplayBooks(input: { q?: string; categoryId?: string; subjectCode?: string; format?: "EPUB" | "PDF"; sort?: "recent" | "title" | "author"; cursor?: string; limit?: number; signal?: AbortSignal } = {}): Promise<DisplayBookPage> {
     if (!demoMode) {
       const params = new URLSearchParams({ limit: String(input.limit ?? 36) });
       if (input.q) params.set("q", input.q);
+      if (input.categoryId) params.set("categoryId", input.categoryId);
+      if (input.subjectCode) params.set("subjectCode", input.subjectCode);
+      if (input.format) params.set("format", input.format);
+      if (input.sort) params.set("sort", input.sort.toUpperCase());
       if (input.cursor) params.set("cursor", input.cursor);
       return request(`/display-books?${params.toString()}`, { signal: input.signal });
     }
     await pause(100);
     if (input.signal?.aborted) throw new DOMException("请求已取消", "AbortError");
     const query = input.q?.trim().toLocaleLowerCase("zh-CN") ?? "";
-    const displayed = displayBookIds
+    let displayed = displayBookIds
       .map((id, index) => ({ book: books.find((candidate) => candidate.id === id), index }))
       .filter((item): item is { book: Book; index: number } => Boolean(item.book))
-      .filter(({ book }) => !query || `${book.title} ${book.author} ${book.tags.join(" ")}`.toLocaleLowerCase("zh-CN").includes(query));
+      .filter(({ book }) => (!input.categoryId || categories.some((category) => category.id === input.categoryId && category.bookIds.includes(book.id)))
+        && matchesThema(book.subjectCodes, input.subjectCode)
+      && (!input.format || book.format === input.format)
+        && (!query || `${book.title} ${book.author} ${book.tags.join(" ")}`.toLocaleLowerCase("zh-CN").includes(query)));
+    if (input.sort) {
+      displayed = [...displayed].sort((left, right) => {
+        if (input.sort === "title") return left.book.title.localeCompare(right.book.title, "zh-CN");
+        if (input.sort === "author") return left.book.author.localeCompare(right.book.author, "zh-CN");
+        return right.book.addedAt.localeCompare(left.book.addedAt) || left.book.id.localeCompare(right.book.id);
+      });
+    }
     const offset = Math.max(0, Number(input.cursor ?? 0) || 0);
     const limit = input.limit ?? 36;
     const items = displayed.slice(offset, offset + limit).map(({ book, index }) => displayBook(book, index + 1));
@@ -866,6 +892,22 @@ export const api = {
     return position;
   },
 
+  async getReadingOverview(signal?: AbortSignal): Promise<ReadingOverview> {
+    if (!demoMode) return request("/reading-overview", { signal });
+    await pause(40);
+    const stats = demoWeeklyReadingStats();
+    const today = localDateKey(new Date());
+    const start = new Date(`${stats.weekStart}T00:00:00`).getTime();
+    const end = new Date(`${stats.weekEnd}T00:00:00`); end.setDate(end.getDate() + 1);
+    const featuredBook = books.filter(book => book.status === "AVAILABLE" && new Date(book.addedAt).getTime() >= start && new Date(book.addedAt).getTime() < end.getTime())
+      .sort((a, b) => b.addedAt.localeCompare(a.addedAt))[0] ?? null;
+    const recentReading = [...readingPositions.values()]
+      .filter(position => position.locator.trim() && books.some(book => book.id === position.bookId && book.status === "AVAILABLE"))
+      .sort((a, b) => (b.updatedAt ?? "").localeCompare(a.updatedAt ?? "") || b.bookId.localeCompare(a.bookId))
+      .slice(0, 3).map(position => ({ book: books.find(book => book.id === position.bookId)!, position }));
+    return { today, featuredBook, recentReading, stats };
+  },
+
   async getWeeklyReadingStats(): Promise<WeeklyReadingStats> {
     if (!demoMode) return request("/reading-stats/weekly");
     await pause(40);
@@ -881,6 +923,11 @@ export const api = {
     const date = localDateKey(new Date());
     readingTimeDaily.set(date, Math.min(86_400, (readingTimeDaily.get(date) ?? 0) + normalizedSeconds));
     return demoWeeklyReadingStats();
+  },
+
+  async getBookBibliographySource(bookId: string, signal?: AbortSignal): Promise<{ description?: string; authorBiography?: string; tableOfContents?: string; subjectCodes?: string[] }> {
+    if (!demoMode) return request(`/books/${bookId}/bibliography-source`, { signal });
+    return {};
   },
 
   async getBookMetadata(bookId: string): Promise<BookMetadata> {
@@ -985,6 +1032,7 @@ export const api = {
   },
 
   async previewFileOperation(book: Book, type: FileOperationType, targetPath?: string, targetRootId?: string): Promise<FileOperationPreview> {
+    if (type === "MOVE") throw new Error("暂不支持移动书籍。");
     if (!demoMode) return request("/file-operations/preview", {
       method: "POST",
       body: JSON.stringify({ bookFileId: book.fileId ?? book.id, type, targetPath, targetRootId, expectedFingerprint: book.fingerprint }),
@@ -998,15 +1046,13 @@ export const api = {
       type,
       sourcePath: `${book.libraryRoot}/${book.relativePath}`,
       targetPath: normalizedTarget,
-      requiredBytes: type === "MOVE" ? 8_842_122 : 0,
+      requiredBytes: 0,
       expectedFingerprint: book.fingerprint,
       expiresAt: new Date(Date.now() + 5 * 60_000).toISOString(),
       conflicts: normalizedTarget?.includes("已存在") ? [{ code: "TARGET_EXISTS", message: "目标路径已有文件，BookKin不会覆盖它。", path: normalizedTarget }] : [],
       warnings: type === "TRASH"
         ? ["文件将保留 30 天；阅读记录和笔记不会删除。"]
-        : type === "MOVE"
-          ? ["跨书库根目录时会先复制、刷盘并校验 SHA-256。"]
-          : type === "WRITE_METADATA"
+        : type === "WRITE_METADATA"
             ? ["写回会校验临时文件后直接覆盖当前原文件，不保留历史版本。"]
             : [],
     };
@@ -1034,6 +1080,7 @@ export const api = {
   },
 
   async executeFileOperation(preview: FileOperationPreview): Promise<FileOperation> {
+    if (preview.type === "MOVE") throw new Error("暂不支持移动书籍。");
     if (!demoMode) return request("/file-operations", {
       method: "POST",
       headers: { "Idempotency-Key": `preview:${preview.previewToken}` },
@@ -1077,6 +1124,11 @@ export const api = {
     return operation;
   },
 
+  async listFileOperationPage(page = 0, pageSize = 10): Promise<{ items: FileOperation[]; total: number }> {
+    if (!demoMode) return request(`/file-operations?page=${page}&pageSize=${pageSize}`);
+    await pause(); return { items: operations.slice(page * pageSize, (page + 1) * pageSize), total: operations.length };
+  },
+
   async listFileOperations(): Promise<FileOperation[]> {
     if (!demoMode) return request<{ items: FileOperation[] }>("/file-operations?limit=50").then((result) => result.items);
     await pause();
@@ -1108,12 +1160,14 @@ export const api = {
     return [...libraryRoots];
   },
 
-  async previewLibraryRoot(path: string): Promise<{ path: string; fingerprint: string; writable: boolean; freeBytes: number }> {
-    return request("/library-roots/preview", { method: "POST", body: JSON.stringify({ path }) });
+  async listLiveLibraryRoots(): Promise<LibraryRoot[]> {
+    return request<{ items: LibraryRoot[] }>("/library-roots").then(result => result.items);
   },
-  async createLibraryRoot(input: { name: string; path: string; expectedFingerprint: string; idempotencyKey: string }): Promise<LibraryRoot> {
-    return request("/library-roots", { method: "POST", body: JSON.stringify(input) });
+
+  async listContentStorage(): Promise<ContentStorageArea[]> {
+    return request("/library-roots/content-storage");
   },
+
   async checkLibraryRoots(): Promise<LibraryRoot[]> {
     return request<{ items: LibraryRoot[] }>("/library-roots/check", { method: "POST" }).then(result => result.items);
   },

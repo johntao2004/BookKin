@@ -3,7 +3,7 @@ import { LONG_ROOM_LIVE_SHELF_SECTION_COUNT } from "./virtual-library-model/long
 
 export interface LibrarySubcategory {
   id: string;
-  // 与书目元数据一起保存的 Thema 1.6 主题代码。
+  // 与书目元数据一起保存的 Thema 1.6 学科代码。
   /** Thema 1.6 subject code persisted with the book metadata. */
   code: string;
   label: string;
@@ -17,8 +17,8 @@ export interface LibraryCategory {
   /** A readable shelf zone. Books are assigned the more specific child code. */
   code: string;
   label: string;
-  // 编辑界面使用 Thema 1.6 层级的完整英文标题。
-  /** Full English heading from the Thema 1.6 hierarchy for edit surfaces. */
+  // 编辑界面使用 Thema 1.6 层级的中文展示名称。
+  /** Chinese display heading from the Thema 1.6 hierarchy for edit surfaces. */
   themaLabel: string;
   subtitle: string;
   description: string;
@@ -36,7 +36,7 @@ export const LIBRARY_CATEGORIES: readonly LibraryCategory[] = [
     id: "literature",
     code: "F",
     label: "小说",
-    themaLabel: "Fiction",
+    themaLabel: "小说",
     subtitle: "FICTION · F",
     description: "Thema F：小说与叙事文学",
     keywords: ["文学", "小说", "散文", "随笔", "诗", "戏剧", "幻想", "故事", "叙事"],
@@ -50,7 +50,7 @@ export const LIBRARY_CATEGORIES: readonly LibraryCategory[] = [
     id: "humanities",
     code: "J",
     label: "社会与社会科学",
-    themaLabel: "Society and Social Sciences",
+    themaLabel: "社会与社会科学",
     subtitle: "SOCIETY · J",
     description: "Thema J：社会、教育与公共生活",
     keywords: ["历史", "传记", "哲学", "思想", "社会", "文化", "人文", "阅读", "方法", "政治", "教育"],
@@ -64,7 +64,7 @@ export const LIBRARY_CATEGORIES: readonly LibraryCategory[] = [
     id: "nature",
     code: "P",
     label: "数学与科学",
-    themaLabel: "Mathematics and Science",
+    themaLabel: "数学与科学",
     subtitle: "SCIENCE · P",
     description: "Thema P：数学、生命科学与自然观察",
     keywords: ["自然", "科学", "地理", "植物", "动物", "海洋", "生命", "天文", "技术", "数学", "物理", "化学"],
@@ -78,7 +78,7 @@ export const LIBRARY_CATEGORIES: readonly LibraryCategory[] = [
     id: "arts",
     code: "A",
     label: "艺术",
-    themaLabel: "The Arts",
+    themaLabel: "艺术",
     subtitle: "THE ARTS · A",
     description: "Thema A：视觉艺术、建筑与表演艺术",
     keywords: ["艺术", "设计", "图文", "摄影", "建筑", "音乐", "生活", "美学", "绘画"],
@@ -92,7 +92,7 @@ export const LIBRARY_CATEGORIES: readonly LibraryCategory[] = [
     id: "reference",
     code: "G",
     label: "参考与信息",
-    themaLabel: "Reference, Information and Interdisciplinary subjects",
+    themaLabel: "参考、信息与跨学科",
     subtitle: "REFERENCE · G",
     description: "Thema G：参考工具、信息科学与跨学科研究",
     keywords: ["文献", "档案", "工具", "收藏", "手册", "资料", "年鉴", "参考", "百科", "研究"],
@@ -104,13 +104,13 @@ export const LIBRARY_CATEGORIES: readonly LibraryCategory[] = [
   },
 ] as const;
 
-// 仅为真实书籍提供暂存分区，不写入 Thema 主题代码字段。
+// 仅为真实书籍提供暂存分区，不写入 Thema 学科代码字段。
 /** A real-book holding area, never written as a Thema subject code. */
 export const UNCLASSIFIED_CATEGORY: LibraryCategory = {
   id: "unclassified",
   code: "",
   label: "待分类",
-  themaLabel: "尚未指定 Thema 主题",
+  themaLabel: "尚未指定学科分类",
   subtitle: "PENDING",
   description: "等待主人或管理员核对主题的真实藏书",
   keywords: [],
@@ -131,7 +131,7 @@ function keywordScore(text: string, keywords: readonly string[]) {
 }
 
 export function classifyCatalogBook(book: Book): CatalogClassification {
-  const explicitCode = (book.subjectCodes ?? []).find((code) =>
+  const explicitCode = (book.subjectCodes ?? []).slice(0, 1).find((code) =>
     LIBRARY_CATEGORIES.some((category) => category.subcategories.some((subcategory) => subcategory.code === code)),
   );
   if (explicitCode) {
@@ -139,6 +139,18 @@ export function classifyCatalogBook(book: Book): CatalogClassification {
       const subcategory = category.subcategories.find((candidate) => candidate.code === explicitCode);
       if (subcategory) return { category, subcategory };
     }
+  }
+  // 深层 Thema 代码沿用现有五个场景分区，不改变模型或伪造新分类记录。
+  /** Deep Thema subjects reuse existing scene zones without changing geometry or inventing category records. */
+  const root = book.subjectCodes?.[0]?.[0];
+  const sceneGroup: Record<string, string> = { A: 'arts', C: 'literature', D: 'literature', F: 'literature',
+    G: 'reference', J: 'humanities', K: 'humanities', L: 'humanities', M: 'nature', N: 'humanities',
+    P: 'nature', Q: 'humanities', R: 'nature', S: 'arts', T: 'nature', U: 'nature', V: 'humanities', W: 'arts', X: 'literature', Y: 'literature' };
+  if (root && sceneGroup[root]) {
+    const category = LIBRARY_CATEGORIES.find(item => item.id === sceneGroup[root])!;
+    const code = book.subjectCodes?.[0] ?? '';
+    const subcategory = category.subcategories.find(item => code.startsWith(item.code)) ?? category.subcategories[0];
+    return { category, subcategory };
   }
   const text = searchableBookText(book);
   const rankedCategories = LIBRARY_CATEGORIES

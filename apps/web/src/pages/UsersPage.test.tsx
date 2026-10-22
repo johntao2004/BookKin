@@ -17,6 +17,7 @@ describe("UsersPage", () => {
     expect(await screen.findByRole("region", { name: "移动端用户列表" })).toBeInTheDocument();
     expect(screen.getAllByRole("article")).toHaveLength(3);
     expect(screen.getAllByText("账户状态")).toHaveLength(3);
+    expect(screen.queryByText(/^@/)).not.toBeInTheDocument();
     expect(screen.queryByText("浏览、阅读、书签、划线和私人笔记。")).not.toBeInTheDocument();
     expect(screen.queryByText("再加用户、扫描书库、管理 NAS 文件。")).not.toBeInTheDocument();
     expect(screen.queryByText("立即撤销会话，保留其个人阅读数据。")).not.toBeInTheDocument();

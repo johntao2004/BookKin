@@ -1,12 +1,11 @@
+import { ThemaSubjectField } from "./ThemaSubjectField";
+import { BookCover } from "./BookCover";
 import { MetadataEditorForm } from "./MetadataEditorForm";
 import { useCoverCrop } from "./CoverCropDialog";
 import { useNavigate } from "react-router-dom";
 import { randomId } from "../utils/random-id";
-import { AutoAwesomeOutlined } from "@/ui/icons";
-import { CheckCircleOutlineRounded } from "@/ui/icons";
 import { CloudUploadOutlined } from "@/ui/icons";
 import { DeleteOutlineRounded } from "@/ui/icons";
-import { ImageOutlined } from "@/ui/icons";
 import { InsertDriveFileOutlined } from "@/ui/icons";
 import { WarningAmberRounded } from "@/ui/icons";
 import { Alert } from "@/ui/feedback";
@@ -18,12 +17,8 @@ import { Dialog } from "@/ui/overlays";
 import { DialogActions } from "@/ui/overlays";
 import { DialogContent } from "@/ui/overlays";
 import { DialogTitle } from "@/ui/overlays";
-import { FormControl } from "@/ui/primitives";
 import { IconButton } from "@/ui/buttons";
-import { InputLabel } from "@/ui/primitives";
 import { LinearProgress } from "@/ui/feedback";
-import { MenuItem } from "@/ui/primitives";
-import { Select } from "@/ui/forms";
 import { Stack } from "@/ui/primitives";
 import { Typography } from "@/ui/primitives";
 import { useQuery } from "@tanstack/react-query";
@@ -57,20 +52,17 @@ export function BookUploadDialog({ open, initialRootId, onClose }: {
   const navigate = useNavigate();
   const fileInput = useRef<HTMLInputElement>(null);
   const uploading = useRef(false);
-  const [rootId, setRootId] = useState(initialRootId ?? "");
   const [local, setLocal] = useState<LocalUpload[]>([]);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
-  const rootsQuery = useQuery({ queryKey: ["library-roots"], queryFn: api.listLibraryRoots, enabled: open });
+  const rootsQuery = useQuery({ queryKey: ["library-roots"], queryFn: () => api.listLibraryRoots(), enabled: open });
   const pendingQuery = useQuery({ queryKey: ["book-uploads"], queryFn: api.listBookUploads, enabled: open });
   const writableRoots = useMemo(() => (rootsQuery.data ?? []).filter(isWritable), [rootsQuery.data]);
+  const rootId = (writableRoots.find(root => root.id === initialRootId) ?? writableRoots[0])?.id ?? "";
   const completedIds = local.filter(item => item.state === "UPLOADED" && item.uploadId).map(item => item.uploadId!);
   const pendingIds = (pendingQuery.data ?? []).filter(item => ["READY_FOR_REVIEW", "INSPECTING", "ENRICHING"].includes(item.status)).map(item => item.id);
   const editIds = [...new Set([...completedIds, ...pendingIds])];
-  useEffect(() => {
-    if (!open) return;
-    if (!rootId && writableRoots[0]) setRootId(writableRoots[0].id);
-  }, [open, rootId, writableRoots]);
+
 
   // 两个工作循环共享队列游标，限制并发传输；UPLOADED 表示传输成功，尚需校对入库。
   // Two workers share a queue cursor to bound transfers; UPLOADED means transfer success, still requiring review and commit.
@@ -112,7 +104,7 @@ export function BookUploadDialog({ open, initialRootId, onClose }: {
     <DialogTitle>上传书籍</DialogTitle>
     <DialogContent>
       <Stack spacing={2}>
-        <FormControl fullWidth><InputLabel id="upload-root-label">目标书库</InputLabel><Select labelId="upload-root-label" label="目标书库" value={rootId} disabled={busy} onChange={(event: any) => setRootId(event.target.value)}>{writableRoots.map(root => <MenuItem key={root.id} value={root.id}>{root.name} · 可用 {formatBytes(root.freeBytes)}</MenuItem>)}</Select></FormControl>
+        {rootId && <Typography color="text.secondary">书籍书库 · 可用 {formatBytes(writableRoots.find(root => root.id === rootId)?.freeBytes)}</Typography>}
         {rootsQuery.isError && <Alert severity="error">无法加载书库，请关闭后重试。</Alert>}
         {!rootsQuery.isPending && writableRoots.length === 0 && <Alert severity="warning">没有可上传的书库。</Alert>}
         <Box role="button" aria-label="点击或拖入 EPUB 或 PDF" aria-disabled={busy || !rootId} tabIndex={busy || !rootId ? -1 : 0} onClick={() => { if (!busy && rootId) fileInput.current?.click(); }} onKeyDown={(event: any) => { if ((event.key === "Enter" || event.key === " ") && !busy && rootId) { event.preventDefault(); fileInput.current?.click(); } }} onDragOver={(event: any) => event.preventDefault()} onDrop={(event: DragEvent<HTMLDivElement>) => { event.preventDefault(); addFiles(event.dataTransfer.files); }} sx={{ bgcolor: "background.default", p: 2, textAlign: "center", cursor: busy || !rootId ? "default" : "pointer", "&:focus-visible": { outline: "none", boxShadow: tokens.shadow.focus } }}>
@@ -120,12 +112,12 @@ export function BookUploadDialog({ open, initialRootId, onClose }: {
           <input ref={fileInput} onClick={event => event.stopPropagation()} hidden multiple type="file" accept=".epub,.pdf,application/epub+zip,application/pdf" onChange={(event: any) => { if (event.target.files) addFiles(event.target.files); event.target.value = ""; }} />
         </Box>
         {local.length > 0 && <LocalQueue items={local} onRemove={id => setLocal(current => current.filter(item => item.id !== id))} />}
-        {!busy && editIds.length > 0 && <Alert severity="success">已上传。你可以更改书籍信息，点击“确定”进入编辑页面。</Alert>}
+        {!busy && editIds.length > 0 && <Alert severity="success">已上传。你可以更改书籍信息，点击“编辑信息”继续。</Alert>}
         {message && <Alert severity="warning">{message}</Alert>}
       </Stack>
     </DialogContent>
     <DialogActions>
-      {!busy && editIds.length > 0 ? <Button variant="contained" onClick={edit}>确定</Button> : <Button variant="contained" disabled={busy || !rootId} startIcon={busy ? <CircularProgress size={18} /> : <CloudUploadOutlined />} onClick={() => { const failed = local.filter(item => item.state === "FAILED"); if (failed.length) void start(failed); else fileInput.current?.click(); }}>{busy ? "正在上传…" : "开始上传"}</Button>}
+      {!busy && editIds.length > 0 ? <Button variant="contained" onClick={edit}>编辑信息</Button> : <Button variant="contained" disabled={busy || !rootId} startIcon={busy ? <CircularProgress size={18} /> : undefined} onClick={() => { const failed = local.filter(item => item.state === "FAILED"); if (failed.length) void start(failed); else fileInput.current?.click(); }}>{busy ? "正在上传…" : "开始上传"}</Button>}
     </DialogActions>
   </Dialog>;
 }
@@ -178,33 +170,34 @@ export function UploadReview({ upload, onChanged, onCommitted, onCancel, cancell
     <MetadataEditorForm value={{
       title: draft.title, subtitle: draft.subtitle ?? "", authors: draft.authors.join("，"), translators: draft.translators.join("，"),
       language: draft.language ?? "", publisher: draft.publisher ?? "", publishedDate: draft.publishedDate ?? "", isbn: draft.isbn ?? "",
-      series: draft.series ?? "", seriesIndex: draft.seriesIndex?.toString() ?? "", tags: draft.tags.join("，"), description: draft.description ?? "", publiclyVisible: draft.publiclyVisible ?? true,
+      series: draft.series ?? "", seriesIndex: draft.seriesIndex?.toString() ?? "", tags: draft.tags.join("，"), description: draft.description ?? "", authorBiography: draft.authorBiography ?? "", tableOfContents: draft.tableOfContents ?? "", publiclyVisible: draft.publiclyVisible ?? true,
     }} disabled={busy} onChange={(key, value) => {
       if (key === "publiclyVisible") setDraft(current => current ? { ...current, publiclyVisible: Boolean(value) } : current);
       else if (key === "authors" || key === "translators" || key === "tags") update(key, split(String(value)));
       else if (key === "seriesIndex") update(key, value ? Number(value) : undefined);
       else update(key, String(value));
-    }} coverUrl={upload.coverUrl} coverAlt={`${draft.title}封面`} coverDetails={
+    }} extraFields={<div style={{ gridColumn: "1 / -1", minWidth: 0 }}><ThemaSubjectField value={draft.subjectCodes ?? []} disabled={busy}
+      metadataText={`${draft.title} ${draft.description ?? ''} ${draft.tags.join(' ')}`} onChange={codes => update('subjectCodes', codes)} /></div>} coverUrl={upload.coverUrl} coverAlt={`${draft.title}封面`} coverDetails={
         <Stack direction="row" sx={{ gap: 1, flexWrap: "wrap" }}><Chip label={upload.format} variant="outlined" /><Chip label={formatBytes(upload.declaredSizeBytes)} variant="outlined" />{(draft.pageCount || draft.wordCount) && <Chip label={draft.pageCount ? `${draft.pageCount} 页` : `${draft.wordCount!.toLocaleString("zh-CN")} 字`} variant="outlined" />}</Stack>
     } coverActions={<>
-        <Button startIcon={<ImageOutlined />} variant="outlined" onClick={() => coverInput.current?.click()}>更换封面</Button>
+        <Button variant="outlined" onClick={() => coverInput.current?.click()}>更换封面</Button>
         <input ref={coverInput} hidden type="file" accept="image/jpeg,image/png,image/webp" onChange={(event: any) => { const file = event.target.files?.[0]; if (file) void coverChanged(file); event.target.value = ""; }} />
     </>} />
     {upload.metadataCandidates.length > 0 && <Stack spacing={1.5}><Typography variant="h6">候选书目信息</Typography>{upload.metadataCandidates.map((candidate) => <CandidateCard key={`${candidate.provider}-${candidate.id}`} candidate={candidate} onUse={() => useCandidate(candidate)} onCover={candidate.coverUrl ? () => run(async () => { await api.selectBookUploadCover(upload.id, candidate.id); await onChanged(); }) : undefined} />)}</Stack>}
     {error && <Alert severity="error">{error}</Alert>}
     <Stack direction={{ xs: "column", sm: "row" }} sx={{ justifyContent: "flex-end", gap: 1.5 }}>
-      {onCancel && <Button color="error" disabled={busy || cancelling} onClick={() => void onCancel()}>取消本次上传</Button>}
-      <Button startIcon={<AutoAwesomeOutlined />} onClick={() => run(async () => { await api.enrichBookUpload(upload.id); await onChanged(); })} disabled={busy}>重新在线补全</Button>
-      <Button startIcon={<AutoAwesomeOutlined />} color="secondary" onClick={() => run(async () => { await api.aiMatchBookUpload(upload.id); await onChanged(); })} disabled={busy}>AI 查找未匹配</Button>
+      {onCancel && <Button color="error" disabled={busy || cancelling} onClick={() => void onCancel()}>取消上传</Button>}
+      <Button onClick={() => run(async () => { await api.enrichBookUpload(upload.id); await onChanged(); })} disabled={busy}>在线补全</Button>
+      <Button color="secondary" onClick={() => run(async () => { await api.aiMatchBookUpload(upload.id); await onChanged(); })} disabled={busy}>AI 匹配</Button>
       <Button variant="outlined" onClick={save} disabled={busy}>保存草稿</Button>
-      <Button variant="contained" startIcon={busy ? <CircularProgress size={18} color="inherit" /> : <CheckCircleOutlineRounded />} onClick={commit} disabled={busy || !draft.title.trim() || draft.authors.length === 0}>{busy ? "正在处理…" : "保存并完成"}</Button>
+      <Button variant="contained" startIcon={busy ? <CircularProgress size={18} color="inherit" /> : undefined} onClick={commit} disabled={busy || !draft.title.trim() || draft.authors.length === 0}>{busy ? "正在处理…" : "确认入库"}</Button>
     </Stack>
   </Stack>;
 }
 
 function CandidateCard({ candidate, onUse, onCover }: { candidate: MetadataCandidate; onUse: () => void; onCover?: () => void }) {
   return <Stack direction={{ xs: "column", sm: "row" }} sx={{ gap: 2, alignItems: { sm: "center" }, border: 1, borderColor: "divider", borderRadius: 2, p: 2 }}>
-    {candidate.coverUrl && <Box component="img" src={candidate.coverUrl} alt="在线候选封面" sx={{ width: 52, aspectRatio: "2 / 3", objectFit: "cover", borderRadius: 1 }} />}
+    {candidate.coverUrl && <BookCover src={candidate.coverUrl} alt="在线候选封面" sx={{ width: `${tokens.spacing[12]}px` }} />}
     <Box sx={{ flex: 1, minWidth: 0 }}><Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap" }}><Typography variant="subtitle2">{candidate.title ?? "未命名候选"}</Typography><Chip label={candidate.providerLabel ?? sourceText[candidate.provider]} size="small" />{candidate.requiresReview && <Chip label={`需核对${candidate.confidence != null ? ` · ${Math.round(candidate.confidence * 100)}%` : ""}`} size="small" color="warning" variant="outlined" />}</Stack><Typography variant="caption" color="text.secondary">{candidate.authors?.join(" / ")}{candidate.publisher ? ` · ${candidate.publisher}` : ""}{candidate.publishedDate ? ` · ${candidate.publishedDate}` : ""}</Typography>{candidate.matchReason && <Typography variant="caption" color="text.secondary">{candidate.matchReason}</Typography>}</Box>
     <Stack direction="row" spacing={1}>{onCover && <Button size="small" onClick={onCover}>采用封面</Button>}<Button size="small" variant="outlined" onClick={onUse}>采用信息</Button></Stack>
   </Stack>;

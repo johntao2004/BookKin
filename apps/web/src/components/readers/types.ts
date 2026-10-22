@@ -43,4 +43,6 @@ export interface TocItem {
   href: string;
   label: string;
   depth: number;
+  /** Resolved position in the source document, used to place private bookmark markers. */
+  locator?: string;
 }

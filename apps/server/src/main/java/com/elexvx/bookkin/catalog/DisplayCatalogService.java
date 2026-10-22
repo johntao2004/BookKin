@@ -26,9 +26,15 @@ public class DisplayCatalogService {
         this.audit = audit;
     }
 
-    public DisplayCatalogRepository.DisplayBookPage list(String query, String cursor, int limit) {
-        return display.list(query, cursor, limit);
+    public DisplayCatalogRepository.DisplayBookPage list(String query, UUID categoryId, BookFormat format,
+                                                          BookSort sort, String cursor, int limit) {
+        return display.list(query, categoryId, format, sort, cursor, limit);
     }
+    public DisplayCatalogRepository.DisplayBookPage list(String query, UUID categoryId, BookFormat format,
+                                                        BookSort sort, String cursor, int limit, String subjectCode) {
+        return display.list(query, categoryId, format, sort, cursor, limit, subjectCode);
+    }
+
 
     public DisplayCatalogRepository.DisplayBook findPublic(UUID bookId) {
         return display.find(bookId);

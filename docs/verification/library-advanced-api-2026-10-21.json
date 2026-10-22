@@ -1,0 +1,24 @@
+{
+  "unauthenticated": true,
+  "publicBooks": 1,
+  "checks": [
+    {
+      "sort": "RECENT",
+      "items": 1,
+      "publicSampleConsistency": "same public IDs"
+    },
+    {
+      "sort": "TITLE",
+      "items": 1,
+      "publicSampleConsistency": "same public IDs"
+    },
+    {
+      "sort": "AUTHOR",
+      "items": 1,
+      "publicSampleConsistency": "same public IDs"
+    }
+  ],
+  "unknownCategory": "empty page",
+  "publicCategoryChecks": 0,
+  "sampleLimit": "The public sample has one book and no visible categories; real cursor/category coverage comes from the isolated native PostgreSQL integration tests."
+}

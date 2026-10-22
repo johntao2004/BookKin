@@ -1,0 +1,23 @@
+{
+  "desktop": {
+    "captureFieldPresent": false,
+    "cards": [
+      {
+        "height": 248.5703125,
+        "width": 335.328125
+      }
+    ],
+    "height": 869,
+    "scrollWidth": 1118,
+    "width": 1118
+  },
+  "mobile": {
+    "width": 390,
+    "height": 844,
+    "scrollWidth": 390,
+    "cardWidth": 366,
+    "drawerWidth": 390,
+    "inputAutoFocused": true
+  },
+  "consoleWarningsAndErrorsSinceRuntimeRestart": []
+}

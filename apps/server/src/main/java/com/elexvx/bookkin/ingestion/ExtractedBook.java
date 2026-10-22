@@ -20,13 +20,23 @@ public record ExtractedBook(
         List<String> tags,
         String coverCacheKey,
         Integer pageCount,
-        Long wordCount) {
+        Long wordCount, List<String> subjectCodes, String authorBiography, String tableOfContents) {
+    public ExtractedBook(String title, String subtitle, List<String> authors, List<String> translators,
+                         String description, String language, String publisher, String publishedDate, String isbn,
+                         String series, BigDecimal seriesIndex, List<String> tags, String coverCacheKey,
+                         Integer pageCount, Long wordCount) {
+        this(title, subtitle, authors, translators, description, language, publisher, publishedDate, isbn,
+                series, seriesIndex, tags, coverCacheKey, pageCount, wordCount, List.of(), null, null);
+    }
 
     public ExtractedBook {
         title = title == null || title.isBlank() ? "未命名藏书" : title.strip();
         authors = clean(authors).isEmpty() ? List.of("未知作者") : clean(authors);
         translators = clean(translators);
         tags = clean(tags);
+        subjectCodes = com.elexvx.bookkin.catalog.ThemaSubjects.extract(subjectCodes);
+        authorBiography = blankToNull(authorBiography);
+        tableOfContents = blankToNull(tableOfContents);
         subtitle = blankToNull(subtitle);
         description = blankToNull(description);
         language = blankToNull(language);

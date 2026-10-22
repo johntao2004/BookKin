@@ -1,7 +1,8 @@
-// 书单发现页按查询展示可见结果，创建与编辑通过共享表单完成。
+import { RequestErrorPage } from "./HttpErrorPage";
+import { usePermissions } from "../auth/permissions";
+// 书目发现页按查询展示可见结果，创建与编辑通过共享表单完成。
 // Lists visible booklists for the query and uses shared forms for creation/editing.
 import { EMPTY_BOOKLISTS_TITLE } from "../ui/empty-state-copy";
-import { AddRounded } from "@/ui/icons";
 import { Alert } from "@/ui/feedback";
 import { Box } from "@/ui/primitives";
 import { Button } from "@/ui/buttons";
@@ -23,6 +24,7 @@ import { tokens } from "../theme/generated-tokens";
 
 export function BooklistsPage() {
   const { user, ready } = useAuth();
+  const { can } = usePermissions();
   const [params, setParams] = useSearchParams();
   const [createOpen, setCreateOpen] = useState(false);
   const [notice, setNotice] = useState("");
@@ -45,24 +47,25 @@ export function BooklistsPage() {
     setParams(next, { replace: true });
   };
 
+  if (booklistsQuery.isError && !booklistsQuery.data) return <RequestErrorPage error={booklistsQuery.error} retrying={booklistsQuery.isFetching} onRetry={() => void booklistsQuery.refetch()} />;
   return (
     <PageContainer>
       <PageHeader
         eyebrow="BOOKLISTS"
-        title="书单"
-        action={user ? <Button variant="contained" startIcon={<AddRounded />} onClick={() => setCreateOpen(true)}>新建书单</Button> : undefined}
+        title="书目"
+        action={can("booklists.edit") ? <Button variant="contained" onClick={() => setCreateOpen(true)}>新建书目</Button> : undefined}
       />
       {booklistsQuery.isPending ? (
-        <Stack sx={{ alignItems: "center", py: `${tokens.spacing[20]}px` }}><CircularProgress /><Typography color="text.secondary" sx={{ mt: 2 }}>正在展开书单…</Typography></Stack>
+        <Stack sx={{ alignItems: "center", py: `${tokens.spacing[20]}px` }}><CircularProgress /><Typography color="text.secondary" sx={{ mt: 2 }}>正在展开书目…</Typography></Stack>
       ) : booklistsQuery.isError ? (
-        <Alert severity="error" action={<Button color="inherit" onClick={() => void booklistsQuery.refetch()}>重试</Button>}>书单暂时无法读取。</Alert>
+        <Alert severity="error" action={<Button color="inherit" onClick={() => void booklistsQuery.refetch()}>重试</Button>}>书目暂时无法读取。</Alert>
       ) : all.length ? (
         <Stack sx={{ gap: `${tokens.spacing[16]}px` }}>
-          {user ? <BooklistSection title="我的书单" items={mine} action={<Button startIcon={<AddRounded />} onClick={() => setCreateOpen(true)}>新建书单</Button>} /> : null}
-          <BooklistSection title={user ? "家庭共享" : "公开书单"} items={discovery} />
+          {user ? <BooklistSection title="我的书目" items={mine} /> : null}
+          <BooklistSection title={user ? "家庭共享" : "公开书目"} items={discovery} />
         </Stack>
       ) : (
-        <BookCatalogEmptyState title={query ? "未找到匹配的书单" : EMPTY_BOOKLISTS_TITLE}
+        <BookCatalogEmptyState title={query ? "未找到匹配的书目" : EMPTY_BOOKLISTS_TITLE}
           action={query ? <Button onClick={() => updateQuery("")}>清除搜索</Button> : undefined}
         />
       )}
@@ -102,7 +105,7 @@ function BooklistSection({ title, description, items, action }: {
           {items.map((booklist) => <BooklistCard key={booklist.id} booklist={booklist} />)}
         </Box>
       ) : (
-        <BookCatalogEmptyState title={title === "家庭共享" ? "暂无家庭共享书单" : title === "公开书单" ? "暂无公开书单" : EMPTY_BOOKLISTS_TITLE} />
+        <BookCatalogEmptyState title={title === "家庭共享" ? "暂无家庭共享书目" : title === "公开书目" ? "暂无公开书目" : EMPTY_BOOKLISTS_TITLE} />
       )}
     </Box>
   );

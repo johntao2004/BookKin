@@ -61,7 +61,7 @@ export interface Book {
   fingerprint: string;
   status: BookFileStatus;
   tags: string[];
-  // 持久化的国际主题代码，使用 Thema 1.6。
+  // 持久化的国际学科分类代码，使用 Thema 1.6。
   /** Persisted international subject codes (Thema 1.6). */
   subjectCodes?: string[];
 }
@@ -143,6 +143,8 @@ export interface BooklistList {
 }
 
 export interface BookMetadata {
+  authorBiography?: string;
+  tableOfContents?: string;
   publiclyVisible?: boolean;
   id: string;
   title: string;
@@ -157,7 +159,7 @@ export interface BookMetadata {
   series?: string;
   seriesIndex?: number;
   tags: string[];
-  // 保存具体 Thema 子代码，第一项为主要主题。
+  // 保存具体 Thema 子代码，第一项为主要学科。
   /** Specific Thema child codes; the first one is the primary subject. */
   subjectCodes?: string[];
   coverCacheKey?: string;
@@ -166,6 +168,9 @@ export interface BookMetadata {
 }
 
 export interface BookMetadataDraft {
+  authorBiography?: string;
+  tableOfContents?: string;
+  subjectCodes?: string[];
   publiclyVisible?: boolean;
   title: string;
   subtitle?: string;
@@ -368,6 +373,13 @@ export interface ReadingPosition {
   updatedAt?: string;
 }
 
+export interface ReadingOverview {
+  today: string;
+  featuredBook: Book | null;
+  recentReading: { book: Book; position: ReadingPosition }[];
+  stats: WeeklyReadingStats;
+}
+
 export interface DailyReadingTime {
   date: string;
   seconds: number;
@@ -379,6 +391,14 @@ export interface WeeklyReadingStats {
   totalSeconds: number;
   previousWeekSeconds: number;
   days: DailyReadingTime[];
+}
+
+export interface ContentStorageArea {
+  kind: "ARTICLES" | "VAULT";
+  lastScanAt?: string | null;
+  canRead: boolean;
+  canWrite: boolean;
+  freeBytes?: number | null;
 }
 
 export interface LibraryRoot {

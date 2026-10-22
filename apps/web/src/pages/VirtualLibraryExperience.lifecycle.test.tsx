@@ -158,7 +158,7 @@ it('retries on the same connected canvas without reusing a permanently lost cont
     .mockImplementation(() => new Promise<void>(() => undefined));
   const view = render(<TestProviders initialPath="/virtual-library"><VirtualLibraryExperience /></TestProviders>);
   const canvas = screen.getByRole('img', {name: '可 360 度环视的虚拟图书馆 3D 场景'});
-  fireEvent.click(await screen.findByRole('button', {name: '重新加载场景'}));
+  fireEvent.click(await screen.findByRole('button', {name: '重试场景'}));
   await waitFor(() => expect(lifecycle.compile).toHaveBeenCalledTimes(2));
   expect(screen.getByRole('img', {name: '可 360 度环视的虚拟图书馆 3D 场景'})).toBe(canvas);
   expect(lifecycle.created).toHaveBeenCalledTimes(2);

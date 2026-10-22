@@ -1,3 +1,4 @@
+import { fetchLibraryAsset } from "../../virtual-library-asset-cache";
 import * as THREE from 'three';
 import { GLTFLoader, type GLTFParser } from 'three/addons/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
@@ -309,7 +310,7 @@ export function createReferenceMaterialPool(parser: GLTFParser) {
 }
 
 async function loadMaterialBank(manager: THREE.LoadingManager, url: string, signal: AbortSignal) {
-  const response = await fetch(url, {signal});
+  const response = await fetchLibraryAsset(url, signal);
   if (!response.ok) throw new Error(`建筑共享材质加载失败 (${response.status})`);
   const data = await response.text();
   signal.throwIfAborted();
@@ -393,7 +394,7 @@ export async function createReferenceLibraryStreaming(options: ReferenceLibraryS
   async function loadChunk(record: ChunkRecord) {
     const started = performance.now();
     const url = assetUrl(record.manifest.url);
-    const response = await fetch(url, {signal: abort.signal});
+    const response = await fetchLibraryAsset(url, abort.signal);
     if (!response.ok) throw new Error(`建筑模块加载失败: ${record.manifest.id} (${response.status})`);
     const bytes = await response.arrayBuffer();
     abort.signal.throwIfAborted();

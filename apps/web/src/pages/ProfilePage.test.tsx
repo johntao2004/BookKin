@@ -13,7 +13,7 @@ it('saves account fields separately and clears the confirmation password', async
  fireEvent.change(screen.getByLabelText(/^用户名/), {target:{value:'renamed'}});
  fireEvent.change(screen.getByLabelText(/^账户名字/), {target:{value:'新名字'}});
  fireEvent.change(screen.getByLabelText(/^当前密码/), {target:{value:'confirmation'}});
- fireEvent.click(screen.getByRole('button',{name:'保存账户资料'}));
+ fireEvent.click(screen.getByRole('button',{name:'保存'}));
  await waitFor(()=>expect(updateProfile).toHaveBeenCalledWith({username:'renamed',displayName:'新名字',currentPassword:'confirmation'}));
  expect(await screen.findByText('账户资料已保存。')).toBeInTheDocument();
  expect(screen.getByLabelText(/^当前密码/)).toHaveValue('');

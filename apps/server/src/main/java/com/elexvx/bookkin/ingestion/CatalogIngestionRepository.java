@@ -172,11 +172,11 @@ public class CatalogIngestionRepository {
     private void insertBook(UUID bookId, ExtractedBook metadata, String sourcesJson, String[] overrides) {
         dsl.execute("""
                 insert into books(id, title, sort_title, subtitle, primary_author, description, language, publisher,
-                  published_date, isbn, series_index, cover_cache_key, metadata_sources, metadata_overrides)
-                values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?::jsonb, ?)
+                  published_date, isbn, series_index, cover_cache_key, metadata_sources, metadata_overrides, subject_codes, author_biography, table_of_contents)
+                values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?::jsonb, ?, ?::text[], ?, ?)
                 """, bookId, metadata.title(), metadata.title().toLowerCase(Locale.ROOT), metadata.subtitle(), metadata.author(),
                 metadata.description(), metadata.language(), metadata.publisher(), metadata.publishedDate(), metadata.isbn(),
-                metadata.seriesIndex(), metadata.coverCacheKey(), sourcesJson == null ? "{}" : sourcesJson, overrides);
+                metadata.seriesIndex(), metadata.coverCacheKey(), sourcesJson == null ? "{}" : sourcesJson, overrides, metadata.subjectCodes().toArray(String[]::new), metadata.authorBiography(), metadata.tableOfContents());
     }
 
     private void insertFile(UUID fileId, UUID bookId, UUID rootId, String relativePath, String normalizedPath,
@@ -202,6 +202,9 @@ public class CatalogIngestionRepository {
                   subtitle = case when not ('subtitle' = any(metadata_overrides)) then ? else subtitle end,
                   primary_author = case when not ('authors' = any(metadata_overrides)) then ? else primary_author end,
                   description = case when not ('description' = any(metadata_overrides)) then ? else description end,
+                  author_biography = case when not ('authorBiography' = any(metadata_overrides)) then ? else author_biography end,
+                  table_of_contents = case when not ('tableOfContents' = any(metadata_overrides)) then ? else table_of_contents end,
+                  subject_codes = case when not ('subjectCodes' = any(metadata_overrides)) then ?::text[] else subject_codes end,
                   language = case when not ('language' = any(metadata_overrides)) then ? else language end,
                   publisher = case when not ('publisher' = any(metadata_overrides)) then ? else publisher end,
                   published_date = case when not ('publishedDate' = any(metadata_overrides)) then ? else published_date end,
@@ -209,7 +212,8 @@ public class CatalogIngestionRepository {
                   series_index = case when not ('seriesIndex' = any(metadata_overrides)) then ? else series_index end,
                   cover_cache_key = coalesce(?, cover_cache_key), updated_at = now() where id = ?
                 """, metadata.title(), metadata.title().toLowerCase(Locale.ROOT), metadata.subtitle(), metadata.author(),
-                metadata.description(), metadata.language(), metadata.publisher(), metadata.publishedDate(), metadata.isbn(),
+                metadata.description(), metadata.authorBiography(), metadata.tableOfContents(), metadata.subjectCodes().toArray(String[]::new),
+                metadata.language(), metadata.publisher(), metadata.publishedDate(), metadata.isbn(),
                 metadata.seriesIndex(), metadata.coverCacheKey(), bookId);
     }
 

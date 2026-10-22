@@ -1,4 +1,4 @@
-// 区分匿名公开书单与登录后的个人/家庭分组，不因旧官方类型暴露额外选择。
+// 区分匿名公开书目与登录后的个人/家庭分组，不因旧官方类型暴露额外选择。
 // Distinguishes anonymous public lists from signed-in personal/family groups without reviving legacy official-type choices.
 import { fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -37,25 +37,25 @@ describe("BooklistsPage", () => {
   beforeEach(() => sessionStorage.clear());
   afterEach(() => vi.restoreAllMocks());
 
-  it("匿名访客只看合并后的公开书单区", async () => {
+  it("匿名访客只看合并后的公开书目区", async () => {
     render(<TestProviders initialPath="/booklists"><BooklistsPage /></TestProviders>);
 
-    expect(await screen.findByRole("heading", { name: "公开书单" })).toBeInTheDocument();
-    expect(screen.queryByRole("heading", { name: "官方书单" })).not.toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "公开书目" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "官方书目" })).not.toBeInTheDocument();
     expect(await screen.findByRole("heading", { name: "秋日慢读" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "灯塔与远方" })).toBeInTheDocument();
-    expect(screen.queryByRole("heading", { name: "我的书单" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "新建书单" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "我的书目" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "新建书目" })).not.toBeInTheDocument();
   });
 
-  it.each(["/booklists", "/booklists?q=not-found"]) ("空书单列表使用统一空态（%s）", async (initialPath) => {
+  it.each(["/booklists", "/booklists?q=not-found"]) ("空书目列表使用统一空态（%s）", async (initialPath) => {
     sessionStorage.setItem("bookkin-demo-session", JSON.stringify(owner));
     vi.spyOn(api, "listBooklists").mockResolvedValue({ items: [] });
     render(<TestProviders initialPath={initialPath}><BooklistsPage /></TestProviders>);
 
-    expect(await screen.findByRole("heading", { name: initialPath.includes("?q=") ? "未找到匹配的书单" : "暂无书单" })).toBeInTheDocument();
-    expect(screen.queryByText(/试试书单名称|创建一份个人书单|登录后可以创建/)).not.toBeInTheDocument();
-    expect(screen.getAllByRole("button", { name: "新建书单" })).toHaveLength(1);
+    expect(await screen.findByRole("heading", { name: initialPath.includes("?q=") ? "未找到匹配的书目" : "暂无书目" })).toBeInTheDocument();
+    expect(screen.queryByText(/试试书目名称|创建一份个人书目|登录后可以创建/)).not.toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: "新建书目" })).toHaveLength(1);
     if (initialPath.includes("?q=")) {
       expect(screen.getByRole("button", { name: "清除搜索" })).toBeInTheDocument();
     } else {
@@ -64,7 +64,7 @@ describe("BooklistsPage", () => {
   });
 
   it.each([
-    { emptyGroup: "我的书单", items: [createBooklist("official", "OFFICIAL", false), createBooklist("shared", "PERSONAL", false)] },
+    { emptyGroup: "我的书目", items: [createBooklist("official", "OFFICIAL", false), createBooklist("shared", "PERSONAL", false)] },
     { emptyGroup: "家庭共享", items: [createBooklist("mine", "PERSONAL", true)] },
   ]) ("空的$emptyGroup分组显示持续的统一文案", async ({ emptyGroup, items }) => {
     sessionStorage.setItem("bookkin-demo-session", JSON.stringify(owner));
@@ -72,23 +72,23 @@ describe("BooklistsPage", () => {
     render(<TestProviders initialPath="/booklists"><BooklistsPage /></TestProviders>);
 
     expect(await screen.findByRole("heading", { name: emptyGroup })).toBeInTheDocument();
-    expect(screen.getByText(emptyGroup === "家庭共享" ? "暂无家庭共享书单" : "暂无书单")).toBeInTheDocument();
+    expect(screen.getByText(emptyGroup === "家庭共享" ? "暂无家庭共享书目" : "暂无书目")).toBeInTheDocument();
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     expect(screen.queryByText("由主人和管理员整理的馆内阅读路径。")).not.toBeInTheDocument();
   });
 
-  it("登录后分开我的书单与家庭发现，且不再提供官方类型", async () => {
+  it("登录后分开我的书目与家庭发现，且不再提供官方类型", async () => {
     sessionStorage.setItem("bookkin-demo-session", JSON.stringify(owner));
     render(<TestProviders initialPath="/booklists"><BooklistsPage /></TestProviders>);
 
-    expect(await screen.findByRole("heading", { name: "我的书单" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "我的书目" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "家庭共享" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "想读的自然笔记" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "灯塔与远方" })).toBeInTheDocument();
 
-    fireEvent.click(screen.getAllByRole("button", { name: "新建书单" })[0]);
-    expect(await screen.findByRole("dialog", { name: "新建书单" })).toBeInTheDocument();
-    expect(screen.queryByRole("combobox", { name: "书单类型" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("heading", { name: "官方书单" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getAllByRole("button", { name: "新建书目" })[0]);
+    expect(await screen.findByRole("dialog", { name: "新建书目" })).toBeInTheDocument();
+    expect(screen.queryByRole("combobox", { name: "书目类型" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "官方书目" })).not.toBeInTheDocument();
   });
 });

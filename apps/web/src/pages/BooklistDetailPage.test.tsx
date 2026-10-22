@@ -30,11 +30,11 @@ describe("BooklistDetailPage", () => {
 
     expect(await screen.findByRole("heading", { name: "想读的自然笔记" })).toBeInTheDocument();
     expect(screen.getByText("仅自己")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "编辑资料与可见范围" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "编辑书目" })).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "整理书单" }));
-    expect(await screen.findByRole("heading", { name: "整理书单 · 想读的自然笔记" })).toBeInTheDocument();
-    expect(screen.getAllByRole("button", { name: "关闭整理书单" })).toHaveLength(1);
+    fireEvent.click(screen.getByRole("button", { name: "整理书目" }));
+    expect(await screen.findByRole("heading", { name: "整理书目 · 想读的自然笔记" })).toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: "关闭整理书目" })).toHaveLength(1);
     const currentOrder = within(await screen.findByRole("region", { name: "当前顺序" }));
     const firstTitle = demoBooks[2].title;
     expect(currentOrder.queryByRole("button", { name: /^上移|^下移/ })).not.toBeInTheDocument();

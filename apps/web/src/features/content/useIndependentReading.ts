@@ -27,6 +27,7 @@ export function useIndependentReading(
     dirty.current = false;
     saving.current = persist
       .current(snapshot)
+      .then(() => setError(""))
       .catch((e) => {
         dirty.current = true;
         setError(e instanceof Error ? e.message : "保存失败");

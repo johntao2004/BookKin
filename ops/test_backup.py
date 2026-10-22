@@ -19,6 +19,12 @@ class BackupTest(unittest.TestCase):
         (library / ".bookkin-trash").mkdir(parents=True)
         (library / ".bookkin-cache").mkdir(parents=True)
         fonts.mkdir()
+        articles = directory / "articles"
+        vault = directory / "vault"
+        articles.mkdir()
+        vault.mkdir()
+        (articles / "image.png").write_text("article-image", encoding="utf-8")
+        (vault / "encrypted-chunk").write_bytes(b"ciphertext")
         (library / "books" / "sample.epub").write_text("book", encoding="utf-8")
         (library / ".bookkin-assets" / "covers" / "sample.jpg").write_text("cover", encoding="utf-8")
         (library / ".bookkin-trash" / "removed.epub").write_text("trash", encoding="utf-8")
@@ -36,6 +42,8 @@ class BackupTest(unittest.TestCase):
             "BOOKKIN_BACKUP_DIR": str(directory / "backups"),
             "BOOKKIN_LIBRARY_BACKUP_ROOTS": str(library),
             "BOOKKIN_FONT_BACKUP_ROOT": str(fonts),
+            "BOOKKIN_ARTICLE_STORAGE": str(articles),
+            "BOOKKIN_VAULT_STORAGE": str(vault),
         }
         result = subprocess.run([str(ROOT / "ops/backup.sh")], cwd=ROOT, env=env, capture_output=True, text=True, check=True)
         backup = pathlib.Path(result.stdout.strip().split("Backup written to ", 1)[1])
@@ -50,10 +58,14 @@ class BackupTest(unittest.TestCase):
             self.assertIn(".bookkin-trash/removed.epub", entries)
             self.assertNotIn(".bookkin-cache/derived.jpg", entries)
             self.assertTrue((backup / "fonts.tar.gz").is_file())
+            self.assertIn("image.png", subprocess.check_output(["tar", "-tzf", str(backup / "articles.tar.gz")], text=True))
+            self.assertIn("encrypted-chunk", subprocess.check_output(["tar", "-tzf", str(backup / "vault.tar.gz")], text=True))
             self.assertEqual(
                 subprocess.run([str(ROOT / "ops/restore.sh"), "--dry-run", str(backup)], cwd=ROOT, env=env, check=False).returncode,
                 0,
             )
+            (backup / "vault.tar.gz").write_bytes(b"corrupted")
+            self.assertNotEqual(subprocess.run([str(ROOT / "ops/restore.sh"), "--dry-run", str(backup)], cwd=ROOT, env=env, capture_output=True).returncode, 0)
 
     def test_backup_fails_when_font_mount_is_missing(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -68,6 +80,25 @@ class BackupTest(unittest.TestCase):
             result = subprocess.run([str(ROOT / "ops/backup.sh")], cwd=ROOT, env=env, capture_output=True, text=True)
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("Directory does not exist", result.stderr)
+
+    def test_restore_keeps_article_assets_and_vault_ciphertext_in_separate_targets(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = pathlib.Path(temporary)
+            backup, env, _, _ = self.run_backup(directory)
+            targets = directory / "restored"
+            for area in ("books", "articles", "vault"):
+                (targets / area).mkdir(parents=True, exist_ok=True)
+            env.update({
+                "BOOKKIN_LIBRARY_BACKUP_ROOTS": str(targets / "books"),
+                "BOOKKIN_FONT_BACKUP_ROOT": str(targets / "fonts"),
+                "BOOKKIN_ARTICLE_STORAGE": str(targets / "articles"),
+                "BOOKKIN_VAULT_STORAGE": str(targets / "vault"),
+            })
+            subprocess.run([str(ROOT / "ops/restore.sh"), str(backup)], cwd=ROOT, env=env, check=True, capture_output=True)
+            self.assertEqual((targets / "articles/image.png").read_text(), "article-image")
+            self.assertEqual((targets / "vault/encrypted-chunk").read_bytes(), b"ciphertext")
+            self.assertFalse((targets / "books/image.png").exists())
+            self.assertFalse((targets / "articles/encrypted-chunk").exists())
 
 
 if __name__ == "__main__":

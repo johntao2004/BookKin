@@ -1,3 +1,4 @@
+import { overviewContentSpacing } from "./overviewCardLayout";
 // 概览卡空态保留共享高度与标题对齐，文案由具体业务模块提供。
 // Overview empty states preserve shared sizing/alignment while business modules supply their copy.
 import { EmptyStateIllustration } from "../ui/empty-state";
@@ -23,9 +24,11 @@ export function OverviewEmptyState({
       sx={{
         gap: `${tokens.spacing[3]}px`,
         minHeight: `${tokens.spacing[20]}px`,
-        alignItems: "flex-start",
-        justifyContent: "flex-start",
-        mt: `${tokens.spacing[4]}px`,
+        alignItems: "center",
+        textAlign: "center",
+        justifyContent: "center",
+        flex: 1,
+        mt: overviewContentSpacing,
       }}
     >
       <EmptyStateIllustration compact />

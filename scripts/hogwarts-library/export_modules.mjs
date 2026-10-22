@@ -38,10 +38,14 @@ function fineRegion(cx,cy,cz,min,max,material){
 // Region assignment keeps triangles whole rather than clipping boundaries; structural triangles spanning multiple bays remain in the core.
 function region(cx,cy,cz,min,max,material){
  const id=fineRegion(cx,cy,cz,min,max,material);
- if(id.startsWith('core-'))return 'core';
+ if(id==='core-floor')return 'core';
+ if(id==='core-enclosure')return /^(Stone|Paint|Glass)/.test(material)?'core-enclosure':'enclosure-detail';
+ if(id==='core-main-vault')return /^(Stone|Paint)/.test(material)?'core-vault':'vault-detail';
+ if(id==='core-gallery-floor')return 'core-gallery-floor';
+ if(id==='core-gallery-guards')return 'gallery-guards';
  if(id.startsWith('bay-')){
   // A few source triangles cross many bays; retain them whole in structural core.
-  if(max[2]-min[2]>6)return 'core';
+  if(max[2]-min[2]>6)return 'spanning-detail';
   const sector=Math.max(0,Math.min(2,Math.floor((cz+15)/10)));
   return `sector-${cx<0?'left':'right'}-${sector}`;
  }
@@ -109,7 +113,7 @@ const bank={asset:original.asset,extensionsUsed:original.extensionsUsed,scene:0,
 const bankBytes=Buffer.from(JSON.stringify(bank));await fs.writeFile(path.join(OUT,'materials.gltf'),bankBytes);
 // startup 列表只是启动预加载策略；模块是否进入当前清单仍由本次实际拆分结果决定。
 // The startup set is a preload policy; only modules produced by this export become manifest entries.
-const startup=new Set(['core','a-end','sector-left-2','sector-right-2','globe','central-furniture-north','central-furniture-south','central-lighting']);
+const startup=new Set(['core','core-enclosure','core-vault','core-gallery-floor']);
 const materialCapacityLimits=original.materials.map((m,id)=>({name:m.name,vertices:0,indices:0}));
 for(const part of parts.values())for(const p of part.primitives){materialCapacityLimits[p.material].vertices+=p.attributes.POSITION.count;materialCapacityLimits[p.material].indices+=p.indices.length;}
 const manifest={materialCapacityLimits,version:1,revision:sceneConfig.revision,

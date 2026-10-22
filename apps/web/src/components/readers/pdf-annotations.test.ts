@@ -2,8 +2,29 @@
 // Checks immediate annotation styling on existing PDF text layers, including virtual-page locators, without requiring refresh.
 import { applyPdfTextAnnotations } from "./pdf-annotations";
 import type { Annotation } from "../../domain/types";
+import { readerHighlightStyle } from "../../domain/annotation-colors";
+import { bookKinThemeOptions } from "../../theme/theme";
 
 describe("applyPdfTextAnnotations", () => {
+  it("refreshes reading highlights and explicit text colors when the theme changes", () => {
+    const layer = document.createElement("div");
+    layer.innerHTML = "<span>切换主题后高亮仍然清晰。</span>";
+    const annotation: Annotation = {
+      id: "themed-highlight", bookId: "book-pdf", type: "HIGHLIGHT", style: "HIGHLIGHT",
+      color: "YELLOW", locator: "pdf:page=1", quote: "高亮仍然清晰", createdAt: "2026-10-21",
+    };
+    for (const { reader: theme } of Object.values(bookKinThemeOptions)) {
+      applyPdfTextAnnotations(layer, 1, [annotation], { theme });
+      const expected = document.createElement("span");
+      Object.assign(expected.style, readerHighlightStyle(annotation.color, theme));
+      const mark = layer.querySelector("mark")!;
+      expect(mark.style.background).toBe(expected.style.background);
+      expect(mark.style.color).toBe(expected.style.color);
+      expect(mark.style.mixBlendMode).toBe("");
+      expect(layer.textContent).toBe("切换主题后高亮仍然清晰。");
+      expect(layer.querySelectorAll("mark")).toHaveLength(1);
+    }
+  });
   it("keeps a highlighted note visibly colored across PDF text spans", () => {
     const layer = document.createElement("div");
     layer.innerHTML = "<span>黄昏从山脊落下，河面先暗</span><span>了一层，渡船归岸。</span>";

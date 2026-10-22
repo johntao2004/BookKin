@@ -18,7 +18,15 @@ public final class BookUploadModels {
             String title, String subtitle, List<String> authors, List<String> translators, String language,
             String publisher, String publishedDate, String isbn, String description, String series,
             BigDecimal seriesIndex, List<String> tags, Integer pageCount, Long wordCount,
-            Map<String, MetadataSource> sources, String targetPath, Boolean publiclyVisible) {
+            Map<String, MetadataSource> sources, String targetPath, Boolean publiclyVisible,
+            List<String> subjectCodes, String authorBiography, String tableOfContents) {
+        public MetadataDraft(String title, String subtitle, List<String> authors, List<String> translators, String language,
+                             String publisher, String publishedDate, String isbn, String description, String series,
+                             BigDecimal seriesIndex, List<String> tags, Integer pageCount, Long wordCount,
+                             Map<String, MetadataSource> sources, String targetPath, Boolean publiclyVisible) {
+            this(title, subtitle, authors, translators, language, publisher, publishedDate, isbn, description, series,
+                    seriesIndex, tags, pageCount, wordCount, sources, targetPath, publiclyVisible, List.of(), null, null);
+        }
         public MetadataDraft(String title, String subtitle, List<String> authors, List<String> translators, String language,
                              String publisher, String publishedDate, String isbn, String description, String series,
                              BigDecimal seriesIndex, List<String> tags, Integer pageCount, Long wordCount,
@@ -28,7 +36,7 @@ public final class BookUploadModels {
         }
         public MetadataDraft withPubliclyVisible(Boolean value) {
             return new MetadataDraft(title, subtitle, authors, translators, language, publisher, publishedDate, isbn,
-                    description, series, seriesIndex, tags, pageCount, wordCount, sources, targetPath, value);
+                    description, series, seriesIndex, tags, pageCount, wordCount, sources, targetPath, value, subjectCodes, authorBiography, tableOfContents);
         }
         // 草稿未指定公开状态时默认公开；这里只规范化数据，不执行入库或授权。
         // Missing draft visibility defaults to public; this normalizes data without committing or authorizing ingestion.
@@ -37,6 +45,7 @@ public final class BookUploadModels {
             authors = clean(authors);
             translators = clean(translators);
             tags = clean(tags);
+            subjectCodes = subjectCodes == null ? List.of() : List.copyOf(subjectCodes);
             sources = sources == null ? Map.of() : Map.copyOf(sources);
         }
         private static List<String> clean(List<String> values) {

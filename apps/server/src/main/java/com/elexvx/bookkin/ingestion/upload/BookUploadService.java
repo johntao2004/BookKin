@@ -166,7 +166,8 @@ public class BookUploadService {
         MetadataDraft normalized = new MetadataDraft(requested.title().strip(), blank(requested.subtitle()), clean(requested.authors()),
                 clean(requested.translators()), blank(requested.language()), blank(requested.publisher()), blank(requested.publishedDate()),
                 blank(requested.isbn()), blank(requested.description()), blank(requested.series()), requested.seriesIndex(), clean(requested.tags()),
-                upload.draftMetadata().pageCount(), upload.draftMetadata().wordCount(), sources, target, requested.publiclyVisible());
+                upload.draftMetadata().pageCount(), upload.draftMetadata().wordCount(), sources, target, requested.publiclyVisible(), com.elexvx.bookkin.catalog.ThemaSubjects.validate(requested.subjectCodes()),
+                blank(requested.authorBiography()), blank(requested.tableOfContents()));
         uploads.updateDraft(id, normalized);
         audit.record(actor, "BOOK_UPLOAD_METADATA_EDITED", "BOOK_UPLOAD", id.toString(), upload.originalFilename(), target,
                 upload.fingerprint(), upload.fingerprint(), "SUCCEEDED", "{}");
@@ -289,7 +290,7 @@ public class BookUploadService {
             MetadataDraft draft = upload.draftMetadata();
             ExtractedBook metadata = new ExtractedBook(draft.title(), draft.subtitle(), draft.authors(), draft.translators(),
                     draft.description(), draft.language(), draft.publisher(), draft.publishedDate(), draft.isbn(), draft.series(),
-                    draft.seriesIndex(), draft.tags(), upload.coverCacheKey(), draft.pageCount(), draft.wordCount());
+                    draft.seriesIndex(), draft.tags(), upload.coverCacheKey(), draft.pageCount(), draft.wordCount(), draft.subjectCodes(), draft.authorBiography(), draft.tableOfContents());
             String sourcesJson = json.writeValueAsString(draft.sources());
             String[] overrides = draft.sources().entrySet().stream().filter(entry -> entry.getValue() == MetadataSource.MANUAL)
                     .map(Map.Entry::getKey).toArray(String[]::new);
@@ -405,6 +406,8 @@ public class BookUploadService {
         if (draft.authors() == null || clean(draft.authors()).isEmpty() || draft.authors().size() > 20) throw new IllegalArgumentException("至少需要一位作者，最多20位");
         if (draft.translators() != null && draft.translators().size() > 20) throw new IllegalArgumentException("译者最多20位");
         if (draft.tags() != null && draft.tags().size() > 50) throw new IllegalArgumentException("标签最多50个");
+        com.elexvx.bookkin.catalog.ThemaSubjects.validate(draft.subjectCodes());
+        if (draft.description() != null && draft.description().length() > 20_000 || draft.authorBiography() != null && draft.authorBiography().length() > 20_000 || draft.tableOfContents() != null && draft.tableOfContents().length() > 40_000) throw ApiException.badRequest("METADATA_TOO_LONG", "书目资料超出长度限制。");
         validateExtension(draft.targetPath(), format);
     }
 
@@ -424,6 +427,9 @@ public class BookUploadService {
         mark(sources, "publishedDate", before.publishedDate(), after.publishedDate());
         mark(sources, "isbn", before.isbn(), after.isbn());
         mark(sources, "description", before.description(), after.description());
+        mark(sources, "authorBiography", before.authorBiography(), after.authorBiography());
+        mark(sources, "tableOfContents", before.tableOfContents(), after.tableOfContents());
+        if (!Objects.equals(before.subjectCodes(), after.subjectCodes())) sources.put("subjectCodes", MetadataSource.MANUAL);
         mark(sources, "series", before.series(), after.series());
         mark(sources, "seriesIndex", before.seriesIndex(), after.seriesIndex());
         mark(sources, "tags", before.tags(), clean(after.tags()));

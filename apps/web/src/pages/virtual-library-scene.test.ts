@@ -1102,3 +1102,46 @@ describe("virtual library shelf layout", () => {
     ]);
   });
 });
+
+it('publishes the full catalogue after yielding between model-building slices', async () => {
+  const context = withMockCanvas(() => document.createElement('canvas').getContext('2d'));
+  const canvas = vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(context);
+  const textureLoad = vi.spyOn(THREE.TextureLoader.prototype, 'load').mockImplementation(() => new THREE.Texture<HTMLImageElement>());
+  let clock = 0; const now = vi.spyOn(performance, 'now').mockImplementation(() => clock += 6);
+  const scene = new THREE.Scene(), loader = new THREE.TextureLoader();
+  try {
+    const hall = buildLongRoom({}, loader); hall.root.userData.staticOptimization = 'test';
+    const world = createVirtualLibraryWorld(scene, loader, 1, hall);
+    const slices = vi.fn();
+    const books = Array.from({length: 6}, (_, i) => makeCatalogBook(`progressive-${i}`));
+    const pending = world.syncCatalogBooksProgressively(books, {signal: new AbortController().signal, onSlice: slices});
+    expect(world.sceneBooks).toHaveLength(0);
+    const result = await pending;
+    expect(slices.mock.calls.length).toBeGreaterThan(1);
+    expect(result.addedBookIds).toHaveLength(6);
+    expect(new Set(world.sceneBooks.map(book => book.book.id))).toEqual(new Set(books.map(book => book.id)));
+    expect(world.interactiveMeshes).toHaveLength(6);
+  } finally {disposeScene(scene); now.mockRestore(); textureLoad.mockRestore(); canvas.mockRestore();}
+});
+
+it('cancels staged book creation without replacing the authorized live snapshot', async () => {
+  const context = withMockCanvas(() => document.createElement('canvas').getContext('2d'));
+  const canvas = vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(context);
+  const textureLoad = vi.spyOn(THREE.TextureLoader.prototype, 'load').mockImplementation(() => new THREE.Texture<HTMLImageElement>());
+  const scene = new THREE.Scene(), loader = new THREE.TextureLoader();
+  let now: ReturnType<typeof vi.spyOn> | undefined;
+  try {
+    const hall = buildLongRoom({}, loader); hall.root.userData.staticOptimization = 'test';
+    const world = createVirtualLibraryWorld(scene, loader, 1, hall);
+    world.syncCatalogBooks([makeCatalogBook('existing')]);
+    const existing = world.sceneBooks[0], revision = hall.root.userData.catalogSyncRevision;
+    let clock = 0; now = vi.spyOn(performance, 'now').mockImplementation(() => clock += 6);
+    const abort = new AbortController();
+    await expect(world.syncCatalogBooksProgressively(Array.from({length: 6}, (_, i) => makeCatalogBook(`cancel-${i}`)), {
+      signal: abort.signal, onSlice: () => abort.abort(),
+    })).rejects.toMatchObject({name: 'AbortError'});
+    expect(world.sceneBooks).toEqual([existing]);
+    expect(hall.root.userData.catalogSyncRevision).toBe(revision);
+    expect(world.interactiveMeshes).toEqual([existing.hitTarget]);
+  } finally {disposeScene(scene); now?.mockRestore(); textureLoad.mockRestore(); canvas.mockRestore();}
+});

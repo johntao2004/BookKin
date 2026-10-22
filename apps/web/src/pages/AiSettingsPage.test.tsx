@@ -26,6 +26,7 @@ const settings = {
 };
 
 beforeEach(() => {
+  sessionStorage.setItem("bookkin-demo-session", JSON.stringify({ id: "admin", username: "admin", displayName: "管理员", role: "ADMIN", mustChangePassword: false }));
   vi.mocked(api.getAiSettings).mockResolvedValue(settings);
   vi.mocked(api.updateAiSettings).mockResolvedValue(settings);
 });
@@ -35,8 +36,8 @@ it("renders AI strategy and provider settings", async () => {
   expect(await screen.findByRole("heading", { name: "匹配策略" })).toBeInTheDocument();
   expect(screen.queryByRole("heading", { name: "OpenAI" })).toBeNull();
   expect(screen.getByText("入库时自动查找未匹配书目")).toBeInTheDocument();
-  expect(screen.getByRole("button", { name: "保存匹配策略" })).toBeInTheDocument();
-  expect(screen.getByRole("button", { name: "保存 AI 平台" })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "保存策略" })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "保存平台" })).toBeInTheDocument();
   expect(screen.getByText("GPT-4o mini")).toBeInTheDocument();
   fireEvent.mouseDown(screen.getByRole("combobox", { name: "选择厂商" }));
   fireEvent.click(await screen.findByText("DeepSeek"));
@@ -50,7 +51,7 @@ it("saves only the selected provider as enabled without an extra switch", async 
   expect(screen.queryByRole("switch", { name: /^启用$/ })).toBeNull();
   fireEvent.mouseDown(screen.getByRole("combobox", { name: "选择厂商" }));
   fireEvent.click(await screen.findByText("DeepSeek"));
-  fireEvent.click(screen.getByRole("button", { name: "保存 AI 平台" }));
+  fireEvent.click(screen.getByRole("button", { name: "保存平台" }));
   await waitFor(() => expect(api.updateAiSettings).toHaveBeenCalledWith(expect.objectContaining({
     providers: [
       expect.objectContaining({ id: "openai", enabled: false }),

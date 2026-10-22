@@ -51,7 +51,7 @@ describe("RequireAuth", () => {
     expect(screen.getByText("401 · 需要登录")).toBeInTheDocument();
     expect(screen.queryByText("用户管理私密内容")).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("link", { name: "前往登录" }));
+    fireEvent.click(screen.getByRole("link", { name: "登录" }));
     expect(screen.getByText("登录返回位置：/admin/users?tab=active#staff")).toBeInTheDocument();
   });
 

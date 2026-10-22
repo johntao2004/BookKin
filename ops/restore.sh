@@ -22,10 +22,20 @@ test -f "$SOURCE/manifest.txt"
 test -f "$SOURCE/database.dump"
 test -f "$SOURCE/SHA256SUMS"
 
-grep -qx 'format=bookkin-backup-v2' "$SOURCE/manifest.txt" || {
+grep -Eq '^format=bookkin-backup-v[23]$' "$SOURCE/manifest.txt" || {
   echo "Unsupported or incomplete backup manifest" >&2
   exit 1
 }
+HAS_CONTENT=false
+if grep -qx 'format=bookkin-backup-v3' "$SOURCE/manifest.txt"; then
+  HAS_CONTENT=true
+  grep -qx 'article-archive=articles.tar.gz' "$SOURCE/manifest.txt"
+  grep -qx 'vault-archive=vault.tar.gz' "$SOURCE/manifest.txt"
+  for CONTENT_ARCHIVE in articles.tar.gz vault.tar.gz; do
+    test -f "$SOURCE/$CONTENT_ARCHIVE"
+    awk -v archive="$CONTENT_ARCHIVE" '$2 == archive || $2 == "*" archive { found=1 } END { exit !found }' "$SOURCE/SHA256SUMS"
+  done
+fi
 ROOT_COUNT=$(sed -n 's/^library-root-count=//p' "$SOURCE/manifest.txt")
 case "$ROOT_COUNT" in
   ''|*[!0-9]*) echo "Invalid library-root-count in manifest" >&2; exit 1 ;;
@@ -71,6 +81,10 @@ done
 if [ "$FONT_ARCHIVE" = fonts.tar.gz ]; then
   validate_archive "$SOURCE/fonts.tar.gz" || { echo "Unsafe font archive" >&2; exit 1; }
 fi
+if [ "$HAS_CONTENT" = true ]; then
+  validate_archive "$SOURCE/articles.tar.gz" || { echo "Unsafe article archive" >&2; exit 1; }
+  validate_archive "$SOURCE/vault.tar.gz" || { echo "Unsafe vault archive" >&2; exit 1; }
+fi
 
 LIBRARY_ROOTS=${BOOKKIN_LIBRARY_BACKUP_ROOTS:-${BOOKKIN_LIBRARY_MAIN:-./.local/library}}
 ROOTS_FILE=$(mktemp "${TMPDIR:-/tmp}/bookkin-restore-roots.XXXXXX")
@@ -90,7 +104,14 @@ test "$CONFIGURED_COUNT" -eq "$ROOT_COUNT" || {
 }
 
 FONT_ROOT=${BOOKKIN_FONT_BACKUP_ROOT:-${BOOKKIN_FONT_STORAGE:-./.local/fonts}}
+ARTICLE_ROOT=${BOOKKIN_ARTICLE_STORAGE:-./.local/content/articles}
+VAULT_ROOT=${BOOKKIN_VAULT_STORAGE:-./.local/content/vault}
 if [ "$DRY_RUN" = true ]; then
+  if [ "$HAS_CONTENT" = true ]; then
+    printf 'DRY RUN: would restore articles to %s and vault to %s\n' "$ARTICLE_ROOT" "$VAULT_ROOT"
+  else
+    echo 'Legacy backup: article and vault assets are not included'
+  fi
   if [ "$FONT_ARCHIVE" = fonts.tar.gz ]; then
     printf 'DRY RUN: would restore fonts to %s\n' "$FONT_ROOT"
   else
@@ -108,6 +129,11 @@ while IFS= read -r LIBRARY_ROOT; do
   }
   ROOT_INDEX=$((ROOT_INDEX + 1))
 done < "$ROOTS_FILE"
+if [ "$HAS_CONTENT" = true ]; then
+  for CONTENT_ROOT in "$ARTICLE_ROOT" "$VAULT_ROOT"; do
+    test -d "$CONTENT_ROOT" || { echo "Content storage is not mounted: $CONTENT_ROOT" >&2; exit 1; }
+  done
+fi
 
 SERVICES_STOPPED=false
 restart_services() {
@@ -132,6 +158,10 @@ done < "$ROOTS_FILE"
 if [ "$FONT_ARCHIVE" = fonts.tar.gz ]; then
   mkdir -p "$FONT_ROOT"
   tar -C "$FONT_ROOT" -xzf "$SOURCE/fonts.tar.gz"
+fi
+if [ "$HAS_CONTENT" = true ]; then
+  tar -C "$ARTICLE_ROOT" -xzf "$SOURCE/articles.tar.gz"
+  tar -C "$VAULT_ROOT" -xzf "$SOURCE/vault.tar.gz"
 fi
 
 docker compose start app worker

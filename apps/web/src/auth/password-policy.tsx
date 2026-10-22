@@ -19,6 +19,6 @@ export function usePasswordPolicy() {
 }
 export function PasswordRequirements({policy,value}:{policy:ReturnType<typeof usePasswordPolicy>;value:string}) {
  if(policy.isPending) return <Typography role="status" variant="body2">正在加载密码规则…</Typography>;
- if(policy.isError) return <Stack spacing={1}><Typography color="error.main">无法读取密码规则，请重试。</Typography><Button onClick={()=>policy.refetch()}>重新加载密码规则</Button></Stack>;
+ if(policy.isError) return <Stack spacing={1}><Typography color="error.main">无法读取密码规则，请重试。</Typography><Button onClick={()=>policy.refetch()}>重试</Button></Stack>;
  return <Stack spacing={1} role="status" aria-label="密码要求">{passwordRequirements(policy.data,value).map(rule=><Typography key={rule.label} variant="body2" color={value ? rule.met?"success.main":"error.main":"text.secondary"}>{value ? rule.met?"✓ ":"未满足：":""}{rule.label}</Typography>)}</Stack>;
 }

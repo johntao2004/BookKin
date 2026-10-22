@@ -29,10 +29,44 @@ import {
     AnnotationRequestToJSON,
 } from '../models/AnnotationRequest';
 import {
+    type ArticlesNotesGet200ResponseInner,
+    ArticlesNotesGet200ResponseInnerFromJSON,
+    ArticlesNotesGet200ResponseInnerToJSON,
+} from '../models/ArticlesNotesGet200ResponseInner';
+import {
+    type BookReview,
+    BookReviewFromJSON,
+    BookReviewToJSON,
+} from '../models/BookReview';
+import {
+    type BookReviewDraft,
+    BookReviewDraftFromJSON,
+    BookReviewDraftToJSON,
+} from '../models/BookReviewDraft';
+import {
+    type BookReviewsIdPutRequest,
+    BookReviewsIdPutRequestFromJSON,
+    BookReviewsIdPutRequestToJSON,
+} from '../models/BookReviewsIdPutRequest';
+import {
     type ListAnnotations200Response,
     ListAnnotations200ResponseFromJSON,
     ListAnnotations200ResponseToJSON,
 } from '../models/ListAnnotations200Response';
+
+export interface BookReviewsIdPutOperationRequest {
+    id: string;
+    bookReviewsIdPutRequest: BookReviewsIdPutRequest;
+}
+
+export interface BooksBookIdReviewsGetRequest {
+    bookId: string;
+}
+
+export interface BooksBookIdReviewsPostRequest {
+    bookId: string;
+    bookReviewDraft: BookReviewDraft;
+}
 
 export interface CreateAnnotationRequest {
     annotationRequest: AnnotationRequest;
@@ -61,6 +95,198 @@ export interface ListAnnotationsRequest {
  *
  */
 export class AnnotationsApi extends runtime.BaseAPI {
+
+    /**
+     * Creates request options for articlesNotesGet without sending the request
+     */
+    async articlesNotesGetRequestOpts(): Promise<runtime.RequestOpts> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+
+        let urlPath = `/articles/notes`;
+
+        return {
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        };
+    }
+
+    /**
+     * 当前用户的文章笔记，独立于图书批注和禁书区
+     */
+    async articlesNotesGetRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<ArticlesNotesGet200ResponseInner>>> {
+        const requestOptions = await this.articlesNotesGetRequestOpts();
+        const response = await this.request(requestOptions, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(ArticlesNotesGet200ResponseInnerFromJSON));
+    }
+
+    /**
+     * 当前用户的文章笔记，独立于图书批注和禁书区
+     */
+    async articlesNotesGet(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<ArticlesNotesGet200ResponseInner>> {
+        const response = await this.articlesNotesGetRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Creates request options for bookReviewsIdPut without sending the request
+     */
+    async bookReviewsIdPutRequestOpts(requestParameters: BookReviewsIdPutOperationRequest): Promise<runtime.RequestOpts> {
+        if (requestParameters['id'] == null) {
+            throw new runtime.RequiredError(
+                'id',
+                'Required parameter "id" was null or undefined when calling bookReviewsIdPut().'
+            );
+        }
+
+        if (requestParameters['bookReviewsIdPutRequest'] == null) {
+            throw new runtime.RequiredError(
+                'bookReviewsIdPutRequest',
+                'Required parameter "bookReviewsIdPutRequest" was null or undefined when calling bookReviewsIdPut().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+
+        let urlPath = `/book-reviews/{id}`;
+        urlPath = urlPath.replace('{id}', encodeURIComponent(String(requestParameters['id'])));
+
+        return {
+            path: urlPath,
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: BookReviewsIdPutRequestToJSON(requestParameters['bookReviewsIdPutRequest']),
+        };
+    }
+
+    /**
+     * 作者编辑长文；管理员不能代改
+     */
+    async bookReviewsIdPutRaw(requestParameters: BookReviewsIdPutOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BookReview>> {
+        const requestOptions = await this.bookReviewsIdPutRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => BookReviewFromJSON(jsonValue));
+    }
+
+    /**
+     * 作者编辑长文；管理员不能代改
+     */
+    async bookReviewsIdPut(requestParameters: BookReviewsIdPutOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BookReview> {
+        const response = await this.bookReviewsIdPutRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Creates request options for booksBookIdReviewsGet without sending the request
+     */
+    async booksBookIdReviewsGetRequestOpts(requestParameters: BooksBookIdReviewsGetRequest): Promise<runtime.RequestOpts> {
+        if (requestParameters['bookId'] == null) {
+            throw new runtime.RequiredError(
+                'bookId',
+                'Required parameter "bookId" was null or undefined when calling booksBookIdReviewsGet().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+
+        let urlPath = `/books/{bookId}/reviews`;
+        urlPath = urlPath.replace('{bookId}', encodeURIComponent(String(requestParameters['bookId'])));
+
+        return {
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        };
+    }
+
+    /**
+     * 读取本人的私密长文和书库共享长文
+     */
+    async booksBookIdReviewsGetRaw(requestParameters: BooksBookIdReviewsGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<BookReview>>> {
+        const requestOptions = await this.booksBookIdReviewsGetRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(BookReviewFromJSON));
+    }
+
+    /**
+     * 读取本人的私密长文和书库共享长文
+     */
+    async booksBookIdReviewsGet(requestParameters: BooksBookIdReviewsGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<BookReview>> {
+        const response = await this.booksBookIdReviewsGetRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Creates request options for booksBookIdReviewsPost without sending the request
+     */
+    async booksBookIdReviewsPostRequestOpts(requestParameters: BooksBookIdReviewsPostRequest): Promise<runtime.RequestOpts> {
+        if (requestParameters['bookId'] == null) {
+            throw new runtime.RequiredError(
+                'bookId',
+                'Required parameter "bookId" was null or undefined when calling booksBookIdReviewsPost().'
+            );
+        }
+
+        if (requestParameters['bookReviewDraft'] == null) {
+            throw new runtime.RequiredError(
+                'bookReviewDraft',
+                'Required parameter "bookReviewDraft" was null or undefined when calling booksBookIdReviewsPost().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+
+        let urlPath = `/books/{bookId}/reviews`;
+        urlPath = urlPath.replace('{bookId}', encodeURIComponent(String(requestParameters['bookId'])));
+
+        return {
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: BookReviewDraftToJSON(requestParameters['bookReviewDraft']),
+        };
+    }
+
+    /**
+     * 为当前用户创建独立存储的读后长文
+     */
+    async booksBookIdReviewsPostRaw(requestParameters: BooksBookIdReviewsPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BookReview>> {
+        const requestOptions = await this.booksBookIdReviewsPostRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => BookReviewFromJSON(jsonValue));
+    }
+
+    /**
+     * 为当前用户创建独立存储的读后长文
+     */
+    async booksBookIdReviewsPost(requestParameters: BooksBookIdReviewsPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BookReview> {
+        const response = await this.booksBookIdReviewsPostRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
 
     /**
      * Creates request options for createAnnotation without sending the request

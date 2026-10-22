@@ -4,6 +4,9 @@ import { Typography } from "@/ui/primitives";
 import { flattenSx, useTheme } from "@/ui/primitives";
 import type { SxProps, Theme } from "@/ui/primitives";
 import { createContext, useContext, type ReactNode } from "react";
+import { Link } from "react-router-dom";
+import { Button } from "../ui/buttons";
+import { ArrowBackRounded } from "../ui/icons";
 
 export const EmbeddedSettingsContext = createContext(false);
 import { tokens } from "../theme/generated-tokens";
@@ -60,6 +63,16 @@ export function PageTitle({
   return <Typography id={id} className={className} variant="h3" component="h1" color={color} sx={{ fontSize: { xs: tokens.typography.fontSize.headingSm, sm: tokens.typography.fontSize.heading }, overflowWrap: "anywhere" }}>{children}</Typography>;
 }
 
+export function PageBackAction({ children, to, onClick }: {
+  children: ReactNode;
+  to?: string;
+  onClick?: () => void;
+}) {
+  return <Box className="bk-page-back" sx={{ display: "flex", justifyContent: "flex-start", mb: `${tokens.spacing[5]}px` }}>
+    <Button component={to ? Link : undefined} to={to} onClick={onClick} variant="outlined" startIcon={<ArrowBackRounded />}>{children}</Button>
+  </Box>;
+}
+
 export function PageHeader({
   eyebrow,
   title,
@@ -100,7 +113,18 @@ export function PageHeader({
 }
 
 export function ActionToolbar({ children }: { children: ReactNode }) {
-  return <Stack className="bk-action-toolbar" direction="row" sx={{ minWidth: 0, maxWidth: "100%", width: { xs: "100%", sm: "auto" }, justifyContent: "flex-end", alignItems: "center", flexWrap: "wrap", gap: 1.5 }}>{children}</Stack>;
+  return <Stack className="bk-action-toolbar" direction="row" sx={{ minWidth: 0, maxWidth: "100%", width: { xs: "100%", sm: "auto" }, ml: "auto", justifyContent: "flex-end", alignItems: "center", flexWrap: "wrap", gap: 1.5 }}>{children}</Stack>;
+}
+
+/** Align section actions with the shared page toolbar, above the section fields. */
+export function SectionHeader({ title, action, description }: { title: string; action?: ReactNode; description?: string }) {
+  return <Stack spacing={1}>
+    <Stack direction="row" sx={{ minWidth: 0, alignItems: "center", flexWrap: "wrap", justifyContent: "space-between", gap: 2 }}>
+      <Typography component="h3" variant="h5" sx={{ minWidth: 0, overflowWrap: "anywhere" }}>{title}</Typography>
+      {action && <ActionToolbar>{action}</ActionToolbar>}
+    </Stack>
+    {description && <Typography color="text.secondary">{description}</Typography>}
+  </Stack>;
 }
 
 export function FormActions({ children }: { children: ReactNode }) {

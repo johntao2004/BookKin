@@ -1,3 +1,4 @@
+import { BookCover } from "./BookCover";
 import type { ReactNode } from "react";
 import { Box, Stack, Typography } from "@/ui/primitives";
 import { TextField, Switch } from "@/ui/forms";
@@ -7,7 +8,7 @@ export interface MetadataEditorValues {
   title: string; subtitle: string; authors: string; translators: string;
   language: string; publisher: string; publishedDate: string; isbn: string;
   series: string; seriesIndex: string; tags: string; description: string;
-  publiclyVisible: boolean;
+  publiclyVisible: boolean; authorBiography?: string; tableOfContents?: string;
 }
 const fields = [
   ["title", "书名"], ["subtitle", "副标题"], ["authors", "作者"], ["translators", "译者"],
@@ -24,7 +25,7 @@ export function MetadataEditorForm({ value, onChange, coverUrl, coverAlt, coverA
 }) {
   return <Box sx={{ display: "grid", gridTemplateColumns: { xs: "minmax(0, 1fr)", md: `${tokens.spacing[20] * 3}px minmax(0, 1fr)` }, gap: 4 }}>
     <Stack spacing={1.5} sx={{ minWidth: 0, alignItems: "stretch" }}>
-      <Box component="img" src={coverUrl} alt={coverAlt} sx={{ width: "100%", maxWidth: tokens.spacing[20] * 3, aspectRatio: "2 / 3", objectFit: "cover", bgcolor: "background.default", borderRadius: 2, boxShadow: tokens.shadow.cover }} />
+      <BookCover src={coverUrl} alt={coverAlt} sx={{ maxWidth: `${tokens.spacing[20] * 3}px` }} />
       {coverDetails && <Stack direction="row" sx={{ gap: 1, flexWrap: "wrap" }}>{coverDetails}</Stack>}
       {coverActions}
     </Stack>
@@ -35,6 +36,8 @@ export function MetadataEditorForm({ value, onChange, coverUrl, coverAlt, coverA
         {extraFields}
       </Box>
       <TextField label="简介" value={value.description} multiline minRows={5} disabled={disabled} onChange={(event: React.ChangeEvent<HTMLInputElement>) => onChange("description", event.target.value)} />
+      <TextField label="作者介绍" value={value.authorBiography ?? ""} multiline minRows={3} disabled={disabled} onChange={(event: React.ChangeEvent<HTMLInputElement>) => onChange("authorBiography", event.target.value)} />
+      <TextField label="目录" value={value.tableOfContents ?? ""} multiline minRows={5} disabled={disabled} helperText="可从原书目录识别，也可手工校对；不修改阅读器原有目录。" onChange={(event: React.ChangeEvent<HTMLInputElement>) => onChange("tableOfContents", event.target.value)} />
       {children}
     </Stack>
   </Box>;

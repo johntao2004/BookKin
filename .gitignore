@@ -15,3 +15,8 @@ design/.figma-state.json
 
 # Registration facts contain personal identity information.
 软件著作权申请资料/正式资料/申请表信息.txt
+
+# Authentication enrollment evidence can contain live QR/recovery credentials.
+docs/verification/vault-two-factor-2026-10-22/
+**/__pycache__/
+*.pyc

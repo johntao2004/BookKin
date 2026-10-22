@@ -1,6 +1,6 @@
 // 把 PDF 页码、定位与文本匹配转换为可见标记，保留已有阅读文本结构。
 // Maps PDF page/locator/text matching to visible annotations while preserving reading text structure.
-import { annotationColorBackground, annotationColorHex } from "../../domain/annotation-colors";
+import { annotationColorBackground, annotationColorHex, readerHighlightStyle, type AnnotationTextTheme } from "../../domain/annotation-colors";
 import type { Annotation } from "../../domain/types";
 
 interface Segment {
@@ -13,7 +13,7 @@ export function applyPdfTextAnnotations(
   layer: HTMLElement,
   pageNumber: number,
   annotations: Annotation[],
-  options: { overlaysCanvasText?: boolean } = {},
+  options: { overlaysCanvasText?: boolean; theme?: AnnotationTextTheme } = {},
 ) {
   const spans = Array.from(layer.querySelectorAll<HTMLSpanElement>("span"));
   const characters: Array<{ span: HTMLSpanElement; offset: number; value: string }> = [];
@@ -69,6 +69,11 @@ export function applyPdfTextAnnotations(
       mark.style.background = segment.annotation.style === "HIGHLIGHT"
         ? annotationColorBackground(segment.annotation.color)
         : "transparent";
+      if (segment.annotation.style === "HIGHLIGHT" && !options.overlaysCanvasText && options.theme) {
+        const highlight = readerHighlightStyle(segment.annotation.color, options.theme);
+        mark.style.background = highlight.background;
+        mark.style.color = highlight.color;
+      }
       if (segment.annotation.style === "HIGHLIGHT" && options.overlaysCanvasText) {
         mark.style.mixBlendMode = "multiply";
       }

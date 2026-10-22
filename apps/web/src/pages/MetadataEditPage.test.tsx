@@ -12,6 +12,22 @@ import { MetadataEditPage } from "./MetadataEditPage";
 afterEach(() => vi.restoreAllMocks());
 
 describe("unified metadata page", () => {
+  it.each(["", "next"])("keeps one page return after upload completion and preserves the %s review queue", async next => {
+    vi.spyOn(api, "getBookUpload").mockResolvedValue({ id: "review", status: "SUCCEEDED" } as BookUpload);
+    render(<TestProviders initialPath={`/library/uploads/review${next ? `?next=${next}` : ""}`}><Routes>
+      <Route path="/library/uploads/next" element={<div>下一本校对</div>} />
+      <Route path="/library/uploads/:uploadId" element={<MetadataEditPage />} />
+    </Routes></TestProviders>);
+    expect(await screen.findByText("书籍信息已保存。")).toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: "返回书库" })).toHaveLength(1);
+    if (next) {
+      fireEvent.click(screen.getByRole("button", { name: "继续校对" }));
+      expect(await screen.findByText("下一本校对")).toBeInTheDocument();
+    } else {
+      expect(screen.queryByRole("button", { name: "继续校对" })).not.toBeInTheDocument();
+    }
+  });
+
   it.each(["stored", "upload"])("renders %s metadata in the shared page rather than a modal", async mode => {
     const book = demoBooks[0];
     vi.spyOn(api, "getBook").mockResolvedValue(book);
@@ -29,11 +45,13 @@ describe("unified metadata page", () => {
     expect(screen.getByRole("heading", { level: 1, name: "编辑书籍信息" })).toBeInTheDocument();
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "返回书库" })).toBeInTheDocument();
+    const returnButton = screen.getByRole("button", { name: "返回书库" });
+    expect(returnButton.compareDocumentPosition(screen.getByRole("heading", { level: 1, name: "编辑书籍信息" })) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(returnButton.closest(".bk-action-toolbar")).toBeNull();
     expect(screen.getByRole("button", { name: "更换封面" })).toBeInTheDocument();
     expect(screen.getByRole("switch", { name: "公开展示" })).toBeInTheDocument();
     expect(screen.getByRole("textbox", { name: "简介" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: mode === "stored" ? "保存" : "保存并完成" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: mode === "stored" ? "保存" : "确认入库" })).toBeInTheDocument();
   });
 });
 

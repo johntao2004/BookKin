@@ -1,0 +1,542 @@
+[
+  {
+    "code": "library.view",
+    "group": "藏书阁",
+    "label": "全部藏书与书籍详情",
+    "kind": "page",
+    "roles": [
+      "OWNER",
+      "ADMIN",
+      "MEMBER"
+    ],
+    "requires": []
+  },
+  {
+    "code": "library.overview",
+    "group": "藏书阁",
+    "label": "阅读概览",
+    "kind": "page",
+    "roles": [
+      "OWNER",
+      "ADMIN",
+      "MEMBER"
+    ],
+    "requires": [
+      "library.view"
+    ]
+  },
+  {
+    "code": "library.upload",
+    "group": "藏书阁",
+    "label": "上传书籍",
+    "kind": "action",
+    "roles": [
+      "OWNER",
+      "ADMIN"
+    ],
+    "requires": [
+      "library.view"
+    ]
+  },
+  {
+    "code": "library.edit",
+    "group": "藏书阁",
+    "label": "编辑书目、封面与公开状态",
+    "kind": "action",
+    "roles": [
+      "OWNER",
+      "ADMIN"
+    ],
+    "requires": [
+      "library.view"
+    ]
+  },
+  {
+    "code": "library.organize",
+    "group": "藏书阁",
+    "label": "管理书籍分类",
+    "kind": "action",
+    "roles": [
+      "OWNER",
+      "ADMIN"
+    ],
+    "requires": [
+      "library.view"
+    ]
+  },
+  {
+    "code": "library.files",
+    "group": "藏书阁",
+    "label": "重命名与写回文件",
+    "kind": "action",
+    "roles": [
+      "OWNER",
+      "ADMIN"
+    ],
+    "requires": [
+      "library.view"
+    ]
+  },
+  {
+    "code": "library.trash",
+    "group": "藏书阁",
+    "label": "删除书籍到回收站",
+    "kind": "action",
+    "roles": [
+      "OWNER",
+      "ADMIN"
+    ],
+    "requires": [
+      "library.view"
+    ]
+  },
+  {
+    "code": "reader.read",
+    "group": "阅读器",
+    "label": "阅读书籍与保存个人进度",
+    "kind": "page",
+    "roles": [
+      "OWNER",
+      "ADMIN",
+      "MEMBER"
+    ],
+    "requires": [
+      "library.view"
+    ]
+  },
+  {
+    "code": "reader.annotate",
+    "group": "阅读器",
+    "label": "创建、删除个人书籍批注与书签",
+    "kind": "action",
+    "roles": [
+      "OWNER",
+      "ADMIN",
+      "MEMBER"
+    ],
+    "requires": [
+      "reader.read"
+    ]
+  },
+  {
+    "code": "knowledge.view",
+    "group": "知识图谱",
+    "label": "查看书籍知识图谱",
+    "kind": "page",
+    "roles": [
+      "OWNER",
+      "ADMIN",
+      "MEMBER"
+    ],
+    "requires": [
+      "library.view"
+    ]
+  },
+  {
+    "code": "knowledge.generate",
+    "group": "知识图谱",
+    "label": "分析书籍正文",
+    "kind": "action",
+    "roles": [
+      "OWNER",
+      "ADMIN"
+    ],
+    "requires": [
+      "knowledge.view"
+    ]
+  },
+  {
+    "code": "virtual.view",
+    "group": "虚拟书库",
+    "label": "访问虚拟书库",
+    "kind": "page",
+    "roles": [
+      "OWNER",
+      "ADMIN",
+      "MEMBER"
+    ],
+    "requires": [
+      "library.view"
+    ]
+  },
+  {
+    "code": "articles.view",
+    "group": "文章收藏",
+    "label": "查看与阅读文章收藏",
+    "kind": "page",
+    "roles": [
+      "OWNER",
+      "ADMIN",
+      "MEMBER"
+    ],
+    "requires": []
+  },
+  {
+    "code": "articles.edit",
+    "group": "文章收藏",
+    "label": "采集、创建、编辑和删除文章",
+    "kind": "action",
+    "roles": [
+      "OWNER",
+      "ADMIN"
+    ],
+    "requires": [
+      "articles.view"
+    ]
+  },
+  {
+    "code": "articles.analyze",
+    "group": "文章收藏",
+    "label": "分析文章正文",
+    "kind": "action",
+    "roles": [
+      "OWNER",
+      "ADMIN"
+    ],
+    "requires": [
+      "articles.view"
+    ]
+  },
+  {
+    "code": "articles.collections.edit",
+    "group": "文章收藏",
+    "label": "管理自己的合集与文章归类",
+    "kind": "action",
+    "roles": ["OWNER", "ADMIN", "MEMBER"],
+    "requires": ["articles.view"]
+  },
+  {
+    "code": "booklists.view",
+    "group": "书单",
+    "label": "查看书单",
+    "kind": "page",
+    "roles": [
+      "OWNER",
+      "ADMIN",
+      "MEMBER"
+    ],
+    "requires": [
+      "library.view"
+    ]
+  },
+  {
+    "code": "booklists.edit",
+    "group": "书单",
+    "label": "管理自己的书单与书目",
+    "kind": "action",
+    "roles": [
+      "OWNER",
+      "ADMIN",
+      "MEMBER"
+    ],
+    "requires": [
+      "booklists.view"
+    ]
+  },
+  {
+    "code": "notes.view",
+    "group": "阅读笔记",
+    "label": "查看自己的批注、书评与博文",
+    "kind": "page",
+    "roles": [
+      "OWNER",
+      "ADMIN",
+      "MEMBER"
+    ],
+    "requires": []
+  },
+  {
+    "code": "notes.edit",
+    "group": "阅读笔记",
+    "label": "撰写和编辑自己的书评、博文",
+    "kind": "action",
+    "roles": [
+      "OWNER",
+      "ADMIN",
+      "MEMBER"
+    ],
+    "requires": [
+      "notes.view"
+    ]
+  },
+  {
+    "code": "vault.use",
+    "group": "禁书库",
+    "label": "使用自己的加密禁书库",
+    "kind": "page",
+    "roles": [
+      "OWNER",
+      "ADMIN",
+      "MEMBER"
+    ],
+    "requires": []
+  },
+  {
+    "code": "settings.roots.view",
+    "group": "书库目录",
+    "label": "访问书库目录",
+    "kind": "page",
+    "roles": [
+      "OWNER",
+      "ADMIN"
+    ],
+    "requires": []
+  },
+  {
+    "code": "settings.roots.edit",
+    "group": "书库目录",
+    "label": "扫描与管理书库目录",
+    "kind": "action",
+    "roles": [
+      "OWNER",
+      "ADMIN"
+    ],
+    "requires": [
+      "settings.roots.view"
+    ]
+  },
+  {
+    "code": "settings.operations.view",
+    "group": "文件任务",
+    "label": "访问文件任务",
+    "kind": "page",
+    "roles": [
+      "OWNER",
+      "ADMIN"
+    ],
+    "requires": []
+  },
+  {
+    "code": "settings.recycle.view",
+    "group": "回收站",
+    "label": "访问回收站",
+    "kind": "page",
+    "roles": [
+      "OWNER",
+      "ADMIN"
+    ],
+    "requires": []
+  },
+  {
+    "code": "settings.recycle.restore",
+    "group": "回收站",
+    "label": "恢复书籍",
+    "kind": "action",
+    "roles": [
+      "OWNER",
+      "ADMIN"
+    ],
+    "requires": [
+      "settings.recycle.view"
+    ]
+  },
+  {
+    "code": "settings.recycle.purge",
+    "group": "回收站",
+    "label": "永久清理文件",
+    "kind": "action",
+    "roles": [
+      "OWNER"
+    ],
+    "requires": [
+      "settings.recycle.view"
+    ]
+  },
+  {
+    "code": "settings.users.view",
+    "group": "用户管理",
+    "label": "访问用户列表",
+    "kind": "page",
+    "roles": [
+      "OWNER",
+      "ADMIN"
+    ],
+    "requires": []
+  },
+  {
+    "code": "settings.users.create",
+    "group": "用户管理",
+    "label": "创建成员账户",
+    "kind": "action",
+    "roles": [
+      "OWNER",
+      "ADMIN"
+    ],
+    "requires": [
+      "settings.users.view"
+    ]
+  },
+  {
+    "code": "settings.users.manage",
+    "group": "用户管理",
+    "label": "停用成员、重置凭据和撤销会话",
+    "kind": "action",
+    "roles": [
+      "OWNER",
+      "ADMIN"
+    ],
+    "requires": [
+      "settings.users.view"
+    ]
+  },
+  {
+    "code": "settings.sessions.view",
+    "group": "在线会话",
+    "label": "访问在线会话",
+    "kind": "page",
+    "roles": [
+      "OWNER",
+      "ADMIN"
+    ],
+    "requires": []
+  },
+  {
+    "code": "settings.sessions.revoke",
+    "group": "在线会话",
+    "label": "撤销成员在线会话",
+    "kind": "action",
+    "roles": [
+      "OWNER",
+      "ADMIN"
+    ],
+    "requires": [
+      "settings.sessions.view"
+    ]
+  },
+  {
+    "code": "settings.logs.view",
+    "group": "登录日志",
+    "label": "访问登录日志",
+    "kind": "page",
+    "roles": [
+      "OWNER",
+      "ADMIN"
+    ],
+    "requires": []
+  },
+  {
+    "code": "settings.security.view",
+    "group": "安全设置",
+    "label": "访问安全设置",
+    "kind": "page",
+    "roles": [
+      "OWNER",
+      "ADMIN"
+    ],
+    "requires": []
+  },
+  {
+    "code": "settings.security.edit",
+    "group": "安全设置",
+    "label": "修改注册、密码与会话策略",
+    "kind": "action",
+    "roles": [
+      "OWNER"
+    ],
+    "requires": [
+      "settings.security.view"
+    ]
+  },
+  {
+    "code": "settings.fonts.view",
+    "group": "阅读字体",
+    "label": "访问阅读字体管理",
+    "kind": "page",
+    "roles": [
+      "OWNER",
+      "ADMIN"
+    ],
+    "requires": []
+  },
+  {
+    "code": "settings.fonts.edit",
+    "group": "阅读字体",
+    "label": "上传和管理阅读字体",
+    "kind": "action",
+    "roles": [
+      "OWNER",
+      "ADMIN"
+    ],
+    "requires": [
+      "settings.fonts.view"
+    ]
+  },
+  {
+    "code": "settings.ai.view",
+    "group": "AI 服务",
+    "label": "访问AI 服务配置",
+    "kind": "page",
+    "roles": [
+      "OWNER",
+      "ADMIN"
+    ],
+    "requires": []
+  },
+  {
+    "code": "settings.ai.edit",
+    "group": "AI 服务",
+    "label": "修改 AI 服务配置",
+    "kind": "action",
+    "roles": [
+      "OWNER",
+      "ADMIN"
+    ],
+    "requires": [
+      "settings.ai.view"
+    ]
+  },
+  {
+    "code": "settings.site.view",
+    "group": "网站设置",
+    "label": "访问网站设置",
+    "kind": "page",
+    "roles": [
+      "OWNER"
+    ],
+    "requires": []
+  },
+  {
+    "code": "settings.site.edit",
+    "group": "网站设置",
+    "label": "修改网站配置",
+    "kind": "action",
+    "roles": [
+      "OWNER"
+    ],
+    "requires": [
+      "settings.site.view"
+    ]
+  },
+  {
+    "code": "settings.mail.view",
+    "group": "邮件服务",
+    "label": "访问邮件服务",
+    "kind": "page",
+    "roles": [
+      "OWNER"
+    ],
+    "requires": []
+  },
+  {
+    "code": "settings.mail.edit",
+    "group": "邮件服务",
+    "label": "修改 SMTP 与发送配置测试邮件",
+    "kind": "action",
+    "roles": [
+      "OWNER"
+    ],
+    "requires": [
+      "settings.mail.view"
+    ]
+  },
+  {
+    "code": "roles.manage",
+    "group": "角色权限",
+    "label": "配置角色权限与调整用户角色",
+    "kind": "page",
+    "roles": [
+      "OWNER"
+    ],
+    "requires": []
+  }
+]

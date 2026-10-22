@@ -9,6 +9,6 @@ it("renders a recovery action instead of a blank page after a render failure", (
   function Broken(): never { throw new Error("render failure"); }
   try {
     render(<TestProviders><AppErrorBoundary><Broken /></AppErrorBoundary></TestProviders>);
-    expect(screen.getByRole("button", { name: "重新加载页面" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "重新加载" })).toBeInTheDocument();
   } finally { error.mockRestore(); }
 });

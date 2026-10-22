@@ -22,7 +22,7 @@ import org.springframework.http.HttpMethod;
 public class SecurityConfig {
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http, HttpSessionSecurityContextRepository repository,
-                                            MustChangePasswordFilter mustChangePasswordFilter, SessionLifetimeFilter sessionLifetimeFilter) throws Exception {
+                                            MustChangePasswordFilter mustChangePasswordFilter, SessionLifetimeFilter sessionLifetimeFilter, com.elexvx.bookkin.users.UserRepository users, RolePermissionService permissions) throws Exception {
         // SPA 从可读 Cookie 取得 CSRF 值；会话 Cookie 不由此处管理。
         // The SPA reads the CSRF cookie; this setting does not control the session cookie.
         var csrf = CookieCsrfTokenRepository.withHttpOnlyFalse();
@@ -34,19 +34,18 @@ public class SecurityConfig {
                 .csrf(configurer -> configurer.csrfTokenRepository(csrf).spa())
                 .securityContext(context -> context.securityContextRepository(repository).requireExplicitSave(true))
                 .sessionManagement(session -> session.sessionFixation(fixation -> fixation.migrateSession()))
-                // 页面壳允许加载不代表 API 公开；以下匹配按顺序区分页面、公开读取和受保护操作。
-                // Serving the page shell does not expose its API; ordered matchers separate pages, public reads and protected operations.
+                // 页面壳允许加载不代表 API 公开；文章 API 由服务端认证保护，页面由前端登录门禁保护。
+                // Article APIs require server-side authentication even when their SPA shell loads publicly.
                 .authorizeHttpRequests(requests -> requests
                         .requestMatchers("/", "/index.html", "/login", "/recover", "/forgot-password", "/register", "/setup", "/change-password", "/library", "/library/**", "/categories", "/categories/**",
                                 "/booklists", "/booklists/**", "/settings", "/settings/display-books", "/display-books", "/recycle-bin",
-                                "/articles", "/articles/**", "/vault", "/profile", "/annotations", "/search", "/virtual-library", "/knowledge-graph", "/reader/**", "/admin/**", "/assets/**", "/covers/**", "/favicon.ico").permitAll()
+                                "/articles", "/articles/**", "/article-collections", "/article-collections/**", "/vault", "/profile", "/annotations", "/annotations/**", "/search", "/virtual-library", "/knowledge-graph", "/reader/**", "/admin/**", "/assets/**", "/covers/**", "/favicon.ico").permitAll()
                         .requestMatchers("/api/v1/auth/password-policy", "/api/v1/auth/csrf", "/api/v1/auth/login", "/api/v1/auth/register", "/api/v1/auth/registration-status", "/api/v1/auth/setup", "/api/v1/auth/setup-status", "/actuator/health/**").permitAll()
                         .requestMatchers("/api/v1/auth/recovery/request", "/api/v1/auth/recovery/verify", "/api/v1/auth/recovery/reset").permitAll()
                         .requestMatchers(HttpMethod.HEAD, "/robots.txt").permitAll()
                         .requestMatchers(HttpMethod.GET, "/robots.txt", "/api/v1/site-settings", "/api/v1/site-settings/robots.txt").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/display-books", "/api/v1/display-books/**").permitAll()
                         .requestMatchers(HttpMethod.HEAD, "/api/v1/display-books/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/articles", "/api/v1/articles/*", "/api/v1/articles/assets/*").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/categories", "/api/v1/categories/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/booklists", "/api/v1/booklists/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/display-books/**").authenticated()
@@ -74,6 +73,7 @@ public class SecurityConfig {
                 .httpBasic(basic -> basic.disable())
                 .logout(logout -> logout.disable())
                 .addFilterBefore(sessionLifetimeFilter, org.springframework.security.web.access.intercept.AuthorizationFilter.class)
+                .addFilterBefore(new RolePermissionFilter(users, permissions), org.springframework.security.web.access.intercept.AuthorizationFilter.class)
                 .addFilterAfter(mustChangePasswordFilter, org.springframework.security.web.context.SecurityContextHolderFilter.class)
                 .build();
     }

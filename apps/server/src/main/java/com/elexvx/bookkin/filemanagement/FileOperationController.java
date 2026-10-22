@@ -53,9 +53,23 @@ public class FileOperationController {
     }
 
     @GetMapping
-    OperationList list(@RequestParam(defaultValue = "50") int limit) {
-        return new OperationList(operations.list(limit));
+    OperationList list(@RequestParam(defaultValue = "50") String limit,
+                       @RequestParam(required = false) String page,
+                       @RequestParam(defaultValue = "10") String pageSize) {
+        // Parse protocol input here so malformed/overflowing values use the same explicit 400 response.
+        int size = pageParameter(pageSize, 1, 100);
+        int recentLimit = pageParameter(limit, 1, 200);
+        Integer current = page == null ? null : pageParameter(page, 0, Integer.MAX_VALUE);
+        return new OperationList(current == null ? operations.list(recentLimit) : operations.page(current, size), operations.count());
     }
 
-    public record OperationList(List<Operation> items) {}
+    private int pageParameter(String value, int minimum, int maximum) {
+        try {
+            int parsed = Integer.parseInt(value);
+            if (parsed >= minimum && parsed <= maximum) return parsed;
+        } catch (NumberFormatException ignored) { /* All invalid protocol values share the same response. */ }
+        throw ApiException.badRequest("INVALID_PAGE", "分页参数无效，请使用有效页码和每页 1–100 条。");
+    }
+
+    public record OperationList(List<Operation> items, long total) {}
 }

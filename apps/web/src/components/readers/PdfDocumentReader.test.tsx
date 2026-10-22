@@ -64,6 +64,40 @@ describe("PdfReadingClipFrame", () => {
     else Reflect.deleteProperty(HTMLElement.prototype, "clientWidth");
   });
 
+  it("jumps to PDF bookmarks after opening, including repeated requests to the same target", async () => {
+    const onPosition = vi.fn();
+    vi.mocked(getDocument).mockReturnValue({
+      promise: Promise.resolve({ numPages: 8, getPage: vi.fn(() => new Promise(() => undefined)) }),
+      destroy: vi.fn(),
+    } as unknown as ReturnType<typeof getDocument>);
+    const props = { bookId: "pdf-bookmark", annotations: [], theme: { background: "white", foreground: "black", muted: "gray" }, fontSize: 19, fontFamily: "serif", readOnly: true, onSelect: vi.fn(), onPosition };
+    const view = render(<PdfDocumentReader {...props} />);
+    await waitFor(() => expect(onPosition).toHaveBeenCalledWith("pdf:page=1&offset=0", expect.any(Number)));
+    view.rerender(<PdfDocumentReader {...props} target="pdf:page=5&offset=2" targetRevision={1} />);
+    await waitFor(() => expect(onPosition).toHaveBeenLastCalledWith("pdf:page=5&offset=2", expect.any(Number)));
+    view.rerender(<PdfDocumentReader {...props} target="pdf:page=2" targetRevision={2} />);
+    await waitFor(() => expect(onPosition).toHaveBeenLastCalledWith("pdf:page=2&offset=0", expect.any(Number)));
+    view.rerender(<PdfDocumentReader {...props} target="pdf:page=5&offset=2" targetRevision={3} />);
+    await waitFor(() => expect(onPosition).toHaveBeenLastCalledWith("pdf:page=5&offset=2", expect.any(Number)));
+  });
+
+  it("resolves PDF outlines into chapter boundaries for bookmark markers", async () => {
+    const onNavigation = vi.fn();
+    vi.mocked(getDocument).mockReturnValue({
+      promise: Promise.resolve({ numPages: 8, getPage: vi.fn(() => new Promise(() => undefined)),
+        getOutline: vi.fn().mockResolvedValue([{ title: "第一章", dest: "chapter-one", items: [{ title: "第一点", dest: [2], items: [] }] }]),
+        getDestination: vi.fn().mockResolvedValue([{ num: 12, gen: 0 }]),
+        getPageIndex: vi.fn().mockResolvedValue(1),
+      }),
+      destroy: vi.fn(),
+    } as unknown as ReturnType<typeof getDocument>);
+    render(<PdfDocumentReader bookId="pdf-outline" annotations={[]} theme={{ background: "white", foreground: "black", muted: "gray" }} fontSize={19} fontFamily="serif" readOnly onNavigation={onNavigation} onSelect={vi.fn()} onPosition={vi.fn()} />);
+    await waitFor(() => expect(onNavigation).toHaveBeenCalledWith([
+      { href: "pdf:page=2", locator: "pdf:page=2", label: "第一章", depth: 0 },
+      { href: "pdf:page=3", locator: "pdf:page=3", label: "第一点", depth: 1 },
+    ]));
+  });
+
   it("uses the bottom navigation as the only generated PDF page label", async () => {
     vi.spyOn(window, "matchMedia").mockImplementation((query) => ({
       matches: false,

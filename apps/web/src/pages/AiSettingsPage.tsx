@@ -1,3 +1,4 @@
+import { usePermissions } from "../auth/permissions";
 // 编辑提供商配置及启用选择；已保存密钥仅显示配置状态，空输入按 API 约定处理。
 // Edits provider configuration/selection; saved keys expose only configured status and blank inputs follow API semantics.
 import { useEffect, useMemo, useState } from "react";
@@ -16,7 +17,7 @@ import { Stack } from "@/ui/primitives";
 import { Switch } from "@/ui/forms";
 import { TextField } from "@/ui/forms";
 import { Typography } from "@/ui/primitives";
-import { ActionToolbar, PageContainer } from "../components/PageHeader";
+import { SectionHeader, PageContainer } from "../components/PageHeader";
 import { api } from "../api/client";
 import type { AiProviderSetting, AiProviderSettingInput, AiSettings, AiSettingsInput } from "../domain/types";
 import { tokens } from "../theme/generated-tokens";
@@ -75,6 +76,7 @@ const modelPresetsByProvider: Record<string, ModelPreset[]> = {
 };
 
 export function AiSettingsPage() {
+  const { can } = usePermissions();
   const query = useQuery({ queryKey: ["ai-settings"], queryFn: api.getAiSettings });
   const [draft, setDraft] = useState<AiSettingsInput | null>(null);
   const [currentSettings, setCurrentSettings] = useState<AiSettings | null>(null);
@@ -140,11 +142,11 @@ export function AiSettingsPage() {
       <SettingsPanel
         title="匹配策略"
         description="AI 只接收解析出的结构化书目信息，不会上传 EPUB/PDF 原文。"
-        footer={<SaveButton disabled={busy} onClick={() => void save("strategy")}>{busy ? "保存中…" : "保存匹配策略"}</SaveButton>}
+        action={<SaveButton disabled={busy || !can("settings.ai.edit")} onClick={() => void save("strategy")}>{busy ? "保存中…" : "保存策略"}</SaveButton>}
       >
         <Stack spacing={1.5}>
-          <FormControlLabel control={<Switch checked={draft.enabled} onChange={(_, checked) => update("enabled", checked)} />} label={<SettingLabel title="启用 AI 书目匹配" description="关闭后不会调用任何 AI 平台，普通本地和在线书目识别仍可使用。" />} />
-          <FormControlLabel control={<Switch checked={draft.autoMatch} disabled={!draft.enabled} onChange={(_, checked) => update("autoMatch", checked)} />} label={<SettingLabel title="入库时自动查找未匹配书目" description="常规来源没有强 ISBN 或书名/作者匹配时，自动请求已启用的平台。" />} />
+          <FormControlLabel control={<Switch disabled={!can("settings.ai.edit")} checked={draft.enabled} onChange={(_, checked) => update("enabled", checked)} />} label={<SettingLabel title="启用 AI 书目匹配" description="关闭后不会调用任何 AI 平台，普通本地和在线书目识别仍可使用。" />} />
+          <FormControlLabel control={<Switch checked={draft.autoMatch} disabled={!draft.enabled || !can("settings.ai.edit")} onChange={(_, checked) => update("autoMatch", checked)} />} label={<SettingLabel title="入库时自动查找未匹配书目" description="常规来源没有强 ISBN 或书名/作者匹配时，自动请求已启用的平台。" />} />
           <Stack sx={{ display: "grid", gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))" }, gap: `${tokens.spacing[4]}px`, pt: `${tokens.spacing[1]}px` }}>
             <TextField fullWidth label="最多候选数" type="number" value={draft.maxCandidates} slotProps={{ htmlInput: { min: 1, max: 10 } }} onChange={(event) => update("maxCandidates", clampNumber(event.target.value, 1, 10, 4))} />
             <TextField fullWidth label="平台超时（秒）" type="number" value={draft.timeoutSeconds} slotProps={{ htmlInput: { min: 5, max: 120 } }} onChange={(event) => update("timeoutSeconds", clampNumber(event.target.value, 5, 120, 20))} />
@@ -155,16 +157,16 @@ export function AiSettingsPage() {
       <SettingsPanel
         title="AI 平台"
         description="选择要使用的厂商，配置模型和接口后保存。"
-        footer={<SaveButton disabled={busy} onClick={() => void save("provider")}>{busy ? "保存中…" : "保存 AI 平台"}</SaveButton>}
+        action={<SaveButton disabled={busy || !can("settings.ai.edit")} onClick={() => void save("provider")}>{busy ? "保存中…" : "保存平台"}</SaveButton>}
       >
         <Stack spacing={2} sx={{ width: "100%", maxWidth: "none" }}>
           <FormControl fullWidth>
             <InputLabel id="ai-provider-select-label">选择厂商</InputLabel>
-            <Select labelId="ai-provider-select-label" label="选择厂商" value={selectedProvider?.id ?? ""} disabled={busy} onChange={(event) => setSelectedProviderId(event.target.value)}>
+            <Select labelId="ai-provider-select-label" label="选择厂商" value={selectedProvider?.id ?? ""} disabled={busy || !can("settings.ai.edit")} onChange={(event) => setSelectedProviderId(event.target.value)}>
               {draft.providers.map((provider) => <MenuItem key={provider.id} value={provider.id}>{provider.label}</MenuItem>)}
             </Select>
           </FormControl>
-          {selectedProvider && <ProviderPanel key={selectedProvider.id} provider={selectedProvider} status={statuses.get(selectedProvider.id)} disabled={busy} onChange={(patch) => updateProvider(selectedProvider.id, patch)} />}
+          {selectedProvider && <ProviderPanel key={selectedProvider.id} provider={selectedProvider} status={statuses.get(selectedProvider.id)} disabled={busy || !can("settings.ai.edit")} onChange={(patch) => updateProvider(selectedProvider.id, patch)} />}
         </Stack>
       </SettingsPanel>
     </Stack>
@@ -207,11 +209,10 @@ function ModelField({ provider, disabled, onChange }: { provider: AiProviderSett
   </Stack>;
 }
 
-function SettingsPanel({ title, description, children, footer }: { title: string; description: string; children: ReactNode; footer?: ReactNode }) {
+function SettingsPanel({ title, description, children, action }: { title: string; description: string; children: ReactNode; action?: ReactNode }) {
   return <Stack spacing={1.5} className="bk-form-section">
-    <Box><Typography variant="subtitle1" component="h3">{title}</Typography><Typography color="text.secondary" sx={{ mt: 0.5 }}>{description}</Typography></Box>
+    <SectionHeader title={title} description={description} action={action} />
     {children}
-    {footer && <Stack sx={{ alignItems: "flex-end", pt: `${tokens.spacing[4]}px`, borderTop: 1, borderColor: "divider" }}><ActionToolbar>{footer}</ActionToolbar></Stack>}
   </Stack>;
 }
 

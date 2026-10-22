@@ -10,6 +10,7 @@ DEST=$(mktemp -d "$ROOT/.artifacts/release-XXXXXXXX")
 printf 'Release directory: %s\n' "$DEST"
 pnpm lint
 pnpm typecheck
+pnpm test
 pnpm build
 rsync -a --exclude target --exclude .local apps/server/ "$DEST/server/"
 mkdir -p "$DEST/server/src/main/resources/static"

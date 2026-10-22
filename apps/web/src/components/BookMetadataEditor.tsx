@@ -1,6 +1,6 @@
+import { usePermissions } from "../auth/permissions";
 // 书目编辑与封面消费共用缓存更新；普通乐观保存失败须恢复快照，文件写回另行确认。
 // Metadata/cover consumers share cache updates; failed optimistic saves restore snapshots and writeback requires separate confirmation.
-import { ImageOutlined } from "@/ui/icons";
 import { Chip } from "@/ui/feedback";
 import { MetadataEditorForm } from "./MetadataEditorForm";
 import { Alert } from "@/ui/feedback";
@@ -9,16 +9,13 @@ import { Dialog, DialogActions, DialogContent, DialogTitle } from "@/ui/overlays
 import { Checkbox } from "@/ui/forms";
 import { CircularProgress } from "@/ui/feedback";
 import { FormControlLabel } from "@/ui/primitives";
-import { MenuItem } from "@/ui/primitives";
 import { Stack } from "@/ui/primitives";
-import { Select } from "@/ui/forms";
 import { Typography } from "@/ui/primitives";
 import { useQuery, useQueryClient, type InfiniteData, type QueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { api } from "../api/client";
-import type { Book, BookMetadata, BookPage, FileOperationPreview } from "../domain/types";
-import { LIBRARY_CATEGORIES } from "../pages/virtual-library-catalog";
-import { tokens } from "../theme/generated-tokens";
+import type { Book, BookMetadata, BookPage, FileOperationPreview, ReadingOverview } from "../domain/types";
+import { ThemaSubjectField } from "./ThemaSubjectField";
 import { useCoverCrop } from "./CoverCropDialog";
 
 interface EditableMetadata {
@@ -34,8 +31,9 @@ interface EditableMetadata {
   series: string;
   seriesIndex: string;
   tags: string;
-  primaryCategoryCode: string;
-  subcategoryCode: string;
+  subjectCodes: string[];
+  authorBiography: string;
+  tableOfContents: string;
   writeBack: boolean;
   publiclyVisible: boolean;
 }
@@ -53,21 +51,12 @@ const empty: EditableMetadata = {
   series: "",
   seriesIndex: "",
   tags: "",
-  primaryCategoryCode: "",
-  subcategoryCode: "",
+  subjectCodes: [],
+  authorBiography: "",
+  tableOfContents: "",
   writeBack: false,
   publiclyVisible: true,
 };
-
-function taxonomySelection(subjectCodes: readonly string[] | undefined) {
-  const codes = subjectCodes ?? [];
-  for (const category of LIBRARY_CATEGORIES) {
-    const subcategory = category.subcategories.find((candidate) => codes.includes(candidate.code));
-    if (subcategory) return { primaryCategoryCode: category.code, subcategoryCode: subcategory.code };
-  }
-  const category = LIBRARY_CATEGORIES.find((candidate) => codes.includes(candidate.code));
-  return { primaryCategoryCode: category?.code ?? "", subcategoryCode: "" };
-}
 
 function visibleBookFromMetadata(book: Book, metadata: BookMetadata): Book {
   return {
@@ -82,9 +71,17 @@ function visibleBookFromMetadata(book: Book, metadata: BookMetadata): Book {
 }
 
 function updateCachedBook(queryClient: QueryClient, updatedBook: Book) {
-  const snapshots = queryClient.getQueriesData<InfiniteData<BookPage>>({ queryKey: ["books"] });
+  const snapshots = queryClient.getQueriesData<InfiniteData<BookPage> | ReadingOverview>({ queryKey: ["books"] });
   for (const [queryKey, data] of snapshots) {
     if (!data) continue;
+    if ("recentReading" in data) {
+      queryClient.setQueryData<ReadingOverview>(queryKey, {
+        ...data,
+        featuredBook: data.featuredBook?.id === updatedBook.id ? updatedBook : data.featuredBook,
+        recentReading: data.recentReading.map(item => item.book.id === updatedBook.id ? {...item, book: updatedBook} : item),
+      });
+      continue;
+    }
     queryClient.setQueryData<InfiniteData<BookPage>>(queryKey, {
       ...data,
       pages: data.pages.map((page) => ({
@@ -105,6 +102,7 @@ export function BookMetadataEditor({ book, onClose, onCompleted, onSavedImmediat
   onSavedImmediately: (message: string) => void;
   onSaveFailed: (message: string) => void;
 }) {
+  const { can } = usePermissions();
   const queryClient = useQueryClient();
   const [resetCoverOpen, setResetCoverOpen] = useState(false);
   const query = useQuery({
@@ -141,7 +139,9 @@ export function BookMetadataEditor({ book, onClose, onCompleted, onSavedImmediat
       series: query.data.series ?? "",
       seriesIndex: query.data.seriesIndex?.toString() ?? "",
       tags: query.data.tags.join("，"),
-      ...taxonomySelection(query.data.subjectCodes),
+      subjectCodes: query.data.subjectCodes ?? [],
+      authorBiography: query.data.authorBiography ?? "",
+      tableOfContents: query.data.tableOfContents ?? "",
       writeBack: false,
       publiclyVisible: query.data.publiclyVisible ?? true,
     });
@@ -152,19 +152,10 @@ export function BookMetadataEditor({ book, onClose, onCompleted, onSavedImmediat
     setPreview(null);
   };
 
-  const subcategories = LIBRARY_CATEGORIES.find((category) => category.code === form.primaryCategoryCode)?.subcategories ?? [];
-
-  const updatePrimaryCategory = (value: string) => {
-    setForm((current) => ({ ...current, primaryCategoryCode: value, subcategoryCode: "" }));
-    setPreview(null);
-  };
-
   const save = () => {
     if (!book || !query.data) return;
     const original = query.data;
-    const originalTaxonomy = taxonomySelection(original.subjectCodes);
-    const subjectChanged = form.primaryCategoryCode !== originalTaxonomy.primaryCategoryCode
-      || form.subcategoryCode !== originalTaxonomy.subcategoryCode;
+    const subjectChanged = JSON.stringify(form.subjectCodes) !== JSON.stringify(original.subjectCodes ?? []);
     const metadataInput = {
       publiclyVisible: form.publiclyVisible,
       title: form.title.trim(),
@@ -179,9 +170,9 @@ export function BookMetadataEditor({ book, onClose, onCompleted, onSavedImmediat
       series: form.series.trim() || undefined,
       seriesIndex: form.seriesIndex ? Number(form.seriesIndex) : undefined,
       tags: form.tags.split(/[，,]/).map((tag) => tag.trim()).filter(Boolean),
-      subjectCodes: subjectChanged
-        ? form.subcategoryCode ? [form.subcategoryCode] : []
-        : original.subjectCodes ?? [],
+      subjectCodes: form.subjectCodes,
+      authorBiography: form.authorBiography.trim() || undefined,
+      tableOfContents: form.tableOfContents.trim() || undefined,
       sources: original.sources,
     };
     const sameList = (left: readonly string[], right: readonly string[]) => JSON.stringify(left) === JSON.stringify(right);
@@ -199,6 +190,8 @@ export function BookMetadataEditor({ book, onClose, onCompleted, onSavedImmediat
       metadataInput.seriesIndex !== (original.seriesIndex ?? undefined) && "seriesIndex",
       !sameList(metadataInput.tags, original.tags) && "tags",
       subjectChanged && "subjectCodes",
+      metadataInput.authorBiography !== (original.authorBiography || undefined) && "authorBiography",
+      metadataInput.tableOfContents !== (original.tableOfContents || undefined) && "tableOfContents",
     ].filter((field): field is string => Boolean(field));
     const optimisticMetadata: BookMetadata = {
       id: book.id,
@@ -216,7 +209,7 @@ export function BookMetadataEditor({ book, onClose, onCompleted, onSavedImmediat
       rollbackBooks();
       queryClient.setQueryData(metadataQueryKey, previousMetadata);
     };
-    const shouldWriteBack = form.writeBack;
+    const shouldWriteBack = form.writeBack && can("library.files");
 
     setBusy(true);
     setError("");
@@ -259,6 +252,22 @@ export function BookMetadataEditor({ book, onClose, onCompleted, onSavedImmediat
     } finally {
       setBusy(false);
     }
+  };
+
+  const readSource = async () => {
+    if (!book) return;
+    setBusy(true); setError("");
+    try {
+      const source = await api.getBookBibliographySource(book.id);
+      setForm(current => ({ ...current,
+        description: current.description || source.description || "",
+        authorBiography: current.authorBiography || source.authorBiography || "",
+        tableOfContents: current.tableOfContents || source.tableOfContents || "",
+        subjectCodes: current.subjectCodes.length ? current.subjectCodes : source.subjectCodes ?? [],
+      }));
+      onCompleted("已读取原书可用资料，核对后保存；已有填写内容已保留。");
+    } catch (reason) { setError(reason instanceof Error ? reason.message : "无法读取原书资料"); }
+    finally { setBusy(false); }
   };
 
   const replaceCover = async (file: File) => {
@@ -308,25 +317,15 @@ export function BookMetadataEditor({ book, onClose, onCompleted, onSavedImmediat
             coverUrl={query.data?.coverUrl ?? book?.coverUrl} coverAlt="当前书籍封面"
             coverDetails={<Chip label={book?.format} variant="outlined" />}
             coverActions={<>
-              <Button variant="outlined" startIcon={<ImageOutlined />} disabled={busy} onClick={() => coverInput.current?.click()}>更换封面</Button>
+              <Button variant="outlined" disabled={busy} onClick={() => coverInput.current?.click()}>更换封面</Button>
+              <Button variant="outlined" disabled={busy} onClick={() => void readSource()}>读取原书资料</Button>
                 <Button color="inherit" disabled={busy} onClick={() => setResetCoverOpen(true)}>恢复默认封面</Button>
               <input ref={coverInput} hidden type="file" accept="image/jpeg,image/png,image/webp" onChange={(event: any) => { const file = event.target.files?.[0]; if (file) void replaceCover(file); event.target.value = ""; }} />
             </>} extraFields={
-              <Stack sx={{ gridColumn: { xs: "auto", sm: "1 / -1" }, gap: `${tokens.spacing[2]}px`, minWidth: 0 }}>
-                <Typography variant="body2" color="text.secondary">书业主题分类</Typography>
-                <Stack direction={{ xs: "column", sm: "row" }} sx={{ gap: `${tokens.spacing[2]}px`, minWidth: 0 }}>
-                  <Select sx={{ width: "100%" }} label="Thema 主分类" disabled={busy} value={form.primaryCategoryCode} onChange={(event: any) => updatePrimaryCategory(event.target.value)} placeholder="选择主分类">
-                    <MenuItem value="">未指定（按书名与标签自动归类）</MenuItem>
-                    {LIBRARY_CATEGORIES.map((category) => <MenuItem key={category.code} value={category.code}>{category.label} · {category.code} · {category.themaLabel}</MenuItem>)}
-                  </Select>
-                  <Select sx={{ width: "100%" }} label="Thema 子分类" value={form.subcategoryCode} disabled={busy || !form.primaryCategoryCode} onChange={(event: any) => update("subcategoryCode", event.target.value)} placeholder={form.primaryCategoryCode ? "选择子分类" : "先选择主分类"}>
-                    <MenuItem value="">未指定（保留自动归类）</MenuItem>
-                    {subcategories.map((subcategory) => <MenuItem key={subcategory.code} value={subcategory.code}>{subcategory.label} · {subcategory.subtitle}</MenuItem>)}
-                  </Select>
-                </Stack>
-              </Stack>
+              <div style={{ gridColumn: "1 / -1", minWidth: 0 }}><ThemaSubjectField value={form.subjectCodes} disabled={busy}
+                metadataText={`${form.title} ${form.description} ${form.tags}`} onChange={subjectCodes => { setForm(current => ({ ...current, subjectCodes })); setPreview(null); }} /></div>
             }>
-            <FormControlLabel control={<Checkbox disabled={busy} checked={form.writeBack} onChange={(event: any) => update("writeBack", event.target.checked)} />} label={`同时写回 ${book?.format ?? ""} 原文件`} />
+            <FormControlLabel control={<Checkbox disabled={busy || !can("library.files")} checked={form.writeBack && can("library.files")} onChange={(event: any) => update("writeBack", event.target.checked)} />} label={`同时写回 ${book?.format ?? ""} 原文件`} />
           </MetadataEditorForm>
         ) : (
           <Stack spacing={2.25} sx={{ pt: 1 }}>
@@ -339,7 +338,7 @@ export function BookMetadataEditor({ book, onClose, onCompleted, onSavedImmediat
       <Stack direction={{ xs: "column", sm: "row" }} sx={{ justifyContent: "flex-end", gap: 1.5 }}>
         <Button color="inherit" onClick={onClose} disabled={busy}>取消</Button>
         {preparingWriteBack ? <Button variant="contained" disabled>正在准备…</Button>
-          : !preview ? <Button variant="contained" disabled={busy || !form.title.trim() || !form.authors.trim()} onClick={save}>{form.writeBack ? "保存并生成预览" : "保存"}</Button>
+          : !preview ? <Button variant="contained" disabled={busy || !form.title.trim() || !form.authors.trim()} onClick={save}>{form.writeBack ? "保存并预览" : "保存"}</Button>
           : <Button variant="contained" disabled={busy || preview.conflicts.length > 0} onClick={executeWriteBack}>{busy ? "正在提交…" : "确认写回原文件"}</Button>}
       </Stack>
     </Stack>

@@ -1,7 +1,8 @@
 // 把批注样式应用到 EPUB 文档范围，清理旧标记后重建，避免叠加重复包装。
 // Applies annotation styles to EPUB ranges, rebuilding after old markers are cleared to avoid repeated wrappers.
-import { annotationColorBackground, annotationColorHex } from "../../domain/annotation-colors";
+import { annotationColorHex, readerHighlightStyle, type AnnotationTextTheme } from "../../domain/annotation-colors";
 import type { Annotation } from "../../domain/types";
+import { tokens } from "../../theme/generated-tokens";
 
 export const EPUB_INLINE_ANNOTATION_CLASS = "page-annotation-inline";
 
@@ -10,8 +11,8 @@ function isReadableTextNode(node: Text) {
   return Boolean(node.data && parent && !parent.closest("script, style, noscript"));
 }
 
-export function findEpubTextRange(document: Document, quote: string) {
-  const root = document.body;
+export function findEpubTextRange(document: Document, quote: string, searchRoot: Node = document.body) {
+  const root = searchRoot;
   const normalizedQuote = quote.replace(/\s/gu, "");
   if (!root || !normalizedQuote) return undefined;
 
@@ -42,6 +43,17 @@ export function findEpubTextRange(document: Document, quote: string) {
   return range;
 }
 
+export function isEpubArticleParagraphLocator(locator: string) {
+  return /^(?:article\.xhtml#)?p-\d+$/u.test(locator);
+}
+
+export function findEpubArticleParagraphRange(document: Document, locator: string, quote: string) {
+  const match = /^(?:article\.xhtml#)?(p-\d+)$/u.exec(locator);
+  const paragraph = match?.[1] ? document.getElementById(match[1]) : null;
+  if (!paragraph || !quote) return undefined;
+  return findEpubTextRange(document, quote, paragraph);
+}
+
 export function clearEpubInlineAnnotations(document: Document) {
   document.querySelectorAll<HTMLElement>(`.${EPUB_INLINE_ANNOTATION_CLASS}`).forEach((wrapper) => {
     const parent = wrapper.parentNode;
@@ -52,7 +64,10 @@ export function clearEpubInlineAnnotations(document: Document) {
   document.body?.normalize();
 }
 
-export function applyEpubInlineAnnotation(range: Range, annotation: Annotation) {
+export function applyEpubInlineAnnotation(range: Range, annotation: Annotation, theme: AnnotationTextTheme = {
+  background: tokens.color.semantic.canvas,
+  foreground: tokens.color.semantic.textPrimary,
+}) {
   if (range.collapsed) return 0;
   const document = range.startContainer.ownerDocument;
   if (!document) return 0;
@@ -87,7 +102,9 @@ export function applyEpubInlineAnnotation(range: Range, annotation: Annotation) 
     wrapper.style.setProperty("box-decoration-break", "clone");
     wrapper.style.setProperty("-webkit-box-decoration-break", "clone");
     if (annotation.style === "HIGHLIGHT") {
-      wrapper.style.setProperty("background-color", annotationColorBackground(annotation.color), "important");
+      const highlight = readerHighlightStyle(annotation.color, theme);
+      wrapper.style.setProperty("background-color", highlight.background, "important");
+      wrapper.style.setProperty("color", highlight.color, "important");
     } else if (annotation.style === "BOLD") {
       wrapper.style.setProperty("font-weight", "700", "important");
     } else {

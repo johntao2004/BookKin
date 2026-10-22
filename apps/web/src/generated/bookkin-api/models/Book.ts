@@ -131,7 +131,7 @@ export interface Book {
      */
     tags: Array<string>;
     /**
-     * Thema 1.6 subject codes.
+     *
      * @type {Array<string>}
      * @memberof Book
      */

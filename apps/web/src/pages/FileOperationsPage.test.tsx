@@ -8,7 +8,7 @@ import { FileOperationsPage } from "./FileOperationsPage";
 
 describe("FileOperationsPage", () => {
   beforeEach(() => {
-    vi.spyOn(api, "listFileOperations").mockResolvedValue([
+    vi.spyOn(api, "listFileOperationPage").mockResolvedValue({ items: [
       {
         id: "operation-1",
         type: "TRASH",
@@ -27,7 +27,7 @@ describe("FileOperationsPage", () => {
         createdAt: "2026-08-19T13:02:00Z",
         stage: "COMPLETE",
       },
-    ]);
+    ], total: 2 });
   });
 
   afterEach(() => vi.restoreAllMocks());
@@ -42,6 +42,7 @@ describe("FileOperationsPage", () => {
       "状态",
       "时间",
     ]);
+    await within(table).findByText("声之来信");
     expect(within(table).getAllByRole("row")).toHaveLength(3);
     expect(within(table).getByText("声之来信")).toBeInTheDocument();
     expect(table).not.toHaveTextContent("顾安安/");
@@ -53,7 +54,7 @@ describe("FileOperationsPage", () => {
   });
 
   it("保留清楚的空状态引导", async () => {
-    vi.mocked(api.listFileOperations).mockResolvedValueOnce([]);
+    vi.mocked(api.listFileOperationPage).mockResolvedValueOnce({ items: [], total: 0 });
 
     render(<TestProviders><FileOperationsPage /></TestProviders>);
 

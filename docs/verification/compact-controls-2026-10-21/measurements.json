@@ -1,0 +1,165 @@
+{
+  "desktop": {
+    "controls": [
+      {
+        "bottom": 215.59375,
+        "height": 40,
+        "label": "全部格式",
+        "top": 175.59375
+      },
+      {
+        "bottom": 215.59375,
+        "height": 40,
+        "label": "最近入库",
+        "top": 175.59375
+      },
+      {
+        "bottom": 215.59375,
+        "height": 40,
+        "label": "高级筛选",
+        "top": 175.59375
+      },
+      {
+        "bottom": 316.1875,
+        "height": 40,
+        "label": "关键词",
+        "top": 276.1875
+      },
+      {
+        "bottom": 316.1875,
+        "height": 40,
+        "label": "全部分类",
+        "top": 276.1875
+      },
+      {
+        "bottom": 372.1875,
+        "height": 40,
+        "label": "重置",
+        "top": 332.1875
+      },
+      {
+        "bottom": 372.1875,
+        "height": 40,
+        "label": "管理分类",
+        "top": 332.1875
+      },
+      {
+        "bottom": 757.4296875,
+        "height": 36,
+        "label": "book更多操作",
+        "top": 721.4296875
+      }
+    ],
+    "overflow": false,
+    "viewport": 1440
+  },
+  "mobile": {
+    "controls": [
+      {
+        "height": 40,
+        "label": "全部格式",
+        "top": 201.7890625
+      },
+      {
+        "height": 40,
+        "label": "最近入库",
+        "top": 201.7890625
+      },
+      {
+        "height": 40,
+        "label": "高级筛选",
+        "top": 253.7890625
+      },
+      {
+        "height": 40,
+        "label": "关键词",
+        "top": 354.3828125
+      },
+      {
+        "height": 40,
+        "label": "全部分类",
+        "top": 437.9765625
+      },
+      {
+        "height": 40,
+        "label": "重置",
+        "top": 493.9765625
+      },
+      {
+        "height": 40,
+        "label": "管理分类",
+        "top": 493.9765625
+      },
+      {
+        "height": 36,
+        "label": "book更多操作",
+        "top": 830.2265625
+      }
+    ],
+    "overflow": false,
+    "viewport": 390
+  },
+  "settings": [
+    {
+      "bottom": 388.1796875,
+      "height": 40,
+      "label": "展示名称（可选）",
+      "top": 348.1796875
+    },
+    {
+      "bottom": 388.1796875,
+      "height": 40,
+      "label": "衬线字体",
+      "top": 348.1796875
+    },
+    {
+      "bottom": 471.7734375,
+      "height": 40,
+      "label": "来源 / 许可说明（可选）",
+      "top": 431.7734375
+    },
+    {
+      "bottom": 471.7734375,
+      "height": 40,
+      "label": "选择字体文件",
+      "top": 431.7734375
+    }
+  ],
+  "mixedFields": [
+    {
+      "height": 40,
+      "tag": "INPUT",
+      "type": "number"
+    },
+    {
+      "height": 40,
+      "tag": "INPUT",
+      "type": "number"
+    },
+    {
+      "height": 40,
+      "tag": "DIV",
+      "type": null
+    },
+    {
+      "height": 40,
+      "tag": "INPUT",
+      "type": "text"
+    },
+    {
+      "height": 40,
+      "tag": "DIV",
+      "type": null
+    },
+    {
+      "height": 40,
+      "tag": "INPUT",
+      "type": "text"
+    },
+    {
+      "height": 40,
+      "tag": "SPAN",
+      "type": null
+    }
+  ]
+}

@@ -1,9 +1,8 @@
-// 书单详情将浏览分页与成员管理分离，修改使用当前 revision 而非无条件覆盖。
+import { RequestErrorPage } from "./HttpErrorPage";
+import { usePermissions } from "../auth/permissions";
+// 书目详情将浏览分页与成员管理分离，修改使用当前 revision 而非无条件覆盖。
 // Separates booklist browsing pagination from membership edits using the current revision instead of unconditional overwrite.
 import { BookGridSkeleton } from "../components/BookGridSkeleton";
-import { ArrowBackRounded } from "@/ui/icons";
-import { EditOutlined } from "@/ui/icons";
-import { TuneRounded } from "@/ui/icons";
 import { Alert } from "@/ui/feedback";
 import { Box } from "@/ui/primitives";
 import { Breadcrumbs } from "@/ui/primitives";
@@ -27,7 +26,7 @@ import { BookCatalogEmptyState } from "../components/BookCatalogEmptyState";
 import { BooklistOrganizerDrawer } from "../components/BooklistOrganizerDrawer";
 import { BrowseBookCard, CoverMosaic, VisibilityChip } from "../components/CatalogDiscoveryCards";
 import { bookGridSx } from "../components/bookGrid";
-import { PageContainer, PageTitle } from "../components/PageHeader";
+import { PageBackAction, PageContainer, PageTitle } from "../components/PageHeader";
 import type { BooklistDetail, BrowseBook } from "../domain/types";
 import { useInfiniteScrollTrigger } from "../hooks/useInfiniteScrollTrigger";
 import { tokens } from "../theme/generated-tokens";
@@ -35,6 +34,7 @@ import { tokens } from "../theme/generated-tokens";
 export function BooklistDetailPage() {
   const { booklistId = "" } = useParams();
   const { user, ready } = useAuth();
+  const { can } = usePermissions();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [params, setParams] = useSearchParams();
@@ -81,41 +81,41 @@ export function BooklistDetailPage() {
     setParams(next, { replace: true });
   };
 
-  if (detailQuery.isPending) return <PageContainer><Stack sx={{ alignItems: "center", py: `${tokens.spacing[20]}px` }}><CircularProgress /></Stack></PageContainer>;
-  if (detailQuery.isError || !detailQuery.data) return <PageContainer><Alert severity="error" action={<Button component={Link} to="/booklists">返回书单</Button>}>这个书单不存在，或你没有查看权限。</Alert></PageContainer>;
+  if (detailQuery.isPending) return <PageContainer><PageBackAction to="/booklists">返回书目</PageBackAction><Stack sx={{ alignItems: "center", py: `${tokens.spacing[20]}px` }}><CircularProgress /></Stack></PageContainer>;
+  if (detailQuery.isError || !detailQuery.data) return <RequestErrorPage error={detailQuery.error} retrying={detailQuery.isFetching} onRetry={() => void detailQuery.refetch()} back={<PageBackAction to="/booklists">返回书目</PageBackAction>} />;
   const booklist = detailQuery.data;
   const coverColumnMaxWidth = tokens.spacing[24] * 3;
 
   return (
     <PageContainer>
-      <Button component={Link} to="/booklists" startIcon={<ArrowBackRounded />} sx={{ mb: `${tokens.spacing[5]}px` }}>返回全部书单</Button>
+      <PageBackAction to="/booklists">返回书目</PageBackAction>
       <Breadcrumbs sx={{ mb: `${tokens.spacing[5]}px` }}>
-        <UiLink component={Link} to="/booklists" underline="hover" color="inherit">书单</UiLink>
+        <UiLink component={Link} to="/booklists" underline="hover" color="inherit">书目</UiLink>
         <Typography color="text.primary">{booklist.title}</Typography>
       </Breadcrumbs>
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: `minmax(${tokens.layout.bookCardMinWidth}px, ${coverColumnMaxWidth}px) minmax(0, 1fr)` }, gap: { xs: `${tokens.spacing[6]}px`, md: `${tokens.spacing[10]}px` }, alignItems: "stretch", mb: `${tokens.spacing[10]}px` }}>
-        <CoverMosaic books={booklist.previewBooks} label={`${booklist.title}书单封面`} />
+        <CoverMosaic books={booklist.previewBooks} label={`${booklist.title}书目封面`} />
         <Stack sx={{ justifyContent: "center", alignItems: "flex-start", gap: `${tokens.spacing[4]}px`, py: { sm: `${tokens.spacing[6]}px` } }}>
           <Stack direction="row" sx={{ flexWrap: "wrap", gap: `${tokens.spacing[2]}px`, alignItems: "center" }}>
             <Typography variant="overline" color="primary.main">BOOKLIST</Typography>
             <VisibilityChip visibility={booklist.visibility} />
           </Stack>
           <PageTitle>{booklist.title}</PageTitle>
-          <Typography color="text.secondary" sx={{ maxWidth: 720 }}>{booklist.description || "创建者还没有写下这份书单的说明。"}</Typography>
-          <Typography variant="body2" color="text.secondary">{booklist.ownerDisplayName ? `由 ${booklist.ownerDisplayName} 创建` : "共享书单"} · {booklist.bookCount} 本</Typography>
-          {booklist.editable ? (
+          <Typography color="text.secondary" sx={{ maxWidth: 720 }}>{booklist.description || "创建者还没有写下这份书目的说明。"}</Typography>
+          <Typography variant="body2" color="text.secondary">{booklist.ownerDisplayName ? `由 ${booklist.ownerDisplayName} 创建` : "共享书目"} · {booklist.bookCount} 本</Typography>
+          {(booklist.editable && can("booklists.edit")) ? (
             <Stack direction={{ xs: "column", sm: "row" }} sx={{ width: { xs: "100%", sm: "auto" }, gap: `${tokens.spacing[3]}px`, mt: `${tokens.spacing[2]}px` }}>
-              <Button variant="contained" startIcon={<TuneRounded />} onClick={() => setOrganizerOpen(true)}>整理书单</Button>
-              <Button variant="outlined" startIcon={<EditOutlined />} onClick={() => setEditOpen(true)}>编辑资料与可见范围</Button>
+              <Button variant="contained" onClick={() => setOrganizerOpen(true)}>整理书目</Button>
+              <Button variant="outlined" onClick={() => setEditOpen(true)}>编辑书目</Button>
             </Stack>
           ) : null}
         </Stack>
       </Box>
-      {booklist.hiddenPublicBookCount > 0 ? <Alert severity="warning" sx={{ mb: `${tokens.spacing[6]}px` }}>有 {booklist.hiddenPublicBookCount} 本书已不在公共书目池，匿名访客不会看到它们。请整理书单或调整可见范围。</Alert> : null}
+      {booklist.hiddenPublicBookCount > 0 ? <Alert severity="warning" sx={{ mb: `${tokens.spacing[6]}px` }}>有 {booklist.hiddenPublicBookCount} 本书已不在公共书目池，匿名访客不会看到它们。请整理书目或调整可见范围。</Alert> : null}
       <Stack direction={{ xs: "column", sm: "row" }} sx={{ justifyContent: "space-between", alignItems: { xs: "stretch", sm: "center" }, gap: `${tokens.spacing[3]}px`, mb: `${tokens.spacing[4]}px` }}>
-        <Typography variant="h4" component="h2">书单内容</Typography>
+        <Typography variant="h4" component="h2">书目内容</Typography>
         <Stack direction={{ xs: "column", sm: "row" }} sx={{ gap: `${tokens.spacing[3]}px` }}>
-          <FormControl size="small" sx={{ minWidth: tokens.spacing[24] + tokens.spacing[8] }}>
+          <FormControl sx={{ minWidth: tokens.spacing[24] + tokens.spacing[8] }}>
             <Select label="格式" value={format} onChange={(event: any) => updateParam("format", event.target.value, "ALL")}>
               <MenuItem value="ALL">全部格式</MenuItem><MenuItem value="EPUB">EPUB</MenuItem><MenuItem value="PDF">PDF</MenuItem>
             </Select>
@@ -123,22 +123,22 @@ export function BooklistDetailPage() {
         </Stack>
       </Stack>
       {booksQuery.isPending ? (
-        <BookGridSkeleton label="正在加载书单内容" />
+        <BookGridSkeleton label="正在加载书目内容" />
       ) : booksQuery.isError && !booksQuery.data ? (
-        <Alert severity="error" action={<Button color="inherit" onClick={() => void booksQuery.refetch()}>重试</Button>}>书单内容暂时无法读取。</Alert>
+        <Alert severity="error" action={<Button color="inherit" onClick={() => void booksQuery.refetch()}>重试</Button>}>书目内容暂时无法读取。</Alert>
       ) : books.length ? (
         <Box sx={bookGridSx}>
           {books.map((book) => <BrowseBookCard key={book.id} book={book} onAdd={user ? setAddBook : undefined} />)}
         </Box>
       ) : (
-        <BookCatalogEmptyState title={query || format !== "ALL" ? "未找到匹配的书籍" : "书单中暂无书籍"}
-          action={booklist.editable && !query && format === "ALL" ? <Button variant="contained" onClick={() => setOrganizerOpen(true)}>整理书单</Button> : undefined}
+        <BookCatalogEmptyState title={query || format !== "ALL" ? "未找到匹配的书籍" : "书目中暂无书籍"}
+          action={(booklist.editable && can("booklists.edit")) && !query && format === "ALL" ? <Button variant="contained" onClick={() => setOrganizerOpen(true)}>整理书目</Button> : undefined}
         />
       )}
       {booksQuery.hasNextPage && !booksQuery.isFetchNextPageError ? <Stack ref={triggerRef} sx={{ alignItems: "center", py: `${tokens.spacing[8]}px` }}>{booksQuery.isFetchingNextPage ? <CircularProgress size={24} /> : supported ? <Typography variant="caption" color="text.disabled">继续向下浏览将加载更多</Typography> : <Button onClick={loadNextPage}>继续加载</Button>}</Stack> : null}
-      {booksQuery.isFetchNextPageError ? <Alert severity="warning" sx={{ mt: `${tokens.spacing[6]}px` }} action={<Button color="inherit" onClick={() => void booksQuery.fetchNextPage()}>重新加载</Button>}>更多书单内容加载失败，已显示的书籍不受影响。</Alert> : null}
-      {booklist.editable ? <BooklistOrganizerDrawer open={organizerOpen} booklist={booklist} onClose={() => setOrganizerOpen(false)} onChanged={updateDetail} /> : null}
-      {booklist.editable ? (
+      {booksQuery.isFetchNextPageError ? <Alert severity="warning" sx={{ mt: `${tokens.spacing[6]}px` }} action={<Button color="inherit" onClick={() => void booksQuery.fetchNextPage()}>重新加载</Button>}>更多书目内容加载失败，已显示的书籍不受影响。</Alert> : null}
+      {(booklist.editable && can("booklists.edit")) ? <BooklistOrganizerDrawer open={organizerOpen} booklist={booklist} onClose={() => setOrganizerOpen(false)} onChanged={updateDetail} /> : null}
+      {(booklist.editable && can("booklists.edit")) ? (
         <BooklistFormDialog
           open={editOpen}
           initial={booklist}

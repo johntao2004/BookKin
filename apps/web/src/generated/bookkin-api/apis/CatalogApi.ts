@@ -34,6 +34,16 @@ import {
     BookPageToJSON,
 } from '../models/BookPage';
 import {
+    type GetBookBibliographySource200Response,
+    GetBookBibliographySource200ResponseFromJSON,
+    GetBookBibliographySource200ResponseToJSON,
+} from '../models/GetBookBibliographySource200Response';
+import {
+    type GetCatalogRevision200Response,
+    GetCatalogRevision200ResponseFromJSON,
+    GetCatalogRevision200ResponseToJSON,
+} from '../models/GetCatalogRevision200Response';
+import {
     type MetadataRequest,
     MetadataRequestFromJSON,
     MetadataRequestToJSON,
@@ -48,6 +58,10 @@ export interface GetBookRequest {
     id: string;
 }
 
+export interface GetBookBibliographySourceRequest {
+    id: string;
+}
+
 export interface GetBookCoverRequest {
     id: string;
 }
@@ -59,6 +73,8 @@ export interface GetBookMetadataRequest {
 export interface ListBooksRequest {
     q?: string;
     format?: BookFormat;
+    subjectCode?: string;
+    categoryId?: string;
     sort?: ListBooksSortEnum;
     cursor?: string;
     limit?: number;
@@ -123,6 +139,49 @@ export class CatalogApi extends runtime.BaseAPI {
      */
     async getBook(requestParameters: GetBookRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Book> {
         const response = await this.getBookRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Creates request options for getBookBibliographySource without sending the request
+     */
+    async getBookBibliographySourceRequestOpts(requestParameters: GetBookBibliographySourceRequest): Promise<runtime.RequestOpts> {
+        if (requestParameters['id'] == null) {
+            throw new runtime.RequiredError(
+                'id',
+                'Required parameter "id" was null or undefined when calling getBookBibliographySource().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+
+        let urlPath = `/books/{id}/bibliography-source`;
+        urlPath = urlPath.replace('{id}', encodeURIComponent(String(requestParameters['id'])));
+
+        return {
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        };
+    }
+
+    /**
+     */
+    async getBookBibliographySourceRaw(requestParameters: GetBookBibliographySourceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GetBookBibliographySource200Response>> {
+        const requestOptions = await this.getBookBibliographySourceRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => GetBookBibliographySource200ResponseFromJSON(jsonValue));
+    }
+
+    /**
+     */
+    async getBookBibliographySource(requestParameters: GetBookBibliographySourceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GetBookBibliographySource200Response> {
+        const response = await this.getBookBibliographySourceRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -213,6 +272,41 @@ export class CatalogApi extends runtime.BaseAPI {
     }
 
     /**
+     * Creates request options for getCatalogRevision without sending the request
+     */
+    async getCatalogRevisionRequestOpts(): Promise<runtime.RequestOpts> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+
+        let urlPath = `/books/revision`;
+
+        return {
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        };
+    }
+
+    /**
+     */
+    async getCatalogRevisionRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GetCatalogRevision200Response>> {
+        const requestOptions = await this.getCatalogRevisionRequestOpts();
+        const response = await this.request(requestOptions, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => GetCatalogRevision200ResponseFromJSON(jsonValue));
+    }
+
+    /**
+     */
+    async getCatalogRevision(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GetCatalogRevision200Response> {
+        const response = await this.getCatalogRevisionRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
      * Creates request options for listBooks without sending the request
      */
     async listBooksRequestOpts(requestParameters: ListBooksRequest): Promise<runtime.RequestOpts> {
@@ -224,6 +318,14 @@ export class CatalogApi extends runtime.BaseAPI {
 
         if (requestParameters['format'] != null) {
             queryParameters['format'] = requestParameters['format'];
+        }
+
+        if (requestParameters['subjectCode'] != null) {
+            queryParameters['subjectCode'] = requestParameters['subjectCode'];
+        }
+
+        if (requestParameters['categoryId'] != null) {
+            queryParameters['categoryId'] = requestParameters['categoryId'];
         }
 
         if (requestParameters['sort'] != null) {

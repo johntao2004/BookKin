@@ -61,7 +61,7 @@ describe('reference library module streaming', () => {
     validateReferenceLibraryManifest(actual);
     expect(actual.revision).toBe(REFERENCE_LIBRARY_ASSET_REVISION);
     expect(REFERENCE_LIBRARY.manifestUrl).toBe(
-      `/assets/hogwarts-library/library-manifest.json?v=${REFERENCE_LIBRARY_ASSET_REVISION}`,
+      `/assets/hogwarts-library/library-manifest.json?v=${REFERENCE_LIBRARY_ASSET_REVISION}-loading-v1`,
     );
     expect(REFERENCE_LIBRARY.configUrl).toBe(
       `/assets/hogwarts-library/scene-config.json?v=${REFERENCE_LIBRARY_ASSET_REVISION}`,
@@ -269,8 +269,8 @@ describe('reference library module streaming', () => {
     await vi.waitFor(() => expect(controller!.diagnostics().allDetailsResident).toBe(true), {timeout: 10_000});
     if (!multiDraw) await vi.waitFor(() => expect(controller!.diagnostics().batching.consolidatedFallback).toBe(true), {timeout: 10_000});
     const diagnostics = controller.diagnostics();
-    expect(diagnostics).toMatchObject({residentModules: 13, failedModules: 0, peakConcurrentLoads: 2,
-      fallbackResidencyLocked: !multiDraw, shadowRequiredModules: 13});
+    expect(diagnostics).toMatchObject({residentModules: actual.chunks.length, failedModules: 0, peakConcurrentLoads: 2,
+      fallbackResidencyLocked: !multiDraw, shadowRequiredModules: actual.chunks.length});
     expect(diagnostics.residentTriangles).toBe(actual.chunks.reduce((sum, chunk) => sum + chunk.triangles, 0));
     expect(diagnostics.batching.residentTriangles).toBe(diagnostics.residentTriangles);
     expect(diagnostics.batching.batchCount).toBe(actual.materialCapacityLimits!.length);
@@ -376,7 +376,7 @@ describe('canonical reference material ownership', () => {
     await pool.dispose(); expect(image.close).toHaveBeenCalledTimes(1);
   });
 
-  it('shares exact shading variants across all thirteen real Meshopt modules', async () => {
+  it('shares exact shading variants across all real Meshopt modules', async () => {
     const root = 'public/assets/hogwarts-library/';
     const manifest: ReferenceLibraryManifest = JSON.parse(readFileSync(root + 'library-manifest.json', 'utf8'));
     const bank = await new GLTFLoader().parseAsync(readFileSync(root + 'materials.gltf', 'utf8'), '/assets/hogwarts-library/');
@@ -419,7 +419,7 @@ describe('canonical reference material ownership', () => {
       }
       geometries.forEach(geometry => geometry.dispose());
     }
-    expect(manifest.chunks).toHaveLength(13);
+    expect(manifest.chunks).toHaveLength(20);
     expect(primitiveCount).toBe(manifest.chunks.reduce((sum, chunk) => sum + chunk.primitives, 0));
     expect(variants.size).toBe(manifest.materialCapacityLimits!.length);
     expect(manifest.materialCapacityLimits!.map(material => material.name)).toEqual(

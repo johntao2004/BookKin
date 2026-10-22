@@ -24,6 +24,9 @@ fi
 export BOOKKIN_STORAGE_ROOTS_0_NAME="${BOOKKIN_STORAGE_ROOTS_0_NAME:-主书库}"
 export BOOKKIN_STORAGE_ROOTS_0_PATH="${BOOKKIN_STORAGE_ROOTS_0_PATH:-$LOCAL_LIBRARY_ROOT}"
 export BOOKKIN_FONT_STORAGE_PATH="${BOOKKIN_FONT_STORAGE_PATH:-$LOCAL_LIBRARY_ROOT/.bookkin-assets/fonts}"
+export BOOKKIN_CONTENT_STORAGE_PATH="${BOOKKIN_CONTENT_STORAGE_PATH:-$HOME/.bookkin/content}"
+# Preserve the existing content location on local upgrades. Articles and vault
+# retain distinct subdirectories; explicit *_STORAGE_PATH overrides are supported.
 
 # 在不将可复用密钥写入应用配置的前提下，使本地加密 AI 设置在重启后仍可使用。生产部署必须自行设置 BOOKKIN_AI_SETTINGS_ENCRYPTION_KEY。
 # Keep local encrypted AI settings usable across restarts without shipping a
@@ -45,6 +48,17 @@ PY
     fi
   fi
   export BOOKKIN_AI_SETTINGS_ENCRYPTION_KEY="$(tr -d '\n' < "$LOCAL_AI_KEY_FILE")"
+fi
+
+# 身份验证器使用独立实例密钥；持久化于受 Git 忽略的本机配置，不进入数据库。
+LOCAL_TWO_FACTOR_KEY_FILE="${BOOKKIN_LOCAL_TWO_FACTOR_KEY_FILE:-$REPO_ROOT/.local/two-factor-encryption-key}"
+if [[ -z "${BOOKKIN_TWO_FACTOR_ENCRYPTION_KEY:-}" ]]; then
+  umask 077
+  if [[ ! -s "$LOCAL_TWO_FACTOR_KEY_FILE" ]]; then
+    mkdir -p "$(dirname "$LOCAL_TWO_FACTOR_KEY_FILE")"
+    openssl rand -hex 32 > "$LOCAL_TWO_FACTOR_KEY_FILE"
+  fi
+  export BOOKKIN_TWO_FACTOR_ENCRYPTION_KEY="$(tr -d '\n' < "$LOCAL_TWO_FACTOR_KEY_FILE")"
 fi
 
 mkdir -p "$RUN_DIR" "$LOG_DIR"

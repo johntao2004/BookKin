@@ -1,6 +1,8 @@
 // 统一整站与阅读器主题状态，把持久选择传播至 Ant Design 和共享 UI。
 // Shares theme state across site and reader, propagating persisted choices to Ant Design and shared UI.
+import zhCN from "antd/locale/zh_CN";
 import { FeedbackProvider } from "../ui/notifications";
+import { ConfirmationProvider } from "../ui/confirmations";
 import { ConfigProvider } from "../ui/antd";
 import { CssBaseline, UiThemeProvider } from "../ui/primitives";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type PropsWithChildren } from "react";
@@ -64,10 +66,10 @@ export function BookKinThemeProvider({ children }: PropsWithChildren) {
 
   return (
     <BookKinThemeContext.Provider value={value}>
-      <ConfigProvider theme={antdTheme} wave={{ disabled: true }}>
+      <ConfigProvider locale={zhCN} theme={antdTheme} wave={{ disabled: true }}>
         <UiThemeProvider theme={uiTheme}>
           <CssBaseline />
-          <FeedbackProvider>{children}</FeedbackProvider>
+          <FeedbackProvider><ConfirmationProvider>{children}</ConfirmationProvider></FeedbackProvider>
         </UiThemeProvider>
       </ConfigProvider>
     </BookKinThemeContext.Provider>

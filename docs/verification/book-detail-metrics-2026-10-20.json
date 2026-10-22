@@ -1,0 +1,50 @@
+[
+  {
+    "requestedWidth": 320,
+    "fields": 13,
+    "scrollWidth": 305,
+    "width": 320
+  },
+  {
+    "requestedWidth": 390,
+    "fields": 13,
+    "scrollWidth": 375,
+    "width": 390
+  },
+  {
+    "requestedWidth": 768,
+    "fields": 13,
+    "scrollWidth": 753,
+    "width": 768
+  },
+  {
+    "requestedWidth": 1024,
+    "fields": 13,
+    "scrollWidth": 1009,
+    "width": 1024
+  },
+  {
+    "requestedWidth": 1440,
+    "fields": 13,
+    "scrollWidth": 1425,
+    "width": 1440
+  },
+  {
+    "requestedWidth": 1920,
+    "fields": 13,
+    "scrollWidth": 1905,
+    "width": 1920
+  },
+  {
+    "requestedWidth": 3840,
+    "fields": 13,
+    "scrollWidth": 3825,
+    "width": 3840
+  },
+  {
+    "requestedWidth": 5120,
+    "fields": 13,
+    "scrollWidth": 4081,
+    "width": 4096
+  }
+]

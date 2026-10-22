@@ -14,7 +14,7 @@ import { Typography } from "@/ui/primitives";
 import { getDocument, GlobalWorkerOptions, TextLayer, type PDFDocumentProxy, type PDFDataRangeTransport, type RenderTask } from "pdfjs-dist";
 import pdfWorker from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 import "pdfjs-dist/web/pdf_viewer.css";
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode, type RefObject, type TouchEvent } from "react";
+import { useCallback, useEffect, useEffectEvent, useMemo, useRef, useState, type ReactNode, type RefObject, type TouchEvent } from "react";
 import { api } from "../../api/client";
 import type { Annotation } from "../../domain/types";
 import { tokens } from "../../theme/generated-tokens";
@@ -24,7 +24,7 @@ import { pdfTextToReadingBlocks, splitPdfInlineFootnoteReferences, type PdfReadi
 import type { ReaderPageLayout } from "./reader-layout";
 import { isEditableReaderTarget, isReaderSwipe } from "./reader-navigation";
 import { PageTurnShade } from "./PageTurnShade";
-import { readerSelectionFromRect, type ReaderSelection } from "./types";
+import { readerSelectionFromRect, type ReaderSelection, type TocItem } from "./types";
 import { useReaderPageLayout } from "./use-reader-page-layout";
 import { usePageTurnTransition } from "./use-page-turn-transition";
 
@@ -67,7 +67,7 @@ export function previousPdfLocation({
   };
 }
 
-export default function PdfDocumentReader({ bookId, annotations, theme, fontSize, fontFamily, pageTurnEnabled = true, fontSourceUrl, contentUrl, dataRange, readOnly = false, target, onSelect, onPosition }: {
+export default function PdfDocumentReader({ bookId, annotations, theme, fontSize, fontFamily, pageTurnEnabled = true, fontSourceUrl, contentUrl, dataRange, readOnly = false, target, targetRevision, onNavigation, onSelect, onPosition }: {
   bookId: string;
   annotations: Annotation[];
   theme: { background: string; foreground: string; muted: string };
@@ -79,6 +79,8 @@ export default function PdfDocumentReader({ bookId, annotations, theme, fontSize
   dataRange?: PDFDataRangeTransport;
   readOnly?: boolean;
   target?: string;
+  targetRevision?: number;
+  onNavigation?: (items: TocItem[]) => void;
   onSelect: (selection: ReaderSelection) => void;
   onPosition: (locator: string, progress: number) => void;
 }) {
@@ -172,6 +174,39 @@ export default function PdfDocumentReader({ bookId, annotations, theme, fontSize
     };
   }, [bookId, contentUrl, dataRange, readOnly]);
 
+  const navigateToTarget = useEffectEvent((loaded: PDFDocumentProxy, locator: string) => {
+    const match = /^pdf:page=(\d+)(?:&offset=(\d+))?/u.exec(locator);
+    if (!match) return;
+    const nextPage = Math.min(loaded.numPages, Math.max(1, Number(match[1])));
+    // Unmount the old text layout before it can clamp the destination's virtual offset.
+    if (nextPage !== pageNumber) setTextLoading(true);
+    pendingPreviousPageNumberRef.current = null;
+    setPendingPreviousPageNumber(null);
+    setPageNumber(nextPage);
+    setVirtualPageIndex(Math.max(0, Number(match[2] ?? 0)));
+  });
+  useEffect(() => {
+    if (document && target) navigateToTarget(document, target);
+  }, [document, target, targetRevision]);
+
+  useEffect(() => {
+    if (!document || !onNavigation) return;
+    let disposed = false;
+    void (async () => {
+      const outline = await document.getOutline();
+      const flatten = async (entries: NonNullable<typeof outline>, depth = 0): Promise<TocItem[]> => (await Promise.all(entries.map(async entry => {
+        const destination = typeof entry.dest === "string" ? await document.getDestination(entry.dest) : entry.dest;
+        const page = destination?.[0];
+        const pageNumber = page === undefined ? undefined : typeof page === "number" ? page + 1 : (await document.getPageIndex(page)) + 1;
+        const children = await flatten(entry.items, depth + 1);
+        return [...(pageNumber ? [{ href: `pdf:page=${pageNumber}`, locator: `pdf:page=${pageNumber}`, label: entry.title, depth }] : []), ...children];
+      }))).flat();
+      const items = outline ? await flatten(outline) : [];
+      if (!disposed) onNavigation(items);
+    })().catch(() => { if (!disposed) onNavigation([]); });
+    return () => { disposed = true; };
+  }, [document, onNavigation]);
+
   useEffect(() => {
     if (viewMode !== "ORIGINAL" || !document || !canvasRef.current || !textLayerRef.current) return;
     let disposed = false;
@@ -229,8 +264,8 @@ export default function PdfDocumentReader({ bookId, annotations, theme, fontSize
 
   useEffect(() => {
     if (viewMode !== "READING" || textLoading) return;
-    if (readingTextRef.current) applyPdfTextAnnotations(readingTextRef.current, pageNumber, annotations);
-  }, [annotations, document, pageNumber, readingBlocks, textLoading, viewMode]);
+    if (readingTextRef.current) applyPdfTextAnnotations(readingTextRef.current, pageNumber, annotations, { theme });
+  }, [annotations, document, pageNumber, readingBlocks, textLoading, viewMode, theme.background, theme.foreground]);
 
   useEffect(() => {
     if (!document || pendingPreviousPageNumber !== null) return;

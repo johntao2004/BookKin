@@ -59,7 +59,8 @@ describe("ReaderPage", () => {
     expect(screen.queryByRole("button", { name: "高亮" })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "使用粉色荧光笔高亮" }));
 
-    await waitFor(() => expect(screen.getByText("高亮已私人同步")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText("黄昏从山脊落下来时", { selector: "mark" })).toHaveAttribute("data-highlight-color", "PINK"));
+    expect(screen.queryByText("高亮已私人同步")).not.toBeInTheDocument();
     expect(screen.getByText("黄昏从山脊落下来时", { selector: "mark" })).toHaveAttribute("data-highlight-color", "PINK");
     expect(screen.queryByRole("toolbar", { name: "批注工具" })).not.toBeInTheDocument();
     expect(removeAllRanges).toHaveBeenCalled();
@@ -88,7 +89,8 @@ describe("ReaderPage", () => {
     fireEvent.change(screen.getByLabelText("写下这段文字带来的想法"), { target: { value: "记住这层暮色。" } });
     fireEvent.click(screen.getByRole("button", { name: "保存笔记" }));
 
-    await waitFor(() => expect(screen.getByText("高亮和笔记已私人同步")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText("河面先暗了一层", { selector: "mark" })).toHaveAttribute("data-highlight-color", "PINK"));
+    expect(screen.queryByText("高亮和笔记已私人同步")).not.toBeInTheDocument();
     await waitFor(() => expect(screen.queryByRole("dialog", { name: "高亮并写笔记" })).not.toBeInTheDocument());
     expect(screen.getByText("河面先暗了一层", { selector: "mark" })).toHaveAttribute("data-highlight-color", "PINK");
     openNotesDrawer();
@@ -111,7 +113,8 @@ describe("ReaderPage", () => {
     fireEvent.mouseUp(screen.getByRole("article"));
     fireEvent.click(screen.getByRole("button", { name: "下划线" }));
 
-    await waitFor(() => expect(screen.getByText("下划线已私人同步")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText("木桨在水里划出细长的纹路", { selector: "mark" })).toHaveStyle({ textDecoration: "underline" }));
+    expect(screen.queryByText("下划线已私人同步")).not.toBeInTheDocument();
     expect(screen.getByText("木桨在水里划出细长的纹路", { selector: "mark" })).toHaveStyle({ textDecoration: "underline" });
     openNotesDrawer();
     expect(await screen.findByText("下划线")).toBeInTheDocument();
@@ -130,7 +133,8 @@ describe("ReaderPage", () => {
     fireEvent.mouseUp(screen.getByRole("article"));
     fireEvent.click(screen.getByRole("button", { name: "加粗" }));
 
-    await waitFor(() => expect(screen.getByText("加粗已私人同步")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText("像有人把一天的光慢慢折进书页", { selector: "mark" })).toHaveStyle({ fontWeight: "700" }));
+    expect(screen.queryByText("加粗已私人同步")).not.toBeInTheDocument();
     expect(screen.getByText("像有人把一天的光慢慢折进书页", { selector: "mark" })).toHaveStyle({ fontWeight: "700" });
   });
 

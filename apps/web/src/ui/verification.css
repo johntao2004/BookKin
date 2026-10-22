@@ -1,0 +1,53 @@
+.bk-verification-heading {
+  text-align: center;
+  padding-inline: calc(var(--bk-overlay-inline) + var(--layout-touch-target)) !important;
+}
+.bk-verification-body {
+  display: grid;
+  gap: var(--spacing-3);
+}
+.bk-verification-body .ant-form-item { margin-bottom: var(--spacing-3); }
+.bk-verification-description {
+  margin: 0;
+  color: var(--color-text-muted);
+  text-align: center;
+  line-height: var(--typography-line-height-body);
+}
+.bk-verification-code { min-width: 0; width: 100%; }
+.bk-one-time-code.ant-otp {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  width: 100%;
+  gap: var(--spacing-2);
+}
+.bk-one-time-code.bk-recovery-code.ant-otp {
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+}
+.bk-one-time-code .ant-input {
+  width: 100%;
+  min-width: 0;
+  height: auto;
+  min-height: var(--layout-touch-target);
+  max-height: var(--spacing-16);
+  aspect-ratio: 3 / 4;
+  padding-inline: 0;
+  font-size: var(--typography-font-size-heading-sm);
+  font-variant-numeric: tabular-nums;
+  background: var(--color-surface-soft);
+}
+.bk-verification-actions {
+  display: grid;
+  justify-items: stretch;
+  gap: var(--spacing-2);
+}
+.bk-verification-actions .ant-btn {
+  width: 100%;
+  min-height: var(--layout-touch-target);
+  height: auto;
+  white-space: normal;
+}
+.bk-verification-status {
+  color: var(--color-text-muted);
+  text-align: center;
+  margin: var(--spacing-3) 0;
+}

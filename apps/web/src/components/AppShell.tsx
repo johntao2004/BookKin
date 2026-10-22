@@ -1,23 +1,22 @@
+import { usePermissions, PermissionBoundary } from "../auth/permissions";
 // 共享导航与账号操作壳，显示权限取自认证状态而非代替服务端权限检查。
 // Shared navigation/account shell derives display permissions from auth state without replacing server authorization.
 import { useSiteSettingsQuery, SiteMetadata, SiteFooter } from "../site/site-settings";
 import { pageWidthSx, topNavigationSurfaceSx } from "./PageHeader";
-import { CategoryOutlined } from "@/ui/icons";
-import { CollectionsBookmarkOutlined } from "@/ui/icons";
-import { HomeOutlined } from "@/ui/icons";
 import { LibraryBooksOutlined } from "@/ui/icons";
-import { LogoutOutlined } from "@/ui/icons";
+import { LockOutlined } from "@/ui/icons";
+import { ExpandMoreRounded } from "@/ui/icons";
+
 import { MenuRounded } from "@/ui/icons";
 import { NotesOutlined } from "@/ui/icons";
 import { PaletteOutlined } from "@/ui/icons";
 import { SearchRounded } from "@/ui/icons";
-import { SettingsOutlined } from "@/ui/icons";
-import { ThreeDRotationOutlined } from "@/ui/icons";
+
 import { AppBar } from "@/ui/primitives";
 import { Alert } from "@/ui/feedback";
 import { Avatar } from "@/ui/feedback";
 import { Box } from "@/ui/primitives";
-import { Button } from "@/ui/buttons";
+import { Button, IconButton } from "@/ui/buttons";
 import { Dropdown } from "@/ui/antd";
 import { Drawer } from "@/ui/overlays";
 import { InputAdornment } from "@/ui/primitives";
@@ -29,8 +28,8 @@ import { Stack } from "@/ui/primitives";
 import { TextField } from "@/ui/forms";
 import { Toolbar } from "@/ui/primitives";
 import { Typography } from "@/ui/primitives";
-import { useEffect, useRef, useState, type PropsWithChildren } from "react";
-import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import { useEffect, useRef, useState, type KeyboardEvent, type PropsWithChildren } from "react";
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import { DEFAULT_SITE_SETTINGS } from "../api/client";
 import type { ReaderTheme } from "./readers/reader-fonts";
@@ -40,15 +39,10 @@ import { bookKinThemeOptions } from "../theme/theme";
 import { useOrdinaryPageScale } from "../theme/useOrdinaryPageScale";
 
 const navigation = [
-  { label: "首页", path: "/library", icon: <HomeOutlined /> },
-  { label: "文章收藏", path: "/articles", icon: <NotesOutlined /> },
-  { label: "禁书区", path: "/vault", icon: <LibraryBooksOutlined /> },
-  { label: "藏书库", path: "/library/all", icon: <LibraryBooksOutlined /> },
-  { label: "分类", path: "/categories", icon: <CategoryOutlined /> },
-  { label: "书单", path: "/booklists", icon: <CollectionsBookmarkOutlined /> },
-  { label: "知识图谱", path: "/knowledge-graph", icon: <CategoryOutlined /> },
-  { label: "阅读笔记", path: "/annotations", icon: <NotesOutlined /> },
-  { label: "虚拟书库", path: "/virtual-library", icon: <ThreeDRotationOutlined /> },
+  { label: "藏书阁", path: "/library", icon: <LibraryBooksOutlined /> },
+  { label: "撷文斋", path: "/articles", icon: <NotesOutlined /> },
+  { label: "札记轩", path: "/annotations", icon: <NotesOutlined /> },
+  { label: "秘藏阁", path: "/vault", icon: <LockOutlined /> },
 ];
 
 const headerControlSx = {
@@ -74,21 +68,40 @@ export function AppShell({ children }: PropsWithChildren) {
   const siteQuery = useSiteSettingsQuery();
   const site = siteQuery.data ?? DEFAULT_SITE_SETTINGS;
   const { user, logout } = useAuth();
+  const { canVisit } = usePermissions();
   const [logoutError, setLogoutError] = useState("");
   const { mode: bookKinTheme, setMode: setBookKinTheme } = useBookKinTheme();
   const location = useLocation();
   const navigate = useNavigate();
 
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [libraryMenuOpen, setLibraryMenuOpen] = useState(false);
+  const [libraryGroupOpen, setLibraryGroupOpen] = useState(true);
+  const [notesMenuOpen, setNotesMenuOpen] = useState(false);
+  const [notesGroupOpen, setNotesGroupOpen] = useState(true);
+  const [articlesMenuOpen, setArticlesMenuOpen] = useState(false);
+  const [articlesGroupOpen, setArticlesGroupOpen] = useState(true);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const [themeMenuOpen, setThemeMenuOpen] = useState(false);
   const themeMenuSelectionRef = useRef(false);
-  const libraryNavigation = user
-    ? navigation.filter(item => item.path !== "/virtual-library" || (siteQuery.isSuccess && site.virtualLibraryEnabled))
-    : navigation.filter((item) => ["/library", "/articles", "/categories", "/booklists"].includes(item.path));
-  const searchLabel = "搜索书籍、笔记、书单";
-  const searchableLibrary = true;
-  const readerRoute = location.pathname.startsWith("/reader/");
+  const libraryNavigation = (user ? navigation : navigation.filter(item => item.path === "/library")).filter(item => canVisit(item.path));
+  const librarySections = [
+    ...(user ? [{ label: "阁中一览", path: "/library/overview" }] : []),
+    { label: "书目", path: "/booklists" },
+    ...(user ? [{ label: "知识图谱", path: "/knowledge-graph" }] : []),
+    ...(user && siteQuery.isSuccess && site.virtualLibraryEnabled ? [{ label: "虚拟书库", path: "/virtual-library" }] : []),
+  ].filter(item => canVisit(item.path));
+  const notesSections = [
+    { label: "读书札记", path: "/annotations/books" },
+    { label: "阅文札记", path: "/annotations/articles" },
+  ].filter(item => canVisit(item.path));
+  const articlesSections = [
+    { label: "全部文章", path: "/articles" },
+    { label: "合集", path: "/article-collections" },
+  ].filter(item => canVisit(item.path));
+  const searchLabel = "搜索书籍、笔记、书目";
+  const searchableLibrary = canVisit("/search");
+  const readerRoute = location.pathname.startsWith("/reader/") || /^\/articles\/[^/]+\/?$/.test(location.pathname);
   useOrdinaryPageScale(!readerRoute && location.pathname !== "/virtual-library");
   const [query, setQuery] = useState(location.pathname === "/search" ? new URLSearchParams(location.search).get("q") ?? "" : "");
   useEffect(() => {
@@ -96,41 +109,53 @@ export function AppShell({ children }: PropsWithChildren) {
   }, [location.pathname, location.search]);
   const [searchExpanded, setSearchExpanded] = useState(Boolean(query));
   const searchTriggerRef = useRef<HTMLElement>(null);
-  const isActivePath = (path: string) => path === "/categories" || path === "/booklists"
-    ? location.pathname === path || location.pathname.startsWith(`${path}/`)
-    : location.pathname === path;
+  const isActivePath = (path: string) => location.pathname === path || location.pathname.startsWith(`${path}/`)
+    || (path === "/articles" && location.pathname.startsWith("/article-collections"))
+    || (path === "/library" && ["/knowledge-graph", "/virtual-library", "/booklists"].some(section => location.pathname === section || location.pathname.startsWith(`${section}/`)));
+  const selectedLibraryPath = librarySections.find(section => location.pathname === section.path || location.pathname.startsWith(`${section.path}/`))?.path;
+  const selectedArticlesPath = location.pathname.startsWith("/article-collections") ? "/article-collections" : "/articles";
+  const selectedNotesPath = location.pathname.startsWith("/annotations/posts/book/") ? "/annotations/books"
+    : location.pathname.startsWith("/annotations/posts/article/") ? "/annotations/articles"
+      : notesSections.find(section => isActivePath(section.path))?.path;
 
   const updateQuery = (value: string) => setQuery(value);
 
-  const linkButton = (item: (typeof navigation)[number]) => (
-    <Button
-      variant="text"
+  const linkButton = (item: (typeof navigation)[number]) => {
+    const library = item.path === "/library";
+    const articleGroup = item.path === "/articles";
+    const grouped = library || articleGroup || item.path === "/annotations";
+    const menuOpen = library ? libraryMenuOpen : articleGroup ? articlesMenuOpen : notesMenuOpen;
+    const setMenuOpen = library ? setLibraryMenuOpen : articleGroup ? setArticlesMenuOpen : setNotesMenuOpen;
+    const sections = library ? librarySections : articleGroup ? articlesSections : notesSections;
+    const selectedPath = library ? selectedLibraryPath : articleGroup ? selectedArticlesPath : selectedNotesPath;
+    const button = <Box
       key={item.path}
-      component={NavLink}
+      component={grouped ? Link : NavLink}
       to={item.path}
-      color="inherit"
-      className="bk-nav-link"
-      sx={{
-        minWidth: 0,
-        px: 1.25,
-        minHeight: `${tokens.layout.touchTarget}px`,
-        borderRadius: `${tokens.radius.md}px`,
-        position: "relative",
-        color: isActivePath(item.path) ? "text.primary" : "text.secondary",
-        "&::after": isActivePath(item.path) ? {
-          content: '""',
-          position: "absolute",
-          left: tokens.spacing.sm,
-          right: tokens.spacing.sm,
-          bottom: 0,
-          height: 2,
-          bgcolor: "primary.main",
-        } : undefined,
-      }}
+      aria-haspopup={grouped ? "menu" : undefined}
+      aria-expanded={grouped ? menuOpen : undefined}
+      aria-current={grouped && isActivePath(item.path) ? "page" : undefined}
+      onClick={grouped ? () => setMenuOpen(false) : undefined}
+      onKeyDown={grouped ? (event: KeyboardEvent<HTMLElement>) => {
+        if (event.key === "ArrowDown") { event.preventDefault(); setMenuOpen(true); }
+        if (event.key === "Escape") setMenuOpen(false);
+      } : undefined}
+      className={`bk-nav-link${isActivePath(item.path) ? " bk-nav-link-active" : ""}`}
     >
-      {item.label}
-    </Button>
-  );
+      <span className="bk-nav-label">{item.label}</span>
+      {grouped && <ExpandMoreRounded className="bk-nav-chevron" />}
+    </Box>;
+    return grouped ? <Dropdown key={item.path} open={menuOpen} onOpenChange={setMenuOpen}
+      trigger={["hover", "click"]} mouseEnterDelay={0} placement="bottomLeft" autoFocus
+      styles={{ root: { minWidth: tokens.layout.menuMinWidth } }}
+      menu={{
+        selectedKeys: selectedPath ? [selectedPath] : [],
+        items: sections.map(section => ({ key: section.path, label: <NavLink to={section.path}>{section.label}</NavLink> })),
+        onClick: () => setMenuOpen(false),
+      }}>
+      {button}
+    </Dropdown> : button;
+  };
 
   return (
     <Box sx={{ minHeight: "var(--app-viewport-height, 100vh)", bgcolor: "background.default", color: "text.primary" }}>
@@ -223,7 +248,6 @@ export function AppShell({ children }: PropsWithChildren) {
                 })}>
                   {searchExpanded && <TextField
                     autoFocus
-                    size="small"
                     value={query}
                     onChange={(event: any) => updateQuery(event.target.value)}
                     onBlur={() => setSearchExpanded(false)}
@@ -240,7 +264,7 @@ export function AppShell({ children }: PropsWithChildren) {
                     }}
                     placeholder={searchLabel ?? undefined}
                     aria-label={searchLabel ?? undefined}
-                    sx={{ width: "100%", "& .bk-field-control": { height: `${tokens.layout.touchTarget}px`, bgcolor: "background.default" } }}
+                    sx={{ width: "100%", "& .bk-field-control": { bgcolor: "background.default" } }}
                     slotProps={{ input: { startAdornment: <InputAdornment position="start"><SearchRounded fontSize="small" /></InputAdornment> } }}
                   />}
                 </Box>
@@ -285,10 +309,10 @@ export function AppShell({ children }: PropsWithChildren) {
                   items: [
                     { key: "account", label: user.displayName, disabled: true },
                     { type: "divider" },
-                    { key: "/profile", label: "个人信息", icon: <SettingsOutlined /> },
-                    ...(["OWNER", "ADMIN"].includes(user.role) ? [{ key: "/settings", label: "设置", icon: <SettingsOutlined /> }] : []),
+                    { key: "/profile", label: "个人信息" },
+                    ...(canVisit("/settings") ? [{ key: "/settings", label: "管理设置" }] : []),
                     { type: "divider" },
-                    { key: "logout", label: "退出登录", icon: <LogoutOutlined /> },
+                    { key: "logout", label: "退出登录" },
                   ],
                   onClick: async ({ key }) => {
                     setAccountMenuOpen(false);
@@ -335,7 +359,35 @@ export function AppShell({ children }: PropsWithChildren) {
             }}
           >
             <List sx={{ width: "100%" }}>
-              {libraryNavigation.map((item) => (
+              {libraryNavigation.map((item) => {
+                const group = item.path === "/library" ? "library" : item.path === "/articles" ? "articles" : item.path === "/annotations" ? "notes" : undefined;
+                const groupOpen = group === "library" ? libraryGroupOpen : group === "articles" ? articlesGroupOpen : notesGroupOpen;
+                const setGroupOpen = group === "library" ? setLibraryGroupOpen : group === "articles" ? setArticlesGroupOpen : setNotesGroupOpen;
+                const sections = group === "library" ? librarySections : group === "articles" ? articlesSections : notesSections;
+                const selectedPath = group === "library" ? selectedLibraryPath : group === "articles" ? selectedArticlesPath : selectedNotesPath;
+                return group ? <Box key={item.path}>
+                <Stack direction="row" sx={{ alignItems: "center" }}>
+                <ListItemButton selected={isActivePath(item.path)}
+                  onClick={() => { setDrawerOpen(false); navigate(item.path); }}
+                  sx={{ flex: 1, minWidth: 0, minHeight: `${tokens.layout.touchTarget}px`, px: { xs: `${tokens.spacing[1]}px`, sm: `${tokens.spacing[3]}px` } }}>
+                  <ListItemIcon sx={{ minWidth: `${tokens.layout.touchTarget}px` }}>{item.icon}</ListItemIcon>
+                  <ListItemText primary={item.label} />
+                </ListItemButton>
+                <IconButton aria-label={`${item.label}二级菜单`} aria-expanded={groupOpen} aria-controls={`${group}-navigation-children`}
+                  sx={{ minWidth: tokens.layout.touchTarget, minHeight: tokens.layout.touchTarget }}
+                  onClick={() => setGroupOpen(open => !open)}>
+                  <ExpandMoreRounded className="bk-nav-chevron" sx={{ transform: groupOpen ? "rotate(180deg)" : undefined }} />
+                </IconButton>
+                </Stack>
+                {groupOpen && <List id={`${group}-navigation-children`} role="group" aria-label={`${item.label}二级菜单`} sx={{ pl: `${tokens.layout.touchTarget}px` }}>
+                  {sections.map(section => <ListItemButton key={section.path}
+                    selected={selectedPath === section.path} aria-current={selectedPath === section.path ? "page" : undefined}
+                    onClick={() => { setDrawerOpen(false); navigate(section.path); }}
+                    sx={{ minWidth: 0, minHeight: `${tokens.layout.touchTarget}px`, px: `${tokens.spacing[3]}px` }}>
+                    <ListItemText primary={section.label} />
+                  </ListItemButton>)}
+                </List>}
+              </Box> : (
                 <ListItemButton
                   key={item.path}
                   selected={isActivePath(item.path)}
@@ -345,14 +397,14 @@ export function AppShell({ children }: PropsWithChildren) {
                   <ListItemIcon sx={{ minWidth: `${tokens.layout.touchTarget}px` }}>{item.icon}</ListItemIcon>
                   <ListItemText primary={item.label} />
                 </ListItemButton>
-              ))}
+              );})}
             </List>
           </Box>
         </Drawer>
       </>
 
       <SiteMetadata />
-      <Box component="main">{children}</Box>
+      <Box component="main"><PermissionBoundary>{children}</PermissionBoundary></Box>
       <SiteFooter />
     </Box>
   );

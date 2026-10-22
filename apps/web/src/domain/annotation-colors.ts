@@ -30,3 +30,22 @@ export function annotationColorBackground(color?: AnnotationColor | string, opac
   const alpha = Math.round(Math.max(0, Math.min(1, opacity)) * 255).toString(16).padStart(2, "0");
   return `${annotationColorHex(color)}${alpha}`;
 }
+
+export interface AnnotationTextTheme {
+  background: string;
+  foreground: string;
+}
+
+// Preblend once against the page so overlapping highlights cannot wash out
+// night-mode text. Explicit text color also keeps highlighted links readable.
+export function readerHighlightStyle(color: AnnotationColor | string | undefined, theme: AnnotationTextTheme) {
+  const highlight = annotationColorHex(color).slice(1);
+  const page = (/^#[\da-f]{6}$/i.test(theme.background) ? theme.background : tokens.color.semantic.canvas).slice(1);
+  const alpha = Math.round(READABLE_HIGHLIGHT_OPACITY * 255) / 255;
+  const background = `#${[0, 2, 4].map(offset => {
+    const foregroundChannel = Number.parseInt(highlight.slice(offset, offset + 2), 16);
+    const backgroundChannel = Number.parseInt(page.slice(offset, offset + 2), 16);
+    return Math.round(foregroundChannel * alpha + backgroundChannel * (1 - alpha)).toString(16).padStart(2, "0");
+  }).join("")}`;
+  return { background, color: theme.foreground };
+}

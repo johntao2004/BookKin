@@ -14,6 +14,11 @@
 
 import * as runtime from '../runtime';
 import {
+    type AuthProfilePutRequest,
+    AuthProfilePutRequestFromJSON,
+    AuthProfilePutRequestToJSON,
+} from '../models/AuthProfilePutRequest';
+import {
     type ChangePasswordRequest,
     ChangePasswordRequestFromJSON,
     ChangePasswordRequestToJSON,
@@ -29,10 +34,40 @@ import {
     LoginRequestToJSON,
 } from '../models/LoginRequest';
 import {
+    type MailSettings,
+    MailSettingsFromJSON,
+    MailSettingsToJSON,
+} from '../models/MailSettings';
+import {
+    type PasswordPolicy,
+    PasswordPolicyFromJSON,
+    PasswordPolicyToJSON,
+} from '../models/PasswordPolicy';
+import {
     type Problem,
     ProblemFromJSON,
     ProblemToJSON,
 } from '../models/Problem';
+import {
+    type RecoveryBindInput,
+    RecoveryBindInputFromJSON,
+    RecoveryBindInputToJSON,
+} from '../models/RecoveryBindInput';
+import {
+    type RecoveryEmailInput,
+    RecoveryEmailInputFromJSON,
+    RecoveryEmailInputToJSON,
+} from '../models/RecoveryEmailInput';
+import {
+    type RecoveryResetInput,
+    RecoveryResetInputFromJSON,
+    RecoveryResetInputToJSON,
+} from '../models/RecoveryResetInput';
+import {
+    type RecoveryTokenInput,
+    RecoveryTokenInputFromJSON,
+    RecoveryTokenInputToJSON,
+} from '../models/RecoveryTokenInput';
 import {
     type SessionUser,
     SessionUserFromJSON,
@@ -49,6 +84,14 @@ import {
     SetupStatusToJSON,
 } from '../models/SetupStatus';
 
+export interface AuthProfilePutOperationRequest {
+    authProfilePutRequest: AuthProfilePutRequest;
+}
+
+export interface BindRecoveryEmailRequest {
+    recoveryBindInput: RecoveryBindInput;
+}
+
 export interface ChangePasswordOperationRequest {
     changePasswordRequest: ChangePasswordRequest;
 }
@@ -57,14 +100,132 @@ export interface LoginOperationRequest {
     loginRequest: LoginRequest;
 }
 
+export interface RequestPasswordResetRequest {
+    recoveryEmailInput: RecoveryEmailInput;
+}
+
+export interface ResetPasswordByEmailRequest {
+    recoveryResetInput: RecoveryResetInput;
+}
+
+export interface SaveMailSettingsRequest {
+    mailSettings: Omit<MailSettings, 'passwordConfigured'>;
+}
+
+export interface SavePasswordPolicyRequest {
+    passwordPolicy: PasswordPolicy;
+}
+
+export interface SendTestMailRequest {
+    recoveryEmailInput: RecoveryEmailInput;
+}
+
 export interface SetupOwnerRequest {
     setupRequest: SetupRequest;
+}
+
+export interface VerifyRecoveryEmailRequest {
+    recoveryTokenInput: RecoveryTokenInput;
 }
 
 /**
  *
  */
 export class AuthApi extends runtime.BaseAPI {
+
+    /**
+     * Creates request options for authProfilePut without sending the request
+     */
+    async authProfilePutRequestOpts(requestParameters: AuthProfilePutOperationRequest): Promise<runtime.RequestOpts> {
+        if (requestParameters['authProfilePutRequest'] == null) {
+            throw new runtime.RequiredError(
+                'authProfilePutRequest',
+                'Required parameter "authProfilePutRequest" was null or undefined when calling authProfilePut().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+
+        let urlPath = `/auth/profile`;
+
+        return {
+            path: urlPath,
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: AuthProfilePutRequestToJSON(requestParameters['authProfilePutRequest']),
+        };
+    }
+
+    /**
+     * 需要当前密码；用户名变化时撤销旧身份会话并重建当前会话。
+     * 修改当前账户用户名和显示名称
+     */
+    async authProfilePutRaw(requestParameters: AuthProfilePutOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        const requestOptions = await this.authProfilePutRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * 需要当前密码；用户名变化时撤销旧身份会话并重建当前会话。
+     * 修改当前账户用户名和显示名称
+     */
+    async authProfilePut(requestParameters: AuthProfilePutOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.authProfilePutRaw(requestParameters, initOverrides);
+    }
+
+    /**
+     * Creates request options for bindRecoveryEmail without sending the request
+     */
+    async bindRecoveryEmailRequestOpts(requestParameters: BindRecoveryEmailRequest): Promise<runtime.RequestOpts> {
+        if (requestParameters['recoveryBindInput'] == null) {
+            throw new runtime.RequiredError(
+                'recoveryBindInput',
+                'Required parameter "recoveryBindInput" was null or undefined when calling bindRecoveryEmail().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+
+        let urlPath = `/auth/recovery-email`;
+
+        return {
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: RecoveryBindInputToJSON(requestParameters['recoveryBindInput']),
+        };
+    }
+
+    /**
+     * 验证当前密码并发送邮箱确认链接
+     */
+    async bindRecoveryEmailRaw(requestParameters: BindRecoveryEmailRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        const requestOptions = await this.bindRecoveryEmailRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * 验证当前密码并发送邮箱确认链接
+     */
+    async bindRecoveryEmail(requestParameters: BindRecoveryEmailRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.bindRecoveryEmailRaw(requestParameters, initOverrides);
+    }
 
     /**
      * Creates request options for changePassword without sending the request
@@ -144,6 +305,113 @@ export class AuthApi extends runtime.BaseAPI {
     async getCsrf(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CsrfToken> {
         const response = await this.getCsrfRaw(initOverrides);
         return await response.value();
+    }
+
+    /**
+     * Creates request options for getMailSettings without sending the request
+     */
+    async getMailSettingsRequestOpts(): Promise<runtime.RequestOpts> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+
+        let urlPath = `/mail/settings`;
+
+        return {
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        };
+    }
+
+    /**
+     * 主人读取 SMTP 配置；密码不返回
+     */
+    async getMailSettingsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        const requestOptions = await this.getMailSettingsRequestOpts();
+        const response = await this.request(requestOptions, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * 主人读取 SMTP 配置；密码不返回
+     */
+    async getMailSettings(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.getMailSettingsRaw(initOverrides);
+    }
+
+    /**
+     * Creates request options for getPasswordPolicy without sending the request
+     */
+    async getPasswordPolicyRequestOpts(): Promise<runtime.RequestOpts> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+
+        let urlPath = `/auth/password-policy`;
+
+        return {
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        };
+    }
+
+    /**
+     */
+    async getPasswordPolicyRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PasswordPolicy>> {
+        const requestOptions = await this.getPasswordPolicyRequestOpts();
+        const response = await this.request(requestOptions, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PasswordPolicyFromJSON(jsonValue));
+    }
+
+    /**
+     */
+    async getPasswordPolicy(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PasswordPolicy> {
+        const response = await this.getPasswordPolicyRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Creates request options for getRecoveryEmail without sending the request
+     */
+    async getRecoveryEmailRequestOpts(): Promise<runtime.RequestOpts> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+
+        let urlPath = `/auth/recovery-email`;
+
+        return {
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        };
+    }
+
+    /**
+     * 读取当前用户已验证的找回邮箱
+     */
+    async getRecoveryEmailRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        const requestOptions = await this.getRecoveryEmailRequestOpts();
+        const response = await this.request(requestOptions, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * 读取当前用户已验证的找回邮箱
+     */
+    async getRecoveryEmail(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.getRecoveryEmailRaw(initOverrides);
     }
 
     /**
@@ -296,6 +564,237 @@ export class AuthApi extends runtime.BaseAPI {
     }
 
     /**
+     * Creates request options for requestPasswordReset without sending the request
+     */
+    async requestPasswordResetRequestOpts(requestParameters: RequestPasswordResetRequest): Promise<runtime.RequestOpts> {
+        if (requestParameters['recoveryEmailInput'] == null) {
+            throw new runtime.RequiredError(
+                'recoveryEmailInput',
+                'Required parameter "recoveryEmailInput" was null or undefined when calling requestPasswordReset().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+
+        let urlPath = `/auth/recovery/request`;
+
+        return {
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: RecoveryEmailInputToJSON(requestParameters['recoveryEmailInput']),
+        };
+    }
+
+    /**
+     * 申请重置链接；未知邮箱也返回相同响应
+     */
+    async requestPasswordResetRaw(requestParameters: RequestPasswordResetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        const requestOptions = await this.requestPasswordResetRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * 申请重置链接；未知邮箱也返回相同响应
+     */
+    async requestPasswordReset(requestParameters: RequestPasswordResetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.requestPasswordResetRaw(requestParameters, initOverrides);
+    }
+
+    /**
+     * Creates request options for resetPasswordByEmail without sending the request
+     */
+    async resetPasswordByEmailRequestOpts(requestParameters: ResetPasswordByEmailRequest): Promise<runtime.RequestOpts> {
+        if (requestParameters['recoveryResetInput'] == null) {
+            throw new runtime.RequiredError(
+                'recoveryResetInput',
+                'Required parameter "recoveryResetInput" was null or undefined when calling resetPasswordByEmail().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+
+        let urlPath = `/auth/recovery/reset`;
+
+        return {
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: RecoveryResetInputToJSON(requestParameters['recoveryResetInput']),
+        };
+    }
+
+    /**
+     * 重置密码并撤销全部旧会话
+     */
+    async resetPasswordByEmailRaw(requestParameters: ResetPasswordByEmailRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        const requestOptions = await this.resetPasswordByEmailRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * 重置密码并撤销全部旧会话
+     */
+    async resetPasswordByEmail(requestParameters: ResetPasswordByEmailRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.resetPasswordByEmailRaw(requestParameters, initOverrides);
+    }
+
+    /**
+     * Creates request options for saveMailSettings without sending the request
+     */
+    async saveMailSettingsRequestOpts(requestParameters: SaveMailSettingsRequest): Promise<runtime.RequestOpts> {
+        if (requestParameters['mailSettings'] == null) {
+            throw new runtime.RequiredError(
+                'mailSettings',
+                'Required parameter "mailSettings" was null or undefined when calling saveMailSettings().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+
+        let urlPath = `/mail/settings`;
+
+        return {
+            path: urlPath,
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: MailSettingsToJSON(requestParameters['mailSettings']),
+        };
+    }
+
+    /**
+     * 主人保存 SMTP 配置；空密码保留原值
+     */
+    async saveMailSettingsRaw(requestParameters: SaveMailSettingsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        const requestOptions = await this.saveMailSettingsRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * 主人保存 SMTP 配置；空密码保留原值
+     */
+    async saveMailSettings(requestParameters: SaveMailSettingsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.saveMailSettingsRaw(requestParameters, initOverrides);
+    }
+
+    /**
+     * Creates request options for savePasswordPolicy without sending the request
+     */
+    async savePasswordPolicyRequestOpts(requestParameters: SavePasswordPolicyRequest): Promise<runtime.RequestOpts> {
+        if (requestParameters['passwordPolicy'] == null) {
+            throw new runtime.RequiredError(
+                'passwordPolicy',
+                'Required parameter "passwordPolicy" was null or undefined when calling savePasswordPolicy().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+
+        let urlPath = `/users/password-policy`;
+
+        return {
+            path: urlPath,
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: PasswordPolicyToJSON(requestParameters['passwordPolicy']),
+        };
+    }
+
+    /**
+     * 仅主人可修改，对新设置的密码生效，不拒绝已有密码登录。
+     */
+    async savePasswordPolicyRaw(requestParameters: SavePasswordPolicyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PasswordPolicy>> {
+        const requestOptions = await this.savePasswordPolicyRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PasswordPolicyFromJSON(jsonValue));
+    }
+
+    /**
+     * 仅主人可修改，对新设置的密码生效，不拒绝已有密码登录。
+     */
+    async savePasswordPolicy(requestParameters: SavePasswordPolicyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PasswordPolicy> {
+        const response = await this.savePasswordPolicyRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Creates request options for sendTestMail without sending the request
+     */
+    async sendTestMailRequestOpts(requestParameters: SendTestMailRequest): Promise<runtime.RequestOpts> {
+        if (requestParameters['recoveryEmailInput'] == null) {
+            throw new runtime.RequiredError(
+                'recoveryEmailInput',
+                'Required parameter "recoveryEmailInput" was null or undefined when calling sendTestMail().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+
+        let urlPath = `/mail/test`;
+
+        return {
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: RecoveryEmailInputToJSON(requestParameters['recoveryEmailInput']),
+        };
+    }
+
+    /**
+     * 主人发送测试邮件
+     */
+    async sendTestMailRaw(requestParameters: SendTestMailRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        const requestOptions = await this.sendTestMailRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * 主人发送测试邮件
+     */
+    async sendTestMail(requestParameters: SendTestMailRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.sendTestMailRaw(requestParameters, initOverrides);
+    }
+
+    /**
      * Creates request options for setupOwner without sending the request
      */
     async setupOwnerRequestOpts(requestParameters: SetupOwnerRequest): Promise<runtime.RequestOpts> {
@@ -338,6 +837,52 @@ export class AuthApi extends runtime.BaseAPI {
     async setupOwner(requestParameters: SetupOwnerRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SessionUser> {
         const response = await this.setupOwnerRaw(requestParameters, initOverrides);
         return await response.value();
+    }
+
+    /**
+     * Creates request options for verifyRecoveryEmail without sending the request
+     */
+    async verifyRecoveryEmailRequestOpts(requestParameters: VerifyRecoveryEmailRequest): Promise<runtime.RequestOpts> {
+        if (requestParameters['recoveryTokenInput'] == null) {
+            throw new runtime.RequiredError(
+                'recoveryTokenInput',
+                'Required parameter "recoveryTokenInput" was null or undefined when calling verifyRecoveryEmail().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+
+        let urlPath = `/auth/recovery/verify`;
+
+        return {
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: RecoveryTokenInputToJSON(requestParameters['recoveryTokenInput']),
+        };
+    }
+
+    /**
+     * 确认绑定邮箱；仅显式 POST 消耗链接
+     */
+    async verifyRecoveryEmailRaw(requestParameters: VerifyRecoveryEmailRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        const requestOptions = await this.verifyRecoveryEmailRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * 确认绑定邮箱；仅显式 POST 消耗链接
+     */
+    async verifyRecoveryEmail(requestParameters: VerifyRecoveryEmailRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.verifyRecoveryEmailRaw(requestParameters, initOverrides);
     }
 
 }

@@ -38,7 +38,7 @@ class BookMetadataExtractorTest {
                     <dc:creator id="a1">作者甲</dc:creator><dc:creator id="a2">作者乙</dc:creator>
                     <dc:contributor id="t1">译者丙</dc:contributor><meta refines="#t1" property="role">trl</meta>
                     <dc:language>zh-CN</dc:language><dc:publisher>BookKin出版社</dc:publisher><dc:date>2026-08-21</dc:date>
-                    <dc:identifier opf:scheme="ISBN">978-7-0000-0000-1</dc:identifier><dc:subject>文学</dc:subject>
+                    <dc:identifier opf:scheme="ISBN">978-7-0000-0000-1</dc:identifier><dc:subject>文学</dc:subject><dc:subject opf:scheme="Thema">PSAF</dc:subject>
                     <meta name="calibre:series" content="山河集"/><meta name="calibre:series_index" content="2.5"/>
                     <meta name="cover" content="cover"/></metadata>
                     <manifest><item id="cover" href="cover.png" media-type="image/png" properties="cover-image"/>
@@ -50,6 +50,8 @@ class BookMetadataExtractorTest {
 
         var value = extractor.extract(epub, BookFormat.EPUB, directory, "sha256:test");
         assertEquals("真实测试书", value.title());
+        assertEquals(java.util.List.of("PSAF"), value.subjectCodes());
+        assertEquals(java.util.List.of("文学"), value.tags());
         assertEquals("副标题", value.subtitle());
         assertEquals(java.util.List.of("作者甲", "作者乙"), value.authors());
         assertEquals(java.util.List.of("译者丙"), value.translators());

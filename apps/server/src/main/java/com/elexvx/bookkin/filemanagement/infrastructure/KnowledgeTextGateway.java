@@ -25,12 +25,19 @@ public class KnowledgeTextGateway {
         this.roots = roots; this.leases = leases; this.paths = paths; this.fingerprints = fingerprints; this.sampler = sampler;
     }
     public BookTextSampler.Sample sample(BookFile file) throws Exception {
+        return read(file, path -> sampler.sample(path, file.format()));
+    }
+    public BookBibliographyReader.Source bibliography(BookFile file) throws Exception {
+        return read(file, path -> new BookBibliographyReader().read(path, file.format()));
+    }
+    @FunctionalInterface private interface FileReader<T> { T read(Path path) throws Exception; }
+    private <T> T read(BookFile file, FileReader<T> reader) throws Exception {
         var lease = leases.acquireRead(file.id(), "knowledge:" + UUID.randomUUID(), Duration.ofMinutes(5));
         try {
             var root = roots.findById(file.libraryRootId()).orElseThrow();
             var path = paths.resolveExisting(Path.of(root.canonicalPath() == null ? root.configuredPath() : root.canonicalPath()), file.relativePath());
             if (!fingerprints.sha256(path).equals(file.fingerprint())) throw ApiException.conflict("KNOWLEDGE_SOURCE_CHANGED", "书籍文件已变化，请先重新扫描。");
-            var sample = sampler.sample(path, file.format());
+            var sample = reader.read(path);
             if (!fingerprints.sha256(path).equals(file.fingerprint())) throw ApiException.conflict("KNOWLEDGE_SOURCE_CHANGED", "提取期间书籍文件发生变化，请重试。");
             return sample;
         } finally { leases.release(lease); }

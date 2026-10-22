@@ -1,10 +1,7 @@
+import { BookCover } from "../components/BookCover";
 // 按书籍组织当前用户笔记并提供导出，列表与搜索通过私人批注接口。
 // Organizes the current user’s notes by book and supports exports through private annotation APIs.
-import { ArrowBackRounded } from "@/ui/icons";
-import { DescriptionOutlined } from "@/ui/icons";
 import { FormatQuoteRounded } from "@/ui/icons";
-import { GridOnRounded } from "@/ui/icons";
-import { MenuBookOutlined } from "@/ui/icons";
 import { Alert } from "@/ui/feedback";
 import { Box } from "@/ui/primitives";
 import { Button } from "@/ui/buttons";
@@ -19,75 +16,83 @@ import { Typography } from "@/ui/primitives";
 import type { SxProps, Theme } from "@/ui/primitives";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useDeferredValue, useMemo, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Link, Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import { api } from "../api/client";
-import { PageContainer, PageHeader, PageTitle } from "../components/PageHeader";
 import { BookCatalogEmptyState } from "../components/BookCatalogEmptyState";
 import { annotationColorBackground, annotationColorHex } from "../domain/annotation-colors";
 import type { Annotation, AnnotationBookSummary, AnnotationStyle } from "../domain/types";
 import { tokens } from "../theme/generated-tokens";
 import { EMPTY_READING_NOTES_TITLE } from "../ui/empty-state-copy";
+import { useAuth } from "../auth/AuthContext";
 
+/** Preserve existing reader/export links while moving source categories to independent routes. */
 export function AnnotationsPage() {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const selectedBookId = searchParams.get("bookId");
-  if (selectedBookId) {
-    return <BookAnnotations bookId={selectedBookId} onBack={() => {
-      const next = new URLSearchParams(searchParams);
-      next.delete("bookId");
-      setSearchParams(next);
-    }} />;
-  }
-  return <AnnotationBooks onOpen={(bookId) => {
-    const next = new URLSearchParams(searchParams);
-    next.set("bookId", bookId);
-    setSearchParams(next);
-  }} />;
+  const [params] = useSearchParams();
+  const next = new URLSearchParams(params);
+  const section = params.get("type") === "articles" || params.has("articleId") ? "articles" : "books";
+  const legacySelection = params.has("type") || params.has("bookId") || params.has("articleId") || params.has("q");
+  next.delete("type");
+  if (legacySelection) next.set("view", "annotations");
+  return <Navigate replace to={`/annotations${legacySelection ? `/${section}` : ""}${next.size ? `?${next}` : ""}`} />;
 }
 
-function AnnotationBooks({ onOpen }: { onOpen: (bookId: string) => void }) {
+export function BookNotesContent() {
+  const { user } = useAuth();
+  const [params, setParams] = useSearchParams();
+  const selected = params.get("bookId");
+  const select = (id?: string) => setParams(previous => {
+    const next = new URLSearchParams(previous);
+    if (id) next.set("bookId", id); else next.delete("bookId");
+    return next;
+  });
+  return selected
+    ? <BookAnnotations bookId={selected} userId={user?.id ?? "anonymous"} />
+    : <AnnotationBooks userId={user?.id ?? "anonymous"} onOpen={select} />;
+}
+
+function AnnotationBooks({ userId, onOpen }: { userId: string; onOpen: (bookId: string) => void }) {
   const [params] = useSearchParams();
   const search = params.get("q") ?? "";
   const deferredSearch = useDeferredValue(search.trim());
   const query = useInfiniteQuery({
-    queryKey: ["annotation-books", deferredSearch],
+    queryKey: ["annotation-books", userId, deferredSearch],
     queryFn: ({ pageParam }) => api.listAnnotationBooks({ q: deferredSearch || undefined, cursor: pageParam, limit: 36 }),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => lastPage.nextCursor,
+    enabled: userId !== "anonymous",
   });
   const books = query.data?.pages.flatMap((page) => page.items) ?? [];
 
   return (
-    <PageContainer>
-      <PageHeader eyebrow="READING NOTES" title="阅读笔记" />
-      {query.isPending ? <Loading /> : query.isError ? <Alert severity="error">无法读取阅读笔记书目</Alert> : books.length === 0 ? (
+    <>
+      {query.isPending ? <Loading label="正在加载读书札记" /> : query.isError ? <Alert severity="error">无法读取读书札记</Alert> : books.length === 0 ? (
         <BookCatalogEmptyState title={EMPTY_READING_NOTES_TITLE} />
       ) : (
         <>
           <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "repeat(2, minmax(0, 1fr))", lg: "repeat(3, minmax(0, 1fr))", xl: `repeat(auto-fill, minmax(min(100%, ${tokens.layout.annotationCardMinWidth}px), 1fr))` }, gap: 2.5 }}>
             {books.map((book) => <AnnotationBookCard key={book.bookId} book={book} onOpen={() => onOpen(book.bookId)} />)}
           </Box>
-          {query.hasNextPage && <Stack sx={{ alignItems: "center", mt: 4 }}><Button variant="outlined" disabled={query.isFetchingNextPage} onClick={() => void query.fetchNextPage()}>{query.isFetchingNextPage ? "正在展开…" : "加载更多书籍"}</Button></Stack>}
+          {query.hasNextPage && <Stack sx={{ alignItems: "center", mt: 4 }}><Button variant="outlined" disabled={query.isFetchingNextPage} onClick={() => void query.fetchNextPage()}>{query.isFetchingNextPage ? "正在展开…" : "加载更多"}</Button></Stack>}
         </>
       )}
-    </PageContainer>
+    </>
   );
 }
 
 function AnnotationBookCard({ book, onOpen }: { book: AnnotationBookSummary; onOpen: () => void }) {
   return (
     <Card variant="outlined" sx={{ overflow: "hidden", transition: "transform 150ms ease, box-shadow 150ms ease", "&:hover": { transform: "translateY(-2px)", boxShadow: tokens.shadow.cover } }}>
-      <CardActionArea onClick={onOpen} aria-label={`查看《${book.bookTitle}》的阅读笔记`} sx={{ height: "100%", alignItems: "stretch" }}>
+      <CardActionArea onClick={onOpen} aria-label={`查看《${book.bookTitle}》的阅读札记`} sx={{ height: "100%", alignItems: "stretch" }}>
         <Stack direction="row" sx={{ minHeight: 188 }}>
-          <Box sx={{ width: { xs: tokens.spacing[24], sm: 126 }, flexShrink: 0, bgcolor: "primary.light", position: "relative", overflow: "hidden" }}>
-            <Box component="img" src={book.coverUrl} alt={`${book.bookTitle}封面`} sx={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+          <Box sx={{ width: { xs: tokens.spacing[24], sm: 126 }, flexShrink: 0, display: "flex", alignItems: "center", p: `${tokens.spacing[2]}px` }}>
+            <BookCover src={book.coverUrl} alt={`${book.bookTitle}封面`} />
           </Box>
           <CardContent sx={{ minWidth: 0, flex: 1, p: { xs: 2, sm: 2.5 }, display: "flex", flexDirection: "column" }}>
             <Typography variant="h4" title={book.bookTitle} sx={{ mb: 0.5, fontSize: { xs: tokens.typography.fontSize.title, sm: tokens.typography.fontSize.headingSm } }} noWrap>{book.bookTitle}</Typography>
             <Typography variant="body2" color="text.secondary" noWrap>{book.bookAuthor}</Typography>
             <Stack direction="row" useFlexGap sx={{ mt: 2, flexWrap: "wrap", gap: 0.75 }}>
               <Chip size="small" label={`${book.annotationCount} 条批注`} />
-              {book.noteCount > 0 && <Chip size="small" variant="outlined" label={`${book.noteCount} 条阅读笔记`} />}
+              {book.noteCount > 0 && <Chip size="small" variant="outlined" label={`${book.noteCount} 条阅读札记`} />}
             </Stack>
             <Typography variant="caption" color="text.disabled" sx={{ mt: "auto", pt: 2 }}>最近记录于 {formatDate(book.latestAt)}</Typography>
           </CardContent>
@@ -97,12 +102,12 @@ function AnnotationBookCard({ book, onOpen }: { book: AnnotationBookSummary; onO
   );
 }
 
-function BookAnnotations({ bookId, onBack }: { bookId: string; onBack: () => void }) {
+function BookAnnotations({ bookId, userId }: { bookId: string; userId: string }) {
   const navigate = useNavigate();
   const [exporting, setExporting] = useState<"DOCX" | "XLSX" | null>(null);
   const [notice, setNotice] = useState("");
-  const bookQuery = useQuery({ queryKey: ["book", bookId], queryFn: () => api.getBook(bookId) });
-  const annotationsQuery = useQuery({ queryKey: ["annotations", bookId], queryFn: () => api.listAnnotations(bookId) });
+  const bookQuery = useQuery({ queryKey: ["book", bookId, userId], queryFn: () => api.getBook(bookId), enabled: userId !== "anonymous" });
+  const annotationsQuery = useQuery({ queryKey: ["annotations", bookId, userId], queryFn: () => api.listAnnotations(bookId), enabled: userId !== "anonymous" });
   const annotations = useMemo(() => (annotationsQuery.data ?? [])
     .filter((annotation) => annotation.type !== "BOOKMARK")
     .sort((left, right) => right.createdAt.localeCompare(left.createdAt)), [annotationsQuery.data]);
@@ -119,25 +124,24 @@ function BookAnnotations({ bookId, onBack }: { bookId: string; onBack: () => voi
     }
   };
 
-  if (bookQuery.isPending || annotationsQuery.isPending) return <PageContainer><Loading /></PageContainer>;
-  if (bookQuery.isError || !bookQuery.data || annotationsQuery.isError) return <PageContainer><Alert severity="error">无法读取这本书的阅读笔记</Alert></PageContainer>;
+  if (bookQuery.isPending || annotationsQuery.isPending) return <Loading label="正在加载读书札记" />;
+  if (bookQuery.isError || !bookQuery.data || annotationsQuery.isError) return <Alert severity="error">无法读取这本书的阅读札记</Alert>;
   const book = bookQuery.data;
 
   return (
-    <PageContainer>
-      <Button color="inherit" startIcon={<ArrowBackRounded />} onClick={onBack} sx={{ mb: 2 }}>全部阅读笔记书籍</Button>
+    <>
       <Stack direction={{ xs: "column", md: "row" }} sx={{ justifyContent: "space-between", alignItems: { xs: "flex-start", md: "flex-end" }, gap: 3, mb: 4 }}>
         <Stack direction="row" spacing={2.5} sx={{ alignItems: "center", minWidth: 0 }}>
-          <Box component="img" src={book.coverUrl} alt={`${book.title}封面`} sx={{ width: 82, height: 116, objectFit: "cover", borderRadius: 1.5, boxShadow: tokens.shadow.cover }} />
+          <BookCover src={book.coverUrl} alt={`${book.title}封面`} sx={{ width: `${tokens.spacing[20]}px` }} />
           <Box sx={{ minWidth: 0 }}>
-            <PageTitle>{book.title}</PageTitle>
+            <Typography component="h2" variant="h4" sx={{ fontSize: { xs: tokens.typography.fontSize.title, sm: tokens.typography.fontSize.headingSm } }}>{book.title}</Typography>
             <Typography color="text.secondary" sx={{ mt: 0.5 }}>{book.author} · {annotations.length} 条批注</Typography>
           </Box>
         </Stack>
         <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ width: { xs: "100%", md: "auto" } }}>
-          <Button variant="outlined" startIcon={<MenuBookOutlined />} onClick={() => navigate(`/reader/${bookId}`)}>回到书中</Button>
-          <Button variant="outlined" startIcon={<DescriptionOutlined />} disabled={Boolean(exporting)} onClick={() => void exportFile("DOCX")}>{exporting === "DOCX" ? "正在生成…" : "导出 Word"}</Button>
-          <Button variant="outlined" startIcon={<GridOnRounded />} disabled={Boolean(exporting)} onClick={() => void exportFile("XLSX")}>{exporting === "XLSX" ? "正在生成…" : "导出 Excel"}</Button>
+          <Button variant="outlined" onClick={() => navigate(`/reader/${bookId}`)}>返回原文</Button>
+          <Button variant="outlined" disabled={Boolean(exporting)} onClick={() => void exportFile("DOCX")}>{exporting === "DOCX" ? "正在生成…" : "导出 Word"}</Button>
+          <Button variant="outlined" disabled={Boolean(exporting)} onClick={() => void exportFile("XLSX")}>{exporting === "XLSX" ? "正在生成…" : "导出 Excel"}</Button>
         </Stack>
       </Stack>
 
@@ -149,7 +153,7 @@ function BookAnnotations({ bookId, onBack }: { bookId: string; onBack: () => voi
         </Stack>
       )}
       <Snackbar open={Boolean(notice)} autoHideDuration={4200} onClose={() => setNotice("")} message={notice} />
-    </PageContainer>
+    </>
   );
 }
 
@@ -171,7 +175,8 @@ function AnnotationEntry({ annotation, index }: { annotation: Annotation; index:
           </Typography>
         </Stack>
       )}
-      {annotation.note && <Box sx={{ mt: 2.5, ml: { xs: 0, sm: 5 }, p: 2, bgcolor: "background.default", borderRadius: 2 }}><Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 0.5 }}>我的阅读笔记</Typography><Typography>{annotation.note}</Typography></Box>}
+      {annotation.note && <Box sx={{ mt: 2.5, ml: { xs: 0, sm: 5 }, p: 2, bgcolor: "background.default", borderRadius: 2 }}><Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 0.5 }}>我的阅读札记</Typography><Typography>{annotation.note}</Typography></Box>}
+      <Button component={Link} to={`/reader/${encodeURIComponent(annotation.bookId)}${annotation.locator ? `?locator=${encodeURIComponent(annotation.locator)}` : ""}`} sx={{ mt: `${tokens.spacing[4]}px` }}>返回原文</Button>
     </Box>
   );
 }
@@ -192,6 +197,6 @@ function formatDate(value: string) {
   return new Intl.DateTimeFormat("zh-CN", { dateStyle: "medium" }).format(new Date(value));
 }
 
-function Loading() {
-  return <Stack sx={{ py: 10, alignItems: "center" }}><CircularProgress /></Stack>;
+function Loading({ label }: { label: string }) {
+  return <Stack role="status" aria-label={label} sx={{ py: 10, alignItems: "center", gap: `${tokens.spacing[2]}px` }}><CircularProgress /><Typography color="text.secondary">{label}</Typography></Stack>;
 }

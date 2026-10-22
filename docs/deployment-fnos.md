@@ -1,13 +1,17 @@
 # 飞牛 NAS 部署
 
+2026-10-23：应用现仅包含一个完整的 V1 初始化脚本，默认无测试藏书。已有 V19/V30 数据库必须先按 [单基线转换流程](../ops/database/README.md) 完成备份恢复演练与受控转换，不能直接启动新版，也不能关闭 Flyway 校验。以下旧版本记录是历史验收说明，不代表当前可直接使用旧迁移参数。GitHub main 更新现自动发布多架构 GHCR 镜像；部署应固定已验证的提交标签或摘要。
+
 ## 运行环境
 
 - 地址：`http://192.168.1.103/`；飞牛管理端继续使用 `5666/5667`。
 - Compose 目录：`/vol1/bookkin/releases`，应用和 Worker 使用同一镜像。
 - 书库：`/vol1/bookkin/data/library`；字体：`/vol1/bookkin/data/fonts`。
+- 文章与禁书区分别配置 `BOOKKIN_ARTICLE_STORAGE`、`BOOKKIN_VAULT_STORAGE`，使用独立持久目录；三类内容主表分别是 `books`、`articles`、`vault_objects`。目录、备份及旧容器素材迁移说明见 [三类书库存储](storage-libraries.md)。
 - 数据库卷：`bookkin_bookkin-postgres`。账户及登录会话保存在 PostgreSQL，不随容器重建丢失。
 - 数据目录 UID/GID：`1000:1001`，目录权限 `0750`。飞牛 ACL 需同时允许该身份访问；镜像中的 JAR 使用 `0644`。
 - `.env` 只保存在服务器，权限 `0600`；不得将密码或 `BOOKKIN_AI_SETTINGS_ENCRYPTION_KEY` 提交到 Git 或发布记录。启用 AI 前必须注入稳定的实例专属随机密钥；AI 关闭时可以留空。
+- 禁书区另需稳定的 `BOOKKIN_TWO_FACTOR_ENCRYPTION_KEY`，用于加密身份验证器种子；单独安全备份，不随数据库公开。未配置时不能启用禁书区，具体流程见 [禁书区 2FA](vault-two-factor.md)。
 - 飞牛网关 `redirect=false` 为 BookKin 释放 80 端口；不修改飞牛生成的 nginx 配置。原配置备份为 `network_gateway_setting.before-bookkin.json`。飞牛升级后需复查端口占用。
 
 ## 构建和发布

@@ -1,18 +1,11 @@
-// 管理书库目录的预览、登记与能力检查，路径和指纹验证最终由服务端执行。
-// Manages root preview, registration and capability probes with final path/fingerprint validation on the server.
+import { usePermissions } from "../auth/permissions";
+// 展示默认书库及独立内容存储的实时状态，仅提供能力复查。
+// Shows live default-library and independent content storage status with capability rechecks.
 import { EmptyState } from "../ui/empty-state";
 import { useState } from "react";
-import { Dialog, DialogTitle, DialogContent, DialogActions } from "@/ui/overlays";
-import { TextField } from "@/ui/forms";
-import { randomId } from "../utils/random-id";
-import { CheckCircleOutlineRounded } from "@/ui/icons";
-import { ErrorOutlineRounded } from "@/ui/icons";
-import { FolderOutlined } from "@/ui/icons";
-import { StorageRounded } from "@/ui/icons";
-import { SyncRounded } from "@/ui/icons";
-import { WarningAmberRounded } from "@/ui/icons";
 import { Alert } from "@/ui/feedback";
 import { Box } from "@/ui/primitives";
+import { Card } from "@/ui/cards";
 import { Button, RefreshButton } from "@/ui/buttons";
 import { Chip } from "@/ui/feedback";
 import { CircularProgress } from "@/ui/feedback";
@@ -26,17 +19,14 @@ import type { LibraryRoot } from "../domain/types";
 import { tokens } from "../theme/generated-tokens";
 
 export function LibraryRootsPage() {
-  const query = useQuery({ queryKey: ["library-roots"], queryFn: api.listLibraryRoots, refetchInterval: 60_000 });
+  const { can } = usePermissions();
+  const query = useQuery({ queryKey: ["library-roots"], queryFn: api.listLiveLibraryRoots, refetchInterval: 60_000 });
+  const contentQuery = useQuery({ queryKey: ["content-storage"], queryFn: api.listContentStorage, refetchInterval: 60_000 });
   const roots = query.data ?? [];
   const degraded = roots.filter((root) => !root.canRead || !root.canWrite);
 
-  const [open, setOpen] = useState(false);
-  const [name, setName] = useState("");
-  const [path, setPath] = useState("");
-  const [preview, setPreview] = useState<Awaited<ReturnType<typeof api.previewLibraryRoot>> | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [key, setKey] = useState(randomId);
   async function perform(action: () => Promise<void>) {
     setBusy(true); setError("");
     try { await action(); } catch (cause) { setError(cause instanceof Error ? cause.message : "操作失败，请重试"); }
@@ -45,33 +35,13 @@ export function LibraryRootsPage() {
   return (
     <PageContainer>
       <Stack sx={{ mb: 3 }}><ActionToolbar>
-        <RefreshButton disabled={busy} onClick={() => perform(async () => { await api.checkLibraryRoots(); await query.refetch(); })}>重新检查</RefreshButton>
-        <Button variant="contained" onClick={() => { setOpen(true); setPreview(null); setError(""); setKey(randomId()); }}>新增书库</Button>
+        <RefreshButton disabled={busy || !can("settings.roots.edit")} onClick={() => perform(async () => { await api.checkLibraryRoots(); await Promise.all([query.refetch(), contentQuery.refetch()]); })}>重新检查</RefreshButton>
       </ActionToolbar></Stack>
-      {error && !open && <Alert severity="error">{error}</Alert>}
-      <Dialog open={open} onClose={() => { if (!busy) setOpen(false); }} maxWidth="sm" fullWidth>
-        <DialogTitle>新增书库</DialogTitle>
-        <DialogContent>
-          <Stack spacing={2}>
-            <TextField label="书库名称" value={name} onChange={event => setName(event.target.value)} fullWidth />
-            <TextField label="容器内目录" value={path} onChange={event => { setPath(event.target.value); setPreview(null); }} helperText="先在 Docker 的应用和任务容器中挂载同一目录，例如 /library/books。" fullWidth />
-            {error && <Alert severity="error">{error}</Alert>}
-            {preview && <Alert severity={preview.writable ? "success" : "warning"}>目录可访问 · {preview.writable ? "可读写，新增时将验证写入能力" : "只读"} · 可用 {formatBytes(preview.freeBytes)}</Alert>}
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button disabled={busy} onClick={() => setOpen(false)}>取消</Button>
-          <Button variant="contained" disabled={busy || !name.trim() || !path.trim()} onClick={() => perform(async () => {
-            if (!preview) { setPreview(await api.previewLibraryRoot(path.trim())); return; }
-            await api.createLibraryRoot({ name: name.trim(), path: preview.path, expectedFingerprint: preview.fingerprint, idempotencyKey: key });
-            await query.refetch(); setOpen(false); setName(""); setPath(""); setPreview(null);
-          })}>{busy ? "检查中…" : preview ? "确认新增" : "检查位置"}</Button>
-        </DialogActions>
-      </Dialog>
+      {error && <Alert severity="error">{error}</Alert>}
 
       {degraded.length > 0 && (
         <Alert severity="warning" sx={{ mb: 3 }}>
-          {degraded.map((root) => root.name).join("、")} 当前不可写。浏览和阅读仍可用，暂时无法重命名、移动、删除或保存文件修改。
+          {degraded.map((root) => root.name).join("、")} 当前不可写。浏览和阅读仍可用，暂时无法重命名、删除或保存文件修改。
         </Alert>
       )}
 
@@ -81,53 +51,40 @@ export function LibraryRootsPage() {
         <Alert severity="error">无法读取书库根目录状态。</Alert>
       ) : roots.length === 0 ? (
         <Stack spacing={1} sx={{ py: 12, alignItems: "center", textAlign: "center" }}>
-          <EmptyState title="尚未配置书库" padded={false} />
-          <Typography color="text.secondary">点击新增书库，检查并添加已挂载的目录。</Typography>
+          <EmptyState title="尚未配置书籍书库" padded={false} />
+          <Typography color="text.secondary">请检查默认书库的挂载配置。</Typography>
         </Stack>
       ) : (
-        <Box className="bk-settings-list">
-          {roots.map((root) => <RootCard key={root.id} root={root} />)}
-        </Box>
+        <Stack spacing={2}>
+          {roots.map((root) => <StorageCard key={root.id} name="书籍书库" canRead={root.canRead} canWrite={root.canWrite} freeBytes={root.freeBytes} lastScanAt={root.lastScanAt} offline={root.status === "OFFLINE"} />)}
+        </Stack>
       )}
+      <Stack spacing={2} sx={{ mt: `${tokens.spacing[4]}px` }}>
+        {contentQuery.isPending ? <CircularProgress /> : contentQuery.isError
+          ? <Alert severity="error">无法读取文章及禁书区存储位置。<Button onClick={() => void contentQuery.refetch()}>重试</Button></Alert>
+          : contentQuery.data?.map(area => <StorageCard key={area.kind} name={area.kind === "VAULT" ? "禁书区书库" : "文章书库"} canRead={area.canRead} canWrite={area.canWrite} freeBytes={area.freeBytes} lastScanAt={area.lastScanAt} />)}
+      </Stack>
     </PageContainer>
   );
 }
 
-function RootCard({ root }: { root: LibraryRoot }) {
-  const unavailable = root.status === "OFFLINE" || !root.canRead;
-  const writable = !unavailable && root.canWrite;
-  const statusIcon = unavailable ? <ErrorOutlineRounded /> : writable ? <CheckCircleOutlineRounded /> : <WarningAmberRounded />;
-  const statusColor = unavailable ? "error" : writable ? "success" : "warning";
-  const statusLabel = unavailable ? (root.status === "OFFLINE" ? "离线" : "不可读") : writable ? "可读可写" : "只读";
-  return (
-    <Stack className="bk-settings-row">
-      <Stack direction="row" sx={{ px: 0, py: `${tokens.spacing[4]}px`, alignItems: "flex-start", gap: 2 }}>
-        <Box sx={{ width: 48, height: 48, borderRadius: 2, bgcolor: "background.default", display: "grid", placeItems: "center", color: "primary.main", flexShrink: 0 }}><StorageRounded /></Box>
-        <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Stack direction={{ xs: "column", sm: "row" }} sx={{ alignItems: { sm: "center" }, justifyContent: "space-between", gap: 1 }}>
-            <Typography variant="h5">{root.name}</Typography>
-            <Chip icon={statusIcon} color={statusColor} size="small" label={statusLabel} />
-          </Stack>
-          <Stack direction="row" spacing={1} sx={{ mt: 1, alignItems: "center", color: "text.secondary" }}>
-            <FolderOutlined fontSize="small" />
-            <Typography
-              variant="body2"
-              title={root.configuredPath}
-              noWrap
-              sx={{ fontFamily: tokens.typography.fontFamily.mono, overflow: "hidden", textOverflow: "ellipsis" }}
-            >
-              {root.configuredPath}
-            </Typography>
-          </Stack>
-        </Box>
-      </Stack>
-      <Divider sx={{ m: 0 }} />
-      <Stack direction={{ xs: "column", sm: "row" }} sx={{ px: 0, py: `${tokens.spacing[3]}px`, justifyContent: "space-between", gap: 1.5, color: "text.secondary" }}>
-        <Typography variant="body2">可用空间 <Box component="span" sx={{ color: "text.primary", fontWeight: 700 }}>{formatBytes(root.freeBytes)}</Box></Typography>
-        <Stack direction="row" spacing={0.75} sx={{ alignItems: "center" }}><SyncRounded fontSize="small" /><Typography variant="body2">上次扫描 {formatDate(root.lastScanAt)}</Typography></Stack>
-      </Stack>
+type StorageCardProps = Pick<LibraryRoot, "canRead" | "canWrite" | "freeBytes" | "lastScanAt"> & { name: string; offline?: boolean };
+
+function StorageCard({ name, canRead, canWrite, freeBytes, lastScanAt, offline = false }: StorageCardProps) {
+  const unavailable = offline || !canRead;
+  const writable = !unavailable && canWrite;
+  return <Card>
+    <Stack direction={{ xs: "column", sm: "row" }} sx={{ p: `${tokens.spacing[4]}px`, alignItems: { sm: "center" }, justifyContent: "space-between", gap: 1 }}>
+      <Typography variant="h5">{name}</Typography>
+      <Chip size="small" color={unavailable ? "error" : writable ? "success" : "warning"}
+        label={offline ? "离线" : unavailable ? "不可读" : writable ? "可读可写" : "只读"} />
     </Stack>
-  );
+    <Divider sx={{ m: 0 }} />
+    <Stack direction={{ xs: "column", sm: "row" }} sx={{ px: `${tokens.spacing[4]}px`, py: `${tokens.spacing[3]}px`, justifyContent: "space-between", gap: 1.5, color: "text.secondary" }}>
+      <Typography variant="body2">可用空间 <Box component="span" sx={{ color: "text.primary", fontWeight: 700 }}>{formatBytes(freeBytes)}</Box></Typography>
+      <Typography variant="body2">上次扫描 {formatDate(lastScanAt)}</Typography>
+    </Stack>
+  </Card>;
 }
 
 function formatBytes(value?: number | null) {
@@ -137,6 +94,6 @@ function formatBytes(value?: number | null) {
 }
 
 function formatDate(value?: string | null) {
-  if (!value) return "尚未完成";
+  if (!value) return "尚未扫描";
   return new Intl.DateTimeFormat("zh-CN", { dateStyle: "short", timeStyle: "short" }).format(new Date(value));
 }

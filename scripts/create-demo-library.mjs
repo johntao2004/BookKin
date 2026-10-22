@@ -23,7 +23,7 @@ if (!Number.isInteger(stressCount) || stressCount < 0 || stressCount > 4560) {
 const targetArgument = argumentsList.find((argument, index) => (
   !argument.startsWith("--") && argumentsList[index - 1] !== "--stress-count"
 ));
-const targetRoot = resolve(targetArgument ?? join(projectDirectory, ".local/library"));
+const targetRoot = resolve(targetArgument ?? join(projectDirectory, ".local/fixtures/library"));
 const coverDirectory = join(projectDirectory, "apps/web/public/covers");
 
 const chapter = [

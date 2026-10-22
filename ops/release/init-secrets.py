@@ -11,10 +11,10 @@ import sys
 import tempfile
 
 
-def initialize(path, encrypted=False):
+def initialize(path, encrypted=False, key="BOOKKIN_AI_SETTINGS_ENCRYPTION_KEY"):
     path = Path(path)
     text = path.read_text() if path.exists() else ''
-    pattern = r'^BOOKKIN_AI_SETTINGS_ENCRYPTION_KEY\s*=(.*)$'
+    pattern = r'^' + re.escape(key) + r'\s*=(.*)$'
     entries = re.findall(pattern, text, re.M)
     if any(value.strip().strip('\"\'') for value in entries):
         os.chmod(path, 0o600)
@@ -22,7 +22,7 @@ def initialize(path, encrypted=False):
     if encrypted:
         raise RuntimeError('Existing encrypted AI credentials require restoring the original encryption key.')
     text = re.sub(pattern, '', text, flags=re.M).rstrip() + '\n'
-    text += 'BOOKKIN_AI_SETTINGS_ENCRYPTION_KEY=' + secrets.token_hex(32) + '\n'
+    text += key + '=' + secrets.token_hex(32) + '\n'
     fd, temporary = tempfile.mkstemp(dir=path.parent, prefix='.env-')
     try:
         with os.fdopen(fd, 'w') as output:
@@ -38,4 +38,6 @@ def initialize(path, encrypted=False):
 
 if __name__ == '__main__':
     initialize(sys.argv[1], len(sys.argv) > 2 and sys.argv[2] != '0')
-    print('Persistent AI encryption key ready.')
+    if len(sys.argv) > 3:
+        initialize(sys.argv[1], sys.argv[3] != '0', 'BOOKKIN_TWO_FACTOR_ENCRYPTION_KEY')
+    print('Persistent encryption keys ready; existing values preserved.')

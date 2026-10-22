@@ -1,8 +1,8 @@
 {
   "sourceSha256": "a6a95221d1a7807c32f0bacad8dfc4ab0faace3f1ce947c7aacda479b3ee1ef1",
-  "modules": 13,
+  "modules": 20,
   "triangles": 1547086,
-  "maxModuleBytes": 21306452,
+  "maxModuleBytes": 7487828,
   "sharedImages": 12,
   "materialDefinitionsUnchanged": true,
   "allImageBytesIdentical": true,

@@ -43,7 +43,7 @@ export function VirtualLibrarySearch({open, books, onClose, onLocateBook, onRead
   return <Modal className="virtual-library-search-modal" aria-label="搜索藏书" centered closable={false} open={open} onCancel={onClose} footer={null}
     width={tokens.spacing[24] * 5} styles={{ container: {padding: 0, background: "transparent", boxShadow: "none", border: 0}, body: SEARCH_MODAL_BODY_STYLE }}
     afterOpenChange={visible => { if (visible) input.current?.focus(); else setQuery(''); }}>
-    <Input className="virtual-library-search-input" ref={input} size="large" prefix={<SearchRounded />} aria-label="搜索书名、作者或分类" placeholder="搜索书名、作者或分类"
+    <Input className="virtual-library-search-input" ref={input} prefix={<SearchRounded />} aria-label="搜索书名、作者或分类" placeholder="搜索书名、作者或分类"
       allowClear value={query} onChange={event => setQuery(event.target.value)} />
     {hasQuery && <><p className="virtual-library-search-status" role="status">找到 {results.length} 本藏书</p>
     <div className="virtual-library-search-results">

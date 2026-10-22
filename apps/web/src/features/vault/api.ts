@@ -1,6 +1,13 @@
-// 专区 API 仅传输信封、密文和修订信息；解密与口令派生在浏览器执行。
-// Vault APIs transport envelopes, ciphertext and revisions; decryption and password derivation stay in the browser.
-import { request } from "../../api/client";
+// 内容保持加密；仅在当前会话通过 2FA 后领取用户隔离的内容密钥，禁止持久缓存授权或明文密钥。
+import { request as sharedRequest, ApiRequestError } from "../../api/client";
+async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  try { return await sharedRequest<T>(path, init); }
+  catch (error) {
+    if (error instanceof ApiRequestError && (error.status === 403 || error.code === "TWO_FACTOR_UNCONFIGURED" || error.code === "TWO_FACTOR_KEY_UNAVAILABLE"))
+      window.dispatchEvent(new Event("bookkin:vault-access-required"));
+    throw error;
+  }
+}
 export interface VaultObject {
   id: string;
   manifest: string;
@@ -9,6 +16,10 @@ export interface VaultObject {
   chunk_count: number;
 }
 export const vaultApi = {
+  open: () => request<{ key: string; envelope: string; revision: number }>("/vault/key/open", { method: "POST" }),
+  migrateKey: (key: string, revision: number) => request<{ key: string; envelope: string; revision: number }>("/vault/key/migrate", {
+    method: "POST", body: JSON.stringify({ key, revision }),
+  }),
   config: () =>
     request<{ envelope: string; revision: number }>("/vault/config"),
   saveConfig: (envelope: unknown, revision: number) =>

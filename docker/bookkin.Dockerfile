@@ -9,6 +9,7 @@ RUN pnpm install --frozen-lockfile
 COPY design design
 COPY scripts scripts
 COPY apps/web apps/web
+COPY apps/server/src/main/resources/role-permissions.json apps/server/src/main/resources/role-permissions.json
 RUN pnpm generate:tokens && pnpm --filter @bookkin/web build
 
 FROM eclipse-temurin:21-jdk-noble AS server-build

@@ -1,55 +1,16 @@
-// 明确区分未认证与角色不足，并保留恢复导航目标。
-// Distinguishes missing authentication from insufficient roles while preserving a recovery destination.
-import { LockOutlined } from "@/ui/icons";
-import { Button } from "@/ui/buttons";
-import { Stack } from "@/ui/primitives";
-import { Typography } from "@/ui/primitives";
 import { Link } from "react-router-dom";
-import { PageTitle, pageWidthSx } from "../components/PageHeader";
-import { tokens } from "../theme/generated-tokens";
+import { Button } from "../ui/buttons";
+import { HttpErrorPage } from "./HttpErrorPage";
 
 export type AccessDeniedReason = "AUTHENTICATION_REQUIRED" | "INSUFFICIENT_ROLE";
-
 export function AccessDeniedPage({ reason, returnTo }: { reason: AccessDeniedReason; returnTo: string }) {
   const authenticationRequired = reason === "AUTHENTICATION_REQUIRED";
-
-  return (
-    <Stack
-      component="main"
-      sx={{
-        ...pageWidthSx,
-        minHeight: authenticationRequired ? "100dvh" : `calc(100dvh - ${tokens.layout.navHeight}px)`,
-        alignItems: "center",
-        justifyContent: "center",
-        py: `${tokens.spacing[10]}px`,
-        bgcolor: "background.default",
-        color: "text.primary",
-        textAlign: "center",
-      }}
-    >
-      <Stack sx={{ width: "100%", maxWidth: tokens.layout.readingMax, alignItems: "center", gap: `${tokens.spacing[5]}px` }}>
-        <LockOutlined aria-hidden sx={{ color: "primary.main", fontSize: tokens.spacing[12] }} />
-        <Typography variant="overline" sx={{ color: "primary.main", fontWeight: tokens.typography.fontWeight.semibold }}>
-          {authenticationRequired ? "401 · 需要登录" : "403 · 权限受限"}
-        </Typography>
-        <PageTitle>
-          {authenticationRequired ? "这间书房暂未为你开门" : "这把钥匙打不开这一页"}
-        </PageTitle>
-        <Stack direction={{ xs: "column", sm: "row" }} sx={{ width: { xs: "100%", sm: "auto" }, gap: `${tokens.spacing[3]}px`, pt: `${tokens.spacing[3]}px` }}>
-          {authenticationRequired ? (
-            <Button component={Link} to="/login" state={{ from: returnTo }} variant="contained" size="large">
-              前往登录
-            </Button>
-          ) : (
-            <Button component={Link} to="/library/all" variant="contained" size="large">
-              返回藏书库
-            </Button>
-          )}
-          <Button component={Link} to="/library" variant="outlined" size="large">
-            浏览公开书目
-          </Button>
-        </Stack>
-      </Stack>
-    </Stack>
-  );
+  return <HttpErrorPage fullHeight={authenticationRequired}
+    failure={{ status: authenticationRequired ? 401 : 403, code: reason, reason: authenticationRequired ? "尚未登录或登录已过期，请登录后访问此页面。" : "当前账户没有访问此页面的权限，请联系主人确认角色权限。" }}
+    title={authenticationRequired ? "这间书房暂未为你开门" : "这把钥匙打不开这一页"}
+    actions={<>
+      {authenticationRequired ? <Button component={Link} to="/login" state={{ from: returnTo }} variant="contained" size="large">登录</Button>
+        : <Button component={Link} to="/library/all" variant="contained" size="large">返回藏书库</Button>}
+      <Button component={Link} to="/library" variant="outlined" size="large">公开书目</Button>
+    </>} />;
 }

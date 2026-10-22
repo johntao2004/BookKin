@@ -1,8 +1,8 @@
+import { usePermissions } from "../auth/permissions";
 // 协调字体登记、文件上传及启用状态，上传完成前不把条目视作可用字体。
 // Coordinates font registration, binary upload and enablement without treating incomplete uploads as usable fonts.
 import { EmptyState } from "../ui/empty-state";
-import { PageContainer } from "../components/PageHeader";
-import { CloudUploadOutlined } from "@/ui/icons";
+import { PageContainer, SectionHeader } from "../components/PageHeader";
 import { Alert } from "@/ui/feedback";
 import { Box, useMediaQuery } from "@/ui/primitives";
 import { Button } from "@/ui/buttons";
@@ -28,6 +28,7 @@ const allowedExtensions = new Set(["woff2", "woff", "ttf", "otf"]);
 const wideFontUploadQuery = `(min-width: ${tokens.layout.breakpointTablet}px)`;
 
 export function ReaderFontsPage() {
+  const { can } = usePermissions();
   const queryClient = useQueryClient();
   const fontsQuery = useQuery({ queryKey: ["reader-fonts", "admin"], queryFn: api.listReaderFontsForAdmin });
   const isWideFontUpload = useMediaQuery(wideFontUploadQuery);
@@ -86,7 +87,10 @@ export function ReaderFontsPage() {
 
       <Stack className="bk-form-section" sx={{ width: "100%", minWidth: 0, maxWidth: "none", mb: `${tokens.spacing[6]}px` }}>
         <Stack spacing={2}>
-          <Typography variant="subtitle1" component="h3">上传自定义字体</Typography>
+          <SectionHeader title="上传自定义字体" action={<>
+            <input ref={inputRef} hidden type="file" accept=".woff2,.woff,.ttf,.otf" onChange={(event: any) => { const file = event.target.files?.[0]; if (file) void upload(file); }} />
+            <Button variant="contained" startIcon={busy ? <CircularProgress size={18} color="inherit" /> : undefined} disabled={busy || !can("settings.fonts.edit")} onClick={() => inputRef.current?.click()}>{busy ? `上传中 ${uploadProgress}%` : "选择字体文件"}</Button>
+          </>} />
           <Box className={`bk-reader-font-upload-grid${isWideFontUpload ? " bk-reader-font-upload-grid--wide" : ""}`}>
             <TextField className="bk-reader-font-upload-name" label="展示名称（可选）" value={displayName} onChange={(event: any) => setDisplayName(event.target.value)} fullWidth />
             <FormControl className="bk-reader-font-upload-kind" fullWidth>
@@ -96,11 +100,7 @@ export function ReaderFontsPage() {
                 <MenuItem value="SANS">无衬线字体</MenuItem>
               </Select>
             </FormControl>
-            <TextField className="bk-reader-font-upload-license" label="来源 / 许可说明（可选）" value={licenseNote} onChange={(event: any) => setLicenseNote(event.target.value)} fullWidth />
-            <Stack className="bk-reader-font-upload-action" sx={{ width: "100%", minWidth: 0 }}>
-              <input ref={inputRef} hidden type="file" accept=".woff2,.woff,.ttf,.otf" onChange={(event: any) => { const file = event.target.files?.[0]; if (file) void upload(file); }} />
-              <Button className="bk-reader-font-upload-button" variant="contained" fullWidth startIcon={busy ? <CircularProgress size={18} color="inherit" /> : <CloudUploadOutlined />} disabled={busy} onClick={() => inputRef.current?.click()}>{busy ? `上传中 ${uploadProgress}%` : "选择字体文件"}</Button>
-            </Stack>
+            <TextField className="bk-reader-font-upload-license" sx={{ gridColumn: "1 / -1" }} label="来源 / 许可说明（可选）" value={licenseNote} onChange={(event: any) => setLicenseNote(event.target.value)} fullWidth />
             <Typography className="bk-reader-font-upload-guidance" component="p" variant="caption" color="text.secondary">WOFF2 / WOFF / TTF / OTF · ≤ 25 MB</Typography>
           </Box>
         </Stack>
@@ -128,7 +128,7 @@ export function ReaderFontsPage() {
                 <Switch
                   checked={font.status === "ENABLED"}
                   onChange={() => void toggle(font)}
-                  disabled={font.source === "PRESET"}
+                  disabled={font.source === "PRESET" || !can("settings.fonts.edit")}
                   slotProps={{
                     input: {
                       "aria-label": font.source === "PRESET"

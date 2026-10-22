@@ -118,6 +118,12 @@ public class FileOperationRepository {
         return dsl.fetch("select * from file_operations order by created_at desc, id desc limit ?", limit).map(this::mapOperation);
     }
 
+    public List<Operation> page(int page, int pageSize) {
+        return dsl.fetch("select * from file_operations order by created_at desc, id desc limit ? offset ?", pageSize, (long) page * pageSize).map(this::mapOperation);
+    }
+
+    public long count() { return dsl.fetchCount(dsl.selectFrom("file_operations")); }
+
     @Transactional
     public Optional<ExecutionRecord> claimNext() {
         var record = dsl.fetchOptional("""

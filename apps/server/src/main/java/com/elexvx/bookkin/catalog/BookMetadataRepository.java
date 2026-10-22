@@ -24,7 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class BookMetadataRepository {
     private static final Set<String> EDITABLE_FIELDS = Set.of("title", "subtitle", "authors", "translators",
             "language", "publisher", "publishedDate", "isbn", "description", "series", "seriesIndex",
-            "tags", "subjectCodes");
+            "tags", "subjectCodes", "authorBiography", "tableOfContents");
     private final DSLContext dsl;
     private final ObjectMapper json;
 
@@ -57,7 +57,8 @@ public class BookMetadataRepository {
                     subjectCodes == null ? List.of() : Arrays.asList(subjectCodes),
                     record.get("cover_cache_key", String.class), "/api/v1/books/" + bookId + "/cover?v="
                             + record.get("updated_at", java.time.OffsetDateTime.class).toInstant().toEpochMilli(),
-                    sources(record.get("metadata_sources_text", String.class)), record.get("publicly_visible", Boolean.class));
+                    sources(record.get("metadata_sources_text", String.class)), record.get("publicly_visible", Boolean.class),
+                    record.get("author_biography", String.class), record.get("table_of_contents", String.class));
         });
     }
 
@@ -90,6 +91,8 @@ public class BookMetadataRepository {
         if (changed.contains("publishedDate")) columns.put("published_date", optionalText(patch.publishedDate()));
         if (changed.contains("isbn")) columns.put("isbn", optionalText(patch.isbn()));
         if (changed.contains("description")) columns.put("description", optionalText(patch.description()));
+        if (changed.contains("authorBiography")) columns.put("author_biography", optionalText(patch.authorBiography()));
+        if (changed.contains("tableOfContents")) columns.put("table_of_contents", optionalText(patch.tableOfContents()));
         if (changed.contains("seriesIndex")) columns.put("series_index", patch.seriesIndex());
 
         StringBuilder sql = new StringBuilder("update books set ");
@@ -100,7 +103,7 @@ public class BookMetadataRepository {
         }
         if (changed.contains("subjectCodes")) {
             sql.append("subject_codes = ?::text[], ");
-            values.add((patch.subjectCodes() == null ? List.<String>of() : patch.subjectCodes()).toArray(String[]::new));
+            values.add(ThemaSubjects.validate(patch.subjectCodes()).toArray(String[]::new));
         }
         String[] changedFields = changed.toArray(String[]::new);
         sql.append("metadata_overrides = (select array_agg(distinct field) from unnest(metadata_overrides || ?::text[]) field), ")
@@ -127,6 +130,8 @@ public class BookMetadataRepository {
             case "publishedDate" -> !Objects.equals(optionalText(patch.publishedDate()), optionalText(current.publishedDate()));
             case "isbn" -> !Objects.equals(optionalText(patch.isbn()), optionalText(current.isbn()));
             case "description" -> !Objects.equals(optionalText(patch.description()), optionalText(current.description()));
+            case "authorBiography" -> !Objects.equals(optionalText(patch.authorBiography()), optionalText(current.authorBiography()));
+            case "tableOfContents" -> !Objects.equals(optionalText(patch.tableOfContents()), optionalText(current.tableOfContents()));
             case "series" -> !Objects.equals(optionalText(patch.series()), optionalText(current.series()));
             case "seriesIndex" -> patch.seriesIndex() == null ? current.seriesIndex() != null
                     : current.seriesIndex() == null || patch.seriesIndex().compareTo(current.seriesIndex()) != 0;
@@ -197,7 +202,15 @@ public class BookMetadataRepository {
     public record BookMetadata(UUID id, String title, String subtitle, List<String> authors, List<String> translators,
                                String language, String publisher, String publishedDate, String isbn, String description,
                                String series, BigDecimal seriesIndex, List<String> tags, List<String> subjectCodes, String coverCacheKey,
-                               String coverUrl, Map<String, String> sources, boolean publiclyVisible) {
+                               String coverUrl, Map<String, String> sources, boolean publiclyVisible,
+                               String authorBiography, String tableOfContents) {
+        public BookMetadata(UUID id, String title, String subtitle, List<String> authors, List<String> translators,
+                            String language, String publisher, String publishedDate, String isbn, String description,
+                            String series, BigDecimal seriesIndex, List<String> tags, List<String> subjectCodes, String coverCacheKey,
+                            String coverUrl, Map<String, String> sources, boolean publiclyVisible) {
+            this(id, title, subtitle, authors, translators, language, publisher, publishedDate, isbn, description,
+                    series, seriesIndex, tags, subjectCodes, coverCacheKey, coverUrl, sources, publiclyVisible, null, null);
+        }
         public BookMetadata(UUID id, String title, String subtitle, List<String> authors, List<String> translators,
                             String language, String publisher, String publishedDate, String isbn, String description,
                             String series, BigDecimal seriesIndex, List<String> tags, List<String> subjectCodes, String coverCacheKey,
@@ -220,5 +233,13 @@ public class BookMetadataRepository {
     public record MetadataPatch(String title, String subtitle, List<String> authors, List<String> translators,
                                 String language, String publisher, String publishedDate, String isbn, String description,
                                 String series, BigDecimal seriesIndex, List<String> tags, List<String> subjectCodes,
-                                String[] manualFields) {}
+                                String[] manualFields, String authorBiography, String tableOfContents) {
+        public MetadataPatch(String title, String subtitle, List<String> authors, List<String> translators,
+                             String language, String publisher, String publishedDate, String isbn, String description,
+                             String series, BigDecimal seriesIndex, List<String> tags, List<String> subjectCodes,
+                             String[] manualFields) {
+            this(title, subtitle, authors, translators, language, publisher, publishedDate, isbn, description,
+                    series, seriesIndex, tags, subjectCodes, manualFields, null, null);
+        }
+    }
 }

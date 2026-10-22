@@ -9,13 +9,14 @@ import { SiteSettingsPage } from './SiteSettingsPage';
 
 afterEach(()=>vi.restoreAllMocks());
 it('saves personalization and immediately updates site brand, metadata and footer',async()=>{
+  sessionStorage.setItem("bookkin-demo-session", JSON.stringify({ id: "owner", username: "owner", displayName: "主人", role: "OWNER", mustChangePassword: false }));
   vi.spyOn(api,'siteSettings').mockResolvedValue({...DEFAULT_SITE_SETTINGS});
   const save=vi.spyOn(api,'saveSiteSettings').mockImplementation(async input=>({...input}));
   render(<TestProviders initialPath="/settings#personalization"><AppShell><SiteSettingsPage /></AppShell></TestProviders>);
   fireEvent.change(await screen.findByRole('textbox',{name:'网站名称'}),{target:{value:'山间书屋'}});
   fireEvent.change(screen.getByRole('textbox',{name:'版权说明'}),{target:{value:'山间书屋 版权所有'}});
   fireEvent.click(screen.getByRole('switch',{name:'启用虚拟 3D 书库'}));
-  fireEvent.click(screen.getByRole('button',{name:'保存个性化设置'}));
+  fireEvent.click(screen.getByRole('button',{name:'保存'}));
   await waitFor(()=>expect(save).toHaveBeenCalledWith(expect.objectContaining({name:'山间书屋',copyright:'山间书屋 版权所有',allowIndexing:false,virtualLibraryEnabled:false})));
   expect(screen.getByRole('switch',{name:'启用虚拟 3D 书库'})).not.toBeChecked();
   expect(await screen.findByRole('link',{name:'山间书屋'})).toBeInTheDocument();

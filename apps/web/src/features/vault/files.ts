@@ -123,6 +123,8 @@ export async function decryptChunk(
     { credentials: "include", cache: "no-store", signal },
   );
   if (!response.ok) {
+    if (response.status === 403 || response.status === 409)
+      window.dispatchEvent(new Event("bookkin:vault-access-required"));
     if (response.status === 401)
       window.dispatchEvent(new Event("bookkin:session-expired"));
     throw new Error("无法读取密文分块，请重新登录或重新导入。");

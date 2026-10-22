@@ -1,5 +1,11 @@
+import { HttpErrorPage, pageFailure } from "./HttpErrorPage";
+import { usePermissions } from "../auth/permissions";
 import { EmptyState } from "../ui/empty-state";
+import type { IndependentReaderSource } from "../components/readers/independent-reader-source";
 import { registerSessionSaver } from "../auth/session-save";
+import { BookmarkRounded } from "@/ui/icons";
+import { IconButton } from "@/ui/buttons";
+import { bookmarkIsVisible, bookmarkLabel, bookmarkTocIndex } from "../components/readers/reader-bookmarks";
 import { AutoStoriesRounded } from "@/ui/icons";
 import { CheckRounded } from "@/ui/icons";
 import { FontDownloadRounded } from "@/ui/icons";
@@ -50,7 +56,7 @@ import { useReaderVisibleHeight } from "../components/readers/use-reader-visible
 import { usePageTurnTransition } from "../components/readers/use-page-turn-transition";
 import { readerWidthSx } from "../components/PageHeader";
 import { demoChapter } from "../data/demo";
-import { annotationColorBackground, annotationColorHex, highlightColorPresets } from "../domain/annotation-colors";
+import { annotationColorHex, highlightColorPresets, readerHighlightStyle, type AnnotationTextTheme } from "../domain/annotation-colors";
 import type { Annotation, AnnotationStyle, Book, DisplayBook, HighlightColor } from "../domain/types";
 import { tokens } from "../theme/generated-tokens";
 import { useBookKinTheme } from "../theme/BookKinThemeProvider";
@@ -65,24 +71,34 @@ function isPrivateBook(book: Book | DisplayBook): book is Book {
 }
 
 export function ReaderPage() {
-  const { bookId = "" } = useParams();
+  const { bookId } = useParams();
+  return <ReaderWorkspace key={bookId} />;
+}
+
+// 文章与书籍共享完整阅读界面，独立来源只注入内容和持久化。
+/** Books and independent content share one reader UI and inject their own persistence. */
+export function ReaderWorkspace({ source }: { source?: IndependentReaderSource }) {
+  const { bookId: routeBookId = "" } = useParams();
+  const bookId = source?.id ?? routeBookId;
   const { user } = useAuth();
+  const { can } = usePermissions();
+  const canAnnotate = Boolean(source) || can("reader.annotate");
   const { mode: readerTheme, setMode: setBookKinTheme } = useBookKinTheme();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const readerLocation = useLocation();
   const libraryReturnState = user ? readReferenceReaderState(readerLocation.state) : null;
-  const returnToLibrary = () => libraryReturnState
+  const returnToLibrary = () => source ? source.onBack() : libraryReturnState
     ? navigate('/virtual-library', {state: libraryReturnState})
     : navigate(user ? "/library/all" : "/library");
-  const annotationTarget = searchParams.get("locator") ?? undefined;
+  const annotationTarget = source ? source.initialLocator : searchParams.get("locator") ?? undefined;
   const queryClient = useQueryClient();
   // 访客走公开书籍接口且不读取私有批注；认证缓存隔离由 AuthProvider 管理。
   // Guests use public book APIs without private annotations; AuthProvider owns identity-related cache isolation.
   const guest = !user;
-  const bookQuery = useQuery<Book | DisplayBook>({ queryKey: ["reader-book", bookId, guest], queryFn: async () => guest ? api.getDisplayBook(bookId) : api.getBook(bookId), enabled: Boolean(bookId) });
+  const bookQuery = useQuery<Book | DisplayBook>({ queryKey: ["reader-book", bookId, guest], queryFn: async () => guest ? api.getDisplayBook(bookId) : api.getBook(bookId), enabled: Boolean(bookId) && !source });
   const annotationQueryKey = ["annotations", bookId] as const;
-  const annotationsQuery = useQuery({ queryKey: annotationQueryKey, queryFn: () => api.listAnnotations(bookId), enabled: Boolean(user) });
+  const annotationsQuery = useQuery({ queryKey: annotationQueryKey, queryFn: () => api.listAnnotations(bookId), enabled: Boolean(user) && !source });
   const readerSettingsKey = `bookkin-reader-settings:${user?.id ?? "anonymous"}`;
   const readerFontsQuery = useQuery({ queryKey: ["reader-fonts"], queryFn: api.listReaderFonts, staleTime: 5 * 60_000, enabled: Boolean(user) });
   const availableFonts = readerFontsQuery.data ?? PRESET_READER_FONTS;
@@ -91,9 +107,9 @@ export function ReaderPage() {
   const [notesOpen, setNotesOpen] = useState(false);
   const [tocOpen, setTocOpen] = useState(false);
   const [tocItems, setTocItems] = useState<TocItem[]>([]);
-  const [epubTarget, setEpubTarget] = useState<string | undefined>(
-    annotationTarget?.startsWith("epubcfi(") ? annotationTarget : undefined,
-  );
+  const [targetRevision, setTargetRevision] = useState(0);
+  const jumpTo = (locator?: string) => { if (!locator) return; setReaderTarget(locator); setTargetRevision(value => value + 1); };
+  const [readerTarget, setReaderTarget] = useState<string | undefined>(annotationTarget);
   const [selection, setSelection] = useState<ReaderSelection | null>(() => {
     const previewParams = new URLSearchParams(window.location.search);
     if (!import.meta.env.DEV || previewParams.get("preview") !== "annotation-toolbar") return null;
@@ -113,17 +129,24 @@ export function ReaderPage() {
   const [annotationBusy, setAnnotationBusy] = useState(false);
   const [notice, setNotice] = useState("");
   const [bookmarkBusy, setBookmarkBusy] = useState(false);
-  const [currentLocator, setCurrentLocator] = useState("epubcfi(/6/14!/4/2)");
+  const [currentLocator, setCurrentLocator] = useState(source ? source.initialLocator ?? "" : api.isDemo ? "epubcfi(/6/14!/4/2)" : "");
+  const [visibleEndLocator, setVisibleEndLocator] = useState<string | undefined>();
   const [readerProgress, setReaderProgress] = useState<number | null>(null);
   const visibleHeight = useReaderVisibleHeight();
   const currentFont = availableFonts.find((font) => font.id === readerSettings.fontId && font.status === "ENABLED") ?? PRESET_READER_FONTS[0];
   const currentTheme = bookKinThemeOptions[readerTheme].reader;
   const fontSize = readerSettings.fontSize;
   const fontFamily = readerFontFamily(currentFont);
-  const bookAnnotations = useMemo(() => user ? (annotationsQuery.data ?? []).filter((item) => item.bookId === bookId) : [], [annotationsQuery.data, bookId, user]);
+  const bookAnnotations = useMemo(() => user ? (source?.annotations ?? annotationsQuery.data ?? []).filter((item) => item.bookId === bookId) : [], [source?.annotations, annotationsQuery.data, bookId, user]);
   const annotations = useMemo(() => bookAnnotations.filter((item) => item.type !== "BOOKMARK"), [bookAnnotations]);
-  const bookmark = useMemo(() => bookAnnotations.find((item) => item.type === "BOOKMARK"), [bookAnnotations]);
-  useReadingTimeTracking(bookId, bookQuery.isSuccess && Boolean(user));
+  const bookmarks = useMemo(() => bookAnnotations.filter((item): item is Annotation & { locator: string } => item.type === "BOOKMARK" && Boolean(item.locator)), [bookAnnotations]);
+  const bookmark = bookmarks.find(item => bookmarkIsVisible(item.locator, currentLocator, visibleEndLocator));
+  const bookmarkSections = bookmarks.map(item => bookmarkTocIndex(item.locator, tocItems));
+  useReadingTimeTracking(bookId, !source && bookQuery.isSuccess && Boolean(user));
+  const readerDocument = source ?? bookQuery.data;
+  const demo = !source && api.isDemo;
+  const notesTitle = source ? guest ? "文章信息" : "阅文札记" : "本书笔记";
+  const noteDraftKey = user && bookId ? `bookkin-${source ? "article-note-draft" : "note-draft"}:${user.id}:${bookId}` : undefined;
 
   useEffect(() => {
     if (!readerFontsQuery.isSuccess) return;
@@ -136,13 +159,13 @@ export function ReaderPage() {
   }, [readerSettings, readerSettingsKey, readerTheme]);
 
   useEffect(() => {
-    if(!user || !bookId) return;
-    const key=`bookkin-note-draft:${user.id}:${bookId}`;
+    if(!noteDraftKey) return;
+    const key=noteDraftKey;
     try { const draft=JSON.parse(localStorage.getItem(key) ?? "null"); if(draft?.selection) {setNote(draft.note ?? "");setSelection(draft.selection);setNoteComposerOpen(Boolean(draft.note));} } catch { /* 忽略损坏的本地草稿。 */ /* Ignore damaged local drafts. */ }
-  },[user?.id,bookId]);
+  },[noteDraftKey]);
   useEffect(() => {
-    if(user && bookId && selection) localStorage.setItem(`bookkin-note-draft:${user.id}:${bookId}`,JSON.stringify({note,selection}));
-  },[user,bookId,noteComposerOpen,note,selection]);
+    if(noteDraftKey && selection) localStorage.setItem(noteDraftKey,JSON.stringify({note,selection}));
+  },[noteDraftKey,noteComposerOpen,note,selection]);
   const handleReaderSelection = useCallback((nextSelection: ReaderSelection) => {
     if (!user) return;
     setSelection(nextSelection);
@@ -150,10 +173,14 @@ export function ReaderPage() {
     setNote("");
   }, [user]);
   const handleNavigation = useCallback((items: TocItem[]) => setTocItems(items), []);
-  const handlePosition = useCallback((locator: string, progress: number) => {
+  const independentPosition = source?.onPosition;
+  const handlePosition = useCallback((locator: string, progress: number, endLocator?: string) => {
     setCurrentLocator(locator);
+    setVisibleEndLocator(endLocator);
     setReaderProgress(progress);
-  }, []);
+    independentPosition?.(locator, progress);
+  }, [independentPosition]);
+  useEffect(() => setReaderTarget(annotationTarget), [annotationTarget]);
 
   const captureSelection = () => {
     const nativeSelection = window.getSelection();
@@ -169,7 +196,7 @@ export function ReaderPage() {
   };
 
   const closeSelection = () => {
-    if(user && bookId) localStorage.removeItem(`bookkin-note-draft:${user.id}:${bookId}`);
+    if(noteDraftKey) localStorage.removeItem(noteDraftKey);
     setSelection(null);
     setNoteComposerOpen(false);
     setNote("");
@@ -177,22 +204,23 @@ export function ReaderPage() {
   };
 
   const saveAnnotation = async (style: AnnotationStyle, withNote = false, color = highlightColor) => {
-    if (!user || !selection || !bookQuery.data || annotationBusy) return;
+    if (!canAnnotate || !user || !selection || !readerDocument || annotationBusy) return;
     setAnnotationBusy(true);
+    setNotice("");
     try {
-      const saved = await api.createAnnotation({
+      const draft = {
         bookId,
-        bookTitle: bookQuery.data.title,
-        type: withNote ? "NOTE" : "HIGHLIGHT",
+        bookTitle: readerDocument.title,
+        type: withNote ? "NOTE" as const : "HIGHLIGHT" as const,
         quote: selection.quote,
         note: withNote ? note.trim() : "",
         locator: selection.locator,
         style,
         color,
-      });
-      queryClient.setQueryData(annotationQueryKey, (current: unknown) => [saved, ...(Array.isArray(current) ? current : [])]);
+      };
+      const saved = source ? await source.createAnnotation(draft) : await api.createAnnotation(draft);
+      if (!source) queryClient.setQueryData(annotationQueryKey, (current: unknown) => [saved, ...(Array.isArray(current) ? current : [])]);
       closeSelection();
-      setNotice(withNote ? "高亮和笔记已私人同步" : `${annotationStyleLabel(style)}已私人同步`);
     } catch (error) {
       setNotice(error instanceof Error ? error.message : "批注同步失败");
     } finally {
@@ -200,28 +228,41 @@ export function ReaderPage() {
     }
   };
 
+  const removeAnnotation = async (id: string) => {
+    if (!user) return;
+    if (source) await source.deleteAnnotation(id);
+    else {
+      await api.deleteAnnotation(id);
+      queryClient.setQueryData(annotationQueryKey, (current: unknown) => Array.isArray(current)
+        ? current.filter((item) => typeof item !== "object" || item === null || !("id" in item) || item.id !== id)
+        : []);
+    }
+  };
+  const removeFromNotes = async (id: string) => {
+    try { await removeAnnotation(id); setNotice("批注已删除"); }
+    catch (error) { setNotice(error instanceof Error ? error.message : "批注删除失败"); }
+  };
+
   const toggleBookmark = async () => {
-    if (!user || !bookQuery.data || bookmarkBusy) return;
+    if (!canAnnotate || !user || !readerDocument || bookmarkBusy || (!bookmark && !currentLocator)) return;
     setBookmarkBusy(true);
     try {
       if (bookmark) {
-        await api.deleteAnnotation(bookmark.id);
-        queryClient.setQueryData(annotationQueryKey, (current: unknown) => Array.isArray(current)
-          ? current.filter((item) => typeof item !== "object" || item === null || !("id" in item) || item.id !== bookmark.id)
-          : []);
+        await removeAnnotation(bookmark.id);
         setNotice("书签已移除");
       } else {
-        const saved = await api.createAnnotation({
+        const draft = {
           bookId,
-          bookTitle: bookQuery.data.title,
-          type: "BOOKMARK",
+          bookTitle: readerDocument.title,
+          type: "BOOKMARK" as const,
           quote: "",
           note: "",
           locator: currentLocator,
-          style: "HIGHLIGHT",
-          color: "GOLD",
-        });
-        queryClient.setQueryData(annotationQueryKey, (current: unknown) => [saved, ...(Array.isArray(current) ? current : [])]);
+          style: "HIGHLIGHT" as const,
+          color: "GOLD" as const,
+        };
+        const saved = source ? await source.createAnnotation(draft) : await api.createAnnotation(draft);
+        if (!source) queryClient.setQueryData(annotationQueryKey, (current: unknown) => [saved, ...(Array.isArray(current) ? current : [])]);
         setNotice("本页已加入书签并同步");
       }
     } catch (error) {
@@ -231,45 +272,50 @@ export function ReaderPage() {
     }
   };
 
-  if (bookQuery.isPending) return <Stack spacing={2} sx={{ minHeight: READER_SHELL_HEIGHT, alignItems: "center", justifyContent: "center" }}><CircularProgress /><Typography color="text.secondary">正在展开书页…</Typography></Stack>;
-  if (bookQuery.isError || !bookQuery.data) return <Stack spacing={2} sx={{ minHeight: READER_SHELL_HEIGHT, alignItems: "center", justifyContent: "center" }}><Alert severity="error">无法打开这本书</Alert><Button onClick={returnToLibrary}>返回书库</Button></Stack>;
-  const book = bookQuery.data;
+  if (!source && bookQuery.isPending) return <Stack spacing={2} sx={{ minHeight: READER_SHELL_HEIGHT, alignItems: "center", justifyContent: "center" }}><CircularProgress /><Typography color="text.secondary">正在展开书页…</Typography></Stack>;
+  if (!source && (bookQuery.isError || !bookQuery.data)) return <HttpErrorPage failure={pageFailure(bookQuery.error)} title="无法打开这本书" actions={<><Button onClick={() => void bookQuery.refetch()}>重试</Button><Button onClick={returnToLibrary}>返回书库</Button></>} />;
+  const book = readerDocument;
+  if (!book) return null;
   if (!book.format) return <Stack spacing={2} sx={{ minHeight: READER_SHELL_HEIGHT, alignItems: "center", justifyContent: "center" }}><Alert severity="info">这本展示书目暂时没有可用文件</Alert><Button onClick={returnToLibrary}>返回书架</Button></Stack>;
-  const privateBook = isPrivateBook(book);
-  const progressPercent = privateBook ? (api.isDemo ? book.progress : Math.round((readerProgress ?? book.progress / 100) * 100)) : 0;
-  const readerSubtitle = `${book.author} · ${privateBook && api.isDemo ? "第七章" : `${book.format} · ${guest ? "只读阅读" : `已读 ${progressPercent}%`}`}`;
+  const privateBook = !source && bookQuery.data && isPrivateBook(bookQuery.data) ? bookQuery.data : undefined;
+  const savedProgress = source?.progress ?? (privateBook ? privateBook.progress / 100 : 0);
+  const progressPercent = source ? Math.round((readerProgress ?? savedProgress) * 100) : privateBook ? (demo ? savedProgress * 100 : Math.round((readerProgress ?? savedProgress) * 100)) : 0;
+  const readerSubtitle = `${book.author} · ${privateBook && demo ? "第七章" : `${source?.label ?? book.format} · ${guest ? "只读阅读" : `已读 ${progressPercent}%`}`}`;
 
   return (
     <Box data-reader-visible-height={visibleHeight || undefined} sx={{ height: readerShellHeight(visibleHeight), minHeight: 0, display: "flex", flexDirection: "column", overflow: "hidden", bgcolor: "background.default", color: "text.primary", transition: "background-color 180ms ease" }}>
       <ReaderTopBar
         title={book.title}
         subtitle={readerSubtitle}
-        format={book.format}
+        format={source ? "ARTICLE" : book.format}
+        notesLabel={notesTitle}
+        notesAvailable={Boolean(source) || !guest}
         progressPercent={progressPercent}
-        tableOfContentsAvailable={!api.isDemo && book.format === "EPUB"}
+        tableOfContentsAvailable={!demo || bookmarks.length > 0}
         bookmarked={Boolean(bookmark)}
-        bookmarkBusy={bookmarkBusy}
-        privateActions={!guest}
+        bookmarkBusy={bookmarkBusy || !currentLocator || (!source && annotationsQuery.isPending)}
+        privateActions={!guest && canAnnotate}
         onBack={returnToLibrary}
-        backLabel={libraryReturnState ? "返回虚拟书库" : user ? "返回全部书籍" : "返回书库"}
+        backLabel={source?.backLabel ?? (libraryReturnState ? "返回虚拟书库" : user ? "返回全部书籍" : "返回书库")}
         onOpenTableOfContents={() => setTocOpen(true)}
         onToggleBookmark={() => void toggleBookmark()}
         onOpenSettings={(event: any) => setSettingsAnchor(event.currentTarget)}
         onOpenNotes={() => setNotesOpen(true)}
       />
 
+      {source?.error && <Alert severity="error">{source.error}</Alert>}
       <Box sx={{ position: "relative", flex: "1 1 auto", minHeight: 0, overflow: "hidden" }}>
-        {!api.isDemo ? (
+        {!demo ? (
           <Suspense fallback={<Stack sx={{ height: "100%", alignItems: "center", justifyContent: "center" }}><CircularProgress /></Stack>}>
             {book.format === "PDF"
-              ? <PdfDocumentReader bookId={bookId} annotations={annotations} theme={currentTheme} fontSize={fontSize} fontFamily={fontFamily} pageTurnEnabled={readerSettings.pageTurnEnabled} fontSourceUrl={!guest && currentFont.source === "CUSTOM" ? `/api/v1/reader-fonts/${currentFont.id}/content` : undefined} contentUrl={guest ? `/api/v1/display-books/${bookId}/content` : undefined} readOnly={guest} target={annotationTarget} onSelect={handleReaderSelection} onPosition={handlePosition} />
-              : <EpubDocumentReader bookId={bookId} annotations={annotations} theme={currentTheme} fontSize={fontSize} fontFamily={fontFamily} pageTurnEnabled={readerSettings.pageTurnEnabled} fontSourceUrl={!guest && currentFont.source === "CUSTOM" ? `/api/v1/reader-fonts/${currentFont.id}/content` : undefined} contentUrl={guest ? `/api/v1/display-books/${bookId}/content` : undefined} readOnly={guest} target={epubTarget} onNavigation={handleNavigation} onSelect={handleReaderSelection} onPosition={handlePosition} />}
+              ? <PdfDocumentReader bookId={bookId} annotations={annotations} theme={currentTheme} fontSize={fontSize} fontFamily={fontFamily} pageTurnEnabled={readerSettings.pageTurnEnabled} fontSourceUrl={!guest && currentFont.source === "CUSTOM" ? `/api/v1/reader-fonts/${currentFont.id}/content` : undefined} contentUrl={source?.contentUrl ?? (guest ? `/api/v1/display-books/${bookId}/content` : undefined)} readOnly={Boolean(source) || guest} target={readerTarget} targetRevision={targetRevision} onNavigation={handleNavigation} onSelect={handleReaderSelection} onPosition={handlePosition} />
+              : <EpubDocumentReader flow={source?.flow} contentLabel={source?.label} bookId={bookId} annotations={annotations} theme={currentTheme} fontSize={fontSize} fontFamily={fontFamily} pageTurnEnabled={readerSettings.pageTurnEnabled} fontSourceUrl={!guest && currentFont.source === "CUSTOM" ? `/api/v1/reader-fonts/${currentFont.id}/content` : undefined} contentUrl={source?.contentUrl ?? (guest ? `/api/v1/display-books/${bookId}/content` : undefined)} readOnly={Boolean(source) || guest} target={readerTarget} targetRevision={targetRevision} onNavigation={handleNavigation} onSelect={handleReaderSelection} onPosition={handlePosition} />}
           </Suspense>
         ) : <DemoPagedSurface bookTitle={book.title} format={book.format} theme={currentTheme} night={readerTheme === "NIGHT"} fontFamily={fontFamily} fontSize={fontSize} pageTurnEnabled={readerSettings.pageTurnEnabled} paragraphs={demoChapter} annotations={annotations} onMouseUp={captureSelection} />}
       </Box>
 
       <Popover
-        open={Boolean(user && selection) && !noteComposerOpen}
+        open={Boolean(canAnnotate && user && selection) && !noteComposerOpen}
         onClose={closeSelection}
         anchorReference="anchorPosition"
         anchorPosition={selection ? { left: Math.round(selection.x), top: Math.max(12, Math.round(selection.y)) } : undefined}
@@ -297,7 +343,7 @@ export function ReaderPage() {
       </Popover>
 
       <Dialog
-        open={Boolean(user && selection) && noteComposerOpen}
+        open={Boolean(canAnnotate && user && selection) && noteComposerOpen}
         onClose={() => { setNoteComposerOpen(false); setNote(""); }}
         fullWidth
         maxWidth="xs"
@@ -305,12 +351,12 @@ export function ReaderPage() {
       >
         <DialogTitle sx={{ pb: 1 }}>高亮并写笔记</DialogTitle>
         <DialogContent>
-          <Typography component="div" variant="body2" sx={{ mb: 2, color: currentTheme.foreground, fontFamily: tokens.typography.fontFamily.display, maxHeight: 86, overflow: "auto" }}><Box component="span" sx={{ bgcolor: annotationColorBackground(highlightColor), borderRadius: "var(--radius-md)", boxDecorationBreak: "clone" }}>“{selection?.quote}”</Box></Typography>
+          <Typography component="div" variant="body2" sx={{ mb: 2, color: currentTheme.foreground, fontFamily: tokens.typography.fontFamily.display, maxHeight: 86, overflow: "auto" }}><Box component="span" sx={{ ...readerHighlightStyle(highlightColor, currentTheme), borderRadius: "var(--radius-md)", boxDecorationBreak: "clone" }}>“{selection?.quote}”</Box></Typography>
           <Typography variant="caption" color="text.secondary">高亮颜色</Typography>
           <AnnotationColorSwatches value={highlightColor} onChange={setHighlightColor} disabled={annotationBusy} compact />
           <TextField label="写下这段文字带来的想法" multiline minRows={3} fullWidth value={note} onChange={(event: any) => setNote(event.target.value)} autoFocus />
         </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2.5, justifyContent: "space-between" }}><Button color="inherit" disabled={annotationBusy} onClick={() => { setNoteComposerOpen(false); setNote(""); }}>返回</Button><Button variant="contained" disabled={!note.trim() || annotationBusy} startIcon={<CheckRounded />} onClick={() => void saveAnnotation("HIGHLIGHT", true)}>保存笔记</Button></DialogActions>
+        <DialogActions sx={{ px: 3, pb: 2.5, justifyContent: "space-between" }}><Button color="inherit" disabled={annotationBusy} onClick={() => { setNoteComposerOpen(false); setNote(""); }}>返回</Button><Button variant="contained" disabled={!note.trim() || annotationBusy} onClick={() => void saveAnnotation("HIGHLIGHT", true)}>保存笔记</Button></DialogActions>
       </Dialog>
 
       <Menu anchorEl={settingsAnchor} open={Boolean(settingsAnchor)} onClose={() => setSettingsAnchor(null)} slotProps={{ paper: { sx: { width: { xs: `calc(100vw - ${tokens.spacing[6]}px)`, sm: 360 }, maxWidth: `calc(100vw - ${tokens.spacing[6]}px)`, maxHeight: `calc(100dvh - ${tokens.spacing[8]}px)`, overflowY: "auto", overscrollBehavior: "contain", p: 1 } } }}>
@@ -325,7 +371,7 @@ export function ReaderPage() {
           </Stack>
           <Stack direction="row" spacing={1} sx={{ alignItems: "center", mt: 1.5, mb: 1 }}><FormatSizeRounded /><Typography sx={{ fontWeight: 700 }}>字号</Typography><Typography variant="body2" color="text.secondary" sx={{ ml: "auto" }}>{fontSize}px</Typography></Stack>
           <Slider min={16} max={28} step={1} value={fontSize} onChange={(_: any, value: any) => setReaderSettings((current) => ({ ...current, fontSize: value as number }))} valueLabelDisplay="auto" />
-          <Stack direction="row" sx={{ alignItems: "center", gap: 1.25, mt: 1.5 }}>
+          {source?.flow !== "scrolled-doc" && <Stack direction="row" sx={{ alignItems: "center", gap: 1.25, mt: 1.5 }}>
             <AutoStoriesRounded />
             <Box sx={{ minWidth: 0 }}>
               <Typography sx={{ fontWeight: 700 }}>翻页效果</Typography>
@@ -339,22 +385,42 @@ export function ReaderPage() {
               slotProps={{ input: { "aria-label": "启用翻页效果" } }}
               sx={{ ml: "auto" }}
             />
-          </Stack>
+          </Stack>}
         </Box>
         <Divider />
         <Typography variant="caption" color="text.secondary" sx={{ px: 2, pt: 1.5, display: "block" }}>阅读主题</Typography>
         {(Object.keys(bookKinThemeOptions) as ReaderTheme[]).map((key) => <MenuItem key={key} selected={readerTheme === key} onClick={() => setBookKinTheme(key)}><Box sx={{ width: 24, height: 24, borderRadius: "50%", bgcolor: bookKinThemeOptions[key].reader.background, border: 1, borderColor: "divider", mr: 1.5 }} />{bookKinThemeOptions[key].label}{readerTheme === key && <CheckRounded sx={{ ml: "auto" }} />}</MenuItem>)}
       </Menu>
 
-      <Drawer anchor="right" title="本书笔记" closeLabel="关闭本书笔记" open={notesOpen} onClose={() => setNotesOpen(false)} slotProps={{ paper: { sx: { width: { xs: `calc(100vw - ${tokens.spacing[6]}px)`, sm: 390 }, maxWidth: "100vw" } } }}>
+      <Drawer anchor="right" title={notesTitle} closeLabel={`关闭${notesTitle}`} open={notesOpen} onClose={() => setNotesOpen(false)} slotProps={{ paper: { sx: { width: { xs: `calc(100vw - ${tokens.spacing[6]}px)`, sm: 390 }, maxWidth: "100vw" } } }}>
         <Box role="complementary" sx={{ width: "100%", maxWidth: "100%", height: "100%", overflowY: "auto", overscrollBehavior: "contain", p: { xs: 2, sm: 3 } }}>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>仅你可见 · {annotations.length} 条</Typography>
-          {annotations.length === 0 ? <EmptyState compact title="暂无批注" /> : <Stack divider={<Divider flexItem />} spacing={2}>{annotations.map((item) => <Box key={item.id} sx={{ pb: 2 }}><Chip size="small" label={annotationLabel(item)} sx={{ mb: 1.25 }} />{item.quote && <Typography sx={{ fontFamily: tokens.typography.fontFamily.display }}><Box component="span" sx={{ bgcolor: item.style === "HIGHLIGHT" ? annotationColorBackground(item.color) : "transparent", borderRadius: "var(--radius-md)", boxDecorationBreak: "clone" }}>“{item.quote}”</Box></Typography>}{item.note && <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>{item.note}</Typography>}</Box>)}</Stack>}
+          {source?.extraActions && <Stack sx={{ mb: 3, gap: 1.5 }}>{source.extraActions}</Stack>}
+          {!guest && <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>仅你可见 · {annotations.length} 条</Typography>}
+          {guest ? null : annotations.length === 0 ? <EmptyState compact title="暂无批注" /> : <Stack divider={<Divider flexItem />} spacing={2}>
+            {annotations.map((item) => <Box key={item.id} sx={{ pb: 2 }}>
+              <Chip size="small" label={annotationLabel(item)} sx={{ mb: 1.25 }} />
+              {item.quote && <Typography sx={{ fontFamily: tokens.typography.fontFamily.display }}><Box component="span" sx={{ ...(item.style === "HIGHLIGHT" ? readerHighlightStyle(item.color, currentTheme) : {}), borderRadius: "var(--radius-md)", boxDecorationBreak: "clone" }}>“{item.quote}”</Box></Typography>}
+              {item.note && <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>{item.note}</Typography>}
+              <Stack direction="row" sx={{ mt: 1, gap: 1 }}>
+                <Button size="small" disabled={!item.locator} onClick={() => { jumpTo(item.locator); setNotesOpen(false); }}>返回原文</Button>
+                {canAnnotate && <Button size="small" color="error" onClick={() => void removeFromNotes(item.id)}>删除批注</Button>}
+              </Stack>
+            </Box>)}
+          </Stack>}
         </Box>
       </Drawer>
       <Drawer anchor="left" title="目录" closeLabel="关闭目录" open={tocOpen} onClose={() => setTocOpen(false)} slotProps={{ paper: { sx: { width: { xs: `calc(100vw - ${tokens.spacing[6]}px)`, sm: 360 }, maxWidth: "100vw" } } }}>
-        <Box role="navigation" aria-label="书籍目录" sx={{ width: "100%", maxWidth: "100%", height: "100%", overflowY: "auto", overscrollBehavior: "contain", p: 0 }}>
-          {tocItems.length === 0 ? <EmptyState compact title="暂无目录" /> : <List disablePadding>{tocItems.map((item, index) => <ListItemButton key={`${item.href}-${index}`} onClick={() => { setEpubTarget(item.href); setTocOpen(false); }} sx={{ pl: { xs: 2 + Math.min(item.depth, 3) * 2, sm: 3 + Math.min(item.depth, 3) * 2 }, pr: { xs: 2, sm: 3 } }}><ListItemText primary={item.label} /></ListItemButton>)}</List>}
+        <Box role="navigation" aria-label={source ? "文章目录" : "书籍目录"} sx={{ width: "100%", maxWidth: "100%", height: "100%", overflowY: "auto", overscrollBehavior: "contain", p: 0 }}>
+          {tocItems.length === 0 && bookmarks.length === 0 && <EmptyState compact title="暂无目录或书签" />}
+          <List sx={{ p: 0 }}>
+            {tocItems.map((item, index) => <Box key={`${item.href}-${index}`} sx={{ display: "flex", alignItems: "center" }}>
+              <ListItemButton onClick={() => { jumpTo(item.href); setTocOpen(false); }} sx={{ flex: 1, minWidth: 0, pl: { xs: 2 + Math.min(item.depth, 3) * 2, sm: 3 + Math.min(item.depth, 3) * 2 }, pr: { xs: 2, sm: 3 } }}><ListItemText primary={item.label} /></ListItemButton>
+              {bookmarks.map((saved, bookmarkIndex) => bookmarkSections[bookmarkIndex] === index && <Tooltip key={saved.id} title={`跳转书签：${item.label}`}><IconButton aria-label={`跳转书签：${item.label}（${bookmarkIndex + 1}）`} color="primary" onClick={() => { jumpTo(saved.locator); setTocOpen(false); }}><BookmarkRounded /></IconButton></Tooltip>)}
+            </Box>)}
+            {bookmarks.map((saved, index) => bookmarkSections[index] < 0 && <ListItemButton key={saved.id} onClick={() => { jumpTo(saved.locator); setTocOpen(false); }}>
+              <BookmarkRounded color="primary" /><ListItemText primary={bookmarkLabel(saved.locator, index)} />
+            </ListItemButton>)}
+          </List>
         </Box>
       </Drawer>
       <Snackbar open={Boolean(notice)} autoHideDuration={3500} onClose={() => setNotice("")} message={notice} />
@@ -447,7 +513,7 @@ function annotationLabel(annotation: Annotation) {
   return annotation.type === "NOTE" ? "高亮笔记" : annotationStyleLabel(annotation.style);
 }
 
-function renderAnnotatedText(paragraph: string, annotations: Annotation[]) {
+function renderAnnotatedText(paragraph: string, annotations: Annotation[], theme: AnnotationTextTheme) {
   const ranges = annotations
     .filter((annotation) => annotation.quote && paragraph.includes(annotation.quote))
     .map((annotation) => ({ annotation, start: paragraph.indexOf(annotation.quote!), end: paragraph.indexOf(annotation.quote!) + annotation.quote!.length }))
@@ -466,8 +532,7 @@ function renderAnnotatedText(paragraph: string, annotations: Annotation[]) {
         key={annotation.id}
         data-highlight-color={annotation.color ?? "YELLOW"}
         sx={{
-          color: "inherit",
-          bgcolor: style === "HIGHLIGHT" ? annotationColorBackground(annotation.color) : "transparent",
+          ...(style === "HIGHLIGHT" ? readerHighlightStyle(annotation.color, theme) : { color: "inherit", background: "transparent" }),
           borderRadius: style === "HIGHLIGHT" ? "var(--radius-md)" : 0,
           fontWeight: style === "BOLD" ? 700 : "inherit",
           textDecoration: style === "UNDERLINE" ? "underline" : "none",
@@ -570,7 +635,7 @@ function DemoPagedSurface({ bookTitle, format, theme, night, fontFamily, fontSiz
         <Box ref={frameRef} component="article" className="reader-paged-text" aria-label={`${format} 阅读正文`} onMouseUp={onMouseUp} onTouchEnd={onMouseUp} sx={{ height: "100%", width: pageLayout ? `${pageLayout.articleWidth}px` : "100%", maxWidth: "100%", mx: "auto", overflow: "visible", transform: columnWidth === null ? `translateX(-${pageIndex * 100}%)` : `translateX(-${pageIndex * pageStride}px)`, transition: "none", columnCount: "auto", columnWidth: columnWidth === null ? "auto" : `${columnWidth}px`, columnGap: `${columnGap}px`, columnFill: "auto", direction: "ltr", writingMode: "horizontal-tb", textOrientation: "mixed", unicodeBidi: "normal", px: `${pagePadding}px`, pt: `${tokens.spacing[6]}px`, pb: `${tokens.spacing[6]}px`, fontFamily, fontSize, lineHeight: 1.95, color: theme.foreground, background: theme.background, "& > *": { breakInside: "auto" }, "& h1, & h2": { breakInside: "avoid" } }}>
           <Typography variant="overline" component="p" sx={{ color: theme.muted, letterSpacing: ".18em" }}>{format === "EPUB" ? "第七章" : bookTitle}</Typography>
           <Typography component="h1" variant="h2" color="inherit" sx={{ mt: 2, mb: 5, fontFamily: "inherit" }}>{format === "EPUB" ? "灯下" : "海岸与迁徙"}</Typography>
-          {paragraphs.map((paragraph, index) => <Typography component="p" key={paragraph} sx={{ fontFamily: "inherit", fontSize: "inherit", lineHeight: 1.95, mb: "1.55em", textIndent: index === 0 ? 0 : "2em", "&::first-letter": index === 0 ? { float: "left", fontSize: "3.5em", lineHeight: 0.9, pr: 1.2, color: "primary.main" } : undefined }}>{renderAnnotatedText(paragraph, annotations)}</Typography>)}
+          {paragraphs.map((paragraph, index) => <Typography component="p" key={paragraph} sx={{ fontFamily: "inherit", fontSize: "inherit", lineHeight: 1.95, mb: "1.55em", textIndent: index === 0 ? 0 : "2em", "&::first-letter": index === 0 ? { float: "left", fontSize: "3.5em", lineHeight: 0.9, pr: 1.2, color: "primary.main" } : undefined }}>{renderAnnotatedText(paragraph, annotations, theme)}</Typography>)}
           <Divider sx={{ borderColor: night ? "rgba(255,255,255,.14)" : "divider", my: 5 }} />
           {format !== "PDF" && <Typography variant="caption" component="p" sx={{ textAlign: "center", color: theme.muted, breakInside: "avoid" }}>本章结束</Typography>}
         </Box>

@@ -1,6 +1,5 @@
 import { prepareSessionExit, setPersistenceUser } from "./session-save";
 import { Button } from "@/ui/buttons";
-import { Typography } from "@/ui/primitives";
 import { CircularProgress } from "@/ui/feedback";
 import { Stack } from "@/ui/primitives";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type PropsWithChildren } from "react";
@@ -9,11 +8,13 @@ import { useQueryClient } from "@tanstack/react-query";
 import { api } from "../api/client";
 import type { SessionUser, UserRole } from "../domain/types";
 import { AccessDeniedPage } from "../pages/AccessDeniedPage";
+import { HttpErrorPage, pageFailure, type PageFailure } from "../pages/HttpErrorPage";
 
 interface AuthContextValue {
   user: SessionUser | null;
   ready: boolean;
   sessionError: string | null;
+  sessionFailure?: PageFailure | null;
   retrySession: () => void;
   login: (username: string, password: string) => Promise<SessionUser>;
   setupOwner: (input: { username: string; displayName: string; password: string }) => Promise<SessionUser>;
@@ -37,23 +38,24 @@ function readStoredUser(): SessionUser | null {
 export function AuthProvider({ children }: PropsWithChildren) {
   const [user, setUser] = useState<SessionUser | null>(() => api.isDemo ? readStoredUser() : null);
   const [ready, setReady] = useState(api.isDemo);
-  const [sessionError, setSessionError] = useState<string | null>(null);
+  const [sessionFailure, setSessionFailure] = useState<PageFailure | null>(null);
+  const sessionError = sessionFailure?.reason ?? null;
   const [sessionAttempt, setSessionAttempt] = useState(0);
   const authRevision = useRef(0);
   const queryClient = useQueryClient();
-  const identity = useRef(user?.id ?? null);
+  const identity = useRef(user ? `${user.id}:${user.role}` : null);
 
   // 身份变化时清空查询缓存，防止下一位用户短暂看到前一位的私有数据。
   // Clear query caches on identity changes to avoid showing the previous user’s private data.
   const persist = useCallback((next: SessionUser | null) => {
-    if (identity.current !== (next?.id ?? null)) {
+    if (identity.current !== (next ? `${next.id}:${next.role}` : null)) {
       queryClient.clear();
-      identity.current = next?.id ?? null;
+      identity.current = next ? `${next.id}:${next.role}` : null;
     }
     setPersistenceUser(next?.id ?? null);
     setUser(next);
     if(next) void api.replayReadingProgress().catch(() => undefined);
-    setSessionError(null);
+    setSessionFailure(null);
     if (api.isDemo) {
       try {
         if (next) sessionStorage.setItem(storageKey, JSON.stringify(next));
@@ -69,13 +71,13 @@ export function AuthProvider({ children }: PropsWithChildren) {
     // A late session probe must not overwrite a later login/logout; check both mount state and auth revision.
     const revision = authRevision.current;
     setReady(false);
-    setSessionError(null);
+    setSessionFailure(null);
     api.getSession().then((session) => {
       if (active && revision === authRevision.current) persist(session);
     }).catch((reason) => {
       if (active && revision === authRevision.current) {
         setUser(null);
-        setSessionError(reason instanceof Error ? reason.message : "暂时无法确认登录状态，请重试。");
+        setSessionFailure(pageFailure(reason));
       }
     }).finally(() => {
       if (active && revision === authRevision.current) setReady(true);
@@ -113,6 +115,8 @@ export function AuthProvider({ children }: PropsWithChildren) {
     const check = async () => {
       try {
         const state=await api.sessionStatus();
+        const current=await api.getSession();
+        if (!stopped && current && current.role !== user.role) persist(current);
         if(stopped || exiting) return;
         window.clearTimeout(timer);
         const remaining=state.expiresAt-state.serverTime;
@@ -129,6 +133,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
     user,
     ready,
     sessionError,
+    sessionFailure,
     retrySession: () => setSessionAttempt((attempt) => attempt + 1),
     login: async (username, password) => {
       const next = await api.login(username, password);
@@ -156,7 +161,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
       const next = await api.changePassword(currentPassword, newPassword);
       persist(next);
     },
-  }), [persist, ready, sessionError, user]);
+  }), [persist, ready, sessionError, sessionFailure, user]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
@@ -170,13 +175,11 @@ export function useAuth() {
 // 先确认会话再挂载受保护内容；前端角色检查不能替代服务端授权。
 // Confirm the session before mounting protected content; client role checks do not replace server authorization.
 export function RequireAuth({ children, roles }: PropsWithChildren<{ roles?: UserRole[] }>) {
-  const { user, ready, sessionError, retrySession } = useAuth();
+  const { user, ready, sessionError, sessionFailure, retrySession } = useAuth();
   const location = useLocation();
   if (!ready) return <Stack sx={{ minHeight: "100vh", alignItems: "center", justifyContent: "center" }}><CircularProgress /></Stack>;
-  if (sessionError) return <Stack sx={{ minHeight: "100vh", alignItems: "center", justifyContent: "center" }} spacing={2}>
-    <Typography>{sessionError}</Typography>
-    <Button onClick={retrySession}>重试连接</Button>
-  </Stack>;
+  if (sessionError) return <HttpErrorPage fullHeight failure={sessionFailure ?? { code: "SESSION_CHECK_FAILED", reason: sessionError }}
+    actions={<Button onClick={retrySession}>重试</Button>} />;
   const returnTo = `${location.pathname}${location.search}${location.hash}`;
   if (!user) return <AccessDeniedPage reason="AUTHENTICATION_REQUIRED" returnTo={returnTo} />;
   if (user.mustChangePassword && location.pathname !== "/change-password") return <Navigate to="/change-password" replace />;

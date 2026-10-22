@@ -17,7 +17,7 @@ export function LoginLogsPage() {
  const users = useQuery({ queryKey:["users"], queryFn:api.listUsers });
  return <>
   <Stack sx={{mb:2}}><ActionToolbar><RefreshButton onClick={() => query.refetch()} disabled={query.isFetching}>刷新</RefreshButton></ActionToolbar></Stack>
-  {query.isError ? <Alert severity="error">无法读取登录日志，请重试。</Alert> : <DataTable<Entry> aria-label="登录日志" rowKey="id" loading={query.isPending} dataSource={query.data?.items ?? []} scroll={{x:true}} locale={{emptyText:<EmptyState compact title="暂无登录日志" />}} pagination={{current:page+1,pageSize,total:query.data?.total ?? 0,position:["topRight","bottomRight"],showTotal:total => `共 ${total} 条`,showSizeChanger:true,pageSizeOptions:[10,20,50],onChange:(p,size) => {setPage(size === pageSize ? p-1 : 0);setPageSize(size);}}} columns={[
+  {query.isError ? <Alert severity="error">无法读取登录日志，请重试。</Alert> : <DataTable<Entry> aria-label="登录日志" rowKey="id" loading={query.isPending} dataSource={query.data?.items ?? []} scroll={{x:true}} locale={{emptyText:<EmptyState compact title="暂无登录日志" />}} pagination={{current:page+1,pageSize,total:query.data?.total ?? 0,onChange:(p,size) => {setPage(size === pageSize ? p-1 : 0);setPageSize(size);}}} columns={[
    {title:"用户",key:"user",render:(_,entry) => users.data?.find(user => user.id === entry.actorId)?.username ?? entry.subjectId ?? "未知用户"},
    {title:"结果",key:"outcome",render:(_,entry) => <Chip size="small" color={entry.outcome === "SUCCEEDED" ? "success" : "error"} label={entry.outcome === "SUCCEEDED" ? "登录成功" : "登录失败"} />},
    {title:"来源 IP",dataIndex:"ip",render:value => value || "未记录"},

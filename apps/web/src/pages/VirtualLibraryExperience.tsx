@@ -1,3 +1,4 @@
+import { libraryAssetCacheStats } from "./virtual-library-asset-cache";
 import { EmptyState } from "../ui/empty-state";
 import { ArrowBackRounded } from "@/ui/icons";
 import { KeyboardReturnRounded } from "@/ui/icons";
@@ -66,7 +67,6 @@ import {
 } from "./virtual-library-rooms";
 import "./virtual-library.css";
 import { VirtualLibrarySearch } from "./VirtualLibrarySearch";
-
 import { createDeferredSceneAction } from "./virtual-library-deferred-action";
 
 type ViewPreset = "front" | "free";
@@ -317,6 +317,7 @@ export function VirtualLibraryExperience() {
       };
       const invalidateShadows = () => { renderer.shadowMap.needsUpdate = true; invalidateScene(); };
       let architectureSignature = '';
+      let architectureShadowsPending = false;
       let revealDeferredBooks = () => undefined;
       let shadowUpdateCount = 0;
       const loadingManager = new THREE.LoadingManager(invalidateScene, invalidateScene, invalidateScene);
@@ -338,6 +339,7 @@ export function VirtualLibraryExperience() {
 
       const worldBuildStarted = performance.now();
       const textureLoader = createVirtualLibraryTextureLoader(loadingManager, construction.signal);
+      const bookTextureLoader = createVirtualLibraryTextureLoader(loadingManager, construction.signal, {maxDimension: 256, deferred: true});
       loadingManager.addHandler(/\.(?:png|jpe?g|webp)(?:\?|$)/i, textureLoader);
       let longestBuildSlice = 0, westBuildMaxSlice = 0, westBuildCpuMs = 0;
       const batchPhases: Record<string, {count: number; totalMs: number; maxMs: number}> = {};
@@ -409,11 +411,20 @@ export function VirtualLibraryExperience() {
               if (!d) return;
               const signature = [d.residentModules, d.residentBytes,
                 d.batching.batchCount, d.batching.allocatedGeometryBytes].join('|');
-              if (signature !== architectureSignature) {architectureSignature = signature; invalidateShadows(); revealDeferredBooks();}
+              if (signature !== architectureSignature) {
+                architectureSignature = signature; architectureShadowsPending = true; revealDeferredBooks();
+              }
+              // Keep the first shadow pass; combine background additions into one exact final refresh.
+              if (architectureShadowsPending && !d.loadingModules && !d.queuedModules && d.phase !== 'consolidating') {
+                architectureShadowsPending = false; invalidateShadows();
+              }
               setArchitectureProgress(d.loadingModules || d.queuedModules || d.phase === 'consolidating'
                 ? `建筑细节加载中（${d.residentModules}/${d.totalModules}）` : null);
               if (!d.failedModules && !d.consolidationError) setArchitectureError(null);
               canvas.dataset.architectureDiagnostics = JSON.stringify(d);
+              canvas.dataset.assetCache = JSON.stringify(libraryAssetCacheStats);
+              if (d.allDetailsResident && !canvas.dataset.detailsReadyNavigationMs)
+                canvas.dataset.detailsReadyNavigationMs = performance.now().toFixed(1);
             }, onError: error => {
               if (!construction.signal.aborted) setArchitectureError(error.message);
             }});
@@ -441,7 +452,7 @@ export function VirtualLibraryExperience() {
       try {
         world = createVirtualLibraryWorld(
           scene,
-          textureLoader,
+          bookTextureLoader,
           Math.min(12, renderer.capabilities.getMaxAnisotropy()),
           preparedHall,
         );
@@ -480,15 +491,30 @@ export function VirtualLibraryExperience() {
         canvas.dataset.catalogSyncRevision = String(preparedHall.root.userData.catalogSyncRevision ?? 0);
         canvas.dataset.bookPresentation = selectedSceneBook ? "inspection" : "shelved";
       };
-      const syncSceneCatalog = (nextBooks: readonly Book[]) => {
+      let resolveInitialCatalog!: () => void;
+      let catalogReady = new Promise<void>(resolve => {resolveInitialCatalog = resolve;});
+      let catalogWork: AbortController | undefined;
+      let initialCatalogFrame = 0;
+      const syncSceneCatalog = async (nextBooks: readonly Book[]) => {
         if (disposed || construction.signal.aborted) return;
+        catalogWork?.abort();
+        const work = new AbortController(); catalogWork = work;
+        const abortWork = () => work.abort();
+        construction.signal.addEventListener('abort', abortWork, {once: true});
+        const started = performance.now();
         let result;
         try {
-          result = world.syncCatalogBooks(nextBooks);
+          result = await world.syncCatalogBooksProgressively(nextBooks, {signal: work.signal, priorityPoint: camera.position.clone(), onSlice: ms => {
+            canvas.dataset.catalogMaxSliceMs = Math.max(Number(canvas.dataset.catalogMaxSliceMs ?? 0), ms).toFixed(1);
+          }});
+          if (disposed || work.signal.aborted) return;
         } catch (error) {
+          if (disposed || work.signal.aborted) return;
           setCatalogSyncError(error instanceof Error ? error.message : "藏书同步失败，请重试。");
           return;
-        }
+        } finally { construction.signal.removeEventListener('abort', abortWork); }
+        canvas.dataset.catalogBuildMs = (performance.now() - started).toFixed(1);
+        canvas.dataset.catalogReadyNavigationMs = performance.now().toFixed(1);
         setCatalogSyncError(null);
         const changedBooks = new Set([...result.addedBookIds, ...result.replacedBookIds]);
         for (const book of world.sceneBooks) if (changedBooks.has(book.book.id)) {
@@ -512,8 +538,8 @@ export function VirtualLibraryExperience() {
         updateCatalogDiagnostics();
         invalidateScene();
       };
-      syncSceneCatalog(catalogBooksRef.current);
-      catalogSyncRef.current = syncSceneCatalog;
+      const startCatalogSync = (items: readonly Book[]) => { catalogReady = syncSceneCatalog(items); void catalogReady.then(resolveInitialCatalog); };
+      catalogSyncRef.current = startCatalogSync;
       staticSceneBuildCountRef.current += 1;
       canvas.dataset.staticSceneBuildCount = String(staticSceneBuildCountRef.current);
       canvas.dataset.worldFinalizeMs = (performance.now() - finalizeStarted).toFixed(1);
@@ -958,6 +984,7 @@ export function VirtualLibraryExperience() {
           placeSceneBookOnShelf(selectedSceneBook);
         }
         selectedSceneBook = sceneBook;
+        world.requestBookCover(sceneBook.book.id, true);
         sceneBook.group.userData.bookPresentation = "inspection";
         setSceneBookRenderLayer(sceneBook, VIRTUAL_LIBRARY_BOOK_PREVIEW_LAYER);
         bookInspectionYawTarget = 0;
@@ -1617,6 +1644,12 @@ export function VirtualLibraryExperience() {
         if (activeRoomRef.current !== 'hall') renderer.shadowMap.needsUpdate = true;
         world.animateEnvironment(reducedMotion ? 0 : elapsed);
         updateBookInspection();
+        // Nearby bindings receive thumbnails first; inspection keeps the original image quality.
+        const nearby = world.sceneBooks.map(book => ({book, distance: camera.position.distanceTo(book.shelfPosition)}))
+          .filter(({book, distance}) => distance < 24 || expandedShelfSectionIdRef.current === book.shelfSectionId)
+          .sort((a, b) => a.distance - b.distance);
+        for (const {book, distance} of nearby)
+          world.requestBookCover(book.book.id, distance < 4 || expandedShelfSectionIdRef.current === book.shelfSectionId);
         updateFocusedShelfDiagnostics();
         const renderStarted = performance.now();
         renderer.info.reset();
@@ -1645,7 +1678,14 @@ export function VirtualLibraryExperience() {
           renderer.shadowMap.enabled = shadowsEnabled;
           renderer.autoClear = autoClear;
         }
-        if (renderedFrameCount === 0) setSceneLoading(false);
+        if (renderedFrameCount === 0) {
+          canvas.dataset.firstFrameNavigationMs = performance.now().toFixed(1);
+          canvas.dataset.firstFrameBuildMs = (performance.now() - worldBuildStarted).toFixed(1);
+          canvas.dataset.firstFrameArchitectureBytes = String(preparedHall.streaming.diagnostics().downloadedBytes);
+          canvas.dataset.firstFrameBookCount = String(world.sceneBooks.length);
+          setSceneLoading(false);
+          initialCatalogFrame = window.requestAnimationFrame(() => startCatalogSync(catalogBooksRef.current));
+        }
         canvas.dataset.drawCalls = String(renderer.info.render.calls);
         canvas.dataset.triangles = String(renderer.info.render.triangles);
         canvas.dataset.renderCpuMs = (performance.now() - renderStarted).toFixed(1);
@@ -1735,6 +1775,7 @@ export function VirtualLibraryExperience() {
         catalogShelfRef.current = () => undefined;
         catalogSyncRef.current = () => undefined;
         architectureRetryRef.current = () => undefined;
+        catalogWork?.abort(); resolveInitialCatalog(); window.cancelAnimationFrame(initialCatalogFrame);
         architectureWaitingBooks.clear(); revealDeferredBooks = () => undefined;
         // 通用目录资源清理之前先分离控制器拥有的几何和材质。
         // Detach controller-owned geometry/materials before generic catalog cleanup.
@@ -1770,8 +1811,8 @@ export function VirtualLibraryExperience() {
       void renderer.compileAsync(scene, camera).then(() => {
         if (disposed) return;
         canvas.dataset.shaderCompileMs = (performance.now() - shaderCompileStarted).toFixed(1);
-        categoryNavigation.attach(focusCategory);
-        bookNavigation.attach(focusBook);
+        categoryNavigation.attach(id => { void catalogReady.then(() => {if (!disposed) focusCategory(id);}); });
+        bookNavigation.attach(id => { void catalogReady.then(() => {if (!disposed) focusBook(id);}); });
         if (document.activeElement === document.body) canvas.focus({ preventScroll: true });
         invalidateScene();
         frame = window.requestAnimationFrame(animate);
@@ -1938,7 +1979,7 @@ export function VirtualLibraryExperience() {
         {!sceneError && !sceneLoading && architectureError && (
           <div className="virtual-library-status" role="alert">
             <span>{architectureError}</span>
-            <Button size="small" onClick={() => architectureRetryRef.current()}>重新加载建筑细节</Button>
+            <Button size="small" onClick={() => architectureRetryRef.current()}>重试细节</Button>
           </div>
         )}
         {!sceneError && !sceneLoading && !architectureError && !catalogSyncError && !booksQuery.isError
@@ -1947,7 +1988,7 @@ export function VirtualLibraryExperience() {
             <span>{spatialLoading ? '正在加载目标区域…' : architectureProgress}</span>
           </div>
         )}
-        {sceneError && <div className="virtual-library-status" role="alert"><span>{sceneErrorMessage}</span><Button size="small" onClick={() => setSceneAttempt(attempt => attempt + 1)}>重新加载场景</Button></div>}
+        {sceneError && <div className="virtual-library-status" role="alert"><span>{sceneErrorMessage}</span><Button size="small" onClick={() => setSceneAttempt(attempt => attempt + 1)}>重试场景</Button></div>}
         {!booksQuery.isPending && !booksQuery.isError && books.length === 0 && (
           <div className="virtual-library-status" role="status"><EmptyState compact title={EMPTY_CATALOG_TITLE} /></div>
         )}

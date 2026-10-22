@@ -38,3 +38,15 @@ it("searches the signed-in catalog and own note text and preserves its reading l
   expect(screen.getByRole("link", { name: "查看笔记" })).toHaveAttribute("href", "/reader/private-book?locator=pdf%3Apage%3D2%26offset%3D1");
   await waitFor(() => expect(privateBooks).toHaveBeenCalledWith(expect.objectContaining({ q: "星空" })));
 });
+
+ it("does not query revoked note and booklist features through global search", async () => {
+  const { defaultGrants } = await import("../auth/permissions");
+  sessionStorage.setItem("bookkin-demo-session", JSON.stringify({ id: "member", username: "member", displayName: "成员", role: "MEMBER", mustChangePassword: false }));
+  sessionStorage.setItem("bookkin-demo-role-permissions", JSON.stringify({ revision: 1, grants: { OWNER: defaultGrants("OWNER"), ADMIN: defaultGrants("ADMIN"), MEMBER: defaultGrants("MEMBER").filter(code => !code.startsWith("notes.") && !code.startsWith("booklists.")) } }));
+  const books = vi.spyOn(api, "listBooks").mockResolvedValue({ items: [] });
+  const notes = vi.spyOn(api, "listAnnotations"); const lists = vi.spyOn(api, "listBooklists");
+  render(<TestProviders initialPath="/search?q=星空"><SearchPage /></TestProviders>);
+  await waitFor(() => expect(books).toHaveBeenCalled());
+  expect(notes).not.toHaveBeenCalled(); expect(lists).not.toHaveBeenCalled();
+  await waitFor(() => expect(screen.queryByText("正在搜索…")).not.toBeInTheDocument());
+});

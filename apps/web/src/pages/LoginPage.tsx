@@ -52,7 +52,7 @@ export function LoginPage() {
   };
 
   if (!ready) return <AuthFrame title="登录"><Typography role="status">正在加载…</Typography></AuthFrame>;
-  if (sessionError) return <AuthFrame title="登录"><Alert severity="error">{sessionError}</Alert><Button onClick={retrySession} sx={{ width: { xs: "100%", sm: "auto" } }}>重试连接</Button></AuthFrame>;
+  if (sessionError) return <AuthFrame title="登录"><Alert severity="error">{sessionError}</Alert><Button onClick={retrySession} sx={{ width: { xs: "100%", sm: "auto" } }}>重试</Button></AuthFrame>;
   if (user) return <Navigate to={user.mustChangePassword ? "/change-password" : "/library"} replace />;
 
   return (

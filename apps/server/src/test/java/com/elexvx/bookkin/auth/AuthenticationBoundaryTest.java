@@ -44,7 +44,24 @@ class AuthenticationBoundaryTest {
         @Bean MailService mail() { return mock(MailService.class); }
         @Bean RecoveryService recovery() { return mock(RecoveryService.class); }
         @Bean LoginRateLimiter limiter() { return new LoginRateLimiter(); }
-        @Bean UserRepository users() { return mock(UserRepository.class); }
+        @Bean UserRepository users() {
+            var users = mock(UserRepository.class);
+            org.mockito.Mockito.when(users.findByUsername(org.mockito.ArgumentMatchers.anyString())).thenAnswer(invocation -> {
+                String name = invocation.getArgument(0);
+                var role = switch (name) { case "owner" -> com.elexvx.bookkin.users.UserRole.OWNER; case "admin" -> com.elexvx.bookkin.users.UserRole.ADMIN; default -> com.elexvx.bookkin.users.UserRole.MEMBER; };
+                return java.util.Optional.of(new com.elexvx.bookkin.users.BookKinUser(java.util.UUID.randomUUID(), name, name, "unused", role, com.elexvx.bookkin.users.UserStatus.ACTIVE, false, null, null));
+            });
+            return users;
+        }
+        @Bean RolePermissionService permissions() {
+            var service = mock(RolePermissionService.class);
+            org.mockito.Mockito.when(service.snapshot(org.mockito.ArgumentMatchers.any())).thenAnswer(invocation -> {
+                java.security.Principal principal = invocation.getArgument(0);
+                var role = switch (principal.getName()) { case "owner" -> com.elexvx.bookkin.users.UserRole.OWNER; case "admin" -> com.elexvx.bookkin.users.UserRole.ADMIN; default -> com.elexvx.bookkin.users.UserRole.MEMBER; };
+                return new RolePermissionService.Snapshot(role, 0, role == com.elexvx.bookkin.users.UserRole.OWNER ? java.util.Set.of("settings.mail.view", "settings.mail.edit", "settings.security.edit", "settings.security.view", "settings.sessions.view") : role == com.elexvx.bookkin.users.UserRole.ADMIN ? java.util.Set.of("settings.security.view", "settings.sessions.view") : java.util.Set.of());
+            });
+            return service;
+        }
         @Bean MustChangePasswordFilter passwordFilter(UserRepository users) { return new MustChangePasswordFilter(users); }
         @Bean Probe probe() { return new Probe(); }
     }
@@ -88,7 +105,7 @@ class AuthenticationBoundaryTest {
     @Test void activeSessionsAreManagementOnlyAndSessionPolicyIsOwnerOnly() throws Exception {
         mvc.perform(get("/api/v1/users/active-sessions")).andExpect(status().isUnauthorized());
         mvc.perform(get("/api/v1/users/active-sessions").with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user("member").roles("MEMBER"))).andExpect(status().isForbidden());
-        for(String role:new String[]{"OWNER","ADMIN"}) mvc.perform(get("/api/v1/users/active-sessions").with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user("manager").roles(role))).andExpect(status().isOk());
+        for(String role:new String[]{"OWNER","ADMIN"}) mvc.perform(get("/api/v1/users/active-sessions").with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user(role.toLowerCase(java.util.Locale.ROOT)).roles(role))).andExpect(status().isOk());
         mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/api/v1/users/session-policy").with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user("admin").roles("ADMIN")).with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf()).contentType("application/json").content("{\"maxMinutes\":60}")).andExpect(status().isForbidden());
         mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/api/v1/users/session-policy").with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user("owner").roles("OWNER")).with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf()).contentType("application/json").content("{\"maxMinutes\":1}")).andExpect(status().isBadRequest());
     }

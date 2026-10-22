@@ -14,6 +14,11 @@
 
 import * as runtime from '../runtime';
 import {
+    type ReadingOverview,
+    ReadingOverviewFromJSON,
+    ReadingOverviewToJSON,
+} from '../models/ReadingOverview';
+import {
     type ReadingPosition,
     ReadingPositionFromJSON,
     ReadingPositionToJSON,
@@ -108,6 +113,43 @@ export class ReadingApi extends runtime.BaseAPI {
      */
     async addReadingTime(requestParameters: AddReadingTimeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WeeklyReadingStats> {
         const response = await this.addReadingTimeRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Creates request options for getReadingOverview without sending the request
+     */
+    async getReadingOverviewRequestOpts(): Promise<runtime.RequestOpts> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+
+        let urlPath = `/reading-overview`;
+
+        return {
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        };
+    }
+
+    /**
+     * Current user\'s three most recently saved available books, newest book added within the server calendar week, and private reading statistics. Article and vault records are excluded.
+     */
+    async getReadingOverviewRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ReadingOverview>> {
+        const requestOptions = await this.getReadingOverviewRequestOpts();
+        const response = await this.request(requestOptions, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => ReadingOverviewFromJSON(jsonValue));
+    }
+
+    /**
+     * Current user\'s three most recently saved available books, newest book added within the server calendar week, and private reading statistics. Article and vault records are excluded.
+     */
+    async getReadingOverview(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ReadingOverview> {
+        const response = await this.getReadingOverviewRaw(initOverrides);
         return await response.value();
     }
 

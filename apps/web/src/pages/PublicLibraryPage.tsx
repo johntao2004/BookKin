@@ -10,23 +10,29 @@ import { Stack } from "@/ui/primitives";
 import { Typography } from "@/ui/primitives";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useCallback, useDeferredValue, useMemo } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useCatalogFilterParams } from "../hooks/useCatalogFilterParams";
+import { CatalogAdvancedFilters, CatalogAdvancedFilterToggle } from "../components/CatalogAdvancedFilters";
+import { CatalogFilters } from "../components/CatalogFilters";
+import { CatalogSection } from "../components/CatalogSection";
 import { api } from "../api/client";
 import { flattenUniquePaginatedItems, PaginatedItemReveal } from "../components/PaginatedItemReveal";
 import { BookCatalogEmptyState } from "../components/BookCatalogEmptyState";
 import { bookGridSx } from "../components/bookGrid";
 import { useInfiniteScrollTrigger } from "../hooks/useInfiniteScrollTrigger";
-import { PageContainer, PageHeader } from "../components/PageHeader";
+import { PageContainer } from "../components/PageHeader";
+import { LibraryPageHeader, LibraryScopeFilter } from "../components/LibraryPageHeader";
+import { useAuth } from "../auth/AuthContext";
 import type { DisplayBook } from "../domain/types";
+import { tokens } from "../theme/generated-tokens";
 
 export function PublicLibraryPage() {
-  const [params, setParams] = useSearchParams();
-  const query = params.get("q")?.trim() ?? "";
+  const { user } = useAuth();
+  const { query, categoryId, subjectCode, format, sort, updateParam, clearFilters, activeCount } = useCatalogFilterParams();
   const deferredQuery = useDeferredValue(query);
   const displayQuery = useInfiniteQuery({
-    queryKey: ["display-books", deferredQuery],
+    queryKey: ["display-books", deferredQuery, categoryId, subjectCode, format, sort, user?.id ?? "anonymous"],
     initialPageParam: undefined as string | undefined,
-    queryFn: ({ pageParam, signal }) => api.listDisplayBooks({ q: deferredQuery || undefined, cursor: pageParam, limit: 36, signal }),
+    queryFn: ({ pageParam, signal }) => api.listDisplayBooks({ q: deferredQuery.trim() || undefined, categoryId: categoryId || undefined, subjectCode: subjectCode || undefined, format: format === "ALL" ? undefined : format as "EPUB" | "PDF", sort, cursor: pageParam, limit: 36, signal }),
     getNextPageParam: (lastPage) => lastPage.nextCursor,
     refetchInterval: 15_000,
   });
@@ -42,16 +48,20 @@ export function PublicLibraryPage() {
 
   return (
     <PageContainer>
-      <PageHeader
-        eyebrow="HOME"
-        title="首页"
-      />
+      <LibraryPageHeader />
+      <CatalogSection title="公开藏书" tools={<CatalogFilters
+        extraTools={<Stack direction="row" sx={{ flexWrap: "wrap", gap: `${tokens.spacing[3]}px` }}><LibraryScopeFilter /><CatalogAdvancedFilterToggle /></Stack>}
+        filter={{ label: "格式", value: format, onChange: value => updateParam("format", value, "ALL"), options: [{ value: "ALL", label: "全部格式" }, { value: "EPUB", label: "EPUB" }, { value: "PDF", label: "PDF" }] }}
+        sort={{ label: "排序", value: sort, onChange: value => updateParam("sort", value, "recent"), options: [{ value: "recent", label: "最近入库" }, { value: "title", label: "按书名" }, { value: "author", label: "按作者" }] }}
+      />}>
+      <CatalogAdvancedFilters />
+      {activeCount > 0 && <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>已加载 {books.length} 本匹配藏书</Typography>}
       {displayQuery.isPending ? (
-        <BookGridSkeleton label="正在打开首页" />
+        <BookGridSkeleton label="正在加载公开藏书" />
       ) : displayQuery.isError && !displayQuery.data ? (
-        <Alert severity="error">首页暂时无法读取，请稍后刷新。</Alert>
+        <Alert severity="error">公开藏书暂时无法读取，请稍后刷新。</Alert>
       ) : books.length === 0 ? (
-        <BookCatalogEmptyState title={query ? "未找到匹配的书籍" : "暂无公开书籍"} />
+        <BookCatalogEmptyState title={activeCount ? "未找到匹配的书籍" : "暂无公开书籍"} action={activeCount ? <Button onClick={clearFilters}>清除筛选</Button> : undefined} />
       ) : (
         <Box sx={bookGridSx}>
           {bookEntries.map(({ item: book, pageIndex, itemIndex }) => (
@@ -67,7 +77,7 @@ export function PublicLibraryPage() {
         </Stack>
       )}
       {displayQuery.isFetchNextPageError && <Alert severity="warning" sx={{ mt: 3 }}>更多展示书目加载失败，请重试。</Alert>}
-      {query && books.length === 0 && <Button sx={{ mt: 2 }} onClick={() => setParams({})}>清除搜索</Button>}
+      </CatalogSection>
     </PageContainer>
   );
 }

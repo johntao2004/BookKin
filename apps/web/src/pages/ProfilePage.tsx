@@ -39,7 +39,7 @@ export function ProfilePage() {
           <TextField label="当前密码（确认资料修改）" type="password" autoComplete="current-password" value={password} required disabled={busy} onChange={(e: React.ChangeEvent<HTMLInputElement>)=>setPassword(e.target.value)} />
           {error && <Alert severity="error">{error}</Alert>}
           {saved && <Alert severity="success">账户资料已保存。</Alert>}
-          <FormActions><Button type="submit" variant="contained" disabled={busy} sx={{ width: { xs: "100%", sm: "auto" } }}>{busy ? "正在保存…" : "保存账户资料"}</Button></FormActions>
+          <FormActions><Button type="submit" variant="contained" disabled={busy} sx={{ width: { xs: "100%", sm: "auto" } }}>{busy ? "正在保存…" : "保存"}</Button></FormActions>
         </Stack>
       </Stack>
       <RecoveryEmailPage />

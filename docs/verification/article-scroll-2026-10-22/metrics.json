@@ -1,0 +1,61 @@
+{
+  "desktop": {
+    "containers": [
+      {
+        "height": 590,
+        "scrollHeight": 20826,
+        "scrollWidth": 1202,
+        "top": 460,
+        "width": 1202
+      }
+    ],
+    "flow": "scrolled-doc",
+    "paginationControls": 0,
+    "spread": "false",
+    "viewport": [
+      1280,
+      720
+    ]
+  },
+  "phone": {
+    "viewport": [
+      390,
+      844
+    ],
+    "bodyWidth": 375,
+    "readingWidth": 336,
+    "readingScrollWidth": 336,
+    "readingHeight": 714,
+    "readingScrollHeight": 32274,
+    "mainWidth": 336,
+    "imageCount": 21,
+    "loadedImageCount": 21,
+    "tableCount": 8,
+    "tableWidths": [
+      336,
+      336,
+      336,
+      336,
+      336,
+      336,
+      336,
+      336
+    ]
+  },
+  "tablet": {
+    "viewport": [
+      768,
+      1024
+    ],
+    "bodyWidth": 753,
+    "readingWidth": 690,
+    "readingScrollWidth": 690,
+    "readingHeight": 894,
+    "readingScrollHeight": 21381,
+    "keyboardPageDown": {
+      "before": 3061.5,
+      "after": 3935.5
+    }
+  },
+  "responsiveMethod": "Real application route inside temporary 390px and 768px iframe viewports. Temporary fixture removed after validation."
+}

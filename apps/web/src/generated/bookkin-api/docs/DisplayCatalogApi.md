@@ -216,7 +216,7 @@ No authorization required
 
 ## listDisplayBooks
 
-> DisplayBookPage listDisplayBooks(q, cursor, limit)
+> DisplayBookPage listDisplayBooks(q, subjectCode, categoryId, format, sort, cursor, limit)
 
 
 
@@ -236,6 +236,14 @@ async function example() {
   const body = {
     // string (optional)
     q: q_example,
+    // string | Thema subject prefix or UNCLASSIFIED (optional)
+    subjectCode: subjectCode_example,
+    // string (optional)
+    categoryId: 38400000-8cf0-11bd-b23e-10b96e4ef00d,
+    // BookFormat (optional)
+    format: ...,
+    // 'RECENT' | 'TITLE' | 'AUTHOR' (optional)
+    sort: sort_example,
     // string (optional)
     cursor: cursor_example,
     // number (optional)
@@ -260,6 +268,10 @@ example().catch(console.error);
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **q** | `string` |  | [Optional] [Defaults to `undefined`] |
+| **subjectCode** | `string` | Thema subject prefix or UNCLASSIFIED | [Optional] [Defaults to `undefined`] |
+| **categoryId** | `string` |  | [Optional] [Defaults to `undefined`] |
+| **format** | `BookFormat` |  | [Optional] [Defaults to `undefined`] [Enum: EPUB, PDF] |
+| **sort** | `RECENT`, `TITLE`, `AUTHOR` |  | [Optional] [Defaults to `undefined`] [Enum: RECENT, TITLE, AUTHOR] |
 | **cursor** | `string` |  | [Optional] [Defaults to `undefined`] |
 | **limit** | `number` |  | [Optional] [Defaults to `60`] |
 

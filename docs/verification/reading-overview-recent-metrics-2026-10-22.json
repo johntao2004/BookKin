@@ -1,0 +1,46 @@
+{
+  "cards": [
+    {
+      "height": 336,
+      "overflow": false,
+      "title": "featured-book-title"
+    },
+    {
+      "height": 336,
+      "overflow": false,
+      "title": "recent-annotations-title"
+    },
+    {
+      "height": 336,
+      "overflow": false,
+      "title": "reading-time-title"
+    },
+    {
+      "height": 336,
+      "overflow": false,
+      "title": "recent-reading-card-title"
+    }
+  ],
+  "headings": [
+    "本周新藏",
+    "最近批注",
+    "本周阅读时长",
+    "最近阅读"
+  ],
+  "horizontalOverflow": false,
+  "path": "/library/overview",
+  "recent": [
+    {
+      "overflow": false,
+      "text": "book已读 2% · 第 2 页"
+    },
+    {
+      "overflow": false,
+      "text": "Responsive Reader QA已读 4% · 第 1 页"
+    },
+    {
+      "overflow": false,
+      "text": "山海观测 063已读 0% · 已保存阅读位置"
+    }
+  ]
+}

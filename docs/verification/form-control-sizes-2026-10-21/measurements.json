@@ -1,0 +1,118 @@
+{
+  "desktopLibrary": {
+    "fields": [
+      {
+        "font": "16px",
+        "height": 44,
+        "name": null,
+        "padding": "0px 14px"
+      },
+      {
+        "font": "16px",
+        "height": 44,
+        "name": null,
+        "padding": "0px 14px"
+      },
+      {
+        "font": "16px",
+        "height": 44,
+        "name": "关键词",
+        "padding": "0px 14px"
+      },
+      {
+        "font": "16px",
+        "height": 44,
+        "name": null,
+        "padding": "0px 14px"
+      }
+    ],
+    "overflow": false,
+    "viewport": 1440
+  },
+  "mobileLibrary": {
+    "fields": [
+      {
+        "height": 44,
+        "width": 169.5
+      },
+      {
+        "height": 44,
+        "width": 169.5
+      },
+      {
+        "height": 44,
+        "width": 317
+      },
+      {
+        "height": 44,
+        "width": 317
+      }
+    ],
+    "overflow": false,
+    "viewport": 390
+  },
+  "desktopDialog": [
+    {
+      "font": "16px",
+      "height": 44,
+      "name": "显示名称",
+      "padding": "0px 14px",
+      "tag": "INPUT"
+    },
+    {
+      "font": "16px",
+      "height": 44,
+      "name": "用户名",
+      "padding": "0px 14px",
+      "tag": "INPUT"
+    },
+    {
+      "font": "16px",
+      "height": 44,
+      "name": null,
+      "padding": "0px 14px",
+      "tag": "DIV"
+    }
+  ],
+  "mobileDialog": {
+    "fields": [
+      {
+        "height": 44,
+        "width": 310
+      },
+      {
+        "height": 44,
+        "width": 310
+      },
+      {
+        "height": 44,
+        "width": 310
+      }
+    ],
+    "overflow": false,
+    "viewport": 390
+  },
+  "textarea": [
+    {
+      "font": "16px",
+      "height": 44,
+      "name": "书单名称",
+      "padding": "0px 14px",
+      "tag": "INPUT"
+    },
+    {
+      "font": "16px",
+      "height": 122,
+      "name": "书单说明",
+      "padding": "10px 14px",
+      "tag": "TEXTAREA"
+    },
+    {
+      "font": "16px",
+      "height": 44,
+      "name": null,
+      "padding": "0px 14px",
+      "tag": "DIV"
+    }
+  ]
+}

@@ -1,0 +1,157 @@
+/* Shared prose rules also run inside the isolated article reader document. */
+.bk-content-prose.bk-markdown-prose {
+  overflow-wrap: anywhere;
+  line-height: 1.85;
+}
+.bk-content-prose.bk-markdown-prose :is(ol, ul) {
+  margin-block: var(--spacing-4);
+  padding: var(--spacing-3) var(--spacing-5) var(--spacing-3) var(--spacing-10);
+  border-radius: var(--radius-md);
+}
+.bk-content-prose.bk-markdown-prose ol {
+  background: color-mix(in srgb, var(--color-primary-soft) 32%, transparent);
+  border-inline-start: var(--spacing-1) solid color-mix(in srgb, var(--color-primary) 55%, var(--color-border));
+}
+.bk-content-prose.bk-markdown-prose ul {
+  background: color-mix(in srgb, var(--color-accent-teal) 8%, transparent);
+  border-inline-start: var(--spacing-1) solid color-mix(in srgb, var(--color-accent-teal) 55%, var(--color-border));
+}
+.bk-content-prose.bk-markdown-prose ol > li::marker {
+  color: color-mix(in srgb, var(--color-primary) 70%, var(--color-text-primary));
+  font-weight: var(--typography-font-weight-semibold);
+}
+.bk-content-prose.bk-markdown-prose ul > li::marker {
+  color: color-mix(in srgb, var(--color-accent-teal) 70%, var(--color-text-primary));
+}
+.bk-content-prose.bk-markdown-prose li + li { margin-block-start: var(--spacing-2); }
+.bk-content-prose.bk-markdown-prose li > :is(ol, ul) {
+  margin-block: var(--spacing-2);
+  padding-block: 0;
+  padding-inline: var(--spacing-6) 0;
+  border: 0;
+  background: none;
+}
+.bk-content-prose.bk-markdown-prose li > p { margin-block: var(--spacing-1); }
+.bk-content-prose.bk-markdown-prose table {
+  display: table;
+  width: 100%;
+  max-width: 100%;
+  margin-block: var(--spacing-5);
+  border-collapse: collapse;
+  table-layout: fixed;
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+}
+.bk-content-prose.bk-markdown-prose :is(th, td) {
+  padding: var(--spacing-3) var(--spacing-4);
+  border: 1px solid var(--color-border);
+  text-align: start;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+.bk-content-prose.bk-markdown-prose tbody tr:nth-child(even) { background: var(--color-surface-soft); }
+.bk-content-prose.bk-markdown-prose thead > tr > :is(th, td),
+.bk-content-prose.bk-markdown-prose table:not(:has(thead)) > tbody > tr:first-child > :is(th, td),
+.bk-content-prose.bk-markdown-prose table:not(:has(thead)) > tr:first-child > :is(th, td) {
+  background: color-mix(in srgb, var(--color-primary-soft) 50%, var(--color-surface));
+  color: color-mix(in srgb, var(--color-primary) 60%, var(--color-text-primary));
+  font-weight: var(--typography-font-weight-semibold);
+}
+.bk-content-prose.bk-markdown-prose :is(th, td) > :first-child { margin-block-start: 0; }
+.bk-content-prose.bk-markdown-prose :is(th, td) > :last-child { margin-block-end: 0; }
+.bk-content-prose.bk-markdown-prose :is(th, td) :is(ol, ul) {
+  padding: 0 0 0 var(--spacing-5);
+  border: 0;
+  background: none;
+}
+.bk-content-prose.bk-markdown-prose blockquote {
+  margin: var(--spacing-5) 0;
+  padding: var(--spacing-3) var(--spacing-4);
+  border-inline-start: var(--spacing-1) solid var(--color-accent-teal);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--color-accent-teal) 8%, transparent);
+  color: var(--color-text-secondary);
+}
+.bk-content-prose.bk-markdown-prose blockquote > :first-child { margin-block-start: 0; }
+.bk-content-prose.bk-markdown-prose blockquote > :last-child { margin-block-end: 0; }
+.bk-content-prose.bk-markdown-prose pre {
+  box-sizing: border-box;
+  max-width: 100%;
+  padding: var(--spacing-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-soft);
+  color: var(--color-text-primary);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.bk-content-prose.bk-markdown-prose code { font-family: var(--typography-font-family-mono); }
+/* Language-only code headers; attributes retain the original reader DOM and CFI paths. */
+.bk-content-prose.bk-markdown-prose pre[data-bk-code-language]::before {
+  content: attr(data-bk-code-language);
+  display: block;
+  margin-block-end: var(--spacing-3);
+  color: var(--color-text-muted);
+  font-family: var(--typography-font-family-mono);
+  font-size: var(--typography-font-size-caption);
+  white-space: normal;
+}
+.bk-content-prose.bk-markdown-prose pre > [data-bk-code-decoration="true"] { display: none; }
+.bk-content-prose.bk-markdown-prose pre > code {
+  display: block;
+  margin-block-start: var(--spacing-2);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.bk-content-prose.bk-markdown-prose pre > code:first-child { margin-block-start: 0; }
+.bk-content-prose.bk-markdown-prose pre[data-bk-code-language] > code { margin-block-start: 0; }
+
+.bk-content-prose.bk-markdown-prose :not(pre) > code {
+  padding: 0 var(--spacing-1);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-soft);
+  color: color-mix(in srgb, var(--color-primary) 70%, var(--color-text-primary));
+}
+.bk-content-prose.bk-markdown-prose hr { border: 0; border-top: 1px solid var(--color-border); margin-block: var(--spacing-6); }
+
+@media (max-width: 767px) {
+  .bk-content-prose.bk-markdown-prose table {
+    display: block;
+    table-layout: auto;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+  }
+  .bk-content-prose.bk-markdown-prose :is(th, td) { min-width: calc(var(--spacing-10) * 3); }
+}
+
+/* Shared token colors for Markdown spans and DOM-preserving reader highlights. */
+.bk-content-prose.bk-markdown-prose pre .hljs-keyword,
+.bk-content-prose.bk-markdown-prose pre .hljs-literal,
+.bk-content-prose.bk-markdown-prose pre .hljs-built_in,
+.bk-content-prose.bk-markdown-prose pre .hljs-operator { color: color-mix(in srgb, var(--color-primary) 65%, var(--color-text-primary)); }
+::highlight(bk-code-keyword) { color: color-mix(in srgb, var(--color-primary) 65%, var(--color-text-primary)); }
+.bk-content-prose.bk-markdown-prose pre .hljs-string,
+.bk-content-prose.bk-markdown-prose pre .hljs-regexp,
+.bk-content-prose.bk-markdown-prose pre .hljs-addition { color: color-mix(in srgb, var(--color-accent-teal) 45%, var(--color-text-primary)); }
+::highlight(bk-code-string) { color: color-mix(in srgb, var(--color-accent-teal) 45%, var(--color-text-primary)); }
+.bk-content-prose.bk-markdown-prose pre .hljs-number,
+.bk-content-prose.bk-markdown-prose pre .hljs-symbol { color: color-mix(in srgb, var(--color-accent-amber) 45%, var(--color-text-primary)); }
+::highlight(bk-code-number) { color: color-mix(in srgb, var(--color-accent-amber) 45%, var(--color-text-primary)); }
+.bk-content-prose.bk-markdown-prose pre .hljs-title,
+.bk-content-prose.bk-markdown-prose pre .hljs-type,
+.bk-content-prose.bk-markdown-prose pre .hljs-attr,
+.bk-content-prose.bk-markdown-prose pre .hljs-attribute,
+.bk-content-prose.bk-markdown-prose pre .hljs-property,
+.bk-content-prose.bk-markdown-prose pre .hljs-name,
+.bk-content-prose.bk-markdown-prose pre .hljs-section,
+.bk-content-prose.bk-markdown-prose pre .hljs-selector-tag,
+.bk-content-prose.bk-markdown-prose pre .hljs-selector-class,
+.bk-content-prose.bk-markdown-prose pre .hljs-selector-id { color: color-mix(in srgb, var(--color-accent-teal) 35%, var(--color-text-primary)); }
+::highlight(bk-code-title) { color: color-mix(in srgb, var(--color-accent-teal) 35%, var(--color-text-primary)); }
+.bk-content-prose.bk-markdown-prose pre .hljs-comment,
+.bk-content-prose.bk-markdown-prose pre .hljs-doctag { color: var(--color-text-muted); }
+::highlight(bk-code-comment) { color: var(--color-text-muted); }
+.bk-content-prose.bk-markdown-prose pre .hljs-meta,
+.bk-content-prose.bk-markdown-prose pre .hljs-deletion,
+.bk-content-prose.bk-markdown-prose pre .hljs-variable { color: color-mix(in srgb, var(--color-primary) 45%, var(--color-text-primary)); }
+::highlight(bk-code-meta) { color: color-mix(in srgb, var(--color-primary) 45%, var(--color-text-primary)); }

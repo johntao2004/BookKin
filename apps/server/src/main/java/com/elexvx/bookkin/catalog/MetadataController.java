@@ -37,18 +37,28 @@ public class MetadataController {
     private final BookRepository books;
     private final FileOperationService fileOperations;
     private final BookCoverService covers;
+    private final com.elexvx.bookkin.filemanagement.infrastructure.KnowledgeTextGateway source;
 
-    public MetadataController(BookMetadataRepository metadata, BookRepository books, FileOperationService fileOperations, BookCoverService covers, MetadataEditingService editing) {
+    public MetadataController(BookMetadataRepository metadata, BookRepository books, FileOperationService fileOperations, BookCoverService covers, MetadataEditingService editing, com.elexvx.bookkin.filemanagement.infrastructure.KnowledgeTextGateway source) {
         this.metadata = metadata;
         this.editing = editing;
+        this.source = source;
         this.books = books;
         this.fileOperations = fileOperations;
         this.covers = covers;
     }
 
     @GetMapping("/{id}/metadata")
+    @PreAuthorize("hasAnyRole('OWNER','ADMIN','MEMBER')")
     BookMetadataRepository.BookMetadata get(@PathVariable UUID id) {
         return metadata.find(id).orElseThrow(() -> ApiException.notFound("BOOK_NOT_FOUND", "未找到这本书。"));
+    }
+
+    @GetMapping("/{id}/bibliography-source")
+    @PreAuthorize("hasAnyRole('OWNER','ADMIN','MEMBER')")
+    com.elexvx.bookkin.filemanagement.infrastructure.BookBibliographyReader.Source source(@PathVariable UUID id) throws Exception {
+        var file = books.findPreferredFile(id).orElseThrow(() -> ApiException.notFound("BOOK_FILE_NOT_FOUND", "书籍文件不可用。"));
+        return source.bibliography(file);
     }
 
     @PatchMapping("/{id}/metadata")
@@ -56,7 +66,7 @@ public class MetadataController {
         metadata.find(id).orElseThrow(() -> ApiException.notFound("BOOK_NOT_FOUND", "未找到这本书。"));
         editing.update(id, new MetadataPatch(input.title(), input.subtitle(), input.authors(), input.translators(),
                 input.language(), input.publisher(), input.publishedDate(), input.isbn(), input.description(), input.series(),
-                input.seriesIndex(), input.tags(), input.subjectCodes(), input.manualFields()), input.publiclyVisible(), principal);
+                input.seriesIndex(), input.tags(), input.subjectCodes(), input.manualFields(), input.authorBiography(), input.tableOfContents()), input.publiclyVisible(), principal);
         Preview preview = null;
         if (input.writeBack()) {
             var file = input.bookFileId() == null ? books.findPreferredFile(id).orElseThrow() : books.findFile(input.bookFileId()).orElseThrow();
@@ -80,7 +90,8 @@ public class MetadataController {
                                   @Size(max = 20_000) String description, @Size(max = 500) String series,
                                   BigDecimal seriesIndex, List<@Size(max = 200) String> tags,
                                   @Size(max = 4) List<@Size(max = 32) String> subjectCodes,
-                                  String[] manualFields, boolean writeBack, UUID bookFileId, String expectedFingerprint, Boolean publiclyVisible) {
+                                  String[] manualFields, boolean writeBack, UUID bookFileId, String expectedFingerprint, Boolean publiclyVisible,
+                                  @Size(max = 20_000) String authorBiography, @Size(max = 40_000) String tableOfContents) {
         public MetadataRequest {
             if (manualFields == null) {
                 List<String> supplied = new ArrayList<>();
@@ -93,6 +104,8 @@ public class MetadataController {
                 if (publishedDate != null) supplied.add("publishedDate");
                 if (isbn != null) supplied.add("isbn");
                 if (description != null) supplied.add("description");
+                if (authorBiography != null) supplied.add("authorBiography");
+                if (tableOfContents != null) supplied.add("tableOfContents");
                 if (series != null) supplied.add("series");
                 if (seriesIndex != null) supplied.add("seriesIndex");
                 if (tags != null) supplied.add("tags");

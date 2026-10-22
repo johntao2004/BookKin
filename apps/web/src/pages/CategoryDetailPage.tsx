@@ -1,9 +1,7 @@
 // 分类详情按当前分类和筛选条件加载书籍，管理操作另经权限入口。
 // Loads category books for the current category/filters with separately authorized management actions.
 import { BookGridSkeleton } from "../components/BookGridSkeleton";
-import { ArrowBackRounded } from "@/ui/icons";
 import { FilterListRounded } from "@/ui/icons";
-import { TuneRounded } from "@/ui/icons";
 import { Alert } from "@/ui/feedback";
 import { Box } from "@/ui/primitives";
 import { Breadcrumbs } from "@/ui/primitives";
@@ -27,7 +25,7 @@ import { BrowseBookCard } from "../components/CatalogDiscoveryCards";
 import { BookCatalogEmptyState } from "../components/BookCatalogEmptyState";
 import { bookGridSx } from "../components/bookGrid";
 import { CategoryBooksDrawer } from "../components/CategoryBooksDrawer";
-import { PageContainer, PageHeader } from "../components/PageHeader";
+import { PageBackAction, PageContainer, PageHeader } from "../components/PageHeader";
 import type { BrowseBook } from "../domain/types";
 import { useInfiniteScrollTrigger } from "../hooks/useInfiniteScrollTrigger";
 import { tokens } from "../theme/generated-tokens";
@@ -78,12 +76,13 @@ export function CategoryDetailPage() {
     setParams(next, { replace: true });
   };
 
-  if (detailQuery.isPending) return <PageContainer><Stack sx={{ alignItems: "center", py: `${tokens.spacing[20]}px` }}><CircularProgress /></Stack></PageContainer>;
-  if (detailQuery.isError || !detailQuery.data) return <PageContainer><Alert severity="error" action={<Button component={Link} to="/categories">返回分类</Button>}>这个分类不存在，或当前没有可见书目。</Alert></PageContainer>;
+  if (detailQuery.isPending) return <PageContainer><PageBackAction to="/categories">返回分类</PageBackAction><Stack sx={{ alignItems: "center", py: `${tokens.spacing[20]}px` }}><CircularProgress /></Stack></PageContainer>;
+  if (detailQuery.isError || !detailQuery.data) return <PageContainer><PageBackAction to="/categories">返回分类</PageBackAction><Alert severity="error">这个分类不存在，或当前没有可见书目。</Alert></PageContainer>;
   const category = detailQuery.data;
 
   return (
     <PageContainer>
+      <PageBackAction to="/categories">返回分类</PageBackAction>
       <Breadcrumbs sx={{ mb: `${tokens.spacing[5]}px` }}>
         <UiLink component={Link} to="/categories" underline="hover" color="inherit">分类</UiLink>
         <Typography color="text.primary">{category.name}</Typography>
@@ -91,7 +90,7 @@ export function CategoryDetailPage() {
       <PageHeader
         eyebrow="CATEGORY"
         title={category.name}
-        action={category.editable ? <Button variant="outlined" startIcon={<TuneRounded />} onClick={() => setOrganizerOpen(true)}>整理本分类</Button> : undefined}
+        action={category.editable ? <Button variant="outlined" onClick={() => setOrganizerOpen(true)}>整理本分类</Button> : undefined}
       />
       <Stack direction={{ xs: "column", md: "row" }} sx={{ justifyContent: "space-between", alignItems: { xs: "stretch", md: "center" }, gap: `${tokens.spacing[4]}px`, mb: `${tokens.spacing[8]}px` }}>
         <Stack spacing={1} sx={{ minWidth: 0 }}>
@@ -99,13 +98,13 @@ export function CategoryDetailPage() {
           <Typography color="text.secondary">{category.bookCount} 本可见藏书</Typography>
         </Stack>
         <Stack direction={{ xs: "column", sm: "row" }} sx={{ gap: `${tokens.spacing[3]}px`, alignItems: { xs: "stretch", sm: "center" } }}>
-          <FormControl size="small" sx={{ minWidth: 126 }}>
+          <FormControl sx={{ minWidth: 126 }}>
             <InputLabel id="category-format-label">格式</InputLabel>
             <Select labelId="category-format-label" label="格式" value={format} onChange={(event: any) => updateParam("format", event.target.value, "ALL")} startAdornment={<FilterListRounded sx={{ mr: 1, color: "text.secondary" }} />}>
               <MenuItem value="ALL">全部格式</MenuItem><MenuItem value="EPUB">EPUB</MenuItem><MenuItem value="PDF">PDF</MenuItem>
             </Select>
           </FormControl>
-          <FormControl size="small" sx={{ minWidth: 126 }}>
+          <FormControl sx={{ minWidth: 126 }}>
             <InputLabel id="category-sort-label">排序</InputLabel>
             <Select labelId="category-sort-label" label="排序" value={sort} onChange={(event: any) => updateParam("sort", event.target.value, "recent")}>
               <MenuItem value="recent">最近入库</MenuItem><MenuItem value="title">按书名</MenuItem><MenuItem value="author">按作者</MenuItem>
@@ -126,7 +125,6 @@ export function CategoryDetailPage() {
       )}
       {booksQuery.hasNextPage && !booksQuery.isFetchNextPageError ? <Stack ref={triggerRef} sx={{ alignItems: "center", py: `${tokens.spacing[8]}px` }}>{booksQuery.isFetchingNextPage ? <CircularProgress size={24} /> : supported ? <Typography variant="caption" color="text.disabled">继续向下浏览将加载更多</Typography> : <Button onClick={loadNextPage}>继续加载</Button>}</Stack> : null}
       {booksQuery.isFetchNextPageError ? <Alert severity="warning" sx={{ mt: `${tokens.spacing[6]}px` }} action={<Button color="inherit" onClick={() => void booksQuery.fetchNextPage()}>重新加载</Button>}>更多分类书目加载失败，已显示的书籍不受影响。</Alert> : null}
-      <Button component={Link} to="/categories" startIcon={<ArrowBackRounded />} sx={{ mt: `${tokens.spacing[10]}px` }}>返回全部分类</Button>
       {category.editable ? <CategoryBooksDrawer open={organizerOpen} categoryId={category.id} categoryName={category.name} onClose={() => setOrganizerOpen(false)} /> : null}
       {addBook ? <AddToBooklistDialog open bookId={addBook.id} bookTitle={addBook.title} onClose={() => setAddBook(null)} onCompleted={setNotice} /> : null}
       <Snackbar open={Boolean(notice)} autoHideDuration={4200} onClose={() => setNotice("")} message={notice} />

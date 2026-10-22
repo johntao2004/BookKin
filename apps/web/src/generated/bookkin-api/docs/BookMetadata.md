@@ -6,6 +6,9 @@
 
 Name | Type
 ------------ | -------------
+`publiclyVisible` | boolean
+`authorBiography` | string
+`tableOfContents` | string
 `id` | string
 `title` | string
 `subtitle` | string
@@ -31,6 +34,9 @@ import type { BookMetadata } from ''
 
 // TODO: Update the object below with actual values
 const example = {
+  "publiclyVisible": null,
+  "authorBiography": null,
+  "tableOfContents": null,
   "id": null,
   "title": null,
   "subtitle": null,

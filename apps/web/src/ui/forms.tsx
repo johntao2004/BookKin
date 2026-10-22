@@ -47,6 +47,7 @@ export function TextField({ label, helperText, error, multiline, minRows, maxRow
     prefix,
     suffix,
     className: "bk-field-control",
+    size: "middle",
   };
   const control = multiline
     ? <AntInput.TextArea {...(common as any)} autoSize={{ minRows, maxRows }} />
@@ -58,13 +59,13 @@ export function TextField({ label, helperText, error, multiline, minRows, maxRow
 }
 
 
-export function Select({ value, defaultValue, onChange, label, children, sx, className, startAdornment, labelId: _labelId, ...props }: BoxProps & { label?: ReactNode; startAdornment?: ReactNode; onChange?: (event: any) => void; labelId?: string }) {
+export function Select({ value, defaultValue, onChange, label, children, sx, className, startAdornment, labelId: _labelId, size: _size, ...props }: BoxProps & { label?: ReactNode; startAdornment?: ReactNode; onChange?: (event: any) => void; labelId?: string }) {
   const options = Children.toArray(children).flatMap((child) => {
     if (!isValidElement(child)) return [];
     const item = child.props as { value?: string; children?: ReactNode; disabled?: boolean };
     return item.value === undefined ? [] : [{ value: item.value, label: item.children, disabled: item.disabled }];
   });
-  return <AntSelect {...(props as any)} value={value} defaultValue={defaultValue} aria-label={typeof label === "string" ? label : undefined} options={options} prefix={startAdornment} className={mergeClassNames("bk-select", sxClassName(sx, useTheme()), className)} onChange={(nextValue) => onChange?.({ target: { value: nextValue } } as any)} />;
+  return <AntSelect {...(props as any)} size="middle" value={value} defaultValue={defaultValue} aria-label={typeof label === "string" ? label : undefined} options={options} prefix={startAdornment} className={mergeClassNames("bk-select", sxClassName(sx, useTheme()), className)} onChange={(nextValue) => onChange?.({ target: { value: nextValue } } as any)} />;
 }
 
 export function Checkbox({ checked, defaultChecked, onChange, sx, className, slotProps, ...props }: BoxProps & { slotProps?: { input?: Record<string, unknown> }; onChange?: (event: any) => void }) {

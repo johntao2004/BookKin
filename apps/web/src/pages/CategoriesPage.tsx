@@ -1,7 +1,5 @@
 import { EMPTY_CATEGORIES_TITLE } from "../ui/empty-state-copy";
 import { BookGridSkeleton } from "../components/BookGridSkeleton";
-import { AddRounded } from "@/ui/icons";
-import { TuneRounded } from "@/ui/icons";
 import { Alert } from "@/ui/feedback";
 import { Box } from "@/ui/primitives";
 import { Button } from "@/ui/buttons";
@@ -115,9 +113,9 @@ export function CategoriesPage() {
   };
 
   const categoryManagementAction = canManage ? categoriesQuery.isSuccess && categories.length === 0 ? (
-    <Button variant="contained" startIcon={<AddRounded />} onClick={() => setManageOpen(true)}>创建分类</Button>
+    <Button variant="contained" onClick={() => setManageOpen(true)}>创建分类</Button>
   ) : (
-    <Button variant="outlined" startIcon={<TuneRounded />} disabled={!categoriesQuery.isSuccess} onClick={() => setManageOpen(true)}>管理分类</Button>
+    <Button variant="outlined" disabled={!categoriesQuery.isSuccess} onClick={() => setManageOpen(true)}>管理分类</Button>
   ) : undefined;
   const headerAction = categories.length ? (
     <Stack direction="row" sx={{ alignItems: "center", gap: `${tokens.spacing[3]}px`, flexWrap: "wrap" }}>
@@ -182,8 +180,8 @@ export function CategoriesPage() {
             </FilterRow>
             <Divider sx={{ my: `${tokens.spacing[3]}px` }} />
             <FilterRow label="排序" ariaLabel="排序方式">
-              <FormControl size="small" sx={{ minWidth: tokens.spacing[24] + tokens.spacing[12] }}>
-                <Select sx={{ height: { xs: tokens.layout.touchTarget, sm: tokens.layout.controlHeight } }} label="排序" value={sort} onChange={(event: any) => updateParam("sort", event.target.value, "recent")}>
+              <FormControl sx={{ minWidth: tokens.spacing[24] + tokens.spacing[12] }}>
+                <Select label="排序" value={sort} onChange={(event: any) => updateParam("sort", event.target.value, "recent")}>
                   <MenuItem value="recent">最近入库</MenuItem>
                   <MenuItem value="title">按书名</MenuItem>
                   <MenuItem value="author">按作者</MenuItem>

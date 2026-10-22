@@ -56,6 +56,29 @@ select {
 html {
   background: var(--color-canvas);
   color: var(--color-text-primary);
+  scrollbar-gutter: stable;
+}
+
+/* Keep the measured page width while portals lock scrolling; their own
+   scrollbar compensation must not subtract the reserved lane a second time. */
+html body {
+  width: var(--app-page-width, 100%) !important;
+}
+
+/* Let fixed drawers paint over the scrollbar lane without widening the body. */
+html:has(.ant-drawer-open) {
+  scrollbar-gutter: auto;
+}
+
+/* Drawers cover the full viewport without resizing the page behind them. */
+.ant-drawer {
+  width: var(--app-viewport-width, 100vw);
+}
+
+/* Portals span the viewport, including the page's reserved scrollbar lane. */
+.ant-modal-mask,
+.ant-modal-wrap {
+  width: var(--app-viewport-width, 100vw);
 }
 
 .reader-prose {
@@ -79,6 +102,13 @@ html {
   column-gap: var(--layout-reader-page-gap);
   column-width: 100%;
   column-rule: 0 solid transparent;
+}
+
+.reader-paged-text::selection,
+.reader-paged-text ::selection {
+  background: var(--color-primitive-coral-100);
+  color: var(--color-primitive-ink-900);
+  text-shadow: none;
 }
 
 .reader-prose p {
@@ -248,12 +278,6 @@ html {
 .bk-field .ant-input::placeholder,
 .bk-field .ant-input-textarea::placeholder {
   color: var(--color-text-muted);
-}
-
-/* Adornment actions already provide a full touch target; do not add the
-   input wrapper's vertical padding to their height. */
-.bk-field .ant-input-affix-wrapper .bk-icon-button {
-  margin-block: calc(-1 * var(--spacing-1));
 }
 
 .bk-select {
@@ -433,14 +457,25 @@ html {
 
 .bk-dialog-title {
   margin: 0;
+  padding: var(--spacing-4) var(--bk-overlay-inline) var(--spacing-3) !important;
+  padding-inline-end: calc(var(--bk-overlay-inline) + var(--layout-touch-target)) !important;
+  font-family: var(--typography-font-family-body) !important;
+  font-size: var(--typography-font-size-title) !important;
+  font-weight: var(--typography-font-weight-medium) !important;
+  line-height: var(--typography-line-height-title-lg) !important;
 }
+
+.bk-dialog-title > :is(.bk-typography-h4, .bk-typography-h5) { font: inherit !important; }
 
 .bk-dialog-content {
   min-width: 0;
+  padding: 0 var(--bk-overlay-inline) var(--spacing-4) !important;
 }
 
 .bk-dialog-actions {
   flex-wrap: wrap;
+  padding: var(--spacing-3) var(--bk-overlay-inline) var(--spacing-4) !important;
+  border-top: 1px solid var(--color-border-soft);
 }
 
 .bk-snackbar {
@@ -590,13 +625,13 @@ html {
 /* Keep modal controls reachable even on short and narrow viewports. */
 .bk-dialog.ant-modal {
   max-width: calc(var(--app-viewport-width, 100vw) - var(--spacing-4) * 2);
-  max-height: calc(var(--app-viewport-height, 100dvh) - var(--spacing-8) * 2);
+  max-height: calc(var(--app-viewport-height, 100dvh) - var(--spacing-6) * 2);
   padding-bottom: 0;
 }
 .bk-dialog .ant-modal-container {
   display: flex;
   flex-direction: column;
-  max-height: calc(var(--app-viewport-height, 100dvh) - var(--spacing-8) * 2);
+  max-height: calc(var(--app-viewport-height, 100dvh) - var(--spacing-6) * 2);
   min-height: 0;
   overflow: hidden;
 }
@@ -642,18 +677,67 @@ html {
 }
 
 .bk-nav-link {
-  min-height: var(--layout-control-height);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  gap: var(--spacing-1);
+  min-width: 0;
+  min-height: var(--layout-touch-target);
+  padding: var(--spacing-2) var(--spacing-3);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
   color: var(--color-text-secondary);
+  font-family: var(--typography-font-family-body);
   font-size: var(--typography-font-size-nav-link);
   font-weight: var(--typography-font-weight-medium);
   line-height: var(--typography-line-height-nav-link);
+  text-decoration: none;
   white-space: nowrap;
+  cursor: pointer;
+  appearance: none;
+  outline: none;
 }
 
+.bk-nav-link-active,
 .bk-nav-link:hover,
 .bk-nav-link:focus-visible {
   color: var(--color-text-primary);
   background: transparent;
+}
+
+.bk-nav-link:focus-visible {
+  box-shadow: var(--shadow-focus);
+}
+
+.bk-nav-label {
+  position: relative;
+}
+
+.bk-nav-link-active .bk-nav-label::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  bottom: calc(var(--spacing-2) * -1);
+  height: calc(var(--spacing-1) / 2);
+  background: var(--color-primary);
+}
+
+.bk-nav-chevron {
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: var(--typography-font-size-caption-uppercase);
+  height: var(--typography-font-size-caption-uppercase);
+  font-size: var(--typography-font-size-caption-uppercase);
+  line-height: 1;
+  color: var(--color-text-muted);
+}
+
+.bk-nav-link[aria-expanded="true"] > .bk-nav-chevron,
+.bk-list-item-button[aria-expanded="true"] > .bk-nav-chevron {
+  transform: rotate(180deg);
 }
 
 .ant-btn {
@@ -682,23 +766,58 @@ html {
   color: var(--color-text-primary);
 }
 
-.ant-btn-primary {
+/* Action meaning is shared by all Ant and compatibility buttons. */
+.ant-btn-default:not(.ant-btn-dangerous):not([data-intent="warning"]):not(:disabled) {
+  border-color: var(--color-border-strong);
+}
+
+:is(.ant-btn, .bk-button)[data-intent="warning"]:not(:disabled) {
+  border-color: color-mix(in srgb, var(--color-warning) 65%, var(--color-text-primary));
+  background: color-mix(in srgb, var(--color-warning) 12%, var(--color-canvas));
+  color: var(--color-text-primary);
+}
+
+:is(.ant-btn, .bk-button)[data-intent="warning"]:not(:disabled):is(:hover, :focus-visible) {
+  background: color-mix(in srgb, var(--color-warning) 20%, var(--color-canvas));
+}
+
+.ant-btn-primary[data-intent="warning"]:not(:disabled),
+.ant-btn-primary[data-intent="warning"]:not(:disabled):is(:hover, :focus-visible, :active) {
+  border-color: color-mix(in srgb, var(--color-warning) 65%, var(--color-text-primary));
+  background: var(--color-warning);
+  color: var(--color-primitive-ink-900);
+}
+
+.ant-btn-primary:not(.ant-btn-dangerous) {
   border-color: var(--color-primary);
   background: var(--color-primary);
   color: var(--color-text-on-primary);
 }
 
-.ant-btn-primary:hover,
-.ant-btn-primary:focus-visible {
+.ant-btn-primary:not(.ant-btn-dangerous):hover,
+.ant-btn-primary:not(.ant-btn-dangerous):focus-visible {
   border-color: var(--color-primary);
   background: var(--color-primary);
   color: var(--color-text-on-primary);
 }
 
-.ant-btn-primary:active {
+.ant-btn-primary:not(.ant-btn-dangerous):active {
   border-color: var(--color-primary-hover);
   background: var(--color-primary-hover);
   color: var(--color-text-on-primary);
+}
+
+
+/* Consequential actions retain semantic danger colors instead of brand colors. */
+.ant-btn-primary.ant-btn-dangerous:not(:disabled) {
+  border-color: var(--color-error);
+  background: var(--color-error);
+  color: var(--color-text-on-primary);
+}
+
+.ant-btn-default.ant-btn-dangerous:not(:disabled) {
+  border-color: var(--color-error);
+  color: var(--color-error);
 }
 
 .ant-btn-text,
@@ -795,20 +914,29 @@ html {
   color: var(--color-text-primary);
   font-family: var(--typography-font-family-body);
   font-size: var(--typography-font-size-body);
+  line-height: var(--typography-line-height-body);
 }
 
-.ant-input {
-  padding-block: var(--layout-input-padding-block);
-  padding-inline: var(--layout-input-padding-inline);
-}
-
+/* Single-line controls share an outer height; nested affix inputs must not
+   add a second control height or another layer of padding. */
+input.ant-input,
 .ant-input-affix-wrapper {
+  box-sizing: border-box;
+  height: var(--layout-control-height);
   padding-block: 0;
   padding-inline: var(--layout-input-padding-inline);
 }
 
-.ant-input-affix-wrapper .ant-input {
-  padding-inline: var(--spacing-xs);
+textarea.ant-input {
+  padding-block: var(--layout-input-padding-block);
+  padding-inline: var(--layout-input-padding-inline);
+}
+
+.ant-input-affix-wrapper > input.ant-input {
+  height: 100%;
+  min-height: 0;
+  padding: 0;
+  font: inherit;
 }
 
 .ant-input:hover,
@@ -834,6 +962,17 @@ html {
 .ant-select {
   min-height: var(--layout-control-height);
   font-family: var(--typography-font-family-body);
+  font-size: var(--typography-font-size-body);
+  line-height: var(--typography-line-height-body);
+  padding-inline: var(--layout-input-padding-inline);
+}
+
+/* Ant Design 6 renders the single-select border on the root itself. */
+.ant-select-single {
+  box-sizing: border-box;
+  height: var(--layout-control-height);
+  padding-block: 0;
+  align-items: center;
 }
 
 .ant-select .ant-select-selector {
@@ -927,15 +1066,35 @@ html {
 
 .ant-drawer .ant-drawer-header {
   border-bottom-color: var(--color-border-soft);
-  padding: var(--spacing-lg);
+  padding: var(--spacing-4) var(--bk-overlay-inline);
+}
+
+.ant-modal,
+.ant-drawer { --bk-overlay-inline: var(--spacing-5); }
+
+.ant-modal {
+  max-width: calc(var(--app-viewport-width, 100vw) - var(--spacing-4) * 2) !important;
+  padding-bottom: 0;
+}
+
+/* Ant's container and the header/body used to each add their own inset. */
+.ant-modal .ant-modal-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  max-height: calc(var(--app-viewport-height, 100dvh) - var(--spacing-6) * 2);
+  padding: 0 !important;
+  overflow: hidden;
 }
 
 .ant-drawer .ant-drawer-title,
-.ant-modal .ant-modal-title {
+.ant-modal .ant-modal-title,
+.ant-modal .ant-modal-confirm-title {
   color: var(--color-text-primary);
   font-family: var(--typography-font-family-body);
   font-size: var(--typography-font-size-title);
   font-weight: var(--typography-font-weight-medium);
+  line-height: var(--typography-line-height-title-lg);
 }
 
 .ant-drawer .ant-drawer-close,
@@ -949,24 +1108,48 @@ html {
   background: var(--color-surface-card);
 }
 
+.ant-modal .ant-modal-close {
+  top: var(--spacing-2);
+  inset-inline-end: var(--spacing-2);
+  width: var(--layout-touch-target);
+  height: var(--layout-touch-target);
+}
+
 .ant-modal .ant-modal-content {
   box-shadow: none;
 }
 
 .ant-modal .ant-modal-header {
   margin-bottom: 0;
-  padding: var(--spacing-lg) var(--spacing-xl) var(--spacing-sm);
+  flex-shrink: 0;
+  padding: var(--spacing-4) var(--bk-overlay-inline) var(--spacing-3);
+  padding-inline-end: calc(var(--bk-overlay-inline) + var(--layout-touch-target));
 }
 
 .ant-modal .ant-modal-body {
-  padding: var(--spacing-lg) var(--spacing-xl);
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--spacing-4) var(--bk-overlay-inline);
   color: var(--color-text-secondary);
 }
+
+.ant-modal .ant-modal-header + .ant-modal-body { padding-top: 0; }
 
 .ant-modal .ant-modal-footer {
   border-top: 1px solid var(--color-border-soft);
   margin-top: 0;
-  padding: var(--spacing-lg) var(--spacing-xl);
+  flex-shrink: 0;
+  padding: var(--spacing-3) var(--bk-overlay-inline) var(--spacing-4);
+}
+
+.ant-modal-confirm.ant-modal .ant-modal-body {
+  padding: var(--spacing-4) var(--bk-overlay-inline);
+}
+.ant-modal-confirm .ant-modal-confirm-btns { margin-top: var(--spacing-4); }
+
+.ant-drawer .ant-drawer-footer {
+  padding: var(--spacing-3) var(--bk-overlay-inline) var(--spacing-4);
 }
 
 .ant-tabs .ant-tabs-nav {
@@ -1328,15 +1511,8 @@ html {
     flex: 1 1 auto;
   }
 
-  .ant-modal {
-    max-width: calc(100vw - var(--spacing-lg) * 2);
-  }
-
-  .ant-modal .ant-modal-header,
-  .ant-modal .ant-modal-body,
-  .ant-modal .ant-modal-footer {
-    padding-inline: var(--spacing-lg);
-  }
+  .ant-modal,
+  .ant-drawer { --bk-overlay-inline: var(--spacing-4); }
 
   .bk-table th,
   .bk-table td {
@@ -1375,15 +1551,6 @@ html {
 
 .bk-reader-font-upload-kind {
   gap: var(--spacing-2);
-}
-
-.bk-reader-font-upload-grid .bk-field > .ant-input,
-.bk-reader-font-upload-grid .bk-select,
-.bk-reader-font-upload-grid .bk-select .ant-select-selector,
-.bk-reader-font-upload-grid .bk-reader-font-upload-button {
-  box-sizing: border-box;
-  height: var(--layout-touch-target);
-  min-height: var(--layout-touch-target);
 }
 
 .bk-reader-font-upload-grid .bk-select,

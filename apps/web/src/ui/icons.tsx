@@ -20,6 +20,7 @@ import {
   DatabaseOutlined,
   DeleteOutlined as AntDeleteOutlined,
   DragOutlined,
+  DownOutlined,
   EditOutlined as AntEditOutlined,
   EnterOutlined,
   ExclamationCircleOutlined,
@@ -182,7 +183,7 @@ const ant = {
   AppstoreAddOutlined, AppstoreOutlined, ArrowDownOutlined, ArrowLeftOutlined, ArrowRightOutlined, ArrowUpOutlined,
   BgColorsOutlined, BlockOutlined, BoldOutlined, BookFilled, BookOutlined, CheckCircleOutlined: AntCheckCircleOutlined, CheckOutlined,
   ClockCircleOutlined, CloseOutlined, CloudUploadOutlined: AntCloudUploadOutlined, CopyOutlined, DatabaseOutlined, DeleteOutlined: AntDeleteOutlined,
-  DragOutlined, EditOutlined: AntEditOutlined, EnterOutlined, ExclamationCircleOutlined, FileAddOutlined, FileOutlined,
+  DragOutlined, DownOutlined, EditOutlined: AntEditOutlined, EnterOutlined, ExclamationCircleOutlined, FileAddOutlined, FileOutlined,
   FileTextOutlined, FilterOutlined, FolderOpenOutlined, FolderOutlined: AntFolderOutlined, FontSizeOutlined, GlobalOutlined,
   HomeOutlined: AntHomeOutlined, LeftOutlined, LockOutlined: AntLockOutlined, LogoutOutlined: AntLogoutOutlined, MenuOutlined, MinusOutlined, MoreOutlined,
   PictureOutlined, PlayCircleOutlined, PlusOutlined, QuestionOutlined, ReadOutlined, ReloadOutlined, RightOutlined,
@@ -198,6 +199,7 @@ export const AdminPanelSettingsOutlined = icon("SafetyCertificateOutlined");
 export const ArrowBackIosNewRounded = icon("LeftOutlined");
 export const ArrowBackRounded = icon("ArrowLeftOutlined");
 export const ArrowDownwardRounded = icon("ArrowDownOutlined");
+export const ExpandMoreRounded = icon("DownOutlined");
 export const ArrowForwardIosRounded = icon("RightOutlined");
 export const ArrowForwardRounded = icon("ArrowRightOutlined");
 export const ArrowUpwardRounded = icon("ArrowUpOutlined");

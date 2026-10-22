@@ -1,8 +1,6 @@
+import { BookCover } from "./BookCover";
 // 封面变更先经本地裁切确认，再调用上传接口并刷新消费方。
 // Cover changes pass local crop confirmation before upload and consumer refresh.
-import { ImageOutlined } from "@/ui/icons";
-import { RestartAltOutlined } from "@/ui/icons";
-import { UploadFileOutlined } from "@/ui/icons";
 import { Alert } from "@/ui/feedback";
 import { Box } from "@/ui/primitives";
 import { Button } from "@/ui/buttons";
@@ -111,19 +109,7 @@ export function CoverUploadDialog({ book, onClose, onCompleted }: {
         {book && (
           <Stack spacing={3} sx={{ pt: 1 }}>
             <Stack direction={{ xs: "column", sm: "row" }} spacing={3} sx={{ alignItems: { xs: "center", sm: "flex-start" } }}>
-              <Box
-                component="img"
-                src={displayedCover}
-                alt={previewUrl ? "新封面预览" : `${book.title}当前封面`}
-                sx={{
-                  width: 160,
-                  aspectRatio: "2 / 3",
-                  objectFit: "cover",
-                  borderRadius: `${tokens.radius.lg}px`,
-                  bgcolor: "background.default",
-                  boxShadow: tokens.shadow.cover,
-                }}
-              />
+              <BookCover src={displayedCover} alt={previewUrl ? "新封面预览" : `${book.title}当前封面`} sx={{ width: `${tokens.spacing[20] * 2}px` }} />
               <Stack spacing={2} sx={{ flex: 1, alignItems: { xs: "center", sm: "flex-start" }, textAlign: { xs: "center", sm: "left" } }}>
                 <Box>
                   <Typography variant="h6">{book.title}</Typography>
@@ -131,7 +117,7 @@ export function CoverUploadDialog({ book, onClose, onCompleted }: {
                 </Box>
                 <Button
                   variant="outlined"
-                  startIcon={preparing ? <CircularProgress size={18} /> : <ImageOutlined />}
+                  startIcon={preparing ? <CircularProgress size={18} /> : undefined}
                   disabled={busy || preparing}
                   onClick={() => input.current?.click()}
                 >
@@ -156,10 +142,10 @@ export function CoverUploadDialog({ book, onClose, onCompleted }: {
         )}
       </DialogContent>
       <DialogActions sx={{ p: 3, flexWrap: "wrap", rowGap: 1 }}>
-        <Button color="inherit" startIcon={<RestartAltOutlined />} disabled={busy || preparing} onClick={restore}>恢复默认封面</Button>
+        <Button color="inherit" disabled={busy || preparing} onClick={restore}>恢复默认封面</Button>
         <Box sx={{ flex: 1 }} />
         <Button color="inherit" disabled={busy || preparing} onClick={onClose}>取消</Button>
-        <Button variant="contained" startIcon={busy ? <CircularProgress size={18} color="inherit" /> : <UploadFileOutlined />} disabled={busy || preparing || !cover} onClick={upload}>
+        <Button variant="contained" startIcon={busy ? <CircularProgress size={18} color="inherit" /> : undefined} disabled={busy || preparing || !cover} onClick={upload}>
           {busy ? "正在上传…" : "确认更换"}
         </Button>
       </DialogActions>

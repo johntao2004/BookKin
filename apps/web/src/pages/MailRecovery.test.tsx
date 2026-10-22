@@ -14,12 +14,12 @@ it("saves SMTP before enabling test delivery and preserves a saved secret", asyn
  const send=vi.spyOn(api,"testMail").mockResolvedValue();
  render(<TestProviders><MailSettingsPage /></TestProviders>);
  fireEvent.change(await screen.findByLabelText("SMTP 主机"),{target:{value:"smtp2.example.com"}});
- expect(screen.getByRole("button",{name:"发送测试邮件"})).toBeDisabled();
- fireEvent.click(screen.getByRole("button",{name:"保存邮件配置"}));
+ expect(screen.getByRole("button",{name:"发送测试"})).toBeDisabled();
+ fireEvent.click(screen.getByRole("button",{name:"保存"}));
  await waitFor(()=>expect(save).toHaveBeenCalledWith(expect.objectContaining({host:"smtp2.example.com",password:""})));
- await waitFor(()=>expect(screen.getByRole("button",{name:"发送测试邮件"})).toBeEnabled());
+ await waitFor(()=>expect(screen.getByRole("button",{name:"发送测试"})).toBeEnabled());
  fireEvent.change(screen.getByLabelText("测试收件邮箱"),{target:{value:"qa@example.com"}});
- fireEvent.click(screen.getByRole("button",{name:"发送测试邮件"}));
+ fireEvent.click(screen.getByRole("button",{name:"发送测试"}));
  await waitFor(()=>expect(send).toHaveBeenCalledWith("qa@example.com"));
 });
 it("does not consume verification links before explicit confirmation",async()=>{

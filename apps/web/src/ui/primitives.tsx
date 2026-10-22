@@ -310,7 +310,7 @@ export const Stack = forwardRef<HTMLElement, StackProps>(function Stack({ direct
     ...flattenSx(sx, useTheme()),
   };
   const items = Children.toArray(children);
-  const content = divider ? items.flatMap((item, index) => index === 0 ? [item] : [divider, item]) : items;
+  const content = divider ? items.flatMap((item, index) => index === 0 ? [item] : [<Fragment key={`divider-${index}`}>{divider}</Fragment>, item]) : items;
   return <Box ref={ref} sx={stackSx} {...props}>{content}</Box>;
 });
 

@@ -1,7 +1,8 @@
-// 文章与独立阅读状态的 API 适配层，revision 随状态提交以识别并发修改。
-// API adapter for articles and independent reading state, submitting revisions to detect concurrent updates.
+// 文章阅读状态按最后提交生效；revision 保留兼容旧客户端，不再作为并发写入锁。
+// Article reading state is last-write-wins; revision is retained for wire compatibility, not conflict detection.
 import { request } from "../../api/client";
-export interface Article {
+import type { AnnotationColor, AnnotationStyle } from "../../domain/types";
+export interface ArticleSummary {
   id: string;
   title: string;
   author: string;
@@ -9,9 +10,13 @@ export interface Article {
   published_at: string;
   visibility: "PUBLIC" | "PRIVATE";
   tags: string;
-  html: string;
+  cover_url?: string | null;
+  excerpt?: string;
   created_at: string;
   updated_at: string;
+}
+export interface Article extends ArticleSummary {
+  html: string;
 }
 export interface Draft {
   title: string;
@@ -21,6 +26,7 @@ export interface Draft {
   visibility: "PUBLIC" | "PRIVATE";
   tags: string;
   html: string;
+  coverUrl?: string;
 }
 export interface ReadingState {
   locator: string;
@@ -35,6 +41,8 @@ export interface Entry {
   note: string;
   locator: string;
   createdAt: string;
+  style?: AnnotationStyle;
+  color?: AnnotationColor;
 }
 export const emptyReading = (): ReadingState => ({
   locator: "",
@@ -43,12 +51,17 @@ export const emptyReading = (): ReadingState => ({
   annotations: [],
 });
 export const articles = {
-  list: () => request<Article[]>("/articles"),
+  list: () => request<ArticleSummary[]>("/articles"),
   get: (id: string) => request<Article>(`/articles/${id}`),
   fetch: (url: string) =>
     request<Draft>("/articles/fetch", {
       method: "POST",
       body: JSON.stringify({ url }),
+    }),
+  prepare: (html: string, sourceUrl: string) =>
+    request<{ html: string }>("/articles/prepare", {
+      method: "POST",
+      body: JSON.stringify({ html, sourceUrl }),
     }),
   save: (draft: Draft, id?: string) =>
     request<Article>(`/articles${id ? `/${id}` : ""}`, {

@@ -38,7 +38,7 @@ describe("CategoryBooksDrawer", () => {
     fireEvent.click(checkbox);
     expect(replace).not.toHaveBeenCalled();
 
-    fireEvent.click(screen.getByRole("button", { name: "保存 1 项变更" }));
+    fireEvent.click(screen.getByRole("button", { name: "保存" }));
     await waitFor(() => expect(replace).toHaveBeenCalledWith(demoBooks[1].id, ["category-literature"]));
   });
 });

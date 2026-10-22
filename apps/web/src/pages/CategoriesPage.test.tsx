@@ -140,7 +140,7 @@ describe("CategoriesPage", () => {
     await waitFor(() => expect(readingCategory).toHaveAttribute("aria-pressed", "true"));
     expect(screen.queryByRole("heading", { name: "阅读生活" })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "展开搜索" }));
-    fireEvent.change(screen.getByRole("textbox", { name: "搜索书籍、笔记、书单" }), { target: { value: "慢读手册" } });
+    fireEvent.change(screen.getByRole("textbox", { name: "搜索书籍、笔记、书目" }), { target: { value: "慢读手册" } });
     expect(await screen.findByText("慢读手册")).toBeInTheDocument();
     expect(screen.queryByText("1 本匹配")).not.toBeInTheDocument();
   });

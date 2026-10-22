@@ -34,11 +34,14 @@ public class BookController {
     @GetMapping
     BookRepository.BookPage list(@RequestParam(required = false) String q,
                                  @RequestParam(required = false) BookFormat format,
+                                 @RequestParam(required = false) UUID categoryId,
+                                 @RequestParam(required = false) String subjectCode,
                                  @RequestParam(defaultValue = "RECENT") BookSort sort,
                                  @RequestParam(required = false) String cursor,
                                  @RequestParam(defaultValue = "60") int limit,
                                  Principal principal) {
-        return books.list(userId(principal), q, format, sort, cursor, limit);
+        return subjectCode == null ? books.list(userId(principal), q, format, categoryId, sort, cursor, limit)
+                : books.list(userId(principal), q, format, categoryId, sort, cursor, limit, subjectCode);
     }
 
     @GetMapping("/revision")

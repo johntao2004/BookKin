@@ -1,11 +1,9 @@
+import { BookCover } from "../components/BookCover";
 // 保留的旧展示管理组件处理公开书目选择与排序；文件存在不意味着当前 App 路由仍挂载它。
 // This retained legacy component selects/reorders public display books; its existence does not imply current App route inclusion.
 import { EmptyState } from "../ui/empty-state";
-import { Link } from "react-router-dom";
-import { AddRounded } from "@/ui/icons";
 import { ArrowDownwardRounded } from "@/ui/icons";
 import { ArrowUpwardRounded } from "@/ui/icons";
-import { CloudUploadOutlined } from "@/ui/icons";
 import { DeleteOutlineRounded } from "@/ui/icons";
 import { DragIndicatorRounded } from "@/ui/icons";
 import { Alert } from "@/ui/feedback";
@@ -34,7 +32,7 @@ import { useEffect, useMemo, useState } from "react";
 import { api } from "../api/client";
 import { useAuth } from "../auth/AuthContext";
 import { BookUploadDialog } from "../components/BookUploadDialog";
-import { PageContainer, PageHeader } from "../components/PageHeader";
+import { PageBackAction, PageContainer, PageHeader } from "../components/PageHeader";
 import { tokens } from "../theme/generated-tokens";
 
 export function DisplayBooksSettingsPage() {
@@ -128,10 +126,11 @@ export function DisplayBooksSettingsPage() {
 
   return (
     <PageContainer>
+      <PageBackAction to="/library">返回首页</PageBackAction>
       <PageHeader
         eyebrow="DISPLAY BOOKS"
         title="管理首页书目"
-        action={<Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", justifyContent: "flex-end" }}><Button component={Link} to="/library">返回首页</Button><RefreshButton onClick={refresh} disabled={displayQuery.isFetching}>刷新</RefreshButton>{canUpload && <Button variant="contained" startIcon={<CloudUploadOutlined />} onClick={() => setUploadOpen(true)}>上传并展示</Button>}</Stack>}
+        action={<Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", justifyContent: "flex-end" }}><RefreshButton onClick={refresh} disabled={displayQuery.isFetching}>刷新</RefreshButton>{canUpload && <Button variant="contained" onClick={() => setUploadOpen(true)}>上传并展示</Button>}</Stack>}
       />
       {displayQuery.isError ? <Alert severity="error" action={<Button color="inherit" onClick={refresh}>重试</Button>}>公共书单暂时无法读取。</Alert> : null}
       <Stack spacing={2} component="section" aria-labelledby="display-order-heading">
@@ -142,7 +141,7 @@ export function DisplayBooksSettingsPage() {
           </Box>
           <Stack direction="row" sx={{ alignItems: "center", gap: `${tokens.spacing[3]}px` }}>
             <Chip label={`${orderedIds.length} 本已展示`} size="small" variant="outlined" />
-            <Button variant="contained" startIcon={<AddRounded />} onClick={openAddDialog} disabled={displayQuery.isPending || Boolean(busyId)}>新增</Button>
+            <Button variant="contained" onClick={openAddDialog} disabled={displayQuery.isPending || Boolean(busyId)}>新增</Button>
           </Stack>
         </Stack>
         {displayQuery.isPending ? <Stack sx={{ alignItems: "center", py: 8 }}><CircularProgress /></Stack> : orderedIds.length === 0 ? <EmptyState compact title="暂无公开展示书籍" /> : (
@@ -152,7 +151,7 @@ export function DisplayBooksSettingsPage() {
               if (!book) return null;
               return <ListItem key={id} divider={index < orderedIds.length - 1} draggable onDragStart={(event: any) => event.dataTransfer.setData("text/display-book", id)} onDragOver={(event: any) => event.preventDefault()} onDrop={(event: any) => { event.preventDefault(); if (busyId) return; const from = orderedIds.indexOf(event.dataTransfer.getData("text/display-book")); if (from >= 0 && from !== index) { const next = [...orderedIds]; next.splice(index, 0, ...next.splice(from, 1)); setOrderedIds(next); setBusyId("order"); void (async () => { try { const result = await api.reorderDisplayBooks(next, revision); setOrderedIds(result.items.map((book) => book.id)); setRevision(result.revision); } catch (error) { await displayQuery.refetch(); setNotice(errorMessage(error)); } finally { setBusyId(null); } })(); } }} sx={{ gap: `${tokens.spacing[2]}px`, py: `${tokens.spacing[3]}px`, px: { xs: `${tokens.spacing[2]}px`, sm: `${tokens.spacing[4]}px` }, "& > .bk-list-item-content": { display: { xs: "grid", sm: "flex" }, gridTemplateColumns: "auto auto minmax(0, 1fr)", gap: `${tokens.spacing[2]}px` } }}>
                 <ListItemIcon sx={{ minWidth: tokens.spacing[8], color: "text.disabled", cursor: "grab" }}><DragIndicatorRounded aria-label={`拖动 ${book.title}`} /></ListItemIcon>
-                <Box component="img" src={book.coverUrl} alt="" sx={{ width: tokens.spacing[12], aspectRatio: "2 / 3", objectFit: "cover", borderRadius: `${tokens.radius.sm}px`, flexShrink: 0 }} />
+                <BookCover src={book.coverUrl} alt="" sx={{ width: `${tokens.spacing[12]}px` }} />
                 <ListItemText primary={book.title} secondary={<>{book.author}{!book.available && " · 文件暂不可用"}</>} sx={{ minWidth: 0, ml: `${tokens.spacing[2]}px` }} />
                 <Stack direction="row" spacing={0.25} sx={{ gridColumn: { xs: "1 / -1", sm: "auto" }, justifySelf: "end", flexShrink: 0 }}>
                   <Tooltip title="上移"><span><IconButton aria-label={`上移 ${book.title}`} disabled={index === 0 || Boolean(busyId)} onClick={() => void move(index, -1)}><ArrowUpwardRounded fontSize="small" /></IconButton></span></Tooltip>
@@ -174,7 +173,7 @@ export function DisplayBooksSettingsPage() {
               {sourceBooks.map((book, index) => (
                 <ListItemButton key={book.id} selected={selectedId === book.id} onClick={() => setSelectedId(book.id)} divider={index < sourceBooks.length - 1} sx={{ gap: `${tokens.spacing[3]}px` }}>
                   <Radio checked={selectedId === book.id} value={book.id} slotProps={{ input: { "aria-label": `选择 ${book.title}` } }} />
-                  <Box component="img" src={book.coverUrl} alt="" sx={{ width: tokens.spacing[10], aspectRatio: "2 / 3", objectFit: "cover", borderRadius: `${tokens.radius.sm}px`, flexShrink: 0 }} />
+                  <BookCover src={book.coverUrl} alt="" sx={{ width: `${tokens.spacing[10]}px` }} />
                   <ListItemText primary={book.title} secondary={`${book.author}${book.status !== "AVAILABLE" ? " · 文件暂不可用" : ""}`} />
                 </ListItemButton>
               ))}
@@ -183,7 +182,7 @@ export function DisplayBooksSettingsPage() {
         </DialogContent>
         <DialogActions>
           <Button onClick={closeAddDialog} disabled={Boolean(busyId)}>取消</Button>
-          <Button variant="contained" startIcon={<AddRounded />} onClick={() => void add()} disabled={!selectedId || Boolean(busyId)}>新增</Button>
+          <Button variant="contained" onClick={() => void add()} disabled={!selectedId || Boolean(busyId)}>新增</Button>
         </DialogActions>
       </Dialog>
       <BookUploadDialog open={uploadOpen} publishToDisplay onClose={() => setUploadOpen(false)} onCompleted={(message) => { setUploadOpen(false); setNotice(message); void queryClient.invalidateQueries({ queryKey: ["display-books"] }); void queryClient.invalidateQueries({ queryKey: ["books"] }); }} />

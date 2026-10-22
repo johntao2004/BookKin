@@ -82,12 +82,25 @@ export function derive(
     worker.postMessage({ password, salt });
   });
 }
-export interface Envelope {
+export interface PasswordEnvelope {
   version: 1;
   kdf: "argon2id-64m-3-1";
   salt: string;
   passwordBox: string;
   recoveryBox: string;
+}
+export interface DeviceEnvelope {
+  version: 2;
+  kind: "device";
+  recoveryBox: string;
+}
+export type Envelope = PasswordEnvelope | DeviceEnvelope;
+export async function createDeviceEnvelope() {
+  const master = random(32), recovery = random(32);
+  try {
+    const envelope: DeviceEnvelope = { version: 2, kind: "device", recoveryBox: b64(await seal(recovery, master, "bookkin:vault:master:recovery:v2")) };
+    return { master, envelope, recovery: b64(recovery) };
+  } finally { recovery.fill(0); }
 }
 export function checkPassword(password: string) {
   if (password.length < 12 || password.length > 256)
@@ -102,7 +115,7 @@ export async function createEnvelope(
     derived = await derive(password, salt),
     recovery = random(32);
   try {
-    const envelope: Envelope = {
+    const envelope: PasswordEnvelope = {
       version: 1,
       kdf: "argon2id-64m-3-1",
       salt: b64(salt),
@@ -124,6 +137,13 @@ export async function unlock(
   password: string,
   recovery = false,
 ) {
+  if (envelope.version === 2) {
+    if (!recovery || envelope.kind !== "device") throw new Error("请使用解密恢复密钥授权此浏览器。");
+    const bytes = unb64(password.trim());
+    try { return await open(bytes, unb64(envelope.recoveryBox), "bookkin:vault:master:recovery:v2"); }
+    catch { throw new Error("解密恢复密钥不正确。"); }
+    finally { bytes.fill(0); }
+  }
   if (
     envelope.version !== 1 ||
     envelope.kdf !== "argon2id-64m-3-1" ||

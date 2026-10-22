@@ -49,6 +49,10 @@ test "$ROOT_COUNT" -gt 0 || {
 # fails fast without producing a partial-looking recovery point.
 FONT_ROOT=${BOOKKIN_FONT_BACKUP_ROOT:-${BOOKKIN_FONT_STORAGE:-./.local/fonts}}
 FONT_REAL=$(canonical_directory "$FONT_ROOT")
+ARTICLE_ROOT=${BOOKKIN_ARTICLE_STORAGE:-./.local/content/articles}
+VAULT_ROOT=${BOOKKIN_VAULT_STORAGE:-./.local/content/vault}
+ARTICLE_REAL=$(canonical_directory "$ARTICLE_ROOT")
+VAULT_REAL=$(canonical_directory "$VAULT_ROOT")
 FONT_EMBEDDED=false
 while IFS= read -r LIBRARY_ROOT; do
   ROOT_REAL=$(canonical_directory "$LIBRARY_ROOT")
@@ -58,10 +62,15 @@ while IFS= read -r LIBRARY_ROOT; do
 done < "$ROOTS_FILE"
 
 DESTINATION_REAL=$(canonical_directory "$DESTINATION")
+for CONTENT_ROOT in "$ARTICLE_REAL" "$VAULT_REAL"; do
+  case "$DESTINATION_REAL/" in
+    "$CONTENT_ROOT/"*) echo "Backup destination must not be inside content storage" >&2; exit 1 ;;
+  esac
+done
 CHECKSUM_FILES="manifest.txt database.dump"
 
 cat > "$DESTINATION/manifest.txt" <<EOF
-format=bookkin-backup-v2
+format=bookkin-backup-v3
 created-at=$STAMP
 library-root-count=$ROOT_COUNT
 EOF
@@ -98,6 +107,11 @@ else
   printf 'font-root=%s\nfont-archive=fonts.tar.gz\n' "$FONT_ROOT" >> "$DESTINATION/manifest.txt"
   CHECKSUM_FILES="$CHECKSUM_FILES fonts.tar.gz"
 fi
+
+tar -C "$ARTICLE_REAL" -czf "$DESTINATION/articles.tar.gz" .
+tar -C "$VAULT_REAL" -czf "$DESTINATION/vault.tar.gz" .
+printf 'article-archive=articles.tar.gz\nvault-archive=vault.tar.gz\n' >> "$DESTINATION/manifest.txt"
+CHECKSUM_FILES="$CHECKSUM_FILES articles.tar.gz vault.tar.gz"
 
 # 清单本身也参与校验，防止缺少根目录或字体归档的备份被误认作完整备份。
 # The manifest itself is checked too, so a missing root or font archive cannot

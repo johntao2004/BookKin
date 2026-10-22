@@ -1,6 +1,5 @@
 // 集中维护分类表单、排序与删除状态，关闭时清理未完成的界面编辑。
 // Centralizes category forms, ordering and deletion state, clearing unfinished UI edits on close.
-import { AddRounded } from "@/ui/icons";
 import { ArrowDownwardRounded } from "@/ui/icons";
 import { ArrowUpwardRounded } from "@/ui/icons";
 import { DeleteOutlineRounded } from "@/ui/icons";
@@ -86,8 +85,8 @@ export function CategoryManagementDialog({ open, mode, categories, onClose }: {
   };
 
   const saveButton = (
-    <Button variant="contained" startIcon={editingId ? <EditOutlined /> : <AddRounded />} disabled={!name.trim() || busy} onClick={() => void save()}>
-      {editingId ? "保存修改" : "创建分类"}
+    <Button variant="contained" disabled={!name.trim() || busy} onClick={() => void save()}>
+      {editingId ? "保存" : "创建分类"}
     </Button>
   );
 
@@ -117,7 +116,8 @@ export function CategoryManagementDialog({ open, mode, categories, onClose }: {
     try {
       await api.deleteCategory(deleteTarget.id);
       setDeleteTarget(null);
-      await queryClient.invalidateQueries({ queryKey: ["categories"] });
+      await Promise.all(["categories", "books", "display-books", "category-books"].map(key =>
+        queryClient.invalidateQueries({ queryKey: [key] })));
       setNotice("分类已删除；书籍和 NAS 文件未受影响");
       if (editingId === deleteTarget.id) resetForm();
     } catch (error) {

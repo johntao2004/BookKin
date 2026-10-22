@@ -158,6 +158,14 @@ public class EpubMetadataWriter {
             setDc(document, metadataElement, "identifier", metadata.isbn());
             replaceSubjects(document, metadataElement, metadata.tags());
             setMeta(document, metadataElement, "calibre:series", metadata.series());
+            setMeta(document, metadataElement, "bookkin:authorBiography", metadata.authorBiography());
+            setMeta(document, metadataElement, "bookkin:tableOfContents", metadata.tableOfContents());
+            for (String code : metadata.subjectCodes()) {
+                var subject = document.createElementNS(DC, "dc:subject");
+                subject.setAttributeNS("http://www.idpf.org/2007/opf", "opf:scheme", "Thema");
+                subject.setTextContent(code);
+                metadataElement.appendChild(subject);
+            }
 
             TransformerFactory factory = TransformerFactory.newInstance();
             factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);

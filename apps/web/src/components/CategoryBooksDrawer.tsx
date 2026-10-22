@@ -1,14 +1,12 @@
+import { BookCover } from "./BookCover";
 // 在抽屉中按分类加载书籍，查询及分页状态与当前分类绑定。
 // Loads category books inside a drawer with query/pagination state bound to the selected category.
 import { EmptyState } from "../ui/empty-state";
-import { SearchRounded } from "@/ui/icons";
 import { Alert } from "@/ui/feedback";
-import { Box } from "@/ui/primitives";
 import { Button } from "@/ui/buttons";
 import { Checkbox } from "@/ui/forms";
 import { CircularProgress } from "@/ui/feedback";
 import { Drawer } from "@/ui/overlays";
-import { InputAdornment } from "@/ui/primitives";
 import { List } from "@/ui/primitives";
 import { ListItem } from "@/ui/primitives";
 import { ListItemButton } from "@/ui/primitives";
@@ -117,14 +115,13 @@ export function CategoryBooksDrawer({ open, categoryId, categoryName, onClose }:
           label="搜索书名或作者"
           value={query}
           onChange={(event: any) => setQuery(event.target.value)}
-          slotProps={{ input: { startAdornment: <InputAdornment position="start"><SearchRounded /></InputAdornment> } }}
         />
         <Stack direction={{ xs: "column", sm: "row" }} sx={{ alignItems: { sm: "center" }, justifyContent: "space-between", gap: `${tokens.spacing[3]}px` }}>
           <Typography color="text.secondary">已选 {selectedIds.size} 本{changedIds.length ? ` · ${changedIds.length} 项变更待保存` : ""}</Typography>
           <Stack direction="row" sx={{ gap: `${tokens.spacing[2]}px` }}>
-            <Button disabled={!changedIds.length || busy} onClick={() => setSelectedIds(new Set(initialIds))}>撤销未保存</Button>
+            <Button disabled={!changedIds.length || busy} onClick={() => setSelectedIds(new Set(initialIds))}>撤销</Button>
             <Button variant="contained" disabled={!changedIds.length || busy} onClick={() => void save()}>
-              {busy ? "正在保存…" : `保存 ${changedIds.length} 项变更`}
+              {busy ? "正在保存…" : "保存"}
             </Button>
           </Stack>
         </Stack>
@@ -141,7 +138,7 @@ export function CategoryBooksDrawer({ open, categoryId, categoryName, onClose }:
                 <ListItem key={book.id} disablePadding divider={index < sourceQuery.data.items.length - 1}>
                   <ListItemButton role={undefined} onClick={() => toggle(book.id)} disabled={busy} dense>
                     <Checkbox edge="start" checked={selected} tabIndex={-1} disableRipple slotProps={{ input: { "aria-label": `${selected ? "移出" : "加入"} ${book.title}` } }} />
-                    <Box component="img" src={book.coverUrl} alt="" sx={{ width: 40, aspectRatio: "2 / 3", objectFit: "cover", borderRadius: `${tokens.radius.sm}px`, mr: `${tokens.spacing[3]}px` }} />
+                    <BookCover src={book.coverUrl} alt="" sx={{ width: `${tokens.spacing[10]}px`, mr: `${tokens.spacing[3]}px` }} />
                     <ListItemText primary={book.title} secondary={book.author} />
                   </ListItemButton>
                 </ListItem>

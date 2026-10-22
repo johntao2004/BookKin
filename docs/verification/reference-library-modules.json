@@ -152,11 +152,11 @@
     },
     {
       "name": "core",
-      "fileBytes": 21306452,
-      "sha256": "70f31d629c8fe9d197f43aa57f519c456f1a88e22c594c1d063d3a823ef88666",
-      "triangles": 742485,
-      "primitives": 18,
-      "decodedGeometryBytes": 41404100,
+      "fileBytes": 626804,
+      "sha256": "c61a56f14aa4f78cb8353585c28548da29356b2f26015bd56bb5f84d0ce73616",
+      "triangles": 32876,
+      "primitives": 8,
+      "decodedGeometryBytes": 1718344,
       "bounds": {
         "min": [
           -20.299999237060547,
@@ -165,7 +165,7 @@
         ],
         "max": [
           20.299999237060547,
-          22.799999237060547,
+          0.07550808042287827,
           20.489999771118164
         ]
       },
@@ -177,17 +177,137 @@
         4,
         5,
         6,
+        12
+      ]
+    },
+    {
+      "name": "core-enclosure",
+      "fileBytes": 7487828,
+      "sha256": "9b4fe8a3e5de8a8c4a62a25253b66a034f4ba9b6bb9d0f4ee5d45f30ed390709",
+      "triangles": 248544,
+      "primitives": 7,
+      "decodedGeometryBytes": 14068424,
+      "bounds": {
+        "min": [
+          -20.299999237060547,
+          0,
+          -20.399999618530273
+        ],
+        "max": [
+          20.299999237060547,
+          22.799999237060547,
+          20.399999618530273
+        ]
+      },
+      "materialIds": [
+        6,
         7,
         8,
         9,
-        10,
-        11,
-        12,
         13,
         14,
-        15,
-        23,
-        26
+        15
+      ]
+    },
+    {
+      "name": "core-gallery-floor",
+      "fileBytes": 82564,
+      "sha256": "559e51bdb84054bb5572db2bca7039db5cd35c1eceabee603ccd76cbf2e8f6f5",
+      "triangles": 2297,
+      "primitives": 3,
+      "decodedGeometryBytes": 175030,
+      "bounds": {
+        "min": [
+          -20,
+          6.857999801635742,
+          -20.229999542236328
+        ],
+        "max": [
+          20,
+          7.485599994659424,
+          20.229999542236328
+        ]
+      },
+      "materialIds": [
+        4,
+        5,
+        10
+      ]
+    },
+    {
+      "name": "core-vault",
+      "fileBytes": 132484,
+      "sha256": "030f5cd2c5f45a99c602b22b41b28c08a3460ed83aa6919432a2312248e4852a",
+      "triangles": 2548,
+      "primitives": 2,
+      "decodedGeometryBytes": 196152,
+      "bounds": {
+        "min": [
+          -9.260000228881836,
+          16.213376998901367,
+          -19.899999618530273
+        ],
+        "max": [
+          9.260000228881836,
+          17.74799919128418,
+          19.899999618530273
+        ]
+      },
+      "materialIds": [
+        14,
+        15
+      ]
+    },
+    {
+      "name": "enclosure-detail",
+      "fileBytes": 5754440,
+      "sha256": "614ebbe613f7406b1b741936f351b5ac4ab09ceaefc201829f1ac4d72ba6c029",
+      "triangles": 185492,
+      "primitives": 5,
+      "decodedGeometryBytes": 11636256,
+      "bounds": {
+        "min": [
+          -20.079999923706055,
+          0,
+          -20.229999542236328
+        ],
+        "max": [
+          20.079999923706055,
+          22.59600067138672,
+          20.229999542236328
+        ]
+      },
+      "materialIds": [
+        4,
+        5,
+        10,
+        11,
+        12
+      ]
+    },
+    {
+      "name": "gallery-guards",
+      "fileBytes": 1845304,
+      "sha256": "87293bf9835f923beb57b5de01d20ae18555eca244e0511e229996edad9c3f66",
+      "triangles": 60788,
+      "primitives": 3,
+      "decodedGeometryBytes": 3132120,
+      "bounds": {
+        "min": [
+          -9.210000038146973,
+          6.659999847412109,
+          -20
+        ],
+        "max": [
+          9.210000038146973,
+          11.706000328063965,
+          20
+        ]
+      },
+      "materialIds": [
+        4,
+        5,
+        12
       ]
     },
     {
@@ -408,6 +528,58 @@
         23,
         26
       ]
+    },
+    {
+      "name": "spanning-detail",
+      "fileBytes": 10788,
+      "sha256": "6ddea43d199be540f20dc09e761f85df42dda022d69b96e40411485096183c91",
+      "triangles": 10,
+      "primitives": 1,
+      "decodedGeometryBytes": 764,
+      "bounds": {
+        "min": [
+          -8.899999618530273,
+          6.659999847412109,
+          -15.699999809265137
+        ],
+        "max": [
+          8.899999618530273,
+          7.440000057220459,
+          15.699999809265137
+        ]
+      },
+      "materialIds": [
+        4
+      ]
+    },
+    {
+      "name": "vault-detail",
+      "fileBytes": 5458804,
+      "sha256": "b668a61b3cc4dc36a113da60372bb118f945b42ad83f632645f6f75d3ce299be",
+      "triangles": 209930,
+      "primitives": 7,
+      "decodedGeometryBytes": 9778232,
+      "bounds": {
+        "min": [
+          -14.581999778747559,
+          16.200000762939453,
+          -20.165000915527344
+        ],
+        "max": [
+          14.581999778747559,
+          22.72800064086914,
+          20.165000915527344
+        ]
+      },
+      "materialIds": [
+        4,
+        5,
+        10,
+        11,
+        12,
+        23,
+        26
+      ]
     }
   ],
   "textures": [
@@ -497,11 +669,11 @@
     }
   ],
   "totals": {
-    "modules": 13,
+    "modules": 20,
     "triangles": 1547086,
-    "moduleBytes": 44375768,
+    "moduleBytes": 44468332,
     "texturesBytes": 9731129,
-    "decodedGeometryBytes": 83243474,
-    "primitives": 121
+    "decodedGeometryBytes": 82544696,
+    "primitives": 139
   }
 }

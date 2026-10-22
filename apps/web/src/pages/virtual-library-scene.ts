@@ -1,3 +1,4 @@
+import { requestVirtualLibraryTexture } from "./virtual-library-texture-loader";
 import * as THREE from "three";
 import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
@@ -266,6 +267,8 @@ export interface LibraryWorld {
   shelfHitMeshes: THREE.Object3D[];
   portalHitMeshes: THREE.Object3D[];
   syncCatalogBooks: (books: readonly Book[]) => CatalogSyncResult;
+  syncCatalogBooksProgressively: (books: readonly Book[], options: { signal: AbortSignal; priorityPoint?: THREE.Vector3; onSlice?: (ms: number) => void }) => Promise<CatalogSyncResult>;
+  requestBookCover: (bookId: string, full?: boolean) => void;
   toggleShelfSection: (sectionId: number) => number | null;
   collapseShelfSections: () => void;
   setHoveredShelfSection: (sectionId: number | null) => void;
@@ -1568,7 +1571,7 @@ export function createVirtualLibraryWorld(
   const catalogBooksById = new Map<string, SceneBook>();
   let catalogSyncRevision = 0;
 
-  const syncCatalogBooks = (books: readonly Book[]): CatalogSyncResult => {
+  function* stageCatalogBooks(books: readonly Book[], priorityPoint?: THREE.Vector3): Generator<void, CatalogSyncResult, void> {
     const nextBooks = Array.from(books);
     const seenBookIds = new Set<string>();
     nextBooks.forEach((book) => {
@@ -1591,8 +1594,9 @@ export function createVirtualLibraryWorld(
     let booksInCatalogSection = 0;
     let previousCategoryId = "";
 
+    let committed = false;
     try {
-      sortedBooks.forEach(({ book, classification }, index) => {
+      for (const [index, { book, classification }] of sortedBooks.entries()) {
         if (classification.category.id !== previousCategoryId
           || booksInCatalogSection === LONG_ROOM_CATALOG_SECTION_CAPACITY) {
           if (previousCategoryId) catalogSectionOffset += LONG_ROOM_CATALOG_SECTION_CAPACITY;
@@ -1610,25 +1614,18 @@ export function createVirtualLibraryWorld(
           shelfRowIndex: slot.rowIndex,
         };
         const existing = catalogBooksById.get(book.id);
-        if (existing && existing.renderSignature === catalogBookRenderSignature(book, classification)) {
-          plans.push({ assignment, classification, existing });
-          return;
-        }
-        const replacement = createBook(
-          assignment,
-          classification,
-          loader,
-          anisotropy,
-          bookMaterials,
-          built.shelfSections,
-        );
-        staged.push(replacement);
-        plans.push({ assignment, classification, existing, replacement });
-      });
-    } catch (error) {
-      staged.forEach((sceneBook) => releaseSceneBook(sceneBook, bookMaterials));
-      throw error;
-    }
+        plans.push({ assignment, classification, existing });
+      }
+      const prioritized = [...plans];
+      if (priorityPoint) prioritized.sort((a, b) => a.assignment.slot.position.distanceToSquared(priorityPoint)
+        - b.assignment.slot.position.distanceToSquared(priorityPoint));
+      for (const plan of prioritized) {
+        const {assignment, classification, existing} = plan;
+        if (existing?.renderSignature === catalogBookRenderSignature(assignment.book, classification)) continue;
+        plan.replacement = createBook(assignment, classification, loader, anisotropy, bookMaterials, built.shelfSections);
+        staged.push(plan.replacement);
+        yield;
+      }
 
     const nextSceneBooks: SceneBook[] = [];
     const nextInteractiveMeshes: THREE.Object3D[] = [];
@@ -1690,7 +1687,36 @@ export function createVirtualLibraryWorld(
     updateShelfSectionControllers(shelfControllers, built.shelfSections, sceneBooks);
     catalogSyncRevision += 1;
     built.root.userData.catalogSyncRevision = catalogSyncRevision;
+    committed = true;
     return { addedBookIds, removedBookIds, replacedBookIds };
+    } finally {
+      // Cancelled or failed staging never publishes a partial catalogue or leaks GPU resources.
+      if (!committed) staged.forEach((sceneBook) => releaseSceneBook(sceneBook, bookMaterials));
+    }
+  }
+
+  const syncCatalogBooks = (books: readonly Book[]): CatalogSyncResult => {
+    const transaction = stageCatalogBooks(books);
+    let result = transaction.next();
+    while (!result.done) result = transaction.next();
+    return result.value;
+  };
+  const syncCatalogBooksProgressively: LibraryWorld["syncCatalogBooksProgressively"] = async (books, {signal, priorityPoint, onSlice}) => {
+    const transaction = stageCatalogBooks(books, priorityPoint);
+    try {
+      while (true) {
+        signal.throwIfAborted();
+        const started = performance.now();
+        let result = transaction.next();
+        while (!result.done && performance.now() - started < 6) {
+          signal.throwIfAborted();
+          result = transaction.next();
+        }
+        onSlice?.(performance.now() - started);
+        if (result.done) return result.value;
+        await new Promise<void>(resolve => setTimeout(resolve, 0));
+      }
+    } finally { transaction.return({addedBookIds: [], removedBookIds: [], replacedBookIds: []}); }
   };
 
   return {
@@ -1700,6 +1726,12 @@ export function createVirtualLibraryWorld(
     shelfHitMeshes: shelfControllers.map(({ hitArea }) => hitArea),
     portalHitMeshes,
     syncCatalogBooks,
+    syncCatalogBooksProgressively,
+    requestBookCover: (id, full = false) => {
+      const book = catalogBooksById.get(id);
+      const texture = book && bookMaterials.coverTextures.get(book.book.coverUrl);
+      if (texture) requestVirtualLibraryTexture(texture, full);
+    },
     toggleShelfSection: (sectionId) => {
       sceneBooks.forEach(placeSceneBookOnShelf);
       expandedShelfSectionId = expandedShelfSectionId === sectionId ? null : sectionId;

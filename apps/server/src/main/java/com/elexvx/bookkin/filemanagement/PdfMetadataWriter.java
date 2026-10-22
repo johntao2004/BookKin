@@ -18,6 +18,9 @@ public class PdfMetadataWriter {
             if (document.isEncrypted()) throw new IOException("加密 PDF 禁止写回");
             if (!document.getSignatureDictionaries().isEmpty()) throw new IOException("带数字签名的 PDF 禁止写回");
             var info = document.getDocumentInformation();
+            info.setCustomMetadataValue("Thema", String.join(",", metadata.subjectCodes()));
+            info.setCustomMetadataValue("BookKinAuthorBiography", metadata.authorBiography());
+            info.setCustomMetadataValue("BookKinTableOfContents", metadata.tableOfContents());
             info.setTitle(metadata.title());
             info.setAuthor(metadata.author());
             info.setSubject(metadata.description());

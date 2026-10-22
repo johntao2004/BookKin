@@ -67,17 +67,10 @@ createdb --owner=bookkin bookkin
 psql postgres -c "alter role bookkin password 'bookkin-local-dev'"
 ```
 
-Install dependencies and create the local cover-complete demo library. The default sample contains four books with four distinct polished covers; it does not seed reading activity, annotations, or text-only PDF placeholders:
+Install dependencies and start with an empty library. Normal setup never creates sample books, accounts or reading activity.
 
 ```bash
 pnpm install
-pnpm demo:library
-```
-
-需要测试大量目录时，可额外生成 120 本真实 EPUB 压力演示书；它们仍由扫描器入库，不直接写数据库：
-
-```bash
-pnpm demo:library:stress
 ```
 
 Start the complete local preview in the background (API, Worker and web):
@@ -93,7 +86,7 @@ The launcher waits for API health and the web CSRF proxy, reuses healthy service
 
 For foreground debugging, `pnpm start:local` and `pnpm dev` remain available in separate terminals; closing either terminal stops that part of the stack.
 
-Open `http://localhost:4173/setup` to create the owner account. After setup, `pnpm demo:seed` can populate the PostgreSQL-backed demo state.
+Open `http://localhost:4173/setup` to create the owner account. After setup, upload your own EPUB/PDF files. Test-only fixture commands are documented in `scripts/fixtures/README.md` and are never part of initialization.
 
 `pnpm start:local` builds the backend and runs immutable JAR snapshots from `.local/run`, so a later Maven build cannot replace archives already being read by the JVM.
 

@@ -19,6 +19,11 @@ import {
     AddDisplayBookRequestToJSON,
 } from '../models/AddDisplayBookRequest';
 import {
+    type BookFormat,
+    BookFormatFromJSON,
+    BookFormatToJSON,
+} from '../models/BookFormat';
+import {
     type DisplayBook,
     DisplayBookFromJSON,
     DisplayBookToJSON,
@@ -53,6 +58,10 @@ export interface GetDisplayBookCoverRequest {
 
 export interface ListDisplayBooksRequest {
     q?: string;
+    subjectCode?: string;
+    categoryId?: string;
+    format?: BookFormat;
+    sort?: ListDisplayBooksSortEnum;
     cursor?: string;
     limit?: number;
 }
@@ -215,6 +224,22 @@ export class DisplayCatalogApi extends runtime.BaseAPI {
 
         if (requestParameters['q'] != null) {
             queryParameters['q'] = requestParameters['q'];
+        }
+
+        if (requestParameters['subjectCode'] != null) {
+            queryParameters['subjectCode'] = requestParameters['subjectCode'];
+        }
+
+        if (requestParameters['categoryId'] != null) {
+            queryParameters['categoryId'] = requestParameters['categoryId'];
+        }
+
+        if (requestParameters['format'] != null) {
+            queryParameters['format'] = requestParameters['format'];
+        }
+
+        if (requestParameters['sort'] != null) {
+            queryParameters['sort'] = requestParameters['sort'];
         }
 
         if (requestParameters['cursor'] != null) {
@@ -400,3 +425,13 @@ export class DisplayCatalogApi extends runtime.BaseAPI {
     }
 
 }
+
+/**
+ * @export
+ */
+export const ListDisplayBooksSortEnum = {
+    Recent: 'RECENT',
+    Title: 'TITLE',
+    Author: 'AUTHOR'
+} as const;
+export type ListDisplayBooksSortEnum = typeof ListDisplayBooksSortEnum[keyof typeof ListDisplayBooksSortEnum];

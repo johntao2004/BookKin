@@ -11,7 +11,10 @@ import org.springframework.beans.factory.annotation.Value;
 // Accepts independent absolute directories below the registration base, rejects symlink segments and derives a location fingerprint.
 public class LibraryLocationProbe {
     private final Path base;
-    public LibraryLocationProbe(@Value("${bookkin.storage.registration-base:/library}") String base) { this.base = Path.of(base).toAbsolutePath().normalize(); }
+    private final PrivateContentStore content;
+    public LibraryLocationProbe(@Value("${bookkin.storage.registration-base:/library}") String base, PrivateContentStore content) {
+        this.base = Path.of(base).toAbsolutePath().normalize(); this.content = content;
+    }
     public Result inspect(String raw) {
         try {
             Path path = Path.of(raw);
@@ -21,6 +24,7 @@ public class LibraryLocationProbe {
             for (Path part : path) { current = current.resolve(part); if (Files.isSymbolicLink(current)) throw new IllegalArgumentException("书库路径不能包含软链接"); }
             if (!Files.isDirectory(path) || !Files.isReadable(path)) throw new IllegalArgumentException("Docker 无法读取该目录，请检查目录挂载和权限");
             var real = path.toRealPath();
+            if (content.overlaps(real)) throw new IllegalArgumentException("书籍书库不能与文章书库或禁书区目录重叠");
             var attrs = Files.readAttributes(real, BasicFileAttributes.class);
             String fingerprint = HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest((real + ":" + attrs.fileKey()).getBytes(StandardCharsets.UTF_8)));
             return new Result(real.toString(), fingerprint, Files.isWritable(real), Files.getFileStore(real).getUsableSpace());

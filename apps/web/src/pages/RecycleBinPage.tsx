@@ -1,13 +1,10 @@
+import { usePermissions } from "../auth/permissions";
 // 恢复和清理均经过安全预览，永久清理仍须主人权限与明确确认。
 // Restore and purge use safety previews; permanent purge still requires owner authorization and confirmation.
 import { EMPTY_RECYCLE_BIN_TITLE } from "../ui/empty-state-copy";
-import { BookGridSkeleton } from "../components/BookGridSkeleton";
-import { DeleteForeverOutlined } from "@/ui/icons";
-import { RestoreFromTrashOutlined } from "@/ui/icons";
 import { Alert } from "@/ui/feedback";
 import { Box } from "@/ui/primitives";
 import { Button } from "@/ui/buttons";
-import { Card } from "@/ui/cards";
 import { Chip } from "@/ui/feedback";
 import { CircularProgress } from "@/ui/feedback";
 import { Dialog } from "@/ui/overlays";
@@ -21,20 +18,19 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useDeferredValue, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { api } from "../api/client";
-import { useAuth } from "../auth/AuthContext";
 import { BookCatalogEmptyState } from "../components/BookCatalogEmptyState";
-import { bookGridSx } from "../components/bookGrid";
 import { PageContainer, PageHeader } from "../components/PageHeader";
 import type { FileOperationPreview, RecycleBinEntry } from "../domain/types";
 import { tokens } from "../theme/generated-tokens";
+import { DataTable } from "../ui/antd";
 
 const DAY_IN_MILLISECONDS = 86_400_000;
 
 export function RecycleBinPage() {
-  const { user } = useAuth();
   const client = useQueryClient();
   const [searchParams] = useSearchParams();
   const query = useQuery({ queryKey: ["recycle-bin"], queryFn: api.listRecycleBin });
+  const { can } = usePermissions();
   const [operationTarget, setOperationTarget] = useState<{ entry: RecycleBinEntry; type: "RESTORE" | "PURGE" } | null>(null);
   const [preview, setPreview] = useState<FileOperationPreview | null>(null);
   const [busy, setBusy] = useState(false);
@@ -81,25 +77,31 @@ export function RecycleBinPage() {
       />
       <Alert severity="warning" sx={{ mb: 4 }}>条目会在这里保留 30 天。恢复时不会覆盖同路径的新文件；到期后自动清理，只有主人可以提前永久清理。</Alert>
 
-      {query.isPending ? (
-        <BookGridSkeleton label="正在打开回收站" />
-      ) : query.isError ? (
-        <Alert severity="error">回收站暂时无法读取，请检查网络与书库连接。</Alert>
-      ) : entries.length === 0 ? (
-        <BookCatalogEmptyState title={EMPTY_RECYCLE_BIN_TITLE} />
-      ) : (
-        <Box sx={bookGridSx}>
-          {entries.map((entry) => (
-            <RecycleBookCard
-              key={entry.id}
-              entry={entry}
-              daysRemaining={Math.max(0, Math.ceil((new Date(entry.expiresAt).getTime() - referenceTime) / DAY_IN_MILLISECONDS))}
-              canPurge={user?.role === "OWNER"}
-              onRestore={() => void openPreview(entry, "RESTORE")}
-              onPurge={() => void openPreview(entry, "PURGE")}
-            />
-          ))}
-        </Box>
+      {query.isError ? <Alert severity="error">回收站暂时无法读取，请检查网络与书库连接。</Alert> : (
+        <DataTable<RecycleBinEntry>
+          key={search}
+          aria-label="回收站列表"
+          rowKey="id"
+          dataSource={entries}
+          loading={query.isPending}
+          scroll={{ x: tokens.spacing[24] * 8 + tokens.spacing[16] }}
+          style={{ marginTop: tokens.spacing[4] }}
+          locale={{ emptyText: query.isPending ? null : <BookCatalogEmptyState title={EMPTY_RECYCLE_BIN_TITLE} /> }}
+          columns={[
+            { title: "书名", dataIndex: "bookTitle", key: "title", render: (title: string) => <Typography variant="body2" sx={{ minWidth: `${tokens.spacing[24] * 2}px`, overflowWrap: "anywhere" }}>{title}</Typography> },
+            { title: "作者", dataIndex: "bookAuthor", key: "author", width: tokens.spacing[24] + tokens.spacing[6], ellipsis: true, render: (author: string) => <Typography variant="body2" noWrap title={author}>{author || "—"}</Typography> },
+            { title: "格式", dataIndex: "format", key: "format", width: tokens.spacing[20], render: (format: string) => <Chip label={format} size="small" variant="outlined" /> },
+            { title: "移入时间", dataIndex: "deletedAt", key: "deleted", width: tokens.spacing[24] + tokens.spacing[6], render: (value: string) => <Typography component="time" dateTime={value} variant="body2" sx={{ whiteSpace: "nowrap" }}>{new Intl.DateTimeFormat("zh-CN", { year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(value))}</Typography> },
+            { title: "剩余", key: "remaining", width: tokens.spacing[20], render: (_, entry) => {
+              const days = Math.max(0, Math.ceil((new Date(entry.expiresAt).getTime() - referenceTime) / DAY_IN_MILLISECONDS));
+              return <Typography variant="body2" color={days < 5 ? "warning.main" : "text.secondary"} sx={{ whiteSpace: "nowrap" }}>{days} 天</Typography>;
+            } },
+            { title: "操作", key: "actions", width: tokens.spacing[24] * 2 + tokens.spacing[4], render: (_, entry) => <Stack direction="row" sx={{ gap: `${tokens.spacing[2]}px`, whiteSpace: "nowrap" }}>
+              <Button variant="outlined" disabled={busy || !can("settings.recycle.restore")} onClick={() => void openPreview(entry, "RESTORE")}>恢复</Button>
+              {can("settings.recycle.purge") && <Button color="error" variant="outlined" disabled={busy} aria-label={`永久清理${entry.bookTitle}`} onClick={() => void openPreview(entry, "PURGE")}>永久清理</Button>}
+            </Stack> },
+          ]}
+        />
       )}
 
       <Dialog open={Boolean(operationTarget)} onClose={() => !busy && setOperationTarget(null)} maxWidth="sm" fullWidth>
@@ -116,46 +118,9 @@ export function RecycleBinPage() {
             </Stack>
           )}
         </DialogContent>
-        <DialogActions sx={{ p: 3 }}><Button onClick={() => setOperationTarget(null)} color="inherit" disabled={busy}>取消</Button><Button variant="contained" color={operationTarget?.type === "PURGE" ? "error" : "primary"} onClick={execute} disabled={!preview || preview.conflicts.length > 0 || busy}>{busy ? "提交中…" : operationTarget?.type === "PURGE" ? "确认永久清理" : "确认恢复"}</Button></DialogActions>
+        <DialogActions sx={{ p: 3 }}><Button onClick={() => setOperationTarget(null)} color="inherit" disabled={busy}>取消</Button><Button variant="contained" color={operationTarget?.type === "PURGE" ? "error" : "primary"} onClick={execute} disabled={!preview || preview.conflicts.length > 0 || busy}>{busy ? "提交中…" : operationTarget?.type === "PURGE" ? "永久清理" : "恢复"}</Button></DialogActions>
       </Dialog>
       <Snackbar open={Boolean(notice)} autoHideDuration={4500} onClose={() => setNotice("")} message={notice} />
     </PageContainer>
-  );
-}
-
-function RecycleBookCard({ entry, daysRemaining, canPurge, onRestore, onPurge }: {
-  entry: RecycleBinEntry;
-  daysRemaining: number;
-  canPurge: boolean;
-  onRestore: () => void;
-  onPurge: () => void;
-}) {
-  const [coverFailed, setCoverFailed] = useState(false);
-  return (
-    <Card sx={{ bgcolor: "transparent", overflow: "visible", contentVisibility: "auto", containIntrinsicSize: "420px" }}>
-      <Box sx={{ position: "relative", aspectRatio: "2 / 3", borderRadius: `${tokens.radius.lg}px`, overflow: "hidden", bgcolor: "background.paper", boxShadow: tokens.shadow.cover }}>
-        {coverFailed ? (
-          <Stack sx={{ height: "100%", p: 3, alignItems: "center", justifyContent: "center", textAlign: "center", bgcolor: "background.paper" }}>
-            <Typography variant="overline" color="primary.main">BookKin藏书</Typography>
-            <Typography variant="h5" sx={{ mt: 1 }}>{entry.bookTitle}</Typography>
-          </Stack>
-        ) : (
-          <Box component="img" src={entry.coverUrl} alt={`${entry.bookTitle}封面`} loading="lazy" decoding="async" fetchPriority="low" onError={() => setCoverFailed(true)} sx={{ width: "100%", height: "100%", display: "block", objectFit: "cover", filter: "grayscale(28%)", opacity: 0.78 }} />
-        )}
-        <Chip label={`剩余 ${daysRemaining} 天`} size="small" color={daysRemaining < 5 ? "warning" : "default"} sx={{ position: "absolute", top: 12, right: 12, bgcolor: "background.paper" }} />
-      </Box>
-      <Stack direction="row" spacing={1} sx={{ alignItems: "flex-start", justifyContent: "space-between", mt: 1.5 }}>
-        <Box sx={{ minWidth: 0 }}>
-          <Typography variant="h6" noWrap title={entry.bookTitle}>{entry.bookTitle}</Typography>
-          <Typography variant="body2" color="text.secondary" noWrap>{entry.bookAuthor}</Typography>
-        </Box>
-        <Chip label={entry.format} size="small" variant="outlined" color="warning" />
-      </Stack>
-      <Typography variant="caption" color="text.disabled" noWrap sx={{ display: "block", mt: 1 }}>移入 {new Intl.DateTimeFormat("zh-CN", { month: "short", day: "numeric" }).format(new Date(entry.deletedAt))}</Typography>
-      <Stack direction="row" spacing={1} sx={{ mt: 1.5 }}>
-        <Button fullWidth variant="outlined" size="small" startIcon={<RestoreFromTrashOutlined />} onClick={onRestore}>恢复</Button>
-        {canPurge && <Button color="error" variant="outlined" size="small" aria-label={`永久清理${entry.bookTitle}`} onClick={onPurge}><DeleteForeverOutlined fontSize="small" /></Button>}
-      </Stack>
-    </Card>
   );
 }

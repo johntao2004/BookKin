@@ -2,6 +2,7 @@ package com.elexvx.bookkin.ingestion;
 
 import com.elexvx.bookkin.catalog.BookFormat;
 import com.elexvx.bookkin.config.BookKinProperties;
+import com.elexvx.bookkin.filemanagement.infrastructure.PrivateContentStore;
 import com.elexvx.bookkin.filemanagement.FileFingerprints;
 import com.elexvx.bookkin.filemanagement.FileInspector;
 import java.io.IOException;
@@ -32,16 +33,18 @@ public class LibraryScanCoordinator {
     private final FileInspector inspector;
     private final BookMetadataExtractor metadataExtractor;
     private final BookKinProperties properties;
+    private final PrivateContentStore content;
 
     public LibraryScanCoordinator(LibraryRootRepository roots, CatalogIngestionRepository catalog,
                                   FileFingerprints fingerprints, FileInspector inspector,
-                                  BookMetadataExtractor metadataExtractor, BookKinProperties properties) {
+                                  BookMetadataExtractor metadataExtractor, BookKinProperties properties, PrivateContentStore content) {
         this.roots = roots;
         this.catalog = catalog;
         this.fingerprints = fingerprints;
         this.inspector = inspector;
         this.metadataExtractor = metadataExtractor;
         this.properties = properties;
+        this.content = content;
     }
 
     public ScanSummary scanAll() {
@@ -65,6 +68,10 @@ public class LibraryScanCoordinator {
         AtomicInteger failed = new AtomicInteger();
         Path rootPath = Path.of(root.canonicalPath() == null ? root.configuredPath() : root.canonicalPath());
         try {
+            if (content.overlaps(rootPath.toRealPath())) {
+                log.warn("Refusing book scan of overlapping content storage root {}", root.name());
+                return new ScanSummary(0, 0, 1);
+            }
             var knownFingerprints = catalog.quickFingerprints(root.id());
             var unchangedPaths = new ArrayList<String>();
             int batchSize = Math.max(1, properties.scan().batchSize());

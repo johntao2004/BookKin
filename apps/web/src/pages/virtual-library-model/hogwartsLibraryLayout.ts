@@ -4,6 +4,7 @@
  * surveyed game dimensions. Blender uses the same contract and exports Y-up.
  */
 export const REFERENCE_LIBRARY_ASSET_REVISION = '20261020-terminal-arches-r42';
+export const REFERENCE_LIBRARY_DELIVERY_REVISION = `${REFERENCE_LIBRARY_ASSET_REVISION}-loading-v1`;
 
 export const REFERENCE_LIBRARY = {
   length: 40,
@@ -44,7 +45,7 @@ export const REFERENCE_LIBRARY = {
   sideVaultRise: 2.94, /* 竖向拱高，不能复用横向半径。 */ // Vertical rise; never reuse the horizontal radius.
   camera: { targetY: 4.2, targetZ: -3.5, radius: 19, pitch: -0.1277 },
   book: { spineWidth: 0.16, height: 0.48, coverWidth: 0.30 },
-  manifestUrl: `/assets/hogwarts-library/library-manifest.json?v=${REFERENCE_LIBRARY_ASSET_REVISION}`,
+  manifestUrl: `/assets/hogwarts-library/library-manifest.json?v=${REFERENCE_LIBRARY_DELIVERY_REVISION}`,
   configUrl: `/assets/hogwarts-library/scene-config.json?v=${REFERENCE_LIBRARY_ASSET_REVISION}`,
 } as const;
 

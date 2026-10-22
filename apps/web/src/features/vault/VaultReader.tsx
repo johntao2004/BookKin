@@ -212,10 +212,10 @@ export function VaultReader({
               .catch((e) => setError(e.message))
           }
         >
-          保存并返回专区
+          保存并返回
         </Button>
         <Button onClick={() => void flush().catch((e) => setError(e.message))}>
-          保存加密记录
+          保存记录
         </Button>
       </div>
       {(error || saveError) && (

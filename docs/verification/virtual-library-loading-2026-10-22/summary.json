@@ -1,0 +1,52 @@
+{
+  "measurement": "local production builds; scene initialization to first completed WebGL render; not whole-page cold navigation",
+  "before": {
+    "firstFrameBuildMs": [
+      1864.5,
+      2083.0,
+      1857.6
+    ],
+    "allArchitectureBuildMs": [
+      3691.7,
+      3375.8,
+      4265.4
+    ],
+    "firstFrameModuleBytes": [
+      36081584,
+      36081584,
+      36081584
+    ],
+    "shadowUpdates": [
+      4,
+      5,
+      6
+    ]
+  },
+  "after": {
+    "firstFrameBuildMs": [
+      392.0,
+      411.5,
+      309.3
+    ],
+    "allArchitectureBuildMs": [
+      4291.8,
+      2763.4,
+      4176.8
+    ],
+    "firstFrameModuleBytes": [
+      8329680,
+      8329680,
+      8329680
+    ],
+    "shadowUpdates": [
+      5,
+      4,
+      4
+    ]
+  },
+  "firstFrameMedianImprovementPercent": 79.0,
+  "sourceTriangles": 1547086,
+  "frontendTests": 688,
+  "frontendTestFiles": 147,
+  "workerTests": 5
+}

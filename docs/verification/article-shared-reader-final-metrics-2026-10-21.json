@@ -1,0 +1,208 @@
+{
+  "viewports": [
+    {
+      "requested": {
+        "width": 320,
+        "height": 844
+      },
+      "footer": [
+        {
+          "bottom": 844,
+          "top": 788
+        }
+      ],
+      "format": "ARTICLE",
+      "height": 844,
+      "scrollHeight": 844,
+      "scrollWidth": 305,
+      "spread": "false",
+      "width": 320,
+      "zoom": ""
+    },
+    {
+      "requested": {
+        "width": 390,
+        "height": 844
+      },
+      "footer": [
+        {
+          "bottom": 844,
+          "top": 788
+        }
+      ],
+      "format": "ARTICLE",
+      "height": 844,
+      "scrollHeight": 844,
+      "scrollWidth": 375,
+      "spread": "false",
+      "width": 390,
+      "zoom": ""
+    },
+    {
+      "requested": {
+        "width": 768,
+        "height": 900
+      },
+      "footer": [
+        {
+          "bottom": 900,
+          "top": 844
+        }
+      ],
+      "format": "ARTICLE",
+      "height": 900,
+      "scrollHeight": 900,
+      "scrollWidth": 753,
+      "spread": "false",
+      "width": 768,
+      "zoom": ""
+    },
+    {
+      "requested": {
+        "width": 1024,
+        "height": 900
+      },
+      "footer": [
+        {
+          "bottom": 900,
+          "top": 844
+        }
+      ],
+      "format": "ARTICLE",
+      "height": 900,
+      "scrollHeight": 900,
+      "scrollWidth": 1009,
+      "spread": "false",
+      "width": 1024,
+      "zoom": ""
+    },
+    {
+      "requested": {
+        "width": 1118,
+        "height": 869
+      },
+      "footer": [
+        {
+          "bottom": 869,
+          "top": 813
+        }
+      ],
+      "format": "ARTICLE",
+      "height": 869,
+      "scrollHeight": 869,
+      "scrollWidth": 1103,
+      "spread": "true",
+      "width": 1118,
+      "zoom": ""
+    },
+    {
+      "requested": {
+        "width": 1440,
+        "height": 900
+      },
+      "footer": [
+        {
+          "bottom": 900,
+          "top": 844
+        }
+      ],
+      "format": "ARTICLE",
+      "height": 900,
+      "scrollHeight": 900,
+      "scrollWidth": 1425,
+      "spread": "true",
+      "width": 1440,
+      "zoom": ""
+    },
+    {
+      "requested": {
+        "width": 1920,
+        "height": 1080
+      },
+      "footer": [
+        {
+          "bottom": 1080,
+          "top": 1024
+        }
+      ],
+      "format": "ARTICLE",
+      "height": 1080,
+      "scrollHeight": 1080,
+      "scrollWidth": 1905,
+      "spread": "true",
+      "width": 1920,
+      "zoom": ""
+    },
+    {
+      "requested": {
+        "width": 3840,
+        "height": 1080
+      },
+      "footer": [
+        {
+          "bottom": 1080,
+          "top": 1024
+        }
+      ],
+      "format": "ARTICLE",
+      "height": 1080,
+      "scrollHeight": 1080,
+      "scrollWidth": 3825,
+      "spread": "true",
+      "width": 3840,
+      "zoom": ""
+    },
+    {
+      "requested": {
+        "width": 5120,
+        "height": 1440
+      },
+      "footer": [
+        {
+          "bottom": 1440,
+          "top": 1384
+        }
+      ],
+      "format": "ARTICLE",
+      "height": 1440,
+      "scrollHeight": 1440,
+      "scrollWidth": 4081,
+      "spread": "true",
+      "width": 4096,
+      "zoom": ""
+    },
+    {
+      "requested": {
+        "width": 844,
+        "height": 390
+      },
+      "footer": [
+        {
+          "bottom": 390,
+          "top": 334
+        }
+      ],
+      "format": "ARTICLE",
+      "height": 390,
+      "scrollHeight": 390,
+      "scrollWidth": 829,
+      "spread": "false",
+      "width": 844,
+      "zoom": ""
+    }
+  ],
+  "font": {
+    "before": "16px",
+    "after": "16.8px",
+    "restored": true
+  },
+  "pdf": {
+    "before": "第 1 页 · 1/2 · 共 6 页",
+    "after": "第 1 页 · 2/2 · 共 6 页",
+    "restored": true
+  },
+  "console": {
+    "since": "2026-10-20T16:37:17.362Z",
+    "entries": []
+  }
+}

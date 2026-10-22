@@ -14,7 +14,7 @@ export function safeHtml(html: string) {
   for(const image of doc.querySelectorAll('img')){
     const source=image.getAttribute('data-src')||image.getAttribute('src')||'';
     if(!/^\/api\/v1\/articles\/assets\/[0-9a-f-]{36}$/i.test(source)&&!/^data:image\/(?:png|jpeg|webp);base64,/i.test(source)){
-      image.setAttribute('data-src',source);image.removeAttribute('src');image.setAttribute('alt','外部图片将在确认保存时下载');
+      image.setAttribute('data-src',source);image.removeAttribute('src');if(!image.getAttribute('alt'))image.setAttribute('alt','图片将自动导入');
     }
   }
   return doc.body.innerHTML;

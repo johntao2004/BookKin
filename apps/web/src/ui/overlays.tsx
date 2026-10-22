@@ -37,13 +37,13 @@ export function Dialog({ open, onClose, children, fullWidth, maxWidth = "sm", fu
 
 export function DialogTitle({ sx, className, children, ...props }: BoxProps) {
   const { titleId } = useContext(DialogContext);
-  return <Typography component="h2" id={titleId} variant="h5" sx={{ p: 3, pb: 1.5, ...flattenSx(sx, useTheme()) }} className={mergeClassNames("bk-dialog-title", className)} {...props}>{children}</Typography>;
+  return <Typography component="h2" id={titleId} variant="h5" sx={sx} className={mergeClassNames("bk-dialog-title", className)} {...props}>{children}</Typography>;
 }
 
 export function DialogContent({ sx, className, children, dividers, ...props }: BoxProps & { dividers?: boolean }) {
-  return <Box {...props} sx={{ p: 3, ...(dividers ? { borderTop: "1px solid var(--color-border)", borderBottom: "1px solid var(--color-border)" } : {}), ...flattenSx(sx, useTheme()) }} className={mergeClassNames("bk-dialog-content", className)}>{children}</Box>;
+  return <Box {...props} sx={{ ...(dividers ? { borderTop: "1px solid var(--color-border)", borderBottom: "1px solid var(--color-border)" } : {}), ...flattenSx(sx, useTheme()) }} className={mergeClassNames("bk-dialog-content", className)}>{children}</Box>;
 }
 
 export function DialogActions({ sx, className, children, ...props }: BoxProps) {
-  return <Stack {...props} direction="row" sx={{ p: 3, minWidth: 0, flexWrap: "wrap", justifyContent: "flex-end", alignItems: "center", gap: 1, ...flattenSx(sx, useTheme()) }} className={mergeClassNames("bk-dialog-actions", className)}>{children}</Stack>;
+  return <Stack {...props} direction="row" sx={{ minWidth: 0, flexWrap: "wrap", justifyContent: "flex-end", alignItems: "center", gap: 1, ...flattenSx(sx, useTheme()) }} className={mergeClassNames("bk-dialog-actions", className)}>{children}</Stack>;
 }

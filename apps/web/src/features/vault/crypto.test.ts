@@ -4,8 +4,15 @@ import { describe, it, expect, vi, afterAll } from "vitest";
 import { webcrypto } from "node:crypto";
 vi.stubGlobal("crypto", webcrypto);
 afterAll(() => vi.unstubAllGlobals());
-import { seal, open, sealJson, openJson, fileKey, chunkAad } from "./crypto";
+import { seal, open, sealJson, openJson, fileKey, chunkAad, createDeviceEnvelope, unlock } from "./crypto";
 describe("vault authenticated encryption", () => {
+  it("creates a password-free device vault with a portable recovery key", async () => {
+    const created = await createDeviceEnvelope();
+    expect(created.envelope.version).toBe(2);
+    expect(await unlock(created.envelope, created.recovery, true)).toEqual(created.master);
+    await expect(unlock(created.envelope, b64Key(), true)).rejects.toThrow("解密恢复密钥不正确");
+    await expect(unlock(created.envelope, "password", false)).rejects.toThrow("恢复密钥");
+  });
   it("round trips and rejects the wrong password key, tampering, reordered or truncated chunks", async () => {
     const key = crypto.getRandomValues(new Uint8Array(32));
     const aad = chunkAad("id", 0, 2, 1500000),
@@ -34,3 +41,4 @@ describe("vault authenticated encryption", () => {
     await expect(openJson(key, note, "state:b")).rejects.toThrow();
   });
 });
+function b64Key() { return Buffer.from(crypto.getRandomValues(new Uint8Array(32))).toString("base64"); }

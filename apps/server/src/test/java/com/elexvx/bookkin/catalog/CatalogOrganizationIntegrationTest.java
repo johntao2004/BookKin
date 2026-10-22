@@ -17,6 +17,7 @@ import org.flywaydb.core.Flyway;
 import org.jooq.DSLContext;
 import org.jooq.impl.DSL;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -36,6 +37,12 @@ class CatalogOrganizationIntegrationTest {
                 .load()
                 .migrate();
         dsl = DSL.using(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword());
+    }
+
+    @BeforeEach
+    void clearPreviousExample() {
+        dsl.execute("TRUNCATE TABLE app_users, books, library_roots CASCADE");
+        dsl.execute("UPDATE display_catalog SET revision = 0 WHERE id = 1");
     }
 
     @Test
@@ -69,6 +76,48 @@ class CatalogOrganizationIntegrationTest {
         assertTrue(new BookRepository(dsl).exists(publicBookId));
         assertTrue(new BookRepository(dsl).exists(privateBookId));
         assertEquals(1, repository.assignedToBook(publicBookId, true).items().size());
+    }
+
+    @Test
+    void bookListsCombineCategoryFormatSearchSortAndCursorWithoutLeakingPrivateProgress() {
+        UUID managerId = insertUser("catalog-filter-admin", "分类管理员", "ADMIN");
+        UUID readerId = insertUser("catalog-filter-reader", "家庭读者", "MEMBER");
+        UUID otherReaderId = insertUser("catalog-filter-other", "另一位读者", "MEMBER");
+        UUID alpha = insertBook("A Story", "Zulu", "EPUB", true);
+        UUID beta = insertBook("B Story", "Alpha", "EPUB", false);
+        UUID gamma = insertBook("C Story", "Mike", "EPUB", true);
+        UUID pdf = insertBook("D Story", "Aaron", "PDF", true);
+        UUID otherCategoryBook = insertBook("E Story", "Aaron", "EPUB", true);
+
+        CategoryRepository categories = new CategoryRepository(dsl);
+        UUID categoryId = UUID.fromString(categories.create("过滤分类", null, managerId).id());
+        UUID otherCategoryId = UUID.fromString(categories.create("其他分类", null, managerId).id());
+        for (UUID bookId : List.of(alpha, beta, gamma, pdf)) {
+            categories.replaceBookCategories(bookId, List.of(categoryId), managerId);
+        }
+        categories.replaceBookCategories(otherCategoryBook, List.of(otherCategoryId), managerId);
+        dsl.execute("insert into reading_positions(user_id, book_id, locator, progress) values (?, ?, 'epubcfi(/6/2)', 0.374)", readerId, alpha);
+        dsl.execute("insert into reading_positions(user_id, book_id, locator, progress) values (?, ?, 'epubcfi(/6/4)', 0.829)", otherReaderId, alpha);
+
+        BookRepository books = new BookRepository(dsl);
+        var firstPrivatePage = books.list(readerId, "Story", BookFormat.EPUB, categoryId, BookSort.TITLE, null, 1);
+        assertEquals(List.of(alpha.toString()), firstPrivatePage.items().stream().map(BookRepository.BookSummary::id).toList());
+        assertEquals(37, firstPrivatePage.items().getFirst().progress());
+        assertTrue(firstPrivatePage.nextCursor() != null);
+        var secondPrivatePage = books.list(readerId, "Story", BookFormat.EPUB, categoryId, BookSort.TITLE,
+                firstPrivatePage.nextCursor(), 1);
+        assertEquals(List.of(beta.toString()), secondPrivatePage.items().stream().map(BookRepository.BookSummary::id).toList());
+        assertEquals(0, secondPrivatePage.items().getFirst().progress());
+        assertEquals(82, books.list(otherReaderId, "Story", BookFormat.EPUB, categoryId, BookSort.TITLE, null, 1)
+                .items().getFirst().progress());
+
+        DisplayCatalogRepository display = new DisplayCatalogRepository(dsl);
+        var firstPublicPage = display.list("Story", categoryId, BookFormat.EPUB, BookSort.TITLE, null, 1);
+        assertEquals(List.of(alpha.toString()), firstPublicPage.items().stream().map(DisplayCatalogRepository.DisplayBook::id).toList());
+        assertTrue(firstPublicPage.nextCursor() != null);
+        var secondPublicPage = display.list("Story", categoryId, BookFormat.EPUB, BookSort.TITLE,
+                firstPublicPage.nextCursor(), 1);
+        assertEquals(List.of(gamma.toString()), secondPublicPage.items().stream().map(DisplayCatalogRepository.DisplayBook::id).toList());
     }
 
     @Test
@@ -158,18 +207,23 @@ class CatalogOrganizationIntegrationTest {
     }
 
     private static UUID insertBook(String title, String author, boolean publicBook) {
+        return insertBook(title, author, "EPUB", publicBook);
+    }
+
+    private static UUID insertBook(String title, String author, String format, boolean publicBook) {
         UUID bookId = UUID.randomUUID();
         UUID rootId = UUID.randomUUID();
         UUID fileId = UUID.randomUUID();
         dsl.execute("insert into library_roots(id, name, configured_path) values (?, ?, ?)",
                 rootId, "root-" + rootId, "/tmp/" + rootId);
         dsl.execute("insert into books(id, title, sort_title, primary_author) values (?, ?, ?, ?)",
-                bookId, title, title, author);
+                bookId, title, title.toLowerCase(java.util.Locale.ROOT), author);
         dsl.execute("""
                 insert into book_files(id, book_id, library_root_id, relative_path, normalized_path,
                   format, status, size_bytes, modified_at, fingerprint, quick_fingerprint)
-                values (?, ?, ?, ?, ?, 'EPUB', 'AVAILABLE', 1024, ?::timestamptz, ?, ?)
-                """, fileId, bookId, rootId, title + ".epub", title + ".epub", OffsetDateTime.now(),
+                values (?, ?, ?, ?, ?, ?, 'AVAILABLE', 1024, ?::timestamptz, ?, ?)
+                """, fileId, bookId, rootId, title + "." + format.toLowerCase(java.util.Locale.ROOT),
+                title + "." + format.toLowerCase(java.util.Locale.ROOT), format, OffsetDateTime.now(),
                 "sha256:" + bookId, "quick:" + bookId);
         if (publicBook) {
             dsl.execute("insert into display_catalog_entries(catalog_id, book_id, sort_order) values (1, ?, ?)",

@@ -1,81 +1,70 @@
+import { RequestErrorPage } from "./HttpErrorPage";
+import { usePermissions } from "../auth/permissions";
 import { BookGridSkeleton } from "../components/BookGridSkeleton";
-import { Skeleton } from "@/ui/antd";
-import { AutoAwesomeOutlined } from "@/ui/icons";
-import { BookmarkAddOutlined } from "@/ui/icons";
-import { EditNoteRounded } from "@/ui/icons";
-import { FilterListRounded } from "@/ui/icons";
 import { KeyboardArrowUpRounded } from "@/ui/icons";
-import { MenuBookRounded } from "@/ui/icons";
-import { CloudUploadOutlined } from "@/ui/icons";
-import { ScheduleRounded } from "@/ui/icons";
 import { Alert } from "@/ui/feedback";
 import { CircularProgress } from "@/ui/feedback";
 import { Box } from "@/ui/primitives";
 import { Button } from "@/ui/buttons";
-import { Chip } from "@/ui/feedback";
-import { Dialog } from "@/ui/overlays";
-import { DialogActions } from "@/ui/overlays";
-import { DialogContent } from "@/ui/overlays";
-import { Divider } from "@/ui/feedback";
 import { Fab } from "@/ui/buttons";
-import { FormControl } from "@/ui/primitives";
-import { MenuItem } from "@/ui/primitives";
-import { Select } from "@/ui/forms";
 import { Snackbar } from "@/ui/primitives";
 import { Stack } from "@/ui/primitives";
 import { Tooltip } from "@/ui/feedback";
 import { Typography } from "@/ui/primitives";
-import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useCallback, useDeferredValue, useEffect, useMemo, useState, type ReactNode } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
+import { useCallback, useDeferredValue, useEffect, useMemo, useState } from "react";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { api } from "../api/client";
 import { useAuth } from "../auth/AuthContext";
+import { CatalogAdvancedFilters, CatalogAdvancedFilterToggle } from "../components/CatalogAdvancedFilters";
+import { useCatalogFilterParams } from "../hooks/useCatalogFilterParams";
+import { CatalogFilters } from "../components/CatalogFilters";
+import { CatalogSection } from "../components/CatalogSection";
 import { BookCard } from "../components/BookCard";
 import { bookGridSx } from "../components/bookGrid";
 import { AddToBooklistDialog } from "../components/AddToBooklistDialog";
 import { BookUploadDialog } from "../components/BookUploadDialog";
 import { BookCatalogEmptyState } from "../components/BookCatalogEmptyState";
 import { FileOperationDialog } from "../components/FileOperationDialog";
-import { OverviewCardHeader } from "../components/OverviewCardHeader";
-import { OverviewEmptyState } from "../components/OverviewEmptyState";
 import { flattenUniquePaginatedItems, PaginatedItemReveal } from "../components/PaginatedItemReveal";
-import { PageContainer, PageHeader } from "../components/PageHeader";
-import { ReadingStatsPanel } from "../components/ReadingStatsPanel";
-import { RecentAnnotationsPanel } from "../components/RecentAnnotationsPanel";
+import { PageContainer } from "../components/PageHeader";
+import { LibraryPageHeader, LibraryScopeFilter } from "../components/LibraryPageHeader";
+import { PublicLibraryPage } from "./PublicLibraryPage";
 import type { Book, FileOperationType } from "../domain/types";
 import { useInfiniteScrollTrigger } from "../hooks/useInfiniteScrollTrigger";
 import { tokens } from "../theme/generated-tokens";
 import { EMPTY_CATALOG_TITLE } from "../ui/empty-state-copy";
 
-type SortKey = "recent" | "title" | "author";
-
 export function LibraryPage() {
+  const { user, ready } = useAuth();
+  const [params] = useSearchParams();
+  if (!ready) return <PageContainer><BookGridSkeleton label="正在加载藏书" /></PageContainer>;
+  return user && params.get("scope") !== "public" ? <MemberLibraryPage key={user.id} /> : <PublicLibraryPage />;
+}
+
+function MemberLibraryPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user } = useAuth();
-  const [params, setParams] = useSearchParams();
-  const [selectedBook, setSelectedBook] = useState<Book | null>(null);
+  const { query: rawQuery, categoryId, subjectCode, format, sort, updateParam, clearFilters: clearBookFilters, activeCount } = useCatalogFilterParams();
+  const location = useLocation();
   const [operation, setOperation] = useState<{ book: Book; type: FileOperationType } | null>(null);
-  const editMetadata = (book: Book) => navigate(`/library/books/${book.id}/edit`);
+  const editMetadata = (book: Book) => navigate(`/library/books/${book.id}/edit`, { state: { bookReturnTo: `${location.pathname}${location.search}` } });
   const [booklistBook, setBooklistBook] = useState<Book | null>(null);
   const [uploadOpen, setUploadOpen] = useState(false);
   const [showBackToTop, setShowBackToTop] = useState(false);
-  const overviewStorageKey = `bookkin-library-overview:${user?.id ?? 'anonymous'}`;
-  const [overviewHidden, setOverviewHidden] = useState(() => { try { return localStorage.getItem(`bookkin-library-overview:${user?.id ?? 'anonymous'}`) === 'hidden'; } catch { return false; } });
-  const toggleOverview = () => setOverviewHidden(hidden => { const next = !hidden; try { localStorage.setItem(overviewStorageKey, next ? 'hidden' : 'visible'); } catch { /* 存储不可用时仍保持布局可操作。 */ /* Layout remains usable without storage. */ } return next; });
   const [notice, setNotice] = useState("");
-  const query = params.get("q")?.trim().toLocaleLowerCase("zh-CN") ?? "";
+  const query = rawQuery.trim().toLocaleLowerCase("zh-CN");
   const deferredQuery = useDeferredValue(query);
-  const format = params.get("format") ?? "ALL";
-  const sort = (params.get("sort") ?? "recent") as SortKey;
-  const canManage = user?.role === "OWNER" || user?.role === "ADMIN";
+  const { can } = usePermissions();
   // 查询键包含检索、格式和排序；请求接收取消信号，游标页属于该组查询条件。
   // The query key includes search, format and sort; requests receive cancellation signals and cursor pages belong to those filters.
   const booksQuery = useInfiniteQuery({
-    queryKey: ["books", deferredQuery, format, sort],
+    queryKey: ["books", deferredQuery, format, sort, categoryId, subjectCode, user?.id],
     initialPageParam: undefined as string | undefined,
     queryFn: ({ pageParam, signal }) => api.listBooks({
       q: deferredQuery || undefined,
+      categoryId: categoryId || undefined, subjectCode: subjectCode || undefined,
       format: format === "ALL" ? undefined : format as "EPUB" | "PDF",
       sort,
       cursor: pageParam,
@@ -85,7 +74,6 @@ export function LibraryPage() {
     getNextPageParam: (lastPage) => lastPage.nextCursor,
     refetchInterval: 15_000,
   });
-  const readingStatsQuery = useQuery({ queryKey: ["reading-stats", "weekly"], queryFn: api.getWeeklyReadingStats, enabled: !overviewHidden });
   useEffect(() => {
     const updateBackToTopVisibility = () => {
       const nextVisible = window.scrollY > tokens.spacing[20];
@@ -97,7 +85,6 @@ export function LibraryPage() {
     return () => window.removeEventListener("scroll", updateBackToTopVisibility);
   }, []);
   const loadedBookEntries = useMemo(() => flattenUniquePaginatedItems(booksQuery.data?.pages), [booksQuery.data]);
-  const loadedBooks = useMemo(() => loadedBookEntries.map(({ item }) => item), [loadedBookEntries]);
 
   const loadNextPage = useCallback(() => {
     if (booksQuery.hasNextPage && !booksQuery.isFetchingNextPage) void booksQuery.fetchNextPage();
@@ -110,204 +97,39 @@ export function LibraryPage() {
   const bookEntries = useMemo(() => loadedBookEntries.filter(({ item }) => item.status === "AVAILABLE"), [loadedBookEntries]);
   const books = useMemo(() => bookEntries.map(({ item }) => item), [bookEntries]);
 
-  const updateParam = (key: string, value: string, defaultValue?: string) => {
-    const next = new URLSearchParams(params);
-    if (!value || value === defaultValue) next.delete(key);
-    else next.set(key, value);
-    setParams(next, { replace: true });
-  };
 
-  const clearBookFilters = () => {
-    const next = new URLSearchParams(params);
-    next.delete("q");
-    next.delete("format");
-    setParams(next, { replace: true });
-  };
-
-  const reading = loadedBooks.find((book) => book.progress > 0);
-  const featured = books[0] ?? reading;
-
+  if (booksQuery.isError && !booksQuery.data) return <RequestErrorPage error={booksQuery.error} retrying={booksQuery.isFetching} onRetry={() => void booksQuery.refetch()} />;
   return (
     <>
       <PageContainer>
-        <PageHeader eyebrow="LIBRARY" title="藏书库" action={<Button aria-expanded={!overviewHidden} aria-controls="library-overview" onClick={toggleOverview}>{overviewHidden ? "显示概览" : "隐藏概览"}</Button>} />
+        <LibraryPageHeader />
 
-        {!overviewHidden && <Box
-          id="library-overview"
-          component="section"
-          aria-label="书库概览"
-          sx={{
-            display: "grid",
-            gridTemplateColumns: {
-              xs: "minmax(0, 1fr)",
-              sm: "repeat(2, minmax(0, 1fr))",
-              lg: "repeat(4, minmax(0, 1fr))",
-            },
-            // 宽屏单行布局中卡片保持等高，包括加载与空状态。
-            // Keep equal card heights in the wide, single-row layout,
-            // including loading and empty states.
-            gridAutoRows: `${tokens.spacing[24] * 3.5}px`,
-            gap: { xs: `${tokens.spacing[4]}px`, sm: `${tokens.spacing[6]}px` },
-            mb: { xs: `${tokens.spacing[6]}px`, md: `${tokens.spacing[8]}px` },
-            alignItems: "stretch",
-            "& .bk-typography-h4": { fontSize: { xs: `${tokens.typography.fontSize.title}px`, sm: `${tokens.typography.fontSize.headingSm}px` } },
-          }}
-        >
-          {booksQuery.isPending ? Array.from({ length: 4 }, (_, index) => (
-            <Box key={index} role="status" aria-label="正在加载书库概览" sx={{ p: 3, border: 1, borderColor: "divider", borderRadius: `${tokens.radius.xl}px`, bgcolor: "background.paper" }}>
-              <Skeleton active paragraph={{ rows: 4 }} />
-            </Box>
-          )) : <>
-          <>
-              <Box
-                component="article"
-                aria-labelledby="featured-book-title"
-                sx={{
-                  minWidth: 0,
-                  gridColumn: { sm: 1 },
-                  gridRow: { sm: 1 },
-                  display: "flex",
-                  flexDirection: "column",
-                  p: { xs: `${tokens.spacing[6]}px`, lg: `${tokens.spacing[8]}px` },
-                  bgcolor: "background.paper",
-                  border: 1,
-                  borderColor: "divider",
-                  borderRadius: `${tokens.radius.xl}px`,
-                  overflow: "hidden",
-                }}
-              >
-                <OverviewCardHeader id="featured-card-title" icon={<AutoAwesomeOutlined />}>本周新藏</OverviewCardHeader>
-                {featured ? <Box
-                  sx={{
-                    display: "grid",
-                    gridTemplateColumns: { xs: "minmax(0, 0.92fr) minmax(0, 1.08fr)", lg: `minmax(0, min(40%, ${tokens.spacing[20] * 2}px)) minmax(0, 1fr)` },
-                    gap: { xs: `${tokens.spacing[4]}px`, md: `${tokens.spacing[6]}px` },
-                    flex: 1,
-                    minHeight: 0,
-                    mt: `${tokens.spacing[4]}px`,
-                  }}
-                >
-                  <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "flex-start", minWidth: 0, minHeight: 0, containerType: "size" }}>
-                    <Box component="img" src={featured.coverUrl} alt={`${featured.title}封面`} loading="eager" decoding="async" fetchPriority="high" sx={{ display: "block", width: "min(100cqw, calc(100cqh * 2 / 3))", height: "auto", aspectRatio: "2 / 3", objectFit: "cover", borderRadius: `${tokens.radius.lg}px` }} />
-                  </Box>
-                  <Stack sx={{ minWidth: 0, minHeight: 0, alignItems: "stretch" }}>
-                    <Typography id="featured-book-title" variant="h4" component="h3" title={featured.title} sx={{ overflowWrap: "anywhere", display: "-webkit-box", WebkitBoxOrient: "vertical", WebkitLineClamp: 3, overflow: "hidden" }}>{featured.title}</Typography>
-                    <Typography color="text.secondary" sx={{ mt: `${tokens.spacing[2]}px` }}>{featured.author}</Typography>
-                    <Stack direction="row" sx={{ flexWrap: "wrap", gap: `${tokens.spacing[3]}px`, mt: "auto", pt: `${tokens.spacing[4]}px` }}>
-                      <Button fullWidth variant="contained" startIcon={<MenuBookRounded />} onClick={() => navigate(`/reader/${featured.id}`)}>开始阅读</Button>
-                    </Stack>
-                  </Stack>
-                </Box> : <OverviewEmptyState titleId="featured-book-title" title="本周暂无新书" />}
-              </Box>
 
-              <Box sx={{ minWidth: 0, gridColumn: { sm: 1, lg: 3 }, gridRow: { sm: 2, lg: 1 }, display: "flex", "& > *": { flex: 1 } }}>
-                <RecentAnnotationsPanel embedded />
-              </Box>
-          </>
 
-          <>
-            <Box sx={{ minWidth: 0, gridColumn: { sm: 2 }, gridRow: { sm: 1 }, display: "flex", "& > *": { flex: 1 } }}>
-              <ReadingStatsPanel stats={readingStatsQuery.data} loading={readingStatsQuery.isPending} error={readingStatsQuery.isError} />
-            </Box>
-            <Stack
-              component="article"
-              aria-labelledby="currently-reading-title"
-              sx={{
-                gridColumn: { sm: 2, lg: 4 },
-                gridRow: { sm: 2, lg: 1 },
-                justifyContent: "flex-start",
-                p: { xs: `${tokens.spacing[6]}px`, lg: `${tokens.spacing[8]}px` },
-                bgcolor: "secondary.dark",
-                border: 1,
-                borderColor: "secondary.dark",
-                color: "common.white",
-                borderRadius: `${tokens.radius.xl}px`,
-              }}
-            >
-              <OverviewCardHeader id="reading-progress-card-title" icon={<MenuBookRounded />} inverse>阅读进度</OverviewCardHeader>
-              {reading ? (
-                <>
-                  <Stack sx={{ minWidth: 0, flex: 1, gap: `${tokens.spacing[2]}px`, mt: `${tokens.spacing[4]}px` }}>
-                    <Typography id="currently-reading-title" variant="h4" title={reading.title} sx={{ overflowWrap: "anywhere", display: "-webkit-box", WebkitBoxOrient: "vertical", WebkitLineClamp: 3, overflow: "hidden" }}>{reading.title}</Typography>
-                    <Typography sx={{ opacity: 0.68 }}>{reading.author}</Typography>
-                    <Box sx={{ mt: `${tokens.spacing[2]}px` }}>
-                      <Box sx={{ height: `${tokens.spacing[1]}px`, bgcolor: "rgba(255,255,255,.18)", mb: `${tokens.spacing[2]}px`, borderRadius: `${tokens.radius.pill}px`, overflow: "hidden" }}>
-                        <Box sx={{ width: `${reading.progress}%`, height: "100%", bgcolor: "primary.light" }} />
-                      </Box>
-                      <Stack direction="row" sx={{ justifyContent: "space-between", opacity: 0.64 }}>
-                        <Typography variant="caption">已读 {reading.progress}%</Typography>
-                        <Typography variant="caption">第 7 章</Typography>
-                      </Stack>
-                    </Box>
-                  </Stack>
-                  <Button
-                    variant="outlined"
-                    onClick={() => navigate(`/reader/${reading.id}`)}
-                    sx={{ mt: "auto" }}
-                  >
-                    继续阅读
-                  </Button>
-                </>
-              ) : (
-                <OverviewEmptyState
-                  titleId="currently-reading-title"
-                  title="请开始阅读"
-                  description="打开任意一本书后，阅读进度会显示在这里。"
-                  inverse
-                />
-              )}
-            </Stack>
-          </>
-          </>}
-        </Box>}
+        <CatalogSection title="全部藏书" tools={
+          <CatalogFilters
+            extraTools={<Stack direction="row" sx={{ flexWrap: "wrap", gap: `${tokens.spacing[3]}px` }}><LibraryScopeFilter /><CatalogAdvancedFilterToggle /></Stack>}
+            actions={can("library.upload") ? <Button variant="contained" onClick={() => setUploadOpen(true)} sx={{ whiteSpace: "nowrap" }}>上传书籍</Button> : undefined}
+            filter={{ label: "格式", value: format, onChange: value => updateParam("format", value, "ALL"), options: [
+              { value: "ALL", label: "全部格式" }, { value: "EPUB", label: "EPUB" }, { value: "PDF", label: "PDF" },
+            ] }}
+            sort={{ label: "排序", value: sort, onChange: value => updateParam("sort", value, "recent"), options: [
+              { value: "recent", label: "最近入库" }, { value: "title", label: "按书名" }, { value: "author", label: "按作者" },
+            ] }}
+          />
+        }>
 
-        <Stack
-          direction={{ xs: "column", sm: "row" }}
-          sx={{
-            alignItems: { xs: "stretch", sm: "center" },
-            justifyContent: "space-between",
-            gap: `${tokens.spacing[3]}px`,
-            mb: `${tokens.spacing[4]}px`,
-          }}
-        >
-          <Typography variant="h4" component="h2">全部藏书</Typography>
-          <Stack
-            direction="row"
-            sx={{
-              width: { xs: "100%", sm: "auto" },
-              justifyContent: { xs: "flex-start", sm: "flex-end" },
-              alignItems: "center",
-              flexWrap: "wrap",
-              gap: `${tokens.spacing[3]}px`,
-            }}
-          >
-            {canManage && <Button variant="contained" startIcon={<CloudUploadOutlined />} onClick={() => setUploadOpen(true)} sx={{ whiteSpace: "nowrap", width: { xs: "100%", sm: "auto" } }}>上传书籍</Button>}
-            <FormControl size="small" sx={{ minWidth: 118, flex: { xs: "1 1 0", sm: "0 0 auto" } }}>
-              <Select label="格式" value={format} onChange={(event: any) => updateParam("format", event.target.value, "ALL")} startAdornment={<FilterListRounded sx={{ mr: 1, color: "text.secondary" }} />}>
-                <MenuItem value="ALL">全部格式</MenuItem>
-                <MenuItem value="EPUB">EPUB</MenuItem>
-                <MenuItem value="PDF">PDF</MenuItem>
-              </Select>
-            </FormControl>
-            <FormControl size="small" sx={{ minWidth: 126, flex: { xs: "1 1 0", sm: "0 0 auto" } }}>
-              <Select label="排序" value={sort} onChange={(event: any) => updateParam("sort", event.target.value, "recent")}>
-                <MenuItem value="recent">最近入库</MenuItem>
-                <MenuItem value="title">按书名</MenuItem>
-                <MenuItem value="author">按作者</MenuItem>
-              </Select>
-            </FormControl>
-          </Stack>
-        </Stack>
+        <CatalogAdvancedFilters />
 
-        {query && <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>找到 {books.length} 本相关藏书</Typography>}
+        {activeCount > 0 && <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>{query ? `找到 ${books.length} 本相关藏书` : `已加载 ${books.length} 本匹配藏书`}</Typography>}
 
         {booksQuery.isPending ? (
           <BookGridSkeleton label="正在加载藏书" />
         ) : booksQuery.isError && !booksQuery.data ? (
           <Alert severity="error">书库暂时无法读取，请检查网络与书库连接。</Alert>
         ) : books.length === 0 ? (
-          <BookCatalogEmptyState title={query || format !== "ALL" ? "未找到匹配的书籍" : EMPTY_CATALOG_TITLE}
-            action={query || format !== "ALL" ? <Button variant="outlined" onClick={clearBookFilters}>清除筛选</Button> : undefined}
+          <BookCatalogEmptyState title={activeCount ? "未找到匹配的书籍" : EMPTY_CATALOG_TITLE}
+            action={activeCount ? <Button variant="outlined" onClick={clearBookFilters}>清除筛选</Button> : undefined}
           />
         ) : (
           <Box sx={bookGridSx}>
@@ -315,11 +137,11 @@ export function LibraryPage() {
               <PaginatedItemReveal key={book.id} animate={pageIndex > 0} order={itemIndex}>
                 <BookCard
                   book={book}
-                  onOpen={setSelectedBook}
+                  onOpen={(book) => navigate(`/library/books/${book.id}`, { state: { bookReturnTo: location.pathname + location.search } })}
                   onRead={(value) => navigate(`/reader/${value.id}`)}
-                  onAddToBooklist={setBooklistBook}
-                  onEditMetadata={canManage ? editMetadata : undefined}
-                  onFileOperation={canManage ? (value, type) => setOperation({ book: value, type }) : undefined}
+                  onAddToBooklist={can("booklists.edit") ? setBooklistBook : undefined}
+                  onEditMetadata={can("library.edit") ? editMetadata : undefined}
+                  onFileOperation={can("library.files") || can("library.trash") ? (value, type) => setOperation({ book: value, type }) : undefined}
                 />
               </PaginatedItemReveal>
             ))}
@@ -348,17 +170,9 @@ export function LibraryPage() {
         {!booksQuery.hasNextPage && books.length > 36 && (
           <Typography variant="caption" color="text.disabled" sx={{ display: "block", textAlign: "center", mt: 6 }}>已加载全部 {books.length} 本藏书</Typography>
         )}
+        </CatalogSection>
       </PageContainer>
 
-      <BookDetailsDialog
-        book={selectedBook}
-        canManage={canManage}
-        onClose={() => setSelectedBook(null)}
-        onRead={(book) => navigate(`/reader/${book.id}`)}
-        onAddToBooklist={(book) => { setSelectedBook(null); setBooklistBook(book); }}
-        onOperation={(book, type) => { setSelectedBook(null); setOperation({ book, type }); }}
-        onEditMetadata={(book) => { setSelectedBook(null); editMetadata(book); }}
-      />
       <AddToBooklistDialog
         open={Boolean(booklistBook)}
         bookId={booklistBook?.id ?? ""}
@@ -394,68 +208,5 @@ export function LibraryPage() {
         </Tooltip>
       )}
     </>
-  );
-}
-
-function BookDetailsDialog({ book, canManage, onClose, onRead, onOperation, onEditMetadata, onAddToBooklist }: {
-  book: Book | null;
-  canManage: boolean;
-  onClose: () => void;
-  onRead: (book: Book) => void;
-  onAddToBooklist: (book: Book) => void;
-  onOperation: (book: Book, type: FileOperationType) => void;
-  onEditMetadata: (book: Book) => void;
-}) {
-  return (
-    <Dialog
-      open={Boolean(book)}
-      onClose={onClose}
-      fullWidth
-      maxWidth="md"
-    >
-      {book && (
-        <>
-          <DialogContent sx={{ p: { xs: `${tokens.spacing[3]}px`, sm: `${tokens.spacing[6]}px`, md: `${tokens.spacing[8]}px` }, minHeight: 0 }}>
-            <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "180px minmax(0, 1fr)", md: "210px minmax(0, 1fr)" }, gap: { xs: `${tokens.spacing[4]}px`, sm: `${tokens.spacing[6]}px`, md: `${tokens.spacing[8]}px` }, minWidth: 0 }}>
-              <Box component="img" src={book.coverUrl} alt={`${book.title}封面`} sx={{ width: "100%", maxWidth: { xs: `${tokens.spacing[24]}px`, sm: "none" }, mx: { xs: "auto", sm: 0 }, aspectRatio: "2 / 3", objectFit: "cover", borderRadius: `${tokens.radius.lg}px`, boxShadow: tokens.shadow.cover }} />
-              <Stack sx={{ alignItems: "flex-start", minWidth: 0 }}>
-                <Stack direction="row" spacing={1} sx={{ mb: `${tokens.spacing[4]}px`, flexWrap: "wrap", rowGap: `${tokens.spacing[2]}px` }}><Chip label={book.format} variant="outlined" size="small" />{book.tags.map((tag) => <Chip key={tag} label={tag} size="small" />)}</Stack>
-                <Typography variant="h2" sx={{ fontSize: { xs: `${tokens.typography.fontSize.heading}px`, md: `${tokens.typography.fontSize.display}px` }, overflowWrap: "anywhere" }}>{book.title}</Typography>
-                <Typography color="text.secondary" sx={{ mt: 1 }}>{book.author}</Typography>
-                {book.description && <Typography sx={{ mt: `${tokens.spacing[6]}px` }}>{book.description}</Typography>}
-                <Divider flexItem sx={{ my: { xs: `${tokens.spacing[5]}px`, md: `${tokens.spacing[6]}px` } }} />
-                <Stack spacing={1.2} sx={{ width: "100%", minWidth: 0 }}>
-                  <Meta icon={<ScheduleRounded />} label="入库时间" value={new Intl.DateTimeFormat("zh-CN", { dateStyle: "long" }).format(new Date(book.addedAt))} />
-                  <Meta icon={<MenuBookRounded />} label="文件位置" value={`${book.libraryRoot}/${book.relativePath}`} />
-                </Stack>
-              </Stack>
-            </Box>
-          </DialogContent>
-          <DialogActions sx={{ px: { xs: `${tokens.spacing[3]}px`, sm: `${tokens.spacing[6]}px`, md: `${tokens.spacing[8]}px` }, pt: { xs: `${tokens.spacing[2]}px`, sm: 0 }, pb: { xs: `${tokens.spacing[3]}px`, sm: `${tokens.spacing[6]}px` }, display: { xs: "grid", sm: "flex" }, gridTemplateColumns: { xs: "repeat(2, minmax(0, 1fr))" }, gap: `${tokens.spacing[2]}px`, alignItems: "stretch" }}>
-            {canManage && (
-              <Stack direction="row" spacing={1} sx={{ gridColumn: { xs: "1 / -1", sm: "auto" }, width: { xs: "100%", sm: "auto" }, flexWrap: "wrap" }}>
-                <Button startIcon={<EditNoteRounded />} color="inherit" onClick={() => onEditMetadata(book)} sx={{ flex: { xs: "1 1 auto", sm: "0 0 auto" } }}>编辑元信息</Button>
-                <Button color="inherit" onClick={() => onOperation(book, "RENAME")} sx={{ flex: { xs: "1 1 auto", sm: "0 0 auto" } }}>管理文件</Button>
-              </Stack>
-            )}
-            <Box sx={{ display: { xs: "none", sm: "block" }, flex: 1 }} />
-            <Stack direction="row" spacing={1} sx={{ gridColumn: { xs: "1 / -1", sm: "auto" }, width: { xs: "100%", sm: "auto" }, minWidth: 0, flexWrap: "wrap" }}>
-              <Button onClick={onClose} color="inherit" sx={{ flex: { xs: 1, sm: "initial" } }}>关闭</Button>
-              <Button startIcon={<BookmarkAddOutlined />} onClick={() => onAddToBooklist(book)} sx={{ flex: { xs: 1, sm: "initial" } }}>加入书单</Button>
-              <Button variant="contained" onClick={() => onRead(book)} sx={{ flex: { xs: 1, sm: "initial" } }}>开始阅读</Button>
-            </Stack>
-          </DialogActions>
-        </>
-      )}
-    </Dialog>
-  );
-}
-
-function Meta({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
-  return (
-    <Stack direction="row" spacing={1.5} sx={{ alignItems: "flex-start", color: "text.secondary" }}>
-      <Box sx={{ display: "inline-flex", mt: "2px" }}>{icon}</Box>
-      <Box sx={{ minWidth: 0, overflowWrap: "anywhere" }}><Typography variant="caption">{label}</Typography><Typography variant="body2" color="text.primary" sx={{ overflowWrap: "anywhere" }}>{value}</Typography></Box>
-    </Stack>
   );
 }

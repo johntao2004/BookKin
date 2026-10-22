@@ -10,7 +10,10 @@ import jakarta.servlet.http.HttpServletRequest;
 // 传递密文信封、分块和 revision；身份隔离及存储规则交给 VaultService。
 // Transfers ciphertext envelopes, chunks and revisions while VaultService enforces identity isolation and storage rules.
 public class VaultController {
- private final VaultService service;public VaultController(VaultService service){this.service=service;}
+ private final VaultService service;private final VaultKeyService keys;
+ public VaultController(VaultService service,VaultKeyService keys){this.service=service;this.keys=keys;}
+ @PostMapping("/key/open") public VaultKeyService.Access openKey(Principal p){return keys.open(p);}
+ @PostMapping("/key/migrate") public VaultKeyService.Access migrateKey(@RequestBody KeyMigration in,Principal p){return keys.migrate(in.key(),in.revision(),p);}
  @GetMapping("/config") public Object config(Principal p){return service.config(p);}
  @PutMapping("/config") public ResponseEntity<Void> config(@RequestBody Config in,Principal p){service.config(in.envelope(),in.revision(),p);return ResponseEntity.noContent().build();}
  @GetMapping("/objects") public Object list(Principal p){return service.list(p);}
@@ -20,6 +23,7 @@ public class VaultController {
  @PutMapping("/objects/{id}/state") public ResponseEntity<Void> state(@PathVariable UUID id,@RequestBody State in,Principal p){service.state(id,in.state(),in.revision(),p);return ResponseEntity.noContent().build();}
  @DeleteMapping("/objects/{id}") public ResponseEntity<Void> delete(@PathVariable UUID id,Principal p)throws Exception{service.delete(id,p);return ResponseEntity.noContent().build();}
  public record Config(String envelope,long revision){}
+ public record KeyMigration(String key,long revision){@Override public String toString(){return "VaultKeyMigration[redacted]";}}
  public record Create(String manifest,String state,int chunkCount){}
  public record State(String state,long revision){}
 }

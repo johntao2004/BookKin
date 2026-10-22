@@ -51,7 +51,7 @@ export function ChangePasswordPage({ embedded = false }: { embedded?: boolean })
         <TextField label="确认新密码" type="password" autoComplete="new-password" value={confirmPassword} onChange={(event: any) => setConfirmPassword(event.target.value)} required />
         {success && <Alert severity="success">登录密码已更新。</Alert>}
         {error && <Alert severity="error">{error}</Alert>}
-        {embedded ? <FormActions><Button type="submit" variant="contained" disabled={loading || !policy.data || policy.isError} sx={{ width: { xs: "100%", sm: "auto" } }}>{loading ? "正在保存…" : user?.mustChangePassword ? "保存并进入书库" : "保存密码"}</Button></FormActions> : <Button type="submit" variant="contained" size="large" disabled={loading || !policy.data || policy.isError} sx={{ width: { xs: "100%", sm: "auto" } }}>{loading ? "正在保存…" : user?.mustChangePassword ? "保存并进入书库" : "保存密码"}</Button>}
+        {embedded ? <FormActions><Button type="submit" variant="contained" disabled={loading || !policy.data || policy.isError} sx={{ width: { xs: "100%", sm: "auto" } }}>{loading ? "正在保存…" : user?.mustChangePassword ? "保存后进书库" : "保存密码"}</Button></FormActions> : <Button type="submit" variant="contained" size="large" disabled={loading || !policy.data || policy.isError} sx={{ width: { xs: "100%", sm: "auto" } }}>{loading ? "正在保存…" : user?.mustChangePassword ? "保存后进书库" : "保存密码"}</Button>}
       </Stack>
   );
   if (embedded) return form;

@@ -20,7 +20,7 @@ public class VaultService {
  @Transactional public void config(String envelope,long revision,Principal p){
   if(envelope==null||envelope.length()>16384)throw ApiException.badRequest("ENVELOPE_SIZE","密钥信封格式无效。");
   int n=revision==0?db.execute("insert into personal_vault(user_id,envelope) values (?,?::jsonb) on conflict do nothing",user(p),envelope)
-   :db.execute("update personal_vault set envelope=?::jsonb,revision=revision+1 where user_id=? and revision=?",envelope,user(p),revision);
+   :db.execute("update personal_vault set envelope=?::jsonb,revision=revision+1 where user_id=? and revision=? and access_key_ciphertext is null",envelope,user(p),revision);
   if(n!=1)throw ApiException.conflict("REVISION_CONFLICT","专区设置已更新，请刷新。");
  }
  public List<Map<String,Object>> list(Principal p){return db.fetch("select id,manifest,state,revision,chunk_count from vault_objects where user_id=? order by created_at desc",user(p)).intoMaps();}
@@ -45,12 +45,12 @@ public class VaultService {
   get(id,p);var r=db.fetchOne("select storage_id from vault_chunks where user_id=? and object_id=? and chunk_index=?",user(p),id,index);
   if(r==null)throw ApiException.notFound("CHUNK_MISSING","分块尚未上传，请重新导入。");return files.resource("vault",user(p),r.get("storage_id",UUID.class));
  }
- // revision 比较与更新在一条 SQL 中完成，冲突要求客户端刷新而非覆盖。
- // Revision comparison and update share one SQL statement; conflicts require client refresh instead of overwrite.
+ // 阅读状态与普通书籍、文章一致，最后提交生效；密钥信封仍独立执行版本校验。
+ // Reading state is last-write-wins; the independent key-envelope revision guard stays intact.
  @Transactional public void state(UUID id,String state,long revision,Principal p){
   if(state==null||state.length()>2_000_000)throw ApiException.badRequest("STATE_SIZE","加密记录过大。");
-  if(db.execute("update vault_objects set state=?,revision=revision+1 where user_id=? and id=? and revision=?",state,user(p),id,revision)!=1)
-   throw ApiException.conflict("REVISION_CONFLICT","另一页面已更新记录，请刷新后解锁。");
+  if(db.execute("update vault_objects set state=?,revision=revision+1 where user_id=? and id=?",state,user(p),id)!=1)
+   throw ApiException.notFound("VAULT_NOT_FOUND","未找到密文。");
  }
  @Transactional public void delete(UUID id,Principal p)throws Exception{
   get(id,p);var rows=db.fetch("select storage_id from vault_chunks where user_id=? and object_id=?",user(p),id);

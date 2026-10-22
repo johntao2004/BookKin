@@ -66,3 +66,18 @@ test("emits the files required by Sites packaging", async () => {
   await access(new URL("../dist/server/index.js", import.meta.url));
   await access(new URL("../dist/.openai/hosting.json", import.meta.url));
 });
+
+test('caches only successful public architectural resources with a content address', async () => {
+  for (const [path, cached] of [
+    ['/assets/hogwarts-library/modules/core.glb?v=0123456789abcdef', true],
+    ['/assets/hogwarts-library/textures/' + 'a'.repeat(64) + '.png', true],
+    ['/api/v1/books/private/cover?v=0123456789abcdef', false],
+    ['/assets/hogwarts-library/library-manifest.json?v=r42', false],
+    ['/assets/hogwarts-library/modules/core.glb?v=mutable', false],
+  ]) {
+    const response = await worker.fetch(new Request('https://example.test' + path), {
+      ASSETS: {fetch: async () => new Response('bytes')},
+    });
+    assert.equal(response.headers.get('Cache-Control'), cached ? 'public, max-age=31536000, immutable' : null);
+  }
+});

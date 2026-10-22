@@ -14,8 +14,9 @@ HASH=$(sha256sum "$CANDIDATE/bookkin.jar" | cut -c1-16)
 IMAGE="bookkin:release-$HASH"
 PREVIOUS=$(docker inspect bookkin-app-1 --format '{{.Image}}')
 docker image tag "$PREVIOUS" "bookkin:rollback-$HASH"
-python3 - "$LIVE/bookkin.jar" "$CANDIDATE/bookkin.jar" "${3:-}" <<'PYCODE'
-import hashlib,sys,zipfile
+BASELINE_STATE=$(docker compose exec -T postgres psql -U bookkin -d bookkin -Atc "select count(*)=1 and bool_and(version='1' and type='BASELINE' and success) from flyway_schema_history")
+python3 - "$LIVE/bookkin.jar" "$CANDIDATE/bookkin.jar" "${3:-}" "${4:-}" "$BASELINE_STATE" <<'PYCODE'
+import hashlib,json,sys,zipfile
 def migrations(path):
     with zipfile.ZipFile(path) as z:
         return {n:hashlib.sha256(z.read(n)).hexdigest() for n in z.namelist() if '/db/migration/' in n and not n.endswith('/')}
@@ -25,9 +26,13 @@ if previous != candidate:
     approved = sys.argv[3] == '--registration-policy-migration' and all(candidate.get(k) == v for k,v in previous.items()) and additions == {'BOOT-INF/classes/db/migration/V8__registration_policy.sql': 'c5cd412275395414bf5f0fd3d54385372d2fcdc07cc76f49ab27efe5acd8bc7e'}
     approved_ai = sys.argv[3] == '--additive-ai-settings-migration' and all(candidate.get(k) == v for k,v in previous.items()) and additions == {'BOOT-INF/classes/db/migration/V9__ai_settings.sql': '82a5d682be2b0faebcb36fa106b45c86db536425608234c0e6593111e7fd0296'}
     approved_ai_refresh = sys.argv[3] == '--refresh-ai-provider-defaults-migration' and all(candidate.get(k) == v for k,v in previous.items()) and additions == {'BOOT-INF/classes/db/migration/V10__refresh_ai_provider_defaults.sql': '2df138db395f8f223a7555255db2442d847c06f007c58a8502d5a1acecc80236'}
-    if not (approved or approved_ai or approved_ai_refresh):
+    approved_baseline = False
+    if sys.argv[3] == '--consolidated-baseline' and sys.argv[5] == 't':
+        receipt = json.load(open(sys.argv[4]))
+        approved_baseline = receipt.get('applied') is True and receipt.get('restoredUpgradeVerified') is True and candidate == {'BOOT-INF/classes/db/migration/V1__initial_schema.sql': receipt.get('baselineSqlSha256')}
+    if not (approved or approved_ai or approved_ai_refresh or approved_baseline):
         raise SystemExit('Schema changed: use a reviewed migration/recovery plan instead of automatic image rollback')
-    print('Reviewed additive migration: existing tables unchanged; rollback retains new settings tables.')
+    print('Reviewed schema transition accepted; backup and rollback metadata retained.')
 PYCODE
 # 仅生成一次并持续复用；已存在加密数据时拒绝替换密钥。
 # Generate once, reuse forever. Refuse replacement when encrypted data already exists.
@@ -45,6 +50,11 @@ umask 077
 docker compose exec -T postgres pg_dump -U bookkin -d bookkin -Fc > "backups/pre-$HASH-$(date -u +%Y%m%dT%H%M%SZ).dump"
 OVERRIDE="$CANDIDATE/image.yaml"
 printf 'services:\n  app:\n    image: %s\n  worker:\n    image: %s\n' "$IMAGE" "$IMAGE" > "$OVERRIDE"
+ROLLBACK_HISTORY=""
+if [[ "${3:-}" == '--consolidated-baseline' ]]; then
+  ROLLBACK_HISTORY=$(python3 -c 'import json,sys;print(json.load(open(sys.argv[1]))["rollbackHistory"])' "${4:?baseline receipt required}")
+  test -s "$ROLLBACK_HISTORY"
+fi
 wait_ready() {
   for ((i=0;i<60;i++)); do
     if curl -fsS http://127.0.0.1/actuator/health/readiness | grep -q '"UP"'; then return 0; fi
@@ -54,6 +64,9 @@ wait_ready() {
 }
 rollback() {
   echo 'Release check failed; restoring previous application image. Database backup retained.'
+  if [[ -n "$ROLLBACK_HISTORY" ]]; then
+    { printf 'BEGIN; DELETE FROM flyway_schema_history;\n'; cat "$ROLLBACK_HISTORY"; printf '\nCOMMIT;\n'; } | docker compose exec -T postgres psql -U bookkin -d bookkin -v ON_ERROR_STOP=1 >/dev/null
+  fi
   printf 'services:\n  app:\n    image: %s\n  worker:\n    image: %s\n' "$PREVIOUS" "$PREVIOUS" > "$CANDIDATE/rollback.yaml"
   docker compose -f compose.yaml -f "$CANDIDATE/rollback.yaml" up -d --no-build --no-deps app worker
 }

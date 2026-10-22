@@ -17,7 +17,7 @@ it('requests server pages and refreshes the selected login-log page', async () =
   render(<TestProviders><LoginLogsPage /></TestProviders>);
   expect(await screen.findByText('account-0')).toBeInTheDocument();
   expect(request).toHaveBeenCalledWith(0, 10);
-  expect(screen.getAllByText('共 25 条')).toHaveLength(2);
+  expect(screen.getAllByText(/共 25 条/)).toHaveLength(1);
   fireEvent.click(screen.getAllByTitle('2')[0]);
   expect(await screen.findByText('account-1')).toBeInTheDocument();
   expect(request).toHaveBeenLastCalledWith(1, 10);

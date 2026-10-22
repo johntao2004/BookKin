@@ -84,18 +84,21 @@ public class BookUploadProcessor {
         put(sources, "publishedDate", value.publishedDate(), MetadataSource.FILE);
         put(sources, "isbn", value.isbn(), MetadataSource.FILE);
         put(sources, "description", value.description(), MetadataSource.FILE);
+        put(sources, "authorBiography", value.authorBiography(), MetadataSource.FILE);
+        put(sources, "tableOfContents", value.tableOfContents(), MetadataSource.FILE);
+        if (!value.subjectCodes().isEmpty()) sources.put("subjectCodes", MetadataSource.FILE);
         put(sources, "series", value.series(), MetadataSource.FILE);
         if (value.seriesIndex() != null) sources.put("seriesIndex", MetadataSource.FILE);
         if (!value.tags().isEmpty()) sources.put("tags", MetadataSource.FILE);
         return new MetadataDraft(value.title(), value.subtitle(), value.authors(), value.translators(), value.language(),
                 value.publisher(), value.publishedDate(), value.isbn(), value.description(), value.series(),
-                value.seriesIndex(), value.tags(), value.pageCount(), value.wordCount(), sources, null);
+                value.seriesIndex(), value.tags(), value.pageCount(), value.wordCount(), sources, null, true, value.subjectCodes(), value.authorBiography(), value.tableOfContents());
     }
 
     private MetadataDraft withTarget(MetadataDraft value, String target) {
         return new MetadataDraft(value.title(), value.subtitle(), value.authors(), value.translators(), value.language(),
                 value.publisher(), value.publishedDate(), value.isbn(), value.description(), value.series(),
-                value.seriesIndex(), value.tags(), value.pageCount(), value.wordCount(), value.sources(), target);
+                value.seriesIndex(), value.tags(), value.pageCount(), value.wordCount(), value.sources(), target, value.publiclyVisible(), value.subjectCodes(), value.authorBiography(), value.tableOfContents());
     }
 
     private String defaultTarget(MetadataDraft value, BookFormat format) {

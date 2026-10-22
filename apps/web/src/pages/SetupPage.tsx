@@ -66,17 +66,17 @@ export function SetupPage() {
     <AuthFrame title="初始化">
       <Form form={formInstance} name="setup" layout="vertical" autoComplete="off" noValidate onFinish={submit} requiredMark validateTrigger="onBlur">
         <Form.Item label="昵称" name="displayName" rules={[{ required: true, whitespace: true, message: "请输入昵称" }]}>
-          <Input autoComplete="off" size="large" />
+          <Input autoComplete="off" />
         </Form.Item>
         <Form.Item label="用户名" name="username" rules={[{ required: true, whitespace: true, message: "请输入用户名" }]}>
-          <Input autoComplete="off" size="large" />
+          <Input autoComplete="off" />
         </Form.Item>
         <Form.Item label="密码" name="password" rules={[{ required: true, message: "请输入密码" }, {validator:(_,value)=>passwordPolicy.data && !passwordPolicy.isError && passwordRequirements(passwordPolicy.data,value || "").every(r=>r.met)?Promise.resolve():Promise.reject(new Error("请满足密码要求"))}]}>
-          <Input.Password onChange={e=>setPasswordValue(e.target.value)} autoComplete="new-password" size="large" />
+          <Input.Password onChange={e=>setPasswordValue(e.target.value)} autoComplete="new-password" />
         </Form.Item>
         <PasswordRequirements policy={passwordPolicy} value={passwordValue} />
    <Form.Item label="确认密码" name="confirmPassword" dependencies={["password"]} rules={[{ required: true, message: "请再次输入密码" }, ({ getFieldValue }) => ({ validator(_, value) { return !value || getFieldValue("password") === value ? Promise.resolve() : Promise.reject(new Error("两次输入的密码不一致")); } })]}>
-          <Input.Password autoComplete="new-password" size="large" />
+          <Input.Password autoComplete="new-password" />
         </Form.Item>
         <Stack spacing={2}>
           {error && <Alert severity="error">{error}</Alert>}

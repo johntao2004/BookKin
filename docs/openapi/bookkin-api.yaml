@@ -22,6 +22,240 @@ tags:
   - name: Reader fonts
 
 paths:
+  /vault/key/open:
+    post:
+      summary: 当前用户通过会话绑定的 2FA 后领取内容密钥，空旧库可原子升级
+      responses:
+        '200':
+          description: 只用于当前页面内存，Cache-Control 为 no-store；禁止日志记录响应体
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [key, envelope, revision]
+                properties:
+                  key: { type: string, description: Base64 编码的 32 字节内容密钥，不持久缓存 }
+                  envelope: { type: string }
+                  revision: { type: integer, format: int64 }
+        '401': { description: 未登录 }
+        '403': { description: 无权限或当前会话未通过有效的 2FA }
+        '409': { description: 服务器实例密钥不可用，或非空旧库缺少原内容密钥 }
+  /vault/key/migrate:
+    post:
+      summary: 已通过 2FA 的旧浏览器迁移原内容密钥，验证已有密文，不改动文件及阅读记录
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [key, revision]
+              properties:
+                key: { type: string, maxLength: 64, description: 已持有且验证过的原内容密钥，不记录请求体 }
+                revision: { type: integer, format: int64 }
+      responses:
+        '200': { description: 已迁移或相同密钥幂等重试，返回与 open 相同的 no-store 密钥响应 }
+        '403': { description: 无权限或 2FA 授权已失效 }
+        '409': { description: 原密钥校验失败或配置修订冲突，原数据保留 }
+  /users/vault-policy:
+    get:
+      tags: [Users]
+      summary: 查看禁书区开关及 2FA 服务配置状态
+      responses:
+        '200': { description: 管理员与主人可查看, content: { application/json: { schema: { $ref: '#/components/schemas/VaultPolicy' } } } }
+        '403': { description: 无安全设置查看权限 }
+    put:
+      tags: [Users]
+      summary: 主人配置禁书区开关，关闭或重新启用均使旧 2FA 授权失效
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [enabled, revision]
+              properties:
+                enabled: { type: boolean }
+                revision: { type: integer, format: int64, minimum: 0 }
+      responses:
+        '200': { description: 已保存, content: { application/json: { schema: { $ref: '#/components/schemas/VaultPolicy' } } } }
+        '403': { description: 仅主人可修改 }
+        '409': { description: 修订冲突或服务器未配置加密密钥 }
+  /auth/two-factor/status:
+    get:
+      tags: [Auth]
+      summary: 当前用户身份验证器绑定与本会话的禁书区授权状态
+      responses:
+        '200': { description: 不返回种子或备用码, content: { application/json: { schema: { $ref: '#/components/schemas/TwoFactorStatus' } } } }
+        '403': { description: 当前角色没有禁书区权限 }
+  /auth/two-factor/enrollment:
+    post:
+      tags: [Auth]
+      summary: 验证当前登录密码，获取 10 分钟有效的 TOTP 二维码资料
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [password]
+              properties:
+                password: { type: string, format: password, maxLength: 256 }
+      responses:
+        '200':
+          description: 仅本次返回绑定种子，禁止缓存
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [id, secret, uri, expiresAt]
+                properties:
+                  id: { type: string, format: uuid }
+                  secret: { type: string }
+                  uri: { type: string }
+                  expiresAt: { type: integer, format: int64 }
+        '400': { description: 登录密码不正确 }
+        '403': { description: 功能未启用或无权限 }
+        '409': { description: 已绑定或未配置服务器密钥 }
+        '429': { description: 验证尝试过于频繁 }
+  /auth/two-factor/confirm:
+    post:
+      tags: [Auth]
+      summary: 验证 6 位动态码并完成绑定，生成 10 条一次性备用码
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id, code]
+              properties:
+                id: { type: string, format: uuid }
+                code: { type: string, pattern: '^[0-9]{6}$' }
+      responses:
+        '200':
+          description: 备用码仅返回一次，并授予本会话 5 分钟禁书区访问权限
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [recoveryCodes]
+                properties:
+                  recoveryCodes: { type: array, items: { type: string } }
+        '400': { description: 动态码无效 }
+        '409': { description: 绑定过期或已完成 }
+        '429': { description: 验证尝试过于频繁 }
+  /auth/two-factor/verify:
+    post:
+      tags: [Auth]
+      summary: 使用动态码或一次性备用码验证，授予当前会话 5 分钟禁书区访问权限
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TwoFactorVerification' }
+      responses:
+        '200': { description: 当前授权状态, content: { application/json: { schema: { $ref: '#/components/schemas/TwoFactorStatus' } } } }
+        '400': { description: 验证码无效、过期或已使用 }
+        '403': { description: 功能关闭、无角色权限或尚未绑定 }
+        '429': { description: 验证尝试过于频繁 }
+  /auth/two-factor/lock:
+    post:
+      tags: [Auth]
+      summary: 撤销当前会话的禁书区访问授权，不退出普通登录
+      responses:
+        '204': { description: 已锁定 }
+  /auth/two-factor/renew:
+    post:
+      tags: [Auth]
+      summary: 为仍已验证的可见阅读会话续期，不能恢复已锁定或已到期的授权
+      responses:
+        '200': { description: 新的授权到期时间, content: { application/json: { schema: { $ref: '#/components/schemas/TwoFactorStatus' } } } }
+        '403': { description: 尚未验证、已锁定、已到期或功能被关闭 }
+  /auth/two-factor/reset:
+    post:
+      tags: [Auth]
+      summary: 同时验证登录密码与动态码或备用码后解除旧绑定，要求重新绑定并使所有旧授权失效
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - { $ref: '#/components/schemas/TwoFactorVerification' }
+                - type: object
+                  required: [password]
+                  properties:
+                    password: { type: string, format: password, maxLength: 256 }
+      responses:
+        '204': { description: 旧绑定与剩余备用码已失效，书籍密文未改变 }
+        '400': { description: 密码或验证码不正确 }
+        '429': { description: 验证尝试过于频繁 }
+  /articles/notes:
+    get:
+      tags: [Annotations]
+      summary: 当前用户的文章笔记，独立于图书批注和禁书区
+      responses:
+        '200':
+          description: 可访问文章中的个人笔记分组，不含书签或其他用户记录
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  required: [articleId, title, author, annotations]
+                  properties:
+                    articleId: { type: string, format: uuid }
+                    title: { type: string }
+                    author: { type: string }
+                    coverUrl: { type: [string, 'null'] }
+                    annotations:
+                      type: array
+                      items: { $ref: '#/components/schemas/ArticleNoteEntry' }
+        '401': { description: 需要登录 }
+  /books/{bookId}/reviews:
+    parameters:
+      - { in: path, name: bookId, required: true, schema: { type: string, format: uuid } }
+    get:
+      tags: [Annotations]
+      summary: 读取本人的私密长文和书库共享长文
+      responses:
+        '200': { description: 不包含其他用户的私密长文，管理员也不例外, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/BookReview' } } } } }
+        '401': { description: 需要登录 }
+        '404': { description: 书籍不存在 }
+    post:
+      tags: [Annotations]
+      summary: 为当前用户创建独立存储的读后长文
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: '#/components/schemas/BookReviewDraft' } } }
+      responses:
+        '200': { description: 已保存, content: { application/json: { schema: { $ref: '#/components/schemas/BookReview' } } } }
+        '400': { description: 标题或正文格式无效 }
+        '401': { description: 需要登录 }
+        '404': { description: 书籍不存在 }
+  /book-reviews/{id}:
+    parameters:
+      - { in: path, name: id, required: true, schema: { type: string, format: uuid } }
+    put:
+      tags: [Annotations]
+      summary: 作者编辑长文；管理员不能代改
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - { $ref: '#/components/schemas/BookReviewDraft' }
+                - type: object
+                  required: [revision]
+                  properties: { revision: { type: integer, minimum: 1 } }
+      responses:
+        '200': { description: 新版本长文, content: { application/json: { schema: { $ref: '#/components/schemas/BookReview' } } } }
+        '401': { description: 需要登录 }
+        '404': { description: 长文不存在或不属于当前用户 }
+        '409': { description: 版本冲突，原有长文不被覆盖 }
   /auth/profile:
     put:
       tags: [Auth]
@@ -187,6 +421,50 @@ paths:
       operationId: getSession
       responses:
         '200': { description: Current user, content: { application/json: { schema: { $ref: '#/components/schemas/SessionUser' } } } }
+  /auth/permissions:
+    get:
+      tags: [Auth]
+      operationId: getEffectivePermissions
+      responses:
+        '200': { description: Current database role and effective grants, content: { application/json: { schema: { $ref: '#/components/schemas/PermissionSnapshot' } } } }
+  /role-permissions:
+    get:
+      tags: [Auth]
+      operationId: getRolePermissionPolicy
+      responses:
+        '200': { description: Owner-only role policy, content: { application/json: { schema: { $ref: '#/components/schemas/RolePermissionPolicy' } } } }
+        '403': { description: Owner required }
+    put:
+      tags: [Auth]
+      operationId: updateRolePermissionPolicy
+      description: Owner only. Complete ADMIN and MEMBER grants; OWNER authority is immutable. Validate role ceilings and page prerequisites. Uses optimistic revision and records an audit event.
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/RolePermissionPolicy' } } } }
+      responses:
+        '200': { description: Updated policy, content: { application/json: { schema: { $ref: '#/components/schemas/RolePermissionPolicy' } } } }
+        '400': { description: Invalid or incomplete policy or dependency }
+        '403': { description: Owner required or grant outside role ceiling }
+        '409': { description: Policy revision conflict }
+  /users/{id}/role:
+    patch:
+      tags: [Users]
+      operationId: changeUserRole
+      description: Owner only. Changes ADMIN or MEMBER with expectedRole concurrency validation. OWNER cannot be assigned or demoted.
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [role, expectedRole]
+              properties:
+                role: { $ref: '#/components/schemas/UserRole' }
+                expectedRole: { $ref: '#/components/schemas/UserRole' }
+      responses:
+        '200': { description: Updated account, content: { application/json: { schema: { $ref: '#/components/schemas/ManagedUser' } } } }
+        '403': { description: Owner required or immutable owner role }
+        '409': { description: User role changed concurrently }
   /auth/password:
     put:
       tags: [Auth]
@@ -240,11 +518,31 @@ paths:
       parameters:
         - { name: q, in: query, schema: { type: string } }
         - { name: format, in: query, schema: { $ref: '#/components/schemas/BookFormat' } }
+        - { name: subjectCode, in: query, description: Thema subject prefix or UNCLASSIFIED, schema: { type: string } }
+        - { name: categoryId, in: query, schema: { type: string, format: uuid } }
         - { name: sort, in: query, schema: { type: string, enum: [RECENT, TITLE, AUTHOR], default: RECENT } }
         - { name: cursor, in: query, schema: { type: string } }
         - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 100, default: 60 } }
       responses:
         '200': { description: Cursor page, content: { application/json: { schema: { $ref: '#/components/schemas/BookPage' } } } }
+  /books/{id}/bibliography-source:
+    get:
+      tags: [Catalog]
+      operationId: getBookBibliographySource
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: Read-only source bibliography, protected by catalog role and file fingerprint
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  description: { type: [string, 'null'] }
+                  authorBiography: { type: [string, 'null'] }
+                  tableOfContents: { type: [string, 'null'] }
+                  subjectCodes: { type: array, items: { type: string } }
   /books/revision:
     get:
       tags: [Catalog]
@@ -334,6 +632,78 @@ paths:
       requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/BookCategoriesRequest' } } } }
       responses:
         '200': { description: Updated category assignments, content: { application/json: { schema: { $ref: '#/components/schemas/CategoryList' } } } }
+  /article-collections:
+    get:
+      tags: [ArticleCollections]
+      operationId: listArticleCollections
+      summary: 查询当前用户拥有或可见的文章合集，不开放匿名读取
+      parameters: [{ name: q, in: query, schema: { type: string } }]
+      responses:
+        '200': { description: 可见合集及经过文章权限过滤的计数和预览, content: { application/json: { schema: { $ref: '#/components/schemas/ArticleCollectionList' } } } }
+    post:
+      tags: [ArticleCollections]
+      operationId: createArticleCollection
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ArticleCollectionDraft' } } } }
+      responses:
+        '200': { description: 新建合集, content: { application/json: { schema: { $ref: '#/components/schemas/ArticleCollectionDetail' } } } }
+  /article-collections/{id}:
+    parameters: [{ $ref: '#/components/parameters/Id' }]
+    get:
+      tags: [ArticleCollections]
+      operationId: getArticleCollection
+      responses:
+        '200': { description: 当前可见文章摘要，不含正文或阅读记录, content: { application/json: { schema: { $ref: '#/components/schemas/ArticleCollectionDetail' } } } }
+    put:
+      tags: [ArticleCollections]
+      operationId: updateArticleCollection
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - { $ref: '#/components/schemas/ArticleCollectionDraft' }
+                - { $ref: '#/components/schemas/ArticleCollectionRevision' }
+      responses:
+        '200': { description: 更新合集, content: { application/json: { schema: { $ref: '#/components/schemas/ArticleCollectionDetail' } } } }
+        '409': { description: 修订冲突或共享合集包含私有文章 }
+    delete:
+      tags: [ArticleCollections]
+      operationId: deleteArticleCollection
+      summary: 仅删除合集和成员关系，保留原文章与阅读记录
+      parameters: [{ name: revision, in: query, required: true, schema: { type: integer, format: int64, minimum: 0 } }]
+      responses:
+        '204': { description: 已删除合集 }
+        '409': { description: 合集已变更 }
+  /article-collections/{id}/articles:
+    parameters: [{ $ref: '#/components/parameters/Id' }]
+    post:
+      tags: [ArticleCollections]
+      operationId: addArticleCollectionArticles
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ArticleCollectionMembership' } } } }
+      responses:
+        '200': { description: 原子加入所选文章, content: { application/json: { schema: { $ref: '#/components/schemas/ArticleCollectionDetail' } } } }
+        '409': { description: 修订冲突、重复文章、超限或文章不可共享 }
+  /article-collections/{id}/articles/{articleId}:
+    parameters:
+      - { $ref: '#/components/parameters/Id' }
+      - { name: articleId, in: path, required: true, schema: { type: string, format: uuid } }
+      - { name: revision, in: query, required: true, schema: { type: integer, format: int64, minimum: 0 } }
+    delete:
+      tags: [ArticleCollections]
+      operationId: removeArticleCollectionArticle
+      responses:
+        '200': { description: 仅移除合集中的文章关系, content: { application/json: { schema: { $ref: '#/components/schemas/ArticleCollectionDetail' } } } }
+        '409': { description: 合集已变更 }
+  /article-collections/{id}/order:
+    parameters: [{ $ref: '#/components/parameters/Id' }]
+    put:
+      tags: [ArticleCollections]
+      operationId: reorderArticleCollection
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ArticleCollectionMembership' } } } }
+      responses:
+        '200': { description: 原子保存完整且无重复的文章顺序, content: { application/json: { schema: { $ref: '#/components/schemas/ArticleCollectionDetail' } } } }
+        '409': { description: 修订冲突或排序与当前成员不一致 }
   /booklists:
     get:
       tags: [Booklists]
@@ -421,6 +791,10 @@ paths:
       operationId: listDisplayBooks
       parameters:
         - { name: q, in: query, schema: { type: string } }
+        - { name: subjectCode, in: query, description: Thema subject prefix or UNCLASSIFIED, schema: { type: string } }
+        - { name: categoryId, in: query, schema: { type: string, format: uuid } }
+        - { name: format, in: query, schema: { $ref: '#/components/schemas/BookFormat' } }
+        - { name: sort, in: query, schema: { type: string, enum: [RECENT, TITLE, AUTHOR] } }
         - { name: cursor, in: query, schema: { type: string } }
         - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 100, default: 60 } }
       responses:
@@ -513,6 +887,14 @@ paths:
       requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ReadingTimeRequest' } } } }
       responses:
         '200': { description: Updated weekly reading statistics, content: { application/json: { schema: { $ref: '#/components/schemas/WeeklyReadingStats' } } } }
+  /reading-overview:
+    get:
+      tags: [Reading]
+      operationId: getReadingOverview
+      description: Current user's three most recently saved available books, newest book added within the server calendar week, and private reading statistics. Article and vault records are excluded.
+      responses:
+        '200': { description: Private reading overview, content: { application/json: { schema: { $ref: '#/components/schemas/ReadingOverview' } } } }
+        '401': { description: Authentication required }
   /reading-stats/weekly:
     get:
       tags: [Reading]
@@ -622,14 +1004,17 @@ paths:
       operationId: previewFileOperation
       requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/FileOperationPreviewRequest' } } } }
       responses:
-        '200': { description: Server-validated preview, content: { application/json: { schema: { $ref: '#/components/schemas/FileOperationPreview' } } } }
+        '200': { description: Server-validated preview. Book MOVE requests are disabled and return 403 BOOK_MOVE_DISABLED., content: { application/json: { schema: { $ref: '#/components/schemas/FileOperationPreview' } } } }
   /file-operations:
     get:
       tags: [File operations]
       operationId: listFileOperations
-      parameters: [{ name: limit, in: query, schema: { type: integer, default: 50, maximum: 200 } }]
+      parameters:
+        - { name: limit, in: query, description: Legacy bounded recent list when page is omitted, schema: { type: integer, default: 50, minimum: 1, maximum: 200 } }
+        - { name: page, in: query, description: Zero-based history page, schema: { type: integer, minimum: 0 } }
+        - { name: pageSize, in: query, schema: { type: integer, default: 10, minimum: 1, maximum: 100 } }
       responses:
-        '200': { description: Operation journal, content: { application/json: { schema: { type: object, properties: { items: { type: array, items: { $ref: '#/components/schemas/FileOperation' } } } } } } }
+        '200': { description: Operation journal, content: { application/json: { schema: { type: object, properties: { total: { type: integer, format: int64 }, items: { type: array, items: { $ref: '#/components/schemas/FileOperation' } } } } } } }
     post:
       tags: [File operations]
       operationId: executeFileOperation
@@ -672,10 +1057,30 @@ paths:
       operationId: listLibraryRoots
       responses:
         '200':
-          description: Root capabilities
+          description: Capabilities for the deployment-configured default book library. Library registration is disabled; legacy registration and registration-preview POSTs return 403 LIBRARY_ROOT_REGISTRATION_DISABLED.
           content:
             application/json:
               schema: { $ref: '#/components/schemas/LibraryRootList' }
+  /library-roots/content-storage:
+    get:
+      tags: [File operations]
+      operationId: listContentStorage
+      responses:
+        '200':
+          description: Live capacity and last completed read-only directory scan; requires settings.roots.view and exposes no paths or user content.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  required: [kind, canRead, canWrite]
+                  properties:
+                    kind: { type: string, enum: [ARTICLES, VAULT] }
+                    canRead: { type: boolean }
+                    canWrite: { type: boolean }
+                    freeBytes: { type: integer, format: int64, nullable: true }
+                    lastScanAt: { type: string, format: date-time, nullable: true }
   /book-uploads:
     get:
       tags: [Book uploads]
@@ -798,6 +1203,28 @@ components:
       description: RFC 9457 problem
       content: { application/problem+json: { schema: { $ref: '#/components/schemas/Problem' } } }
   schemas:
+    VaultPolicy:
+      type: object
+      required: [enabled, configured, revision]
+      properties:
+        enabled: { type: boolean }
+        configured: { type: boolean }
+        revision: { type: integer, format: int64 }
+    TwoFactorStatus:
+      type: object
+      required: [enabled, configured, bound, verified, expiresAt]
+      properties:
+        enabled: { type: boolean }
+        configured: { type: boolean }
+        bound: { type: boolean }
+        verified: { type: boolean }
+        expiresAt: { type: integer, format: int64 }
+    TwoFactorVerification:
+      type: object
+      required: [code]
+      properties:
+        code: { type: string, maxLength: 80 }
+        recovery: { type: boolean, default: false }
     PasswordPolicy:
       type: object
       required: [minLength, requireUppercase, requireLowercase, requireDigit, requireSpecial]
@@ -851,6 +1278,21 @@ components:
       type: object
       required: [token, headerName]
       properties: { token: { type: string }, headerName: { type: string } }
+    PermissionSnapshot:
+      type: object
+      required: [role, revision, grants]
+      properties:
+        role: { $ref: '#/components/schemas/UserRole' }
+        revision: { type: integer, format: int64 }
+        grants: { type: array, uniqueItems: true, items: { type: string } }
+    RolePermissionPolicy:
+      type: object
+      required: [revision, grants]
+      properties:
+        revision: { type: integer, format: int64 }
+        grants:
+          type: object
+          additionalProperties: { type: array, uniqueItems: true, items: { type: string } }
     UserRole: { type: string, enum: [OWNER, ADMIN, MEMBER] }
     UserStatus: { type: string, enum: [ACTIVE, DISABLED] }
     SessionUser:
@@ -968,6 +1410,64 @@ components:
       type: object
       required: [categoryIds]
       properties: { categoryIds: { type: array, items: { type: string, format: uuid } } }
+    ArticleCollectionVisibility: { type: string, enum: [PRIVATE, MEMBERS] }
+    ArticleCollectionDraft:
+      type: object
+      required: [title, visibility]
+      properties:
+        title: { type: string, minLength: 1, maxLength: 240 }
+        description: { type: string, maxLength: 4000 }
+        visibility: { $ref: '#/components/schemas/ArticleCollectionVisibility' }
+    ArticleCollectionRevision:
+      type: object
+      required: [revision]
+      properties: { revision: { type: integer, format: int64, minimum: 0 } }
+    ArticleCollectionMembership:
+      allOf:
+        - { $ref: '#/components/schemas/ArticleCollectionRevision' }
+        - type: object
+          required: [articleIds]
+          properties: { articleIds: { type: array, maxItems: 1000, uniqueItems: true, items: { type: string, format: uuid } } }
+    CollectionArticleSummary:
+      type: object
+      required: [id, title, author, source_url, published_at, visibility, tags, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string }
+        author: { type: string }
+        source_url: { type: string }
+        published_at: { type: string }
+        visibility: { type: string, enum: [PUBLIC, PRIVATE] }
+        tags: { type: string }
+        cover_url: { type: [string, 'null'] }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    ArticleCollectionSummary:
+      type: object
+      required: [id, title, description, visibility, ownerDisplayName, ownedByViewer, editable, articleCount, previewArticles, revision, createdAt, updatedAt]
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string }
+        description: { type: string }
+        visibility: { $ref: '#/components/schemas/ArticleCollectionVisibility' }
+        ownerDisplayName: { type: string }
+        ownedByViewer: { type: boolean }
+        editable: { type: boolean }
+        articleCount: { type: integer, minimum: 0, maximum: 1000 }
+        previewArticles: { type: array, maxItems: 4, items: { $ref: '#/components/schemas/CollectionArticleSummary' } }
+        revision: { type: integer, format: int64, minimum: 0 }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    ArticleCollectionDetail:
+      allOf:
+        - { $ref: '#/components/schemas/ArticleCollectionSummary' }
+        - type: object
+          required: [articles]
+          properties: { articles: { type: array, maxItems: 1000, items: { $ref: '#/components/schemas/CollectionArticleSummary' } } }
+    ArticleCollectionList:
+      type: object
+      required: [items]
+      properties: { items: { type: array, items: { $ref: '#/components/schemas/ArticleCollectionSummary' } } }
     BooklistKind: { type: string, enum: [OFFICIAL, PERSONAL] }
     BooklistVisibility: { type: string, enum: [PRIVATE, MEMBERS, PUBLIC] }
     BooklistSummary:
@@ -1058,11 +1558,15 @@ components:
     BookMetadata:
       type: object
       required: [id, title, authors, translators, tags, subjectCodes, sources]
-      properties: { id: { type: string, format: uuid }, title: { type: string }, subtitle: { type: [string, 'null'] }, authors: { type: array, items: { type: string } }, translators: { type: array, items: { type: string } }, language: { type: [string, 'null'] }, publisher: { type: [string, 'null'] }, publishedDate: { type: [string, 'null'] }, isbn: { type: [string, 'null'] }, description: { type: [string, 'null'] }, series: { type: [string, 'null'] }, seriesIndex: { type: [number, 'null'] }, tags: { type: array, items: { type: string } }, subjectCodes: { type: array, items: { type: string, maxLength: 32 } }, coverCacheKey: { type: [string, 'null'] }, coverUrl: { type: [string, 'null'] }, sources: { type: object, additionalProperties: { $ref: '#/components/schemas/MetadataSource' } } }
+      properties: { publiclyVisible: { type: boolean }, authorBiography: { type: [string, "null"], maxLength: 20000 }, tableOfContents: { type: [string, "null"], maxLength: 40000 }, id: { type: string, format: uuid }, title: { type: string }, subtitle: { type: [string, 'null'] }, authors: { type: array, items: { type: string } }, translators: { type: array, items: { type: string } }, language: { type: [string, 'null'] }, publisher: { type: [string, 'null'] }, publishedDate: { type: [string, 'null'] }, isbn: { type: [string, 'null'] }, description: { type: [string, 'null'] }, series: { type: [string, 'null'] }, seriesIndex: { type: [number, 'null'] }, tags: { type: array, items: { type: string } }, subjectCodes: { type: array, items: { type: string, maxLength: 32 } }, coverCacheKey: { type: [string, 'null'] }, coverUrl: { type: [string, 'null'] }, sources: { type: object, additionalProperties: { $ref: '#/components/schemas/MetadataSource' } } }
     BookMetadataDraft:
       type: object
       required: [title, authors, translators, tags, sources, targetPath]
       properties:
+        publiclyVisible: { type: boolean, default: true }
+        subjectCodes: { type: array, maxItems: 4, items: { type: string } }
+        authorBiography: { type: [string, "null"], maxLength: 20000 }
+        tableOfContents: { type: [string, "null"], maxLength: 40000 }
         title: { type: string, maxLength: 500 }
         subtitle: { type: [string, 'null'], maxLength: 500 }
         authors: { type: array, maxItems: 20, items: { type: string, maxLength: 300 } }
@@ -1185,6 +1689,20 @@ components:
       type: object
       required: [date, seconds]
       properties: { date: { type: string, format: date }, seconds: { type: integer, format: int64, minimum: 0 } }
+    RecentReading:
+      type: object
+      required: [book, position]
+      properties:
+        book: { $ref: '#/components/schemas/Book' }
+        position: { $ref: '#/components/schemas/ReadingPosition' }
+    ReadingOverview:
+      type: object
+      required: [today, featuredBook, recentReading, stats]
+      properties:
+        today: { type: string, format: date, description: Today's date in the server calendar timezone }
+        featuredBook: { anyOf: [{ $ref: '#/components/schemas/Book' }, { type: 'null' }] }
+        recentReading: { type: array, maxItems: 3, items: { $ref: '#/components/schemas/RecentReading' } }
+        stats: { $ref: '#/components/schemas/WeeklyReadingStats' }
     WeeklyReadingStats:
       type: object
       required: [weekStart, weekEnd, totalSeconds, previousWeekSeconds, days]
@@ -1211,7 +1729,7 @@ components:
       properties:
         items: { type: array, items: { $ref: '#/components/schemas/AnnotationBookSummary' } }
         nextCursor: { type: [string, 'null'] }
-    FileOperationType: { type: string, enum: [RENAME, MOVE, TRASH, RESTORE, WRITE_METADATA, PURGE] }
+    FileOperationType: { type: string, description: MOVE is retained for historical records only; new previews and executions are disabled., enum: [RENAME, MOVE, TRASH, RESTORE, WRITE_METADATA, PURGE] }
     FileOperationStatus: { type: string, enum: [PLANNED, RUNNING, SUCCEEDED, FAILED, ROLLED_BACK] }
     FileConflict: { type: object, required: [code, message], properties: { code: { type: string }, message: { type: string }, path: { type: [string, 'null'] } } }
     FileOperationPreviewRequest:
@@ -1236,4 +1754,37 @@ components:
       properties: { id: { type: string, format: uuid }, bookId: { type: string, format: uuid }, bookTitle: { type: string }, bookAuthor: { type: string }, format: { $ref: '#/components/schemas/BookFormat' }, coverUrl: { type: string }, originalPath: { type: string }, trashPath: { type: string }, sizeBytes: { type: integer, format: int64 }, deletedBy: { type: string }, deletedAt: { type: string, format: date-time }, expiresAt: { type: string, format: date-time }, fingerprint: { type: string } }
     MetadataRequest:
       type: object
-      properties: { title: { type: string }, subtitle: { type: string }, authors: { type: array, items: { type: string } }, translators: { type: array, items: { type: string } }, language: { type: string }, publisher: { type: string }, publishedDate: { type: string }, isbn: { type: string }, description: { type: string }, series: { type: string }, seriesIndex: { type: number }, tags: { type: array, items: { type: string } }, subjectCodes: { type: array, maxItems: 4, items: { type: string, maxLength: 32 } }, manualFields: { type: array, items: { type: string } }, writeBack: { type: boolean }, bookFileId: { type: string, format: uuid }, expectedFingerprint: { type: string } }
+      properties: { publiclyVisible: { type: boolean }, authorBiography: { type: [string, "null"], maxLength: 20000 }, tableOfContents: { type: [string, "null"], maxLength: 40000 }, title: { type: string }, subtitle: { type: string }, authors: { type: array, items: { type: string } }, translators: { type: array, items: { type: string } }, language: { type: string }, publisher: { type: string }, publishedDate: { type: string }, isbn: { type: string }, description: { type: string }, series: { type: string }, seriesIndex: { type: number }, tags: { type: array, items: { type: string } }, subjectCodes: { type: array, maxItems: 4, items: { type: string, maxLength: 32 } }, manualFields: { type: array, items: { type: string } }, writeBack: { type: boolean }, bookFileId: { type: string, format: uuid }, expectedFingerprint: { type: string } }
+
+    ArticleNoteEntry:
+      type: object
+      required: [id, type, quote, note, locator, createdAt]
+      properties:
+        id: { type: string }
+        type: { type: string, enum: [NOTE, HIGHLIGHT] }
+        quote: { type: string }
+        note: { type: string }
+        locator: { type: string }
+        style: { type: string, enum: [HIGHLIGHT, UNDERLINE, BOLD] }
+        color: { type: string }
+        createdAt: { type: string, format: date-time }
+    BookReviewDraft:
+      type: object
+      required: [title, markdown]
+      properties:
+        title: { type: string, minLength: 1, maxLength: 200 }
+        markdown: { type: string, minLength: 1, maxLength: 500000 }
+        visibility: { type: string, enum: [PRIVATE, LIBRARY], default: PRIVATE }
+    BookReview:
+      allOf:
+        - { $ref: '#/components/schemas/BookReviewDraft' }
+        - type: object
+          required: [id, bookId, userId, authorName, revision, createdAt, updatedAt]
+          properties:
+            id: { type: string, format: uuid }
+            bookId: { type: string, format: uuid }
+            userId: { type: string, format: uuid }
+            authorName: { type: string }
+            revision: { type: integer, minimum: 1 }
+            createdAt: { type: string, format: date-time }
+            updatedAt: { type: string, format: date-time }

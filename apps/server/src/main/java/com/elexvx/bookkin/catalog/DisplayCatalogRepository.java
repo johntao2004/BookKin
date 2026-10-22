@@ -21,37 +21,79 @@ public class DisplayCatalogRepository {
         this.dsl = dsl;
     }
 
-    public DisplayBookPage list(String query, String cursor, int requestedLimit) {
+    public DisplayBookPage list(String query, UUID categoryId, BookFormat format, BookSort sort, String cursor, int requestedLimit) {
+        return list(query, categoryId, format, sort, cursor, requestedLimit, null);
+    }
+    public DisplayBookPage list(String query, UUID categoryId, BookFormat format, BookSort sort, String cursor, int requestedLimit, String subjectCode) {
+        String subject = ThemaSubjects.filter(subjectCode);
         int limit = Math.max(1, Math.min(100, requestedLimit));
-        DisplayCursor decoded = DisplayCursor.decode(cursor);
+        DisplayCursor decoded = DisplayCursor.decode(cursor, sort);
         String rawQuery = query == null || query.isBlank() ? null : query.strip();
         String likeQuery = rawQuery == null ? null : "%" + rawQuery + "%";
+        String formatName = format == null ? null : format.name();
+        String cursorClause;
+        String orderClause;
+        Object cursorKey = null;
+        if (sort == null) {
+            cursorClause = "and (?::bigint is null or (e.sort_order, e.book_id) > (?::bigint, ?::uuid))";
+            orderClause = "order by e.sort_order, e.book_id";
+            if (decoded != null) cursorKey = Long.valueOf(decoded.key());
+        } else {
+            switch (sort) {
+                case RECENT -> {
+                    cursorClause = "and (?::timestamptz is null or (b.created_at, b.id) < (?::timestamptz, ?::uuid))";
+                    orderClause = "order by b.created_at desc, b.id desc";
+                    if (decoded != null) cursorKey = OffsetDateTime.parse(decoded.key());
+                }
+                case TITLE -> {
+                    cursorClause = "and (?::text is null or (b.sort_title, b.id) > (?::text, ?::uuid))";
+                    orderClause = "order by b.sort_title, b.id";
+                    if (decoded != null) cursorKey = decoded.key();
+                }
+                case AUTHOR -> {
+                    cursorClause = "and (?::text is null or (lower(b.primary_author), b.id) > (?::text, ?::uuid))";
+                    orderClause = "order by lower(b.primary_author), b.id";
+                    if (decoded != null) cursorKey = decoded.key();
+                }
+                default -> throw new IllegalStateException("Unsupported book sort: " + sort);
+            }
+        }
         var records = dsl.fetch("""
-                select e.book_id, e.sort_order, b.title, b.primary_author, b.description, b.updated_at,
+                select e.book_id, e.sort_order, b.title, b.primary_author, b.description, b.created_at, b.sort_title,
+                       lower(b.primary_author) as sort_author, b.updated_at,
                        bf.format, bf.status, bf.id as file_id
                   from display_catalog_entries e
                   join books b on b.id = e.book_id
                   left join lateral (
                     select f.id, f.format, f.status from book_files f
-                     where f.book_id = b.id
+                     where f.book_id = b.id and (?::varchar is null or f.format = ?)
                      order by case f.status when 'AVAILABLE' then 0 when 'TRASHED' then 1 else 2 end,
                               case f.format when 'EPUB' then 0 else 1 end, f.id
                      limit 1
                   ) bf on true
                  where e.catalog_id = 1
+                   and (?::uuid is null or exists (select 1 from book_categories bc where bc.book_id = b.id and bc.category_id = ?))
+                   and (?::text is null or exists (select 1 from unnest(case when cardinality(b.subject_codes)=0 then array['UNCLASSIFIED']::text[] else b.subject_codes end) code where starts_with(code, ?)))
                    and (?::text is null or b.title ilike ? or b.primary_author ilike ? or coalesce(b.description, '') ilike ?)
-                   and (?::bigint is null or (e.sort_order, e.book_id) > (?::bigint, ?::uuid))
-                 order by e.sort_order, e.book_id
-                 limit ?
-                """, rawQuery, likeQuery, likeQuery, likeQuery,
-                decoded == null ? null : decoded.order(), decoded == null ? null : decoded.order(),
-                decoded == null ? null : decoded.bookId(), limit + 1);
+                   and (?::varchar is null or bf.format = ?)
+                """ + cursorClause + " " + orderClause + " limit ?",
+                formatName, formatName, categoryId, categoryId, subject, subject, rawQuery, likeQuery, likeQuery, likeQuery,
+                formatName, formatName, cursorKey, cursorKey, decoded == null ? null : decoded.bookId(), limit + 1);
         boolean hasMore = records.size() > limit;
         var items = records.stream().limit(limit).map(this::map).toList();
         String next = hasMore && !items.isEmpty()
-                ? DisplayCursor.encode(items.getLast().sortOrder(), UUID.fromString(items.getLast().id()))
+                ? DisplayCursor.encode(sort, cursorKey(sort, records.get(limit - 1)), records.get(limit - 1).get("book_id", UUID.class))
                 : null;
         return new DisplayBookPage(items, next, revision());
+    }
+
+    private String cursorKey(BookSort sort, Record record) {
+        if (sort == null) return record.get("sort_order", Long.class).toString();
+        return switch (sort) {
+            case RECENT -> record.get("created_at", OffsetDateTime.class).toString();
+            case TITLE -> record.get("sort_title", String.class);
+            case AUTHOR -> record.get("sort_author", String.class);
+        };
     }
 
     public DisplayBook find(UUID bookId) {
@@ -121,7 +163,7 @@ public class DisplayCatalogRepository {
                     index + 1L, orderedBookIds.get(index));
         }
         bumpRevision();
-        return list(null, null, 100);
+        return list(null, null, null, null, null, 100);
     }
 
     private void lockAndCheckRevision(long expectedRevision) {
@@ -165,16 +207,30 @@ public class DisplayCatalogRepository {
 
     public record DisplayBookPage(List<DisplayBook> items, String nextCursor, long revision) {}
 
-    private record DisplayCursor(long order, UUID bookId) {
-        static String encode(long order, UUID bookId) {
-            return Base64.getUrlEncoder().withoutPadding().encodeToString((order + ":" + bookId).getBytes(StandardCharsets.UTF_8));
+    private record DisplayCursor(String key, UUID bookId) {
+        static String encode(BookSort sort, String key, UUID bookId) {
+            String encodedKey = Base64.getUrlEncoder().withoutPadding().encodeToString(key.getBytes(StandardCharsets.UTF_8));
+            String sortName = sort == null ? "ORDER" : sort.name();
+            return Base64.getUrlEncoder().withoutPadding()
+                    .encodeToString((sortName + "|" + encodedKey + "|" + bookId).getBytes(StandardCharsets.UTF_8));
         }
 
-        static DisplayCursor decode(String value) {
+        static DisplayCursor decode(String value, BookSort expectedSort) {
             if (value == null || value.isBlank()) return null;
             try {
-                String[] parts = new String(Base64.getUrlDecoder().decode(value), StandardCharsets.UTF_8).split(":", 2);
-                return new DisplayCursor(Long.parseLong(parts[0]), UUID.fromString(parts[1]));
+                String raw = new String(Base64.getUrlDecoder().decode(value), StandardCharsets.UTF_8);
+                if (!raw.contains("|") && expectedSort == null) {
+                    String[] legacyParts = raw.split(":", 2);
+                    Long.parseLong(legacyParts[0]);
+                    return new DisplayCursor(legacyParts[0], UUID.fromString(legacyParts[1]));
+                }
+                String[] parts = raw.split("\\|", 3);
+                String expectedName = expectedSort == null ? "ORDER" : expectedSort.name();
+                if (parts.length != 3 || !parts[0].equals(expectedName)) throw new IllegalArgumentException();
+                String key = new String(Base64.getUrlDecoder().decode(parts[1]), StandardCharsets.UTF_8);
+                if (expectedSort == null) Long.parseLong(key);
+                if (expectedSort == BookSort.RECENT) OffsetDateTime.parse(key);
+                return new DisplayCursor(key, UUID.fromString(parts[2]));
             } catch (RuntimeException exception) {
                 throw ApiException.conflict("INVALID_DISPLAY_CURSOR", "公共书单游标无效，请重新加载。");
             }

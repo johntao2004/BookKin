@@ -19,10 +19,11 @@ it("automatically uploads on LAN HTTP and confirms into a persistent editor rout
   await waitFor(() => expect(screen.getByRole('button', { name: '开始上传' })).toBeEnabled());
   fireEvent.change(document.querySelector('input[type="file"]')!, { target: { files: [new File(['test'], 'upload-check.pdf', { type: 'application/pdf' })] } });
   await waitFor(() => expect(transfer).toHaveBeenCalledTimes(1));
-  expect(create).toHaveBeenCalledTimes(1);
+  expect(create).toHaveBeenCalledWith({ libraryRootId: "root", filename: "upload-check.pdf", sizeBytes: 4 });
+  expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
   expect(await screen.findByText(/已上传。你可以更改/)).toBeInTheDocument();
   expect(screen.queryByText('识别与入库队列')).not.toBeInTheDocument();
-  fireEvent.click(screen.getByRole('button', { name: '确定' }));
+  fireEvent.click(screen.getByRole('button', { name: '编辑信息' }));
   expect(screen.getByText('/library/uploads/upload-test')).toBeInTheDocument();
 });
 

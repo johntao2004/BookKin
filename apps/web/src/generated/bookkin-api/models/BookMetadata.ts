@@ -29,6 +29,24 @@ import {
 export interface BookMetadata {
     /**
      *
+     * @type {boolean}
+     * @memberof BookMetadata
+     */
+    publiclyVisible?: boolean;
+    /**
+     *
+     * @type {string}
+     * @memberof BookMetadata
+     */
+    authorBiography?: string | null;
+    /**
+     *
+     * @type {string}
+     * @memberof BookMetadata
+     */
+    tableOfContents?: string | null;
+    /**
+     *
      * @type {string}
      * @memberof BookMetadata
      */
@@ -106,7 +124,7 @@ export interface BookMetadata {
      */
     tags: Array<string>;
     /**
-     * Thema 1.6 subject codes.
+     *
      * @type {Array<string>}
      * @memberof BookMetadata
      */
@@ -155,6 +173,9 @@ export function BookMetadataFromJSONTyped(json: any, ignoreDiscriminator: boolea
     }
     return {
 
+        'publiclyVisible': json['publiclyVisible'] == null ? undefined : json['publiclyVisible'],
+        'authorBiography': json['authorBiography'] === undefined ? undefined : json['authorBiography'] === null ? null : json['authorBiography'],
+        'tableOfContents': json['tableOfContents'] === undefined ? undefined : json['tableOfContents'] === null ? null : json['tableOfContents'],
         'id': json['id'],
         'title': json['title'],
         'subtitle': json['subtitle'] === undefined ? undefined : json['subtitle'] === null ? null : json['subtitle'],
@@ -186,6 +207,9 @@ export function BookMetadataToJSONTyped(value?: BookMetadata | null, ignoreDiscr
 
     return {
 
+        'publiclyVisible': value['publiclyVisible'],
+        'authorBiography': value['authorBiography'],
+        'tableOfContents': value['tableOfContents'],
         'id': value['id'],
         'title': value['title'],
         'subtitle': value['subtitle'],

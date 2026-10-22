@@ -5,6 +5,7 @@ All URIs are relative to */api/v1*
 | Method | HTTP request | Description |
 |------------- | ------------- | -------------|
 | [**addReadingTime**](ReadingApi.md#addreadingtime) | **POST** /books/{id}/reading-time |  |
+| [**getReadingOverview**](ReadingApi.md#getreadingoverview) | **GET** /reading-overview |  |
 | [**getReadingPosition**](ReadingApi.md#getreadingposition) | **GET** /books/{id}/position |  |
 | [**getWeeklyReadingStats**](ReadingApi.md#getweeklyreadingstats) | **GET** /reading-stats/weekly |  |
 | [**saveReadingPosition**](ReadingApi.md#savereadingposition) | **PUT** /books/{id}/position |  |
@@ -80,6 +81,70 @@ example().catch(console.error);
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 | **200** | Updated weekly reading statistics |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
+
+## getReadingOverview
+
+> ReadingOverview getReadingOverview()
+
+
+
+Current user\&#39;s three most recently saved available books, newest book added within the server calendar week, and private reading statistics. Article and vault records are excluded.
+
+### Example
+
+```ts
+import {
+  Configuration,
+  ReadingApi,
+} from '';
+import type { GetReadingOverviewRequest } from '';
+
+async function example() {
+  console.log("🚀 Testing  SDK...");
+  const config = new Configuration({
+    // To configure API key authorization: sessionCookie
+    apiKey: "YOUR API KEY",
+  });
+  const api = new ReadingApi(config);
+
+  try {
+    const data = await api.getReadingOverview();
+    console.log(data);
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+// Run the test
+example().catch(console.error);
+```
+
+### Parameters
+
+This endpoint does not need any parameter.
+
+### Return type
+
+[**ReadingOverview**](ReadingOverview.md)
+
+### Authorization
+
+[sessionCookie](../README.md#sessionCookie)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: `application/json`
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | Private reading overview |  -  |
+| **401** | Authentication required |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 

@@ -1,4 +1,4 @@
-// 保护统一元信息入口及独立文件移动、加入书单动作，避免卡片菜单出现重复编辑路径。
+// 保护统一元信息入口、回收站及加入书目动作，避免卡片菜单出现重复编辑路径。
 // Protects unified metadata editing alongside separate file-move and booklist actions without duplicate edit paths.
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
@@ -25,10 +25,11 @@ describe("BookCard", () => {
     expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
   });
 
-  it("把封面和书名编辑合并为一个元信息入口，同时保留独立的文件移动", () => {
+  it("保留元信息及回收站入口，移除移动操作", () => {
     const book = demoBooks[0];
     const editMetadata = vi.fn();
     const fileOperation = vi.fn();
+    sessionStorage.setItem("bookkin-demo-session", JSON.stringify({ id: "owner", username: "owner", displayName: "主人", role: "OWNER", mustChangePassword: false }));
 
     render(
       <TestProviders>
@@ -45,16 +46,16 @@ describe("BookCard", () => {
     fireEvent.click(screen.getByRole("button", { name: `${book.title}更多操作` }));
     expect(screen.queryByRole("menuitem", { name: "更换封面" })).not.toBeInTheDocument();
     expect(screen.queryByRole("menuitem", { name: "重命名" })).not.toBeInTheDocument();
-    expect(screen.getByRole("menuitem", { name: "移动" })).toBeInTheDocument();
+    expect(screen.queryByRole("menuitem", { name: "移动" })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("menuitem", { name: "编辑元信息" }));
     expect(editMetadata).toHaveBeenCalledWith(book);
 
     fireEvent.click(screen.getByRole("button", { name: `${book.title}更多操作` }));
-    fireEvent.click(screen.getByRole("menuitem", { name: "移动" }));
-    expect(fileOperation).toHaveBeenCalledWith(book, "MOVE");
+    fireEvent.click(screen.getByRole("menuitem", { name: "移入回收站" }));
+    expect(fileOperation).toHaveBeenCalledWith(book, "TRASH");
   });
 
-  it("从藏书卡片直接加入书单", () => {
+  it("从藏书卡片直接加入书目", () => {
     const book = demoBooks[0];
     const addToBooklist = vi.fn();
 
@@ -65,7 +66,7 @@ describe("BookCard", () => {
     );
 
     fireEvent.click(screen.getByRole("button", { name: `${book.title}更多操作` }));
-    fireEvent.click(screen.getByRole("menuitem", { name: "加入书单" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "加入书目" }));
     expect(addToBooklist).toHaveBeenCalledWith(book);
   });
 });
