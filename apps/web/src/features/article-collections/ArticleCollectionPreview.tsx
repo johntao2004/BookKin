@@ -15,4 +15,3 @@ export function ArticleCollectionPreview({ articles, title, emptyLabel = "还没
     </Box>) : <Stack sx={{ gridColumn: "1 / -1", alignItems: "center", justifyContent: "center", color: "text.disabled", gap: `${tokens.spacing[2]}px` }}><FolderOutlined /><Typography variant="caption">{emptyLabel}</Typography></Stack>}
   </Box>;
 }
-

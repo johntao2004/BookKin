@@ -141,4 +141,3 @@ export function ArticleCollectionFormDialog({ open, initial, hasPrivateArticles 
     </Dialog>
   </>;
 }
-

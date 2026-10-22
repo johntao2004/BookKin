@@ -119,4 +119,3 @@ describe("article collection interactions", () => {
     await waitFor(() => expect(reorder).toHaveBeenLastCalledWith(initial.id, [articleB.id, articleA.id], latest.revision));
   });
 });
-

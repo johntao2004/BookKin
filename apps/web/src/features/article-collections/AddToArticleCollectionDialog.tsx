@@ -145,4 +145,3 @@ export function AddToArticleCollectionDialog({ articleId, articleTitle, articleV
     />
   </>;
 }
-

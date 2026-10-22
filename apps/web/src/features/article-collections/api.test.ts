@@ -33,4 +33,3 @@ describe("article collection API", () => {
     expect(isArticleCollectionRevisionConflict(new Error("offline"))).toBe(false);
   });
 });
-

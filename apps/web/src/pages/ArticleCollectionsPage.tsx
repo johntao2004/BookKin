@@ -100,4 +100,3 @@ function CollectionCard({ collection, returnTo }: { collection: ArticleCollectio
     </CardActionArea>
   </Card>;
 }
-

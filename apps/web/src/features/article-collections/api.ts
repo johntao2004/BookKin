@@ -66,4 +66,3 @@ export function isArticleCollectionRevisionConflict(reason: unknown): boolean {
 export function articleCollectionError(reason: unknown, fallback = "操作失败，请重试。") {
   return reason instanceof Error ? reason.message : fallback;
 }
-

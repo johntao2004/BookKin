@@ -128,4 +128,3 @@ function safeReturnTo(value: string | null | undefined) {
   if (value === "/article-collections" || value?.startsWith("/article-collections?")) return value;
   return "/article-collections";
 }
-

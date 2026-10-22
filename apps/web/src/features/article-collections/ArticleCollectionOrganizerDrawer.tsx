@@ -201,4 +201,3 @@ export function ArticleCollectionOrganizerDrawer({ open, collection, onClose, on
     </Stack>
   </Drawer>;
 }
-

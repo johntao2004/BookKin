@@ -64,4 +64,3 @@ describe("ArticleCollectionsPage routes and visibility", () => {
     expect(screen.queryByRole("menuitem", { name: /编辑文章/ })).not.toBeInTheDocument();
   });
 });
-

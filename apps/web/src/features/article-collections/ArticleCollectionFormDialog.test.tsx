@@ -66,4 +66,3 @@ describe("ArticleCollectionFormDialog", () => {
     expect(deleted).toHaveBeenCalledWith("合集已删除；文章及其阅读记录仍保留");
   });
 });
-
