@@ -9,13 +9,15 @@ import threading
 import unittest
 
 class CheckTest(unittest.TestCase):
-    def run_check(self, missing_asset=False, leak=False):
+    def run_check(self, missing_asset=False, leak=False, missing_css=False):
         class Handler(http.server.BaseHTTPRequestHandler):
             def log_message(self, *args): pass
             def do_GET(self):
                 status, mime, body = 200, 'text/html', b'<div id="root"></div><script src="/assets/app.js"></script>'
                 if self.path == '/assets/app.js':
-                    mime, body = 'application/javascript', b'import("./page.js")'
+                    mime, body = 'application/javascript', b'import("./page.js");const epubStylesheet="article.css";const preload="assets/reader.css"'
+                elif self.path == '/assets/reader.css':
+                    status, mime, body = (404 if missing_css else 200), 'text/css', b'body { color: inherit; }'
                 elif self.path == '/assets/page.js':
                     status, mime, body = (404 if missing_asset else 200), 'application/javascript', b'export {}'
                 elif self.path.startswith('/api/'):
@@ -31,6 +33,7 @@ class CheckTest(unittest.TestCase):
             return result
     def test_valid_release(self): self.assertEqual(self.run_check().returncode,0)
     def test_missing_lazy_chunk_blocks_release(self): self.assertNotEqual(self.run_check(missing_asset=True).returncode,0)
+    def test_missing_preloaded_css_blocks_release(self): self.assertNotEqual(self.run_check(missing_css=True).returncode,0)
     def test_private_api_exposure_blocks_release(self): self.assertNotEqual(self.run_check(leak=True).returncode,0)
 
 if __name__ == '__main__': unittest.main()

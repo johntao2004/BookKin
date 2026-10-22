@@ -47,14 +47,17 @@ class Database:
         canonical = 'bookkin_schema_' + uuid.uuid4().hex[:12]
         self.run('createdb', [canonical])
         try:
-            self.run('psql', ['-X', '-q', '-v', 'ON_ERROR_STOP=1', '-d', canonical], raw)
+            self.run('psql', ['-X', '-q', '-1', '-v', 'ON_ERROR_STOP=1', '-d', canonical], raw)
             return normalized_schema(self.run('pg_dump', ['-d', canonical] + args))
         finally:
             self.run('dropdb', ['--if-exists', canonical])
 
     def counts(self, db):
         present = json.loads(self.sql(db, "select coalesce(json_agg(tablename),'[]') from pg_tables where schemaname='public' and tablename <> 'flyway_schema_history'"))
-        return {name: int(self.sql(db, 'select count(*) from public."' + name.replace('"', '""') + '"')) for name in present}
+        if not present:
+            return {}
+        rows = " UNION ALL ".join("SELECT " + quote(name) + " AS name, count(*) AS total FROM public.\"" + name.replace('"', '""') + "\"" for name in present)
+        return json.loads(self.sql(db, "SELECT json_object_agg(name,total) FROM (" + rows + ") counts"))
 
 
 
@@ -112,14 +115,17 @@ def main():
     try:
         for name in (clone, fresh):
             db.run('createdb', [name]); created.append(name)
-        db.run('pg_restore', ['-d', clone, '--no-owner', '--no-privileges', '--exit-on-error'], backup.read_bytes())
+        db.run('pg_restore', ['-d', clone, '--no-owner', '--no-privileges', '--exit-on-error', '--single-transaction'], backup.read_bytes())
         before = db.counts(clone)
         db.sql(clone, 'BEGIN;\n' + upgrade + '\nCOMMIT;')
         rollback = args.backup_dir / f'rollback-history-{stamp}.sql'
         rollback.write_bytes(db.run('pg_dump', ['-d', clone, '--data-only', '--column-inserts', '--table=public.flyway_schema_history', '--no-owner', '--no-privileges']))
-        db.sql(fresh, args.baseline.read_text())
-        if db.schema(clone) != db.schema(fresh):
-            raise ValueError('Restored/upgraded schema differs from the clean initialization schema')
+        db.sql(fresh, 'BEGIN;\n' + args.baseline.read_text() + '\nCOMMIT;')
+        upgraded_schema, initial_schema = db.schema(clone), db.schema(fresh)
+        if upgraded_schema != initial_schema:
+            (args.backup_dir / 'schema-upgraded.sql').write_text(upgraded_schema)
+            (args.backup_dir / 'schema-initial.sql').write_text(initial_schema)
+            raise ValueError('Restored/upgraded schema differs from the clean initialization schema; private schema diffs saved')
         upgraded_counts = db.counts(clone)
         if any(upgraded_counts.get(name) != count for name, count in before.items()):
             raise ValueError('Business row counts changed during the restored upgrade')

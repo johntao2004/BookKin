@@ -45,7 +45,7 @@ while queue:
     assets.add(path)
     if path.endswith('.js'):
         content = body.decode()
-        for asset in re.findall(r'["\'](?:\./|/assets/|assets/)?([A-Za-z0-9_.-]+\.(?:js|css))["\']', content):
+        for asset in re.findall(r'["\'](?:\./|/assets/|assets/)([A-Za-z0-9_.-]+\.(?:js|css))["\']', content):
             queue.add('/assets/' + asset)
 for path in ['/api/v1/books', '/api/v1/users', '/api/v1/library-roots', '/api/v1/annotations']:
     code, _, _ = get(path)
