@@ -40,7 +40,17 @@ class Database:
         return self.run('psql', ['-X', '-v', 'ON_ERROR_STOP=1', '-qAt', '-d', db], sql.encode()).decode().strip()
 
     def schema(self, db):
-        return normalized_schema(self.run('pg_dump', ['-d', db, '--schema-only', '--no-owner', '--no-privileges', '--exclude-table=public.flyway_schema_history']))
+        # PostgreSQL can deparse equivalent array casts differently after restore.
+        # Parse every schema once before comparing; never discard constraint text.
+        args = ['--schema-only', '--no-owner', '--no-privileges', '--exclude-table=public.flyway_schema_history']
+        raw = self.run('pg_dump', ['-d', db] + args)
+        canonical = 'bookkin_schema_' + uuid.uuid4().hex[:12]
+        self.run('createdb', [canonical])
+        try:
+            self.run('psql', ['-X', '-q', '-v', 'ON_ERROR_STOP=1', '-d', canonical], raw)
+            return normalized_schema(self.run('pg_dump', ['-d', canonical] + args))
+        finally:
+            self.run('dropdb', ['--if-exists', canonical])
 
     def counts(self, db):
         present = json.loads(self.sql(db, "select coalesce(json_agg(tablename),'[]') from pg_tables where schemaname='public' and tablename <> 'flyway_schema_history'"))
