@@ -69,6 +69,7 @@ export function BookDetailPage() {
             </Box>
             <Stack direction="row" sx={{ flexWrap: "wrap", gap: `${tokens.spacing[3]}px` }}>
               <Button variant="contained" disabled={!can("reader.read") || book.status !== "AVAILABLE"} onClick={() => navigate(`/reader/${book.id}`)}>{book.progress > 0 ? "继续阅读" : "开始阅读"}</Button>
+              {can("reader.read") && book.status === "AVAILABLE" && <Button component="a" variant="outlined" href={`/api/v1/books/${encodeURIComponent(book.id)}/content`} download={`${title}.${book.format.toLowerCase()}`}>下载原书</Button>}
               <Button variant="outlined" disabled={!can("booklists.edit") || book.status !== "AVAILABLE"} onClick={() => setAdding(true)}>加入书目</Button>
                 {can("library.edit") && <Button variant="outlined" onClick={() => navigate(`/library/books/${book.id}/edit`, { state: { bookDetailReturnTo: location.pathname, bookReturnTo: returnTo } })}>编辑元信息</Button>}
                 {can("library.files") && <Button variant="outlined" onClick={() => setFileOperation("RENAME")}>管理文件</Button>}
