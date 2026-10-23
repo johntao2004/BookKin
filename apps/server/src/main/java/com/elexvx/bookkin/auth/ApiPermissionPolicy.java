@@ -18,6 +18,8 @@ public final class ApiPermissionPolicy {
         if (p.equals("/users") || p.startsWith("/users/")) return Set.of("settings.users." + (read ? "view" : p.equals("/users") ? "create" : "manage"));
         if (p.startsWith("/mail/")) return Set.of("settings.mail." + (read ? "view" : "edit"));
         if (p.equals("/ai/providers")) return Set.of("settings.ai.view", "library.upload", "library.edit", "knowledge.generate");
+        // The assistance service additionally requires the exact source/action grant and object access.
+        if (p.equals("/ai/assistance")) return Set.of("reader.read", "articles.view", "notes.edit", "articles.edit", "library.edit", "library.upload");
         if (p.startsWith("/ai/")) return Set.of("settings.ai." + (read ? "view" : "edit"));
         if (p.startsWith("/vault/")) return Set.of("vault.use");
         if (p.equals("/library-roots/content-storage")) return Set.of("settings.roots.view");

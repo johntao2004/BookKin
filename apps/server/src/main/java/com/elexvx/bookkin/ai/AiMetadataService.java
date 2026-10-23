@@ -185,6 +185,29 @@ public class AiMetadataService {
     public record KnowledgePoint(String name, String quote, String locator) {}
     public record KnowledgeResult(String providerId, List<KnowledgePoint> points) {}
 
+    /** Shared bounded, non-persistent gateway. Callers authorize and minimize source data first. */
+    public StructuredResult generateStructured(String systemPrompt, Map<String, Object> input) throws Exception {
+        var config = configuration.get();
+        var provider = config.providers().stream().filter(this::available).findFirst().filter(value -> config.enabled())
+                .orElseThrow(() -> com.elexvx.bookkin.common.ApiException.badRequest("AI_UNAVAILABLE", "请先在 AI 设置中启用并配置平台。"));
+        String raw;
+        try { raw = invoke(provider, json.writeValueAsString(input), systemPrompt); }
+        catch (InterruptedException e) { Thread.currentThread().interrupt(); throw e; }
+        catch (Exception e) {
+            throw new com.elexvx.bookkin.common.ApiException(org.springframework.http.HttpStatus.BAD_GATEWAY,
+                    "AI_PROVIDER_FAILED", "AI 平台未能完成请求，请检查已保存的平台配置、额度或网络后重试。");
+        }
+        try {
+            var value = json.readTree(extractJson(raw));
+            if (!value.isObject()) throw new IllegalArgumentException();
+            return new StructuredResult(provider.label(), provider.model(), value);
+        } catch (Exception e) {
+            throw com.elexvx.bookkin.common.ApiException.badRequest("AI_RESULT_INVALID", "AI 返回的结果格式不完整，请重试。");
+        }
+    }
+
+    public record StructuredResult(String provider, String model, JsonNode value) {}
+
     private String invoke(AiProvider provider, String prompt) throws Exception {
         return invoke(provider, prompt, SYSTEM_PROMPT);
     }

@@ -3,10 +3,11 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, expect, it, vi } from "vitest";
 import { TestProviders } from "../test/TestProviders";
-import { api } from "../api/client";
+import { api, request } from "../api/client";
 import { AiSettingsPage } from "./AiSettingsPage";
 
 vi.mock("../api/client", () => ({
+  request: vi.fn(),
   api: {
     isDemo: true,
     getAiSettings: vi.fn(),
@@ -21,14 +22,26 @@ const settings = {
   timeoutSeconds: 20,
   providers: [
     { id: "openai", label: "OpenAI", type: "OPENAI_COMPATIBLE" as const, enabled: false, baseUrl: "https://api.openai.com/v1", model: "gpt-4o-mini", configured: false, available: false, apiKeyConfigured: false },
-    { id: "deepseek", label: "DeepSeek", type: "OPENAI_COMPATIBLE" as const, enabled: false, baseUrl: "https://api.deepseek.com", model: "deepseek-v4-flash", configured: false, available: false, apiKeyConfigured: false },
+    { id: "deepseek", label: "DeepSeek", type: "OPENAI_COMPATIBLE" as const, enabled: false, baseUrl: "https://api.deepseek.com", model: "deepseek-flash", configured: false, available: false, apiKeyConfigured: false },
   ],
 };
 
 beforeEach(() => {
+  vi.clearAllMocks();
   sessionStorage.setItem("bookkin-demo-session", JSON.stringify({ id: "admin", username: "admin", displayName: "管理员", role: "ADMIN", mustChangePassword: false }));
   vi.mocked(api.getAiSettings).mockResolvedValue(settings);
   vi.mocked(api.updateAiSettings).mockResolvedValue(settings);
+  vi.mocked(request).mockReset();
+});
+
+it("tests saved provider settings without saving or sending the unsaved draft", async () => {
+  vi.mocked(request).mockResolvedValue({ provider: "DeepSeek", model: "deepseek-flash", elapsedMs: 320 });
+  render(<TestProviders><AiSettingsPage /></TestProviders>);
+  fireEvent.change(await screen.findByRole("textbox", { name: "显示名称" }), { target: { value: "尚未保存的名称" } });
+  fireEvent.click(screen.getByRole("button", { name: "测试已保存配置" }));
+  expect(await screen.findByText(/连接成功/)).toBeInTheDocument();
+  expect(request).toHaveBeenCalledWith("/ai/test", { method: "POST" }, { timeoutMs: 150000 });
+  expect(api.updateAiSettings).not.toHaveBeenCalled();
 });
 
 it("renders AI strategy and provider settings", async () => {
@@ -41,7 +54,7 @@ it("renders AI strategy and provider settings", async () => {
   expect(screen.getByText("GPT-4o mini")).toBeInTheDocument();
   fireEvent.mouseDown(screen.getByRole("combobox", { name: "选择厂商" }));
   fireEvent.click(await screen.findByText("DeepSeek"));
-  expect(screen.getByText("deepseek-v4-flash")).toBeInTheDocument();
+  expect(screen.getByText("deepseek-flash")).toBeInTheDocument();
   await waitFor(() => expect(api.getAiSettings).toHaveBeenCalledTimes(1));
 });
 

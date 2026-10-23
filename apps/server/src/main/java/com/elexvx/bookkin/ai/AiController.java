@@ -11,6 +11,7 @@ import jakarta.validation.constraints.Size;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -36,6 +37,17 @@ public class AiController {
 
     @GetMapping("/settings")
     AiSettingsService.AiSettingsView settings() { return settings.view(); }
+
+    @PostMapping("/test")
+    ConnectionResult test() throws Exception {
+        long start = System.nanoTime();
+        var result = ai.generateStructured("只返回 JSON：{\"text\":\"connected\"}", java.util.Map.of("task", "connection test; no user content"));
+        if (!"connected".equals(result.value().path("text").asText()))
+            throw com.elexvx.bookkin.common.ApiException.badRequest("AI_RESULT_INVALID", "平台已响应，但未返回预期格式。");
+        return new ConnectionResult(result.provider(), result.model(), (System.nanoTime() - start) / 1_000_000);
+    }
+
+    public record ConnectionResult(String provider, String model, long elapsedMs) {}
 
     @PutMapping("/settings")
     AiSettingsService.AiSettingsView update(@Valid @RequestBody UpdateAiSettingsRequest input, Principal principal) {

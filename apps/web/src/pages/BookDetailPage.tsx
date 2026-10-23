@@ -1,5 +1,6 @@
 import { RequestErrorPage } from "./HttpErrorPage";
 import { usePermissions } from "../auth/permissions";
+import { AiAssistantButton } from "../features/ai/AiAssistant";
 import { BookReviewsPanel } from "../features/reviews/BookReviewsPanel";
 import { BookCover } from "../components/BookCover";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -71,6 +72,7 @@ export function BookDetailPage() {
               <Button variant="contained" disabled={!can("reader.read") || book.status !== "AVAILABLE"} onClick={() => navigate(`/reader/${book.id}`)}>{book.progress > 0 ? "继续阅读" : "开始阅读"}</Button>
               {can("reader.read") && book.status === "AVAILABLE" && <Button component="a" variant="outlined" href={`/api/v1/books/${encodeURIComponent(book.id)}/content`} download={`${title}.${book.format.toLowerCase()}`}>下载原书</Button>}
               <Button variant="outlined" disabled={!can("booklists.edit") || book.status !== "AVAILABLE"} onClick={() => setAdding(true)}>加入书目</Button>
+              {can("reader.read") && book.status === "AVAILABLE" && <AiAssistantButton source="BOOK" id={book.id} />}
                 {can("library.edit") && <Button variant="outlined" onClick={() => navigate(`/library/books/${book.id}/edit`, { state: { bookDetailReturnTo: location.pathname, bookReturnTo: returnTo } })}>编辑元信息</Button>}
                 {can("library.files") && <Button variant="outlined" onClick={() => setFileOperation("RENAME")}>管理文件</Button>}
                 {can("library.trash") && <Button variant="outlined" color="error" disabled={book.status === "TRASHED"} onClick={() => setFileOperation("TRASH")}>删除书籍</Button>}

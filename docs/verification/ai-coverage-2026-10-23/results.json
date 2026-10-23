@@ -1,0 +1,351 @@
+{
+  "date": "2026-10-23",
+  "provider": "DeepSeek",
+  "model": "deepseek-flash",
+  "apiChecks": [
+    {
+      "case": "anonymous denied",
+      "status": 401,
+      "passed": true,
+      "seconds": 0.0,
+      "provider": null,
+      "model": null,
+      "evidenceCount": 0
+    },
+    {
+      "case": "no consent",
+      "status": 400,
+      "passed": true,
+      "seconds": 0.01,
+      "provider": null,
+      "model": null,
+      "evidenceCount": 0
+    },
+    {
+      "case": "member cannot edit article draft",
+      "status": 403,
+      "passed": true,
+      "seconds": 0.01,
+      "provider": null,
+      "model": null,
+      "evidenceCount": 0
+    },
+    {
+      "case": "member cannot edit metadata draft",
+      "status": 403,
+      "passed": true,
+      "seconds": 0.01,
+      "provider": null,
+      "model": null,
+      "evidenceCount": 0
+    },
+    {
+      "case": "read action cannot edit content",
+      "status": 400,
+      "passed": true,
+      "seconds": 0.01,
+      "provider": null,
+      "model": null,
+      "evidenceCount": 0
+    },
+    {
+      "case": "invalid source UUID",
+      "status": 400,
+      "passed": true,
+      "seconds": 0.02,
+      "provider": null,
+      "model": null,
+      "evidenceCount": 0
+    },
+    {
+      "case": "missing question",
+      "status": 400,
+      "passed": true,
+      "seconds": 0.01,
+      "provider": null,
+      "model": null,
+      "evidenceCount": 0
+    },
+    {
+      "case": "draft length guard",
+      "status": 400,
+      "passed": true,
+      "seconds": 0.01,
+      "provider": null,
+      "model": null,
+      "evidenceCount": 0
+    },
+    {
+      "case": "vault source rejected",
+      "status": 400,
+      "passed": true,
+      "seconds": 0.01,
+      "provider": null,
+      "model": null,
+      "evidenceCount": 0
+    },
+    {
+      "case": "private article isolation",
+      "status": 404,
+      "passed": true,
+      "seconds": 0.02,
+      "provider": null,
+      "model": null,
+      "evidenceCount": 0
+    },
+    {
+      "case": "private collection isolation",
+      "status": 404,
+      "passed": true,
+      "seconds": 0.02,
+      "provider": null,
+      "model": null,
+      "evidenceCount": 0
+    },
+    {
+      "case": "saved provider real connection",
+      "status": 200,
+      "passed": true,
+      "provider": "DeepSeek",
+      "model": "deepseek-flash"
+    },
+    {
+      "case": "ARTICLE SUMMARY",
+      "status": 200,
+      "passed": true,
+      "seconds": 2.29,
+      "provider": "DeepSeek",
+      "model": "deepseek-flash",
+      "evidenceCount": 3
+    },
+    {
+      "case": "BOOK SUMMARY",
+      "status": 200,
+      "passed": true,
+      "seconds": 2.34,
+      "provider": "DeepSeek",
+      "model": "deepseek-flash",
+      "evidenceCount": 2
+    },
+    {
+      "case": "BOOK OUTLINE",
+      "status": 200,
+      "passed": true,
+      "seconds": 2.45,
+      "provider": "DeepSeek",
+      "model": "deepseek-flash",
+      "evidenceCount": 3
+    },
+    {
+      "case": "ARTICLE OUTLINE",
+      "status": 200,
+      "passed": true,
+      "seconds": 2.7,
+      "provider": "DeepSeek",
+      "model": "deepseek-flash",
+      "evidenceCount": 3
+    },
+    {
+      "case": "BOOK QUESTIONS",
+      "status": 200,
+      "passed": true,
+      "seconds": 2.78,
+      "provider": "DeepSeek",
+      "model": "deepseek-flash",
+      "evidenceCount": 3
+    },
+    {
+      "case": "ARTICLE QUESTIONS",
+      "status": 200,
+      "passed": true,
+      "seconds": 2.94,
+      "provider": "DeepSeek",
+      "model": "deepseek-flash",
+      "evidenceCount": 3
+    },
+    {
+      "case": "ARTICLE ASK",
+      "status": 200,
+      "passed": true,
+      "seconds": 2.51,
+      "provider": "DeepSeek",
+      "model": "deepseek-flash",
+      "evidenceCount": 3
+    },
+    {
+      "case": "BOOK ASK",
+      "status": 200,
+      "passed": true,
+      "seconds": 2.55,
+      "provider": "DeepSeek",
+      "model": "deepseek-flash",
+      "evidenceCount": 4
+    },
+    {
+      "case": "METADATA_DRAFT DESCRIPTION",
+      "status": 200,
+      "passed": true,
+      "seconds": 1.69,
+      "provider": "DeepSeek",
+      "model": "deepseek-flash",
+      "evidenceCount": 1
+    },
+    {
+      "case": "COLLECTION READING_PLAN",
+      "status": 200,
+      "passed": true,
+      "seconds": 3.98,
+      "provider": "DeepSeek",
+      "model": "deepseek-flash",
+      "evidenceCount": 4
+    },
+    {
+      "case": "METADATA_DRAFT TAGS",
+      "status": 200,
+      "passed": true,
+      "seconds": 1.09,
+      "provider": "DeepSeek",
+      "model": "deepseek-flash",
+      "evidenceCount": 0
+    },
+    {
+      "case": "COLLECTION SUMMARY",
+      "status": 200,
+      "passed": true,
+      "seconds": 3.23,
+      "provider": "DeepSeek",
+      "model": "deepseek-flash",
+      "evidenceCount": 4
+    },
+    {
+      "case": "ARTICLE_DRAFT POLISH",
+      "status": 200,
+      "passed": true,
+      "seconds": 1.17,
+      "provider": "DeepSeek",
+      "model": "deepseek-flash",
+      "evidenceCount": 0
+    },
+    {
+      "case": "ARTICLE_DRAFT OUTLINE",
+      "status": 200,
+      "passed": true,
+      "seconds": 2.29,
+      "provider": "DeepSeek",
+      "model": "deepseek-flash",
+      "evidenceCount": 1
+    },
+    {
+      "case": "COLLECTION QUESTIONS",
+      "status": 200,
+      "passed": true,
+      "seconds": 4.69,
+      "provider": "DeepSeek",
+      "model": "deepseek-flash",
+      "evidenceCount": 4
+    },
+    {
+      "case": "ARTICLE_DRAFT TITLES",
+      "status": 200,
+      "passed": true,
+      "seconds": 1.09,
+      "provider": "DeepSeek",
+      "model": "deepseek-flash",
+      "evidenceCount": 0
+    },
+    {
+      "case": "COLLECTION ASK",
+      "status": 200,
+      "passed": true,
+      "seconds": 2.78,
+      "provider": "DeepSeek",
+      "model": "deepseek-flash",
+      "evidenceCount": 3
+    },
+    {
+      "case": "ARTICLE_DRAFT SUMMARY",
+      "status": 200,
+      "passed": true,
+      "seconds": 1.19,
+      "provider": "DeepSeek",
+      "model": "deepseek-flash",
+      "evidenceCount": 1
+    },
+    {
+      "case": "NOTE_DRAFT POLISH",
+      "status": 200,
+      "passed": true,
+      "seconds": 1.32,
+      "provider": "DeepSeek",
+      "model": "deepseek-flash",
+      "evidenceCount": 0
+    },
+    {
+      "case": "NOTE_DRAFT OUTLINE",
+      "status": 200,
+      "passed": true,
+      "seconds": 1.93,
+      "provider": "DeepSeek",
+      "model": "deepseek-flash",
+      "evidenceCount": 1
+    },
+    {
+      "case": "NOTE_DRAFT TITLES",
+      "status": 200,
+      "passed": true,
+      "seconds": 1.26,
+      "provider": "DeepSeek",
+      "model": "deepseek-flash",
+      "evidenceCount": 0
+    },
+    {
+      "case": "NOTE_DRAFT SUMMARY",
+      "status": 200,
+      "passed": true,
+      "seconds": 1.38,
+      "provider": "DeepSeek",
+      "model": "deepseek-flash",
+      "evidenceCount": 1
+    },
+    {
+      "case": "PDF BOOK SUMMARY",
+      "status": 200,
+      "passed": true,
+      "seconds": 3.24,
+      "provider": "DeepSeek",
+      "model": "deepseek-flash",
+      "evidenceCount": 3
+    }
+  ],
+  "knowledgeRegression": {
+    "bookPoints": 10,
+    "articlePoints": 4,
+    "bookStatus": "READY",
+    "providerId": "deepseek-acceptance",
+    "passed": true
+  },
+  "retainedData": {
+    "bookId": "6596b19b-07d6-4d68-9e12-e0667ad39791",
+    "postId": "b75c0755-ccb4-42ad-b359-fde934a535d5",
+    "uploadId": "6e4ff387-4072-4b32-8d46-a068b763700e",
+    "privatePostIsolation": true,
+    "downloadSha256Matches": true,
+    "tagsPersisted": 6,
+    "metadataDescriptionPersisted": true
+  },
+  "checks": {
+    "frontend": {
+      "lint": "PASS",
+      "typecheck": "PASS",
+      "tests": 878,
+      "build": "PASS"
+    },
+    "backend": {
+      "verify": "PASS",
+      "total": 305,
+      "passed": 300,
+      "skipped": 5,
+      "failed": 0
+    }
+  }
+}

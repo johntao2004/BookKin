@@ -17,7 +17,7 @@ import { Toolbar } from "@/ui/primitives";
 import { Tooltip } from "@/ui/feedback";
 import { Typography } from "@/ui/primitives";
 import { useMediaQuery } from "@/ui/primitives";
-import { useState, type MouseEvent, type MouseEventHandler } from "react";
+import { useState, type MouseEvent, type MouseEventHandler, type ReactNode } from "react";
 import type { BookFormat } from "../../domain/types";
 import { tokens } from "../../theme/generated-tokens";
 import { readerWidthSx, topNavigationSurfaceSx } from "../PageHeader";
@@ -40,6 +40,7 @@ interface ReaderTopBarProps {
   onOpenNotes: () => void;
   privateActions?: boolean;
   notesAvailable?: boolean;
+  assistant?: ReactNode;
 }
 
 export function ReaderTopBar({
@@ -59,6 +60,7 @@ export function ReaderTopBar({
   privateActions = true,
   notesLabel = "本书笔记",
   notesAvailable = privateActions,
+  assistant,
 }: ReaderTopBarProps) {
   const safeProgress = Math.max(0, Math.min(100, progressPercent));
   const [moreAnchor, setMoreAnchor] = useState<HTMLElement | null>(null);
@@ -92,6 +94,7 @@ export function ReaderTopBar({
           <Typography variant="body2" noWrap sx={{ fontWeight: tokens.typography.fontWeight.semibold }}>{title}</Typography>
           {!compactChrome && <Typography variant="caption" noWrap color="text.secondary" sx={{ display: "block" }}>{subtitle}</Typography>}
         </Box>
+        {assistant}
         {compactChrome ? <Stack direction="row" sx={{ alignItems: "center", flexShrink: 0 }}>
           <Tooltip title="阅读设置">
             <IconButton onClick={onOpenSettings} color="inherit" aria-label="阅读设置" sx={touchIconSx}><SettingsBrightnessOutlined /></IconButton>
