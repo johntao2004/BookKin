@@ -1,0 +1,625 @@
+{
+  "api-results": [
+    {
+      "case": "administrator effective role",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "case": "administrator /users",
+      "passed": true,
+      "detail": 200
+    },
+    {
+      "case": "administrator /users/active-sessions",
+      "passed": true,
+      "detail": 200
+    },
+    {
+      "case": "administrator /users/login-logs?page=0&size=10",
+      "passed": true,
+      "detail": 200
+    },
+    {
+      "case": "administrator cannot gain owner authority /users",
+      "passed": true,
+      "detail": 403
+    },
+    {
+      "case": "administrator cannot gain owner authority /role-permissions",
+      "passed": true,
+      "detail": 403
+    },
+    {
+      "case": "administrator cannot gain owner authority /users/vault-policy",
+      "passed": true,
+      "detail": 403
+    },
+    {
+      "case": "reader effective role",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "case": "reader /users",
+      "passed": true,
+      "detail": 403
+    },
+    {
+      "case": "reader /users/active-sessions",
+      "passed": true,
+      "detail": 403
+    },
+    {
+      "case": "reader /users/login-logs?page=0&size=10",
+      "passed": true,
+      "detail": 403
+    },
+    {
+      "case": "reader cannot gain owner authority /users",
+      "passed": true,
+      "detail": 403
+    },
+    {
+      "case": "reader cannot gain owner authority /role-permissions",
+      "passed": true,
+      "detail": 403
+    },
+    {
+      "case": "reader cannot gain owner authority /users/vault-policy",
+      "passed": true,
+      "detail": 403
+    },
+    {
+      "case": "second reader effective role",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "case": "second reader /users",
+      "passed": true,
+      "detail": 403
+    },
+    {
+      "case": "second reader /users/active-sessions",
+      "passed": true,
+      "detail": 403
+    },
+    {
+      "case": "second reader /users/login-logs?page=0&size=10",
+      "passed": true,
+      "detail": 403
+    },
+    {
+      "case": "second reader cannot gain owner authority /users",
+      "passed": true,
+      "detail": 403
+    },
+    {
+      "case": "second reader cannot gain owner authority /role-permissions",
+      "passed": true,
+      "detail": 403
+    },
+    {
+      "case": "second reader cannot gain owner authority /users/vault-policy",
+      "passed": true,
+      "detail": 403
+    },
+    {
+      "case": "Anonymous denied /articles",
+      "passed": true,
+      "detail": 401
+    },
+    {
+      "case": "Anonymous denied /article-collections",
+      "passed": true,
+      "detail": 401
+    },
+    {
+      "case": "Anonymous denied /vault/objects",
+      "passed": true,
+      "detail": 401
+    },
+    {
+      "case": "Anonymous denied /users",
+      "passed": true,
+      "detail": 401
+    },
+    {
+      "case": "Anonymous denied /annotations",
+      "passed": true,
+      "detail": 401
+    },
+    {
+      "case": "Persist all bibliography fields 纸页之间：家庭藏书养护手册",
+      "passed": true,
+      "detail": {
+        "isbn": null
+      }
+    },
+    {
+      "case": "Download SHA-256 纸页之间：家庭藏书养护手册",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "case": "Range download 纸页之间：家庭藏书养护手册",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "case": "Member cannot edit 纸页之间：家庭藏书养护手册",
+      "passed": true,
+      "detail": 403
+    },
+    {
+      "case": "Reading saved across sessions and private 纸页之间：家庭藏书养护手册",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "case": "Persist all bibliography fields 周末步道：自然观察随身册",
+      "passed": true,
+      "detail": {
+        "isbn": null
+      }
+    },
+    {
+      "case": "Download SHA-256 周末步道：自然观察随身册",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "case": "Range download 周末步道：自然观察随身册",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "case": "Member cannot edit 周末步道：自然观察随身册",
+      "passed": true,
+      "detail": 403
+    },
+    {
+      "case": "Reading saved across sessions and private 周末步道：自然观察随身册",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "case": "Persist all bibliography fields 沿河散步：城市水岸观察札记",
+      "passed": true,
+      "detail": {
+        "isbn": null
+      }
+    },
+    {
+      "case": "Download SHA-256 沿河散步：城市水岸观察札记",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "case": "Range download 沿河散步：城市水岸观察札记",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "case": "Member cannot edit 沿河散步：城市水岸观察札记",
+      "passed": true,
+      "detail": 403
+    },
+    {
+      "case": "Reading saved across sessions and private 沿河散步：城市水岸观察札记",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "case": "Member cannot upload",
+      "passed": true,
+      "detail": 403
+    },
+    {
+      "case": "Member cannot file preview",
+      "passed": true,
+      "detail": 403
+    },
+    {
+      "case": "Exact duplicate prevented",
+      "passed": true,
+      "detail": "DUPLICATE"
+    },
+    {
+      "case": "Duplicate article prevented",
+      "passed": true,
+      "detail": {
+        "status": 409,
+        "code": "ARTICLE_DUPLICATE"
+      }
+    },
+    {
+      "case": "Private article hidden from member",
+      "passed": true,
+      "detail": 404
+    },
+    {
+      "case": "Collection reorder persists",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "case": "Shared collection edit restricted to creator",
+      "passed": true,
+      "detail": 403
+    },
+    {
+      "case": "Private collection hidden from administrator",
+      "passed": true,
+      "detail": 404
+    },
+    {
+      "case": "Duplicate membership rejected",
+      "passed": true,
+      "detail": 409
+    },
+    {
+      "case": "Article last successful write wins with private state",
+      "passed": true,
+      "detail": null
+    }
+  ],
+  "roles-vault-results": [
+    {
+      "case": "Demotion revokes an existing admin session immediately",
+      "passed": true,
+      "detail": 403
+    },
+    {
+      "case": "Restored administrator grant applies to same session",
+      "passed": true,
+      "detail": 200
+    },
+    {
+      "case": "Owner cannot downgrade own authority",
+      "passed": true,
+      "detail": 403
+    },
+    {
+      "case": "Configured permission revocation affects active member",
+      "passed": true,
+      "detail": 403
+    },
+    {
+      "case": "Original member permissions restored",
+      "passed": true,
+      "detail": 200
+    },
+    {
+      "case": "Disabled account existing session rejected",
+      "passed": true,
+      "detail": 401
+    },
+    {
+      "case": "Disabled account new login rejected",
+      "passed": true,
+      "detail": 401
+    },
+    {
+      "case": "Vault is enabled for runtime acceptance",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "case": "周晚晴 cannot access vault before verification",
+      "passed": true,
+      "detail": 403
+    },
+    {
+      "case": "周晚晴 2FA opens key without second password",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "case": "周晚晴 immutable encrypted chunk 0",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "case": "Different ciphertext cannot overwrite existing chunk",
+      "passed": true,
+      "detail": 409
+    },
+    {
+      "case": "周晚晴 vault upload/download decrypt hash",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "case": "Vault last-write-wins even with stale revision",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "case": "Lock denies all vault content 周晚晴",
+      "passed": true,
+      "detail": 403
+    },
+    {
+      "case": "Renew cannot reopen a locked visit",
+      "passed": true,
+      "detail": 403
+    },
+    {
+      "case": "Recovery code is single-use 周晚晴",
+      "passed": true,
+      "detail": 400
+    },
+    {
+      "case": "New ordinary session requires its own 2FA",
+      "passed": true,
+      "detail": 403
+    },
+    {
+      "case": "许清禾 cannot access vault before verification",
+      "passed": true,
+      "detail": 403
+    },
+    {
+      "case": "许清禾 2FA opens key without second password",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "case": "许清禾 immutable encrypted chunk 0",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "case": "Different ciphertext cannot overwrite existing chunk",
+      "passed": true,
+      "detail": 409
+    },
+    {
+      "case": "许清禾 vault upload/download decrypt hash",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "case": "Vault last-write-wins even with stale revision",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "case": "Lock denies all vault content 许清禾",
+      "passed": true,
+      "detail": 403
+    },
+    {
+      "case": "Renew cannot reopen a locked visit",
+      "passed": true,
+      "detail": 403
+    },
+    {
+      "case": "Recovery code is single-use 许清禾",
+      "passed": true,
+      "detail": 400
+    },
+    {
+      "case": "New ordinary session requires its own 2FA",
+      "passed": true,
+      "detail": 403
+    },
+    {
+      "case": "Verified vault users cannot read each other 1",
+      "passed": true,
+      "detail": 404
+    },
+    {
+      "case": "Vault list is user-scoped 1",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "case": "Verified vault users cannot read each other 2",
+      "passed": true,
+      "detail": 404
+    },
+    {
+      "case": "Vault list is user-scoped 2",
+      "passed": true,
+      "detail": null
+    }
+  ],
+  "post-restart-results": [
+    {
+      "case": "Original persists after runtime restart 纸页之间：家庭藏书养护手册",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "case": "Manual fields persist 纸页之间：家庭藏书养护手册",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "case": "Original persists after runtime restart 周末步道：自然观察随身册",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "case": "Manual fields persist 周末步道：自然观察随身册",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "case": "Original persists after runtime restart 沿河散步：城市水岸观察札记",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "case": "Manual fields persist 沿河散步：城市水岸观察札记",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "case": "Original persists after runtime restart 窗边读书：午后随笔",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "case": "Manual fields persist 窗边读书：午后随笔",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "case": "Browser EPUB bookmark persisted",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "case": "Browser article body, tags and cover persisted",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "case": "Distinct curated article saved 给旧书留一张藏书卡",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "case": "Distinct curated article saved 尚未寄出的阅读信",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "case": "DeepSeek analyses edited article",
+      "passed": true,
+      "detail": 204
+    },
+    {
+      "case": "Saved DeepSeek source evidence 纸页之间：家庭藏书养护手册",
+      "passed": true,
+      "detail": {
+        "points": 8,
+        "sampledSections": 3
+      }
+    },
+    {
+      "case": "Saved DeepSeek source evidence 周末步道：自然观察随身册",
+      "passed": true,
+      "detail": {
+        "points": 3,
+        "sampledSections": 3
+      }
+    },
+    {
+      "case": "DeepSeek key survives restart without plaintext disclosure",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "case": "Member article grants restored after role test",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "case": "Member retains access and no role authority",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "case": "Vault locked on new session",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "case": "Actual browser original download hash",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "case": "Private notes cannot be read through spoofed userId 沿河散步：城市水岸观察札记",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "case": "Private notes cannot be read through spoofed userId 窗边读书：午后随笔",
+      "passed": true,
+      "detail": null
+    }
+  ],
+  "ai-results": [
+    {
+      "feature": "bookKnowledge",
+      "title": "纸页之间：家庭藏书养护手册",
+      "status": 200,
+      "seconds": 2.8,
+      "saved": true
+    },
+    {
+      "feature": "bookKnowledge",
+      "title": "周末步道：自然观察随身册",
+      "status": 200,
+      "seconds": 3.8,
+      "saved": true
+    },
+    {
+      "feature": "articleKnowledge",
+      "title": "雨后沿河散步的三个发现",
+      "status": 204,
+      "seconds": 1.2
+    },
+    {
+      "feature": "metadataMatch",
+      "title": "纸页之间：家庭藏书养护手册",
+      "status": 200,
+      "seconds": 1.2,
+      "candidates": 1,
+      "manualTitleRetained": true
+    }
+  ],
+  "deepseek-diagnostics": [
+    {
+      "thinkingDisabled": false,
+      "finishReason": "length",
+      "contentLength": 0,
+      "reasoningLength": 11386,
+      "usage": {
+        "prompt_tokens": 565,
+        "completion_tokens": 4096,
+        "total_tokens": 4661,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 4096
+        },
+        "prompt_cache_hit_tokens": 0,
+        "prompt_cache_miss_tokens": 565
+      },
+      "seconds": 21.4
+    },
+    {
+      "thinkingDisabled": true,
+      "finishReason": "stop",
+      "contentLength": 761,
+      "reasoningLength": 0,
+      "usage": {
+        "prompt_tokens": 540,
+        "completion_tokens": 359,
+        "total_tokens": 899,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "prompt_cache_hit_tokens": 0,
+        "prompt_cache_miss_tokens": 540
+      },
+      "seconds": 2.2
+    }
+  ],
+  "browser-download": {
+    "sha256": "e2a8fbdfc420594bdfe30e2e3c474a473c0c3764d6465d98858e3580a7d1508e",
+    "matches": true
+  },
+  "browser-pdf-download": {
+    "sha256": "aa7d88ccdf549860f44c778f79d36e1399243ad15cca46aa928232026096b63e",
+    "matches": true
+  }
+}

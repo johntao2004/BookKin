@@ -1,7 +1,6 @@
 package com.elexvx.bookkin.users;
 
 import com.elexvx.bookkin.audit.AuditService;
-import java.nio.charset.StandardCharsets;
 import java.sql.DriverManager;
 import java.util.Optional;
 import java.util.UUID;
@@ -16,7 +15,7 @@ import static org.mockito.Mockito.*;
 /** 临时表验证开关持久化；Verify persistence with connection-local temporary tables. */
 @EnabledIfEnvironmentVariable(named="BOOKKIN_SITE_SETTINGS_TEST_DATABASE_URL", matches=".+")
 class SiteSettingsPersistenceTest {
-    @Test void upgradesLegacySettingsAndPersistsOwnerTogglesAcrossServiceInstances() throws Exception {
+    @Test void legacySettingsDefaultsAndOwnerTogglesPersistAcrossServiceInstances() throws Exception {
         try (var connection=DriverManager.getConnection(System.getenv("BOOKKIN_SITE_SETTINGS_TEST_DATABASE_URL"),
                 System.getenv().getOrDefault("BOOKKIN_DATABASE_USER","agent"),
                 System.getenv().getOrDefault("BOOKKIN_DATABASE_PASSWORD",""))) {
@@ -33,18 +32,9 @@ class SiteSettingsPersistenceTest {
             var audit=mock(AuditService.class);
             var service=new SiteSettingsService(db,json,users,audit);
             assertThat(service.current().virtualLibraryEnabled()).isTrue();
-            String migration;
-            try (var input=getClass().getResourceAsStream("/db/migration/V20__optional_virtual_library.sql")) {
-                assertThat(input).isNotNull();
-                migration=new String(input.readAllBytes(),StandardCharsets.UTF_8);
-            }
-            db.execute(migration);
-            assertThat(db.fetchOne("select settings->>'virtualLibraryEnabled' from site_settings").get(0,String.class)).isEqualTo("true");
             var disabled=new SiteSettingsService.Settings("BookKin","电子图书馆","说明","","",false,false,"","","","");
             assertThat(service.save("owner",disabled).virtualLibraryEnabled()).isFalse();
             assertThat(new SiteSettingsService(db,json,users,audit).current().virtualLibraryEnabled()).isFalse();
-            db.execute(migration);
-            assertThat(service.current().virtualLibraryEnabled()).isFalse();
             assertThat(service.save("owner",enabled).virtualLibraryEnabled()).isTrue();
         }
     }

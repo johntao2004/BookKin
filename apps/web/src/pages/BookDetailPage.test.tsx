@@ -9,6 +9,7 @@ import { TestProviders } from "../test/TestProviders";
 import { LibraryPage } from "./LibraryPage";
 import { bookReviews } from "../features/reviews/api";
 import { BookDetailPage } from "./BookDetailPage";
+import * as permissionHooks from "../auth/permissions";
 
 const owner = {
   id: "user-owner",
@@ -114,6 +115,39 @@ describe("BookDetailPage", () => {
     fireEvent.click(await screen.findByRole("button", { name: "继续阅读" }));
 
     expect(screen.getByTestId("route-location")).toHaveTextContent(`/reader/${book.id}`);
+  });
+
+  it("lets a reader download the original through the authenticated streaming endpoint", async () => {
+    const book = demoBooks[0];
+    vi.spyOn(api, "getBook").mockResolvedValue(book);
+    renderDetail(`/library/books/${book.id}`, member);
+
+    const download = await screen.findByRole("link", { name: "下载原书" });
+    expect(download).toHaveAttribute("href", `/api/v1/books/${book.id}/content`);
+    expect(download).toHaveAttribute("download", `${book.title}.${book.format.toLowerCase()}`);
+  });
+
+  it("does not offer an original download without reading permission", async () => {
+    const book = demoBooks[0];
+    vi.spyOn(api, "getBook").mockResolvedValue(book);
+    const usePermissions = permissionHooks.usePermissions;
+    vi.spyOn(permissionHooks, "usePermissions").mockImplementation(() => {
+      const permissions = usePermissions();
+      return { ...permissions, can: code => code !== "reader.read" && permissions.can(code) };
+    });
+    renderDetail(`/library/books/${book.id}`, member);
+
+    expect(await screen.findByRole("heading", { level: 2, name: book.title })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "下载原书" })).not.toBeInTheDocument();
+  });
+
+  it("does not offer an original download for an unavailable file", async () => {
+    const book = { ...demoBooks[0], status: "MISSING" as const };
+    vi.spyOn(api, "getBook").mockResolvedValue(book);
+    renderDetail(`/library/books/${book.id}`, member);
+
+    expect(await screen.findByRole("heading", { level: 2, name: book.title })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "下载原书" })).not.toBeInTheDocument();
   });
 
   it("lets members add a book to a list without exposing management actions", async () => {

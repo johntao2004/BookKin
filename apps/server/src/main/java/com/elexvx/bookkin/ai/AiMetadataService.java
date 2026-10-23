@@ -202,12 +202,22 @@ public class AiMetadataService {
         body.put("model", provider.model());
         body.put("temperature", 0);
         body.put("max_tokens", systemPrompt.equals(SYSTEM_PROMPT) ? 1200 : 4096);
+        // DeepSeek enables thinking by default; its reasoning shares this bounded
+        // output budget and can consume it before producing the required JSON.
+        // Scope the extension to the official API so other compatible providers
+        // are not sent an unsupported parameter.
+        if ("api.deepseek.com".equalsIgnoreCase(URI.create(defaultValue(provider.baseUrl(), "https://api.openai.com/v1")).getHost())) {
+            body.put("thinking", Map.of("type", "disabled"));
+        }
         body.put("messages", List.of(
                 Map.of("role", "system", "content", systemPrompt),
                 Map.of("role", "user", "content", prompt)));
         HttpRequest.Builder request = request(join(defaultValue(provider.baseUrl(), "https://api.openai.com/v1"), "/chat/completions"), body);
         if (!provider.apiKey().isBlank()) request.header("Authorization", "Bearer " + provider.apiKey());
         JsonNode root = json.readTree(send(request.build()));
+        if ("length".equals(root.at("/choices/0/finish_reason").asText())) {
+            throw new IllegalStateException("AI 输出达到长度限制，未取得完整结果。");
+        }
         JsonNode content = root.at("/choices/0/message/content");
         if (content.isTextual()) return content.asText();
         if (content.isArray()) {
