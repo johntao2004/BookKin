@@ -78,13 +78,13 @@ export function ArticleCollectionOrganizerDrawer({ open, collection, onClose, on
       setBase(result);
       setOrdered(result.articles);
       setConflict(false);
-      onChanged(result, "合集顺序已保存");
+      onChanged(result, "选集顺序已保存");
       await refreshCaches();
     } catch (reason) {
       if (isArticleCollectionRevisionConflict(reason)) {
         try {
           await refreshConflict();
-          setError("合集已在其他位置更新。最新版本已重新获取，当前顺序草稿保留；核对后可再次保存。");
+          setError("选集已在其他位置更新。最新版本已重新获取，当前顺序草稿保留；核对后可再次保存。");
         } catch (refreshError) {
           setError(`${articleCollectionError(reason)} 最新版本读取失败：${articleCollectionError(refreshError)}`);
         }
@@ -113,13 +113,13 @@ export function ArticleCollectionOrganizerDrawer({ open, collection, onClose, on
       const result = await articleCollections.addArticles(base.id, [article.id], base.revision);
       setBase(result);
       setOrdered(result.articles);
-      onChanged(result, `已将《${article.title}》加入合集`);
+      onChanged(result, `已将《${article.title}》加入选集`);
       await refreshCaches();
     } catch (reason) {
       if (isArticleCollectionRevisionConflict(reason)) {
         try {
           await refreshConflict();
-          setError("合集已在其他位置更新。最新版本已重新读取；这次加入没有提交，请重新选择文章。");
+          setError("选集已在其他位置更新。最新版本已重新读取；这次加入没有提交，请重新选择文章。");
         } catch (refreshError) {
           setError(`${articleCollectionError(reason)} 最新版本读取失败：${articleCollectionError(refreshError)}`);
         }
@@ -139,13 +139,13 @@ export function ArticleCollectionOrganizerDrawer({ open, collection, onClose, on
       const result = await articleCollections.removeArticle(base.id, article.id, base.revision);
       setBase(result);
       setOrdered(result.articles);
-      onChanged(result, `已将《${article.title}》移出合集；文章本身仍保留`);
+      onChanged(result, `已将《${article.title}》移出选集；文章本身仍保留`);
       await refreshCaches();
     } catch (reason) {
       if (isArticleCollectionRevisionConflict(reason)) {
         try {
           await refreshConflict();
-          setError("合集已在其他位置更新。最新版本已重新读取；这次移除没有提交，请重新检查当前内容。");
+          setError("选集已在其他位置更新。最新版本已重新读取；这次移除没有提交，请重新检查当前内容。");
         } catch (refreshError) {
           setError(`${articleCollectionError(reason)} 最新版本读取失败：${articleCollectionError(refreshError)}`);
         }
@@ -157,17 +157,17 @@ export function ArticleCollectionOrganizerDrawer({ open, collection, onClose, on
     }
   };
 
-  return <Drawer anchor="right" title={`整理合集 · ${base.title}`} closeLabel="关闭整理合集" open={open} onClose={busy ? undefined : onClose} slotProps={{ paper: { sx: { width: { xs: "100%", md: tokens.layout.readingMax + tokens.spacing[20] * 2 }, maxWidth: "100vw" } } }}>
+  return <Drawer anchor="right" title={`整理选集 · ${base.title}`} closeLabel="关闭整理选集" open={open} onClose={busy ? undefined : onClose} slotProps={{ paper: { sx: { width: { xs: "100%", md: tokens.layout.readingMax + tokens.spacing[20] * 2 }, maxWidth: "100vw" } } }}>
     <Stack sx={{ minHeight: "100%", p: { xs: `${tokens.spacing[4]}px`, sm: `${tokens.spacing[6]}px` }, gap: `${tokens.spacing[5]}px` }}>
       {error && <Alert severity={conflict ? "warning" : "error"}>{error}</Alert>}
       {base.visibility === "MEMBERS" && <Alert severity="info">仅可加入书库成员可阅读的文章；仅自己的文章不会出现在可加入列表中。</Alert>}
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "minmax(0, 1fr)", md: "minmax(0, .9fr) minmax(0, 1.1fr)" }, gap: `${tokens.spacing[8]}px`, alignItems: "start" }}>
         <Box component="section" aria-labelledby="article-collection-current-heading" sx={{ minWidth: 0 }}>
           <Stack direction={{ xs: "column", sm: "row" }} sx={{ alignItems: { xs: "stretch", sm: "center" }, justifyContent: "space-between", minHeight: tokens.layout.touchTarget, gap: `${tokens.spacing[3]}px`, mb: `${tokens.spacing[3]}px` }}>
-            <Typography id="article-collection-current-heading" variant="h5">合集顺序</Typography>
+            <Typography id="article-collection-current-heading" variant="h5">选集顺序</Typography>
             {orderDirty && <Button variant="contained" disabled={busy} onClick={() => void saveOrder()}>{busy ? "保存中…" : "保存顺序"}</Button>}
           </Stack>
-          {ordered.length ? <List role="list" aria-label="合集中的文章" sx={{ p: 0, border: 1, borderColor: "divider", borderRadius: `${tokens.radius.lg}px`, overflow: "hidden" }}>
+          {ordered.length ? <List role="list" aria-label="选集中的文章" sx={{ p: 0, border: 1, borderColor: "divider", borderRadius: `${tokens.radius.lg}px`, overflow: "hidden" }}>
             {ordered.map((article, index) => <ListItem key={article.id} role="listitem" divider={index < ordered.length - 1} sx={{ gap: `${tokens.spacing[2]}px`, px: `${tokens.spacing[3]}px`, alignItems: "flex-start", "& > .bk-list-item-content": { minWidth: 0 } }}>
               <Box sx={{ width: `${tokens.spacing[20]}px`, flex: "0 0 auto", aspectRatio: "2.35 / 1", borderRadius: `${tokens.radius.md}px`, overflow: "hidden", bgcolor: "background.paper", border: 1, borderColor: "divider" }}>
                 {article.cover_url ? <Box component="img" src={article.cover_url} alt="" loading="lazy" sx={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} /> : <Stack sx={{ height: "100%", alignItems: "center", justifyContent: "center", px: `${tokens.spacing[2]}px` }}><Typography variant="caption" color="text.secondary" sx={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "100%" }}>{article.title}</Typography></Stack>}
@@ -179,7 +179,7 @@ export function ArticleCollectionOrganizerDrawer({ open, collection, onClose, on
                 <IconButton aria-label={`移出 ${article.title}`} disabled={busy || orderDirty} onClick={() => void removeArticle(article)}><DeleteOutlineRounded /></IconButton>
               </Stack>
             </ListItem>)}
-          </List> : <EmptyState compact title="这个合集还没有文章" />}
+          </List> : <EmptyState compact title="这个选集还没有文章" />}
           {orderDirty && <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: `${tokens.spacing[2]}px` }}>调整完成后保存顺序；保存前可继续用上移、下移按钮修改。</Typography>}
         </Box>
         <Stack component="aside" sx={{ minWidth: 0, gap: `${tokens.spacing[3]}px`, position: { md: "sticky" }, top: `${tokens.spacing[6]}px` }}>
@@ -189,7 +189,7 @@ export function ArticleCollectionOrganizerDrawer({ open, collection, onClose, on
           </Stack>
           {sourceQuery.isPending ? <Stack sx={{ alignItems: "center", py: `${tokens.spacing[8]}px` }}><CircularProgress size={24} /></Stack> : sourceQuery.isError ? (
             <Stack sx={{ alignItems: "flex-start", gap: `${tokens.spacing[3]}px` }}><Alert severity="error">文章暂时无法读取。</Alert><Button onClick={() => void sourceQuery.refetch()}>重试</Button></Stack>
-          ) : blockedPrivate.length > 0 ? <Typography variant="caption" color="text.secondary">搜索结果中有 {blockedPrivate.length} 篇仅自己可见的文章，不能加入这个共享合集。</Typography> : null}
+          ) : blockedPrivate.length > 0 ? <Typography variant="caption" color="text.secondary">搜索结果中有 {blockedPrivate.length} 篇仅自己可见的文章，不能加入这个共享选集。</Typography> : null}
           {!sourceQuery.isPending && !sourceQuery.isError && (candidates.length ? <List aria-label="可添加的文章" sx={{ p: 0, maxHeight: { md: "62vh" }, overflowY: "auto", border: 1, borderColor: "divider", borderRadius: `${tokens.radius.lg}px` }}>
             {candidates.map((article, index) => <ListItem key={article.id} divider={index < candidates.length - 1} secondaryAction={<Button size="small" disabled={busy || orderDirty} onClick={() => void addArticle(article)}>加入</Button>}>
               <ListItemText primary={article.title} secondary={article.author} />

@@ -7,7 +7,7 @@ import { PageHeader } from "./PageHeader";
 
 // Public and signed-in catalogs share one entry and header without sharing private data.
 export function LibraryPageHeader() {
-  return <PageHeader eyebrow="LIBRARY" title="藏书阁" />;
+  return <PageHeader eyebrow="LIBRARY" title="藏书楼" />;
 }
 
 export function LibraryScopeFilter() {

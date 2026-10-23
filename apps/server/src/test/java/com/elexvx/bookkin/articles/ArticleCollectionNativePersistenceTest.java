@@ -48,7 +48,7 @@ class ArticleCollectionNativePersistenceTest {
                     Principal bob = () -> "bob";
                     Principal administrator = () -> "admin";
 
-                    var created = service.create("我的合集", "说明", "PRIVATE", alice);
+                    var created = service.create("我的选集", "说明", "PRIVATE", alice);
                     UUID privateCollection = created.id();
                     var withPrivate = service.addArticles(privateCollection.toString(), List.of(publicOne, privateAlice), 1, alice);
                     assertThat(withPrivate.articleCount()).isEqualTo(2);
@@ -57,12 +57,12 @@ class ArticleCollectionNativePersistenceTest {
                     assertApi("COLLECTION_NOT_FOUND", () -> service.get(privateCollection.toString(), administrator));
                     assertApi("ARTICLE_NOT_FOUND", () -> service.addArticles(privateCollection.toString(), List.of(privateBob), 2, alice));
 
-                    assertApi("COLLECTION_PRIVATE_ARTICLES", () -> service.update(privateCollection.toString(), "我的合集", "说明", "MEMBERS", 2, alice));
+                    assertApi("COLLECTION_PRIVATE_ARTICLES", () -> service.update(privateCollection.toString(), "我的选集", "说明", "MEMBERS", 2, alice));
                     assertThat(db.fetchOne("select visibility from article_collections where id=?", privateCollection).get("visibility", String.class)).isEqualTo("PRIVATE");
                     assertThat(db.fetchOne("select revision from article_collections where id=?", privateCollection).get("revision", Long.class)).isEqualTo(2L);
                     var noPrivate = service.removeArticle(privateCollection.toString(), privateAlice.toString(), 2, alice);
                     assertThat(noPrivate.revision()).isEqualTo(3);
-                    var shared = service.update(privateCollection.toString(), "成员合集", "说明", "MEMBERS", 3, alice);
+                    var shared = service.update(privateCollection.toString(), "成员选集", "说明", "MEMBERS", 3, alice);
                     assertThat(shared.revision()).isEqualTo(4);
 
                     assertApi("COLLECTION_ARTICLE_NOT_PUBLIC", () -> service.addArticles(privateCollection.toString(), List.of(publicTwo, privateAlice), 4, alice));
@@ -103,7 +103,7 @@ class ArticleCollectionNativePersistenceTest {
                     assertThat(count(db, "select count(*) from articles where id=?", publicOne)).isEqualTo(1);
                     assertThat(count(db, "select count(*) from article_reading where article_id=? and user_id=?", publicOne, bobId)).isEqualTo(1);
 
-                    var cascadeCollection = service.create("级联合集", "", "PRIVATE", alice);
+                    var cascadeCollection = service.create("级联选集", "", "PRIVATE", alice);
                     service.addArticles(cascadeCollection.id().toString(), List.of(publicOne), 1, alice);
                     db.execute("delete from articles where id=?", publicOne);
                     assertThat(count(db, "select count(*) from article_collection_articles where collection_id=?", cascadeCollection.id())).isZero();

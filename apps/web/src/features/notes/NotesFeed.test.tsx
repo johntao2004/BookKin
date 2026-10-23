@@ -26,8 +26,8 @@ describe("reading-note navigation and data views", () => {
     expect(readingPosts.list).not.toHaveBeenCalled();
     expect(articleNotesApi.list).not.toHaveBeenCalled();
     expect(articles.list).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByRole("tab", { name: "博文" }));
-    expect(await screen.findByRole("heading", { name: "暂无博文" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("tab", { name: "随笔" }));
+    expect(await screen.findByRole("heading", { name: "暂无随笔" })).toBeInTheDocument();
     expect(readingPosts.list).toHaveBeenCalledWith("BOOK", undefined);
     expect(screen.queryByText("书籍想法")).not.toBeInTheDocument();
   });

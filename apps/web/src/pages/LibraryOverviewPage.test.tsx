@@ -19,7 +19,7 @@ afterEach(() => vi.restoreAllMocks());
 it("preserves all four overview cards and empty states on its own page", async () => {
   render(<TestProviders initialPath="/library/overview"><LibraryOverviewPage /></TestProviders>);
   expect(await screen.findByRole("heading", { name: "本周暂无新书" })).toBeInTheDocument();
-  expect(screen.getByRole("heading", { name: "阁中一览", level: 1 })).toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: "楼中一览", level: 1 })).toBeInTheDocument();
   const overview = screen.getByRole("region", { name: "书库概览" });
   for (const name of ["本周新藏", "批注回顾", "本周阅读时长", "最近阅读"]) expect(within(overview).getByRole("heading", { name })).toBeInTheDocument();
   expect(screen.getByRole("link", { name: "全部藏书" })).toHaveAttribute("href", "/library");

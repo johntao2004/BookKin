@@ -184,11 +184,11 @@ export function ArticleReaderPage() {
     };
   }, [articleId, user?.id]);
 
-  if (error) return <RequestErrorPage error={error} onRetry={() => window.location.reload()} back={<PageBackAction to="/articles">返回撷文斋</PageBackAction>} />;
+  if (error) return <RequestErrorPage error={error} onRetry={() => window.location.reload()} back={<PageBackAction to="/articles">返回文钞馆</PageBackAction>} />;
   if (!loaded) {
     return (
       <PageContainer>
-        <PageBackAction to="/articles">返回撷文斋</PageBackAction>
+        <PageBackAction to="/articles">返回文钞馆</PageBackAction>
         <Skeleton active />
       </PageContainer>
     );
@@ -367,8 +367,8 @@ function ArticleReading({
             保存记录
           </Button>
         )}
-        {user && <Button onClick={() => navigate(`/annotations/articles?write=1&sourceId=${encodeURIComponent(article.id)}`)}>写博文</Button>}
-        {canOrganizeCollections && <Button onClick={() => setCollectionOpen(true)}>加入合集</Button>}
+        {user && <Button onClick={() => navigate(`/annotations/articles?write=1&sourceId=${encodeURIComponent(article.id)}`)}>写随笔</Button>}
+        {canOrganizeCollections && <Button onClick={() => setCollectionOpen(true)}>加入选集</Button>}
         {canAnalyze && (
           <Button
             loading={busy}
@@ -399,7 +399,7 @@ function ArticleReading({
       flow: "scrolled-doc",
       contentUrl,
       label: "文章",
-      backLabel: "返回撷文斋",
+      backLabel: "返回文钞馆",
       initialLocator,
       progress: state.progress,
       annotations: state.annotations.map((entry) =>
@@ -430,7 +430,7 @@ function ArticleReading({
   if (epubError) {
     return (
       <PageContainer>
-        <PageBackAction to="/articles">返回撷文斋</PageBackAction>
+        <PageBackAction to="/articles">返回文钞馆</PageBackAction>
         <PageHeader
           eyebrow="ARTICLE"
           title={article.title}
@@ -442,7 +442,7 @@ function ArticleReading({
   if (!contentUrl) {
     return (
       <PageContainer>
-        <PageBackAction to="/articles">返回撷文斋</PageBackAction>
+        <PageBackAction to="/articles">返回文钞馆</PageBackAction>
         <Skeleton active />
       </PageContainer>
     );

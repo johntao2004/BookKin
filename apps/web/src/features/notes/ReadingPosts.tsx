@@ -51,9 +51,9 @@ export function ReadingPosts({ kind }: { kind: PostFilter }) {
   const query = usePostCollection(kind);
   const posts = query.data?.pages.flatMap(page => page.items) ?? [];
   return <>
-    {query.isPending ? <Skeleton active /> : query.isError ? <Stack spacing={2} sx={{ alignItems: "flex-start" }}><Alert severity="error">无法加载博文</Alert><Button onClick={() => void query.refetch()}>重试</Button></Stack>
-      : posts.length === 0 ? <BookCatalogEmptyState title="暂无博文" />
-        : <Box component="section" aria-label="博文列表" sx={articleGridSx}>{posts.map(post => <PostCard key={`${post.kind}:${post.id}`} post={post} />)}</Box>}
+    {query.isPending ? <Skeleton active /> : query.isError ? <Stack spacing={2} sx={{ alignItems: "flex-start" }}><Alert severity="error">无法加载随笔</Alert><Button onClick={() => void query.refetch()}>重试</Button></Stack>
+      : posts.length === 0 ? <BookCatalogEmptyState title="暂无随笔" />
+        : <Box component="section" aria-label="随笔列表" sx={articleGridSx}>{posts.map(post => <PostCard key={`${post.kind}:${post.id}`} post={post} />)}</Box>}
     {query.hasNextPage && <Button sx={{ mt: `${tokens.spacing[6]}px` }} disabled={query.isFetchingNextPage} onClick={() => void query.fetchNextPage()}>加载更多</Button>}
   </>;
 }
@@ -72,14 +72,14 @@ export function ReadingPostPage() {
   const returnTo = failed ? "/annotations" : `/annotations/${postSections[kind]}?view=posts`;
   return <PageContainer>
     <PageBackAction to={returnTo}>返回笔记</PageBackAction>
-    {!validKind ? <Alert severity="error">未找到博文</Alert> : query.isPending ? <Skeleton active /> : query.isError || !post ? <Stack spacing={2} sx={{ alignItems: "flex-start" }}><PageHeader eyebrow="BLOG POST" title="无法读取博文" /></Stack> : <>
+    {!validKind ? <Alert severity="error">未找到随笔</Alert> : query.isPending ? <Skeleton active /> : query.isError || !post ? <Stack spacing={2} sx={{ alignItems: "flex-start" }}><PageHeader eyebrow="BLOG POST" title="无法读取随笔" /></Stack> : <>
       <PageHeader eyebrow="BLOG POST" title={post.title} action={post.userId === user?.id && can("notes.edit") ? <Button variant="contained" onClick={() => setEditing(true)}>编辑</Button> : undefined} />
       <Stack direction="row" sx={{ flexWrap: "wrap", alignItems: "center", gap: `${tokens.spacing[3]}px`, mb: `${tokens.spacing[6]}px` }}>
         <Chip label={postLabels[kind]} size="small" variant="outlined" />
         <Button component={Link} to={kind === "BOOK" ? `/library/books/${post.sourceId}` : `/articles/${post.sourceId}`}>{post.sourceTitle}</Button>
         <Typography color="text.secondary" variant="body2">{post.authorName} · {date(post.updatedAt)} · {post.visibility === "PRIVATE" ? "仅自己" : "书库共享"}</Typography>
       </Stack>
-      <Box component="article" aria-label="博文正文" className={proseClass} sx={{ maxWidth: `${tokens.layout.readingMax}px`, minWidth: 0, mx: "auto" }} dangerouslySetInnerHTML={{ __html: html }} />
+      <Box component="article" aria-label="随笔正文" className={proseClass} sx={{ maxWidth: `${tokens.layout.readingMax}px`, minWidth: 0, mx: "auto" }} dangerouslySetInnerHTML={{ __html: html }} />
       {editing && <PostEditor key={`${kind}:${post.id}`} saved={post} initialKind={kind} onClose={() => setEditing(false)} onSaved={() => setEditing(false)} />}
     </>}
   </PageContainer>;
@@ -120,16 +120,16 @@ export function PostEditor({ saved, initialKind, initialSourceId, sourceTitle, a
       void queryClient.invalidateQueries({ queryKey: ["reading-posts", user?.id] });
       void queryClient.invalidateQueries({ queryKey: ["book-reviews", user?.id] });
       onSaved(post);
-    } catch (failure) { setError(failure instanceof Error ? failure.message : "博文保存失败。"); }
+    } catch (failure) { setError(failure instanceof Error ? failure.message : "随笔保存失败。"); }
     finally { setBusy(false); }
   };
-  return <Drawer anchor="right" open title={saved ? "编辑博文" : "写博文"} closeLabel="关闭博文编辑" destroyOnHidden onClose={() => !busy && onClose()}
+  return <Drawer anchor="right" open title={saved ? "编辑随笔" : "写随笔"} closeLabel="关闭随笔编辑" destroyOnHidden onClose={() => !busy && onClose()}
     className={`bk-post-editor${fullscreen ? " bk-post-editor-fullscreen" : ""}`}
     slotProps={{ paper: { sx: { width: fullscreen ? "100vw" : `min(100vw, ${tokens.layout.touchTarget * 16}px)` } } }}
-    footer={<Stack direction="row" sx={{ justifyContent: "flex-end", flexWrap: "wrap", gap: `${tokens.spacing[3]}px` }}><Button aria-pressed={fullscreen} onClick={() => setFullscreen(value => !value)}>{fullscreen ? "退出全屏" : "全屏"}</Button><Button disabled={busy} onClick={() => setPreview(value => !value)}>{preview ? "编辑" : "预览"}</Button><Button variant="contained" type="submit" form={formId} loading={busy} aria-label="保存博文">保存</Button></Stack>}>
+    footer={<Stack direction="row" sx={{ justifyContent: "flex-end", flexWrap: "wrap", gap: `${tokens.spacing[3]}px` }}><Button aria-pressed={fullscreen} onClick={() => setFullscreen(value => !value)}>{fullscreen ? "退出全屏" : "全屏"}</Button><Button disabled={busy} onClick={() => setPreview(value => !value)}>{preview ? "编辑" : "预览"}</Button><Button variant="contained" type="submit" form={formId} loading={busy} aria-label="保存随笔">保存</Button></Stack>}>
     <Box component="form" id={formId} noValidate onSubmit={(event: React.FormEvent) => { event.preventDefault(); void save(); }} sx={{ py: `${tokens.spacing[4]}px`, px: "var(--bk-drawer-gutter)", display: "flex", flexDirection: "column", gap: `${tokens.spacing[5]}px`, minWidth: 0, width: "100%", maxWidth: fullscreen ? `${tokens.layout.readingMax}px` : "none", mx: "auto", flex: 1 }}>
       {error && <Alert severity="error">{error}</Alert>}
-      {fullscreen && <Typography color="text.secondary">{draft.title || "未命名博文"} · {postLabels[draft.kind]}</Typography>}
+      {fullscreen && <Typography color="text.secondary">{draft.title || "未命名随笔"} · {postLabels[draft.kind]}</Typography>}
       <Box hidden={fullscreen} sx={{ display: fullscreen ? "none" : "grid", gap: `${tokens.spacing[5]}px` }}>
       {saved || fixedSource ? <Typography color="text.secondary">来源：{postLabels[draft.kind]} · {saved?.sourceTitle || sourceTitle || selectedBook.data?.title || selectedArticle.data?.title || "正在加载"}</Typography> : <>
         {allowKindChange && <Stack spacing={1}><Typography component="label">来源</Typography><Select label="来源" aria-label="来源" value={draft.kind} disabled={busy} onChange={event => { change({ kind: event.target.value as PostKind, sourceId: "" }); setSearch(""); }}><MenuItem value="BOOK">书籍</MenuItem><MenuItem value="ARTICLE">文章</MenuItem></Select></Stack>}
@@ -146,7 +146,7 @@ export function PostEditor({ saved, initialKind, initialSourceId, sourceTitle, a
       <Stack spacing={1}><Typography component="label">可见范围</Typography><Select label="可见范围" aria-label="可见范围" value={draft.visibility} disabled={busy} onChange={event => change({ visibility: event.target.value })}><MenuItem value="PRIVATE">仅自己</MenuItem><MenuItem value="LIBRARY">书库共享</MenuItem></Select></Stack>
       </Box>
       {can("notes.edit") && <Box><AiAssistantButton source="NOTE_DRAFT" label="AI 写作辅助" draft={draft.markdown} disabled={busy} onApply={text => change({ markdown: text })} /></Box>}
-      {preview ? <section aria-label="博文预览" className={proseClass} dangerouslySetInnerHTML={{ __html: html }} /> : <TextField className="bk-post-writing-area" label="正文（Markdown）" aria-label="博文正文" placeholder="# 阅读感想" fullWidth multiline required minRows={fullscreen ? 18 : 14} maxRows={fullscreen ? undefined : 24} disabled={busy} value={draft.markdown} slotProps={{ htmlInput: { maxLength: 500000 } }} onChange={event => change({ markdown: event.target.value })} />}
+      {preview ? <section aria-label="随笔预览" className={proseClass} dangerouslySetInnerHTML={{ __html: html }} /> : <TextField className="bk-post-writing-area" label="正文（Markdown）" aria-label="随笔正文" placeholder="# 阅读感想" fullWidth multiline required minRows={fullscreen ? 18 : 14} maxRows={fullscreen ? undefined : 24} disabled={busy} value={draft.markdown} slotProps={{ htmlInput: { maxLength: 500000 } }} onChange={event => change({ markdown: event.target.value })} />}
     </Box>
   </Drawer>;
 }

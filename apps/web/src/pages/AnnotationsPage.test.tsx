@@ -58,7 +58,7 @@ describe("AnnotationsPage", () => {
   it("groups annotations by book and opens the selected book's notes", async () => {
     render(<TestProviders initialPath="/annotations/books?view=annotations"><SearchProbe /><NotesRoutes /></TestProviders>);
 
-    expect(await screen.findByRole("heading", { name: "札记轩" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "读书录" })).toBeInTheDocument();
     await waitFor(() => expect(screen.getByTestId("route-search")).toHaveTextContent("?view=annotations"));
     expect(screen.queryByText("PRIVATE NOTES")).not.toBeInTheDocument();
     expect(await screen.findByRole("button", { name: `查看《${demoBooks[0].title}》的阅读札记` })).toBeInTheDocument();
@@ -132,7 +132,7 @@ describe("AnnotationsPage", () => {
     const captureKeys = (keys: unknown[][]) => { queryKeys = keys; };
     render(<TestProviders initialPath="/annotations/articles?view=annotations&filter=recent"><SearchProbe /><QueryKeyProbe onKeys={captureKeys} /><NotesRoutes /></TestProviders>);
 
-    expect(await screen.findByRole("heading", { name: "札记轩" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "读书录" })).toBeInTheDocument();
     expect(api.listAnnotationBooks).not.toHaveBeenCalled();
     fireEvent.click(await screen.findByRole("button", { name: "查看《潮汐之间》的阅文札记" }));
 

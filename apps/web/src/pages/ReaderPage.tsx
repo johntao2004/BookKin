@@ -297,7 +297,7 @@ export function ReaderWorkspace({ source }: { source?: IndependentReaderSource }
         bookmarkBusy={bookmarkBusy || !currentLocator || (!source && annotationsQuery.isPending)}
         privateActions={!guest && canAnnotate}
         onBack={returnToLibrary}
-        backLabel={source?.backLabel ?? (libraryReturnState ? "返回虚拟书库" : user ? "返回全部书籍" : "返回书库")}
+        backLabel={source?.backLabel ?? (libraryReturnState ? "返回书楼漫游" : user ? "返回全部书籍" : "返回书库")}
         onOpenTableOfContents={() => setTocOpen(true)}
         onToggleBookmark={() => void toggleBookmark()}
         onOpenSettings={(event: any) => setSettingsAnchor(event.currentTarget)}

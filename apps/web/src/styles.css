@@ -1642,6 +1642,27 @@ textarea.ant-input {
 .bk-drawer .ant-drawer-footer { padding: var(--spacing-4) var(--bk-drawer-gutter); }
 @media (max-width: 767px) { .bk-drawer { --bk-drawer-gutter: var(--spacing-4); } }
 
+/* A single icon/label grid for touch navigation, at both phone and tablet widths. */
+.bk-navigation-drawer .bk-list-item-button {
+  min-height: var(--layout-touch-target);
+  padding: var(--spacing-2) var(--spacing-3);
+}
+.bk-navigation-drawer .bk-list-item-icon {
+  min-width: var(--spacing-6);
+  width: var(--spacing-6);
+  flex-shrink: 0;
+}
+.bk-navigation-drawer [role="group"] .bk-list-item-button {
+  padding-inline-start: calc(var(--spacing-3) + var(--spacing-6) + var(--spacing-3));
+}
+.bk-navigation-row { border-radius: var(--radius-md); }
+.bk-navigation-row-active { background: var(--color-surface-soft); }
+.bk-navigation-row > .bk-list-item-button-selected { background: transparent; }
+.bk-navigation-drawer .bk-list-item-button:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus);
+}
+
 .bk-settings-list {
   display: flex;
   flex-direction: column;

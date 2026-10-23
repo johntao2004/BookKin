@@ -61,7 +61,7 @@ export function AddToArticleCollectionDialog({ articleId, articleTitle, articleV
         return;
       }
       if (latest.visibility === "MEMBERS" && articleVisibility === "PRIVATE") {
-        setNotice("这篇文章仅自己可见，不能加入书库共享合集。");
+        setNotice("这篇文章仅自己可见，不能加入书库共享选集。");
         return;
       }
       const result = await articleCollections.addArticles(collectionId, [articleId], latest.revision);
@@ -69,7 +69,7 @@ export function AddToArticleCollectionDialog({ articleId, articleTitle, articleV
       onSaved?.(result, `已将《${articleTitle}》加入“${result.title}”`);
       onClose();
     } catch (reason) {
-      setError(articleCollectionError(reason, "加入合集失败，请重试。"));
+      setError(articleCollectionError(reason, "加入选集失败，请重试。"));
     } finally {
       setBusyId(null);
     }
@@ -86,7 +86,7 @@ export function AddToArticleCollectionDialog({ articleId, articleTitle, articleV
       onClose();
     } catch (reason) {
       await queryClient.invalidateQueries({ queryKey: ["article-collections"] });
-      setError(`私人合集已创建，但《${articleTitle}》没有加入。${articleCollectionError(reason, "请重新选择合集后重试。")}`);
+      setError(`私人选集已创建，但《${articleTitle}》没有加入。${articleCollectionError(reason, "请重新选择选集后重试。")}`);
     } finally {
       setBusyId(null);
     }
@@ -101,21 +101,21 @@ export function AddToArticleCollectionDialog({ articleId, articleTitle, articleV
 
   return <>
     <Dialog open={open && !createOpen} onClose={close} fullWidth maxWidth="sm">
-      <DialogTitle>将《{articleTitle}》加入合集</DialogTitle>
+      <DialogTitle>将《{articleTitle}》加入选集</DialogTitle>
       <DialogContent>
         <Stack sx={{ gap: `${tokens.spacing[4]}px` }}>
           {error && <Alert severity="error">{error}</Alert>}
           {notice && <Alert severity="info">{notice}</Alert>}
-          <TextField label="搜索合集" value={query} onChange={(event: any) => setQuery(event.target.value)} placeholder="按名称或说明搜索" />
+          <TextField label="搜索选集" value={query} onChange={(event: any) => setQuery(event.target.value)} placeholder="按名称或说明搜索" />
           {collectionsQuery.isPending ? (
             <Stack sx={{ alignItems: "center", py: `${tokens.spacing[8]}px` }}><CircularProgress /></Stack>
           ) : collectionsQuery.isError ? (
             <Stack sx={{ gap: `${tokens.spacing[3]}px`, alignItems: "flex-start" }}>
-              <Alert severity="error">可加入的合集暂时无法读取。</Alert>
+              <Alert severity="error">可加入的选集暂时无法读取。</Alert>
               <Button onClick={() => void collectionsQuery.refetch()}>重试</Button>
             </Stack>
           ) : collections.length ? (
-            <List aria-label="可加入的合集" sx={{ p: 0, border: 1, borderColor: "divider", borderRadius: `${tokens.radius.lg}px`, overflow: "hidden" }}>
+            <List aria-label="可加入的选集" sx={{ p: 0, border: 1, borderColor: "divider", borderRadius: `${tokens.radius.lg}px`, overflow: "hidden" }}>
               {collections.map((collection, index) => {
                 const blocked = articleVisibility === "PRIVATE" && collection.visibility === "MEMBERS";
                 return <ListItem key={collection.id} divider={index < collections.length - 1} secondaryAction={
@@ -125,15 +125,15 @@ export function AddToArticleCollectionDialog({ articleId, articleTitle, articleV
                 }>
                   <ListItemText primary={collection.title} secondary={<Stack component="span" direction="row" sx={{ alignItems: "center", flexWrap: "wrap", gap: `${tokens.spacing[2]}px`, mt: `${tokens.spacing[1]}px` }}>
                     <Typography component="span" variant="caption" color="text.secondary">{collection.visibility === "PRIVATE" ? "仅自己" : "书库共享"} · {collection.articleCount} 篇文章</Typography>
-                    {blocked && <Typography component="span" variant="caption" color="warning.main">仅自己的文章不能加入共享合集</Typography>}
+                    {blocked && <Typography component="span" variant="caption" color="warning.main">仅自己的文章不能加入共享选集</Typography>}
                   </Stack>} />
                 </ListItem>;
               })}
             </List>
           ) : (
-            <Typography color="text.secondary" sx={{ py: `${tokens.spacing[5]}px`, textAlign: "center" }}>{query ? "没有找到匹配的合集" : "暂无可加入的私人合集"}</Typography>
+            <Typography color="text.secondary" sx={{ py: `${tokens.spacing[5]}px`, textAlign: "center" }}>{query ? "没有找到匹配的选集" : "暂无可加入的私人选集"}</Typography>
           )}
-          <Button variant={collections.length ? "outlined" : "contained"} onClick={() => { setError(""); setCreateOpen(true); }}>新建私人合集</Button>
+          <Button variant={collections.length ? "outlined" : "contained"} onClick={() => { setError(""); setCreateOpen(true); }}>新建私人选集</Button>
         </Stack>
       </DialogContent>
       <DialogActions><Button onClick={close} disabled={Boolean(busyId)}>关闭</Button></DialogActions>

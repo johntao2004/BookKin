@@ -14,13 +14,13 @@ export function VirtualLibraryRoute() {
   const verified = query.isSuccess && query.isFetchedAfterMount;
 
   if (query.isError) return <PageContainer><PageBackAction to="/library/all">返回藏书库</PageBackAction><Stack spacing={2}>
-    <Alert severity="error">无法确认虚拟书库是否已启用，请稍后重试。</Alert>
+    <Alert severity="error">无法确认书楼漫游是否已启用，请稍后重试。</Alert>
     <Button onClick={() => void query.refetch()}>重试</Button>
   </Stack></PageContainer>;
-  if (!verified || !query.data) return <PageContainer><PageBackAction to="/library/all">返回藏书库</PageBackAction><div role="status" aria-label="正在读取虚拟书库设置"><Skeleton active /></div></PageContainer>;
+  if (!verified || !query.data) return <PageContainer><PageBackAction to="/library/all">返回藏书库</PageBackAction><div role="status" aria-label="正在读取书楼漫游设置"><Skeleton active /></div></PageContainer>;
   if (!query.data.virtualLibraryEnabled) return <PageContainer>
     <PageBackAction to="/library/all">返回藏书库</PageBackAction>
-    <PageHeader eyebrow="VIRTUAL LIBRARY" title="虚拟书库未启用" />
+    <PageHeader eyebrow="VIRTUAL LIBRARY" title="书楼漫游未启用" />
   </PageContainer>;
   return <Experience />;
 }

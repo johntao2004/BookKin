@@ -46,7 +46,7 @@ class ReadingPostsNativePersistenceTest {
                     var articleService=new ArticleService(db,users,null,null,null,new ObjectMapper());
                     var service=new ReadingPostsService(new ArticlePostRepository(db),bookService,catalog,articleService,users);
                     var old=bookService.create(book,"已有读后长文","# 旧内容",null,()->"alice");
-                    var post=service.create(ReadingPostsService.Kind.ARTICLE,article,"文章博文","# 标题\n\n"+"正文".repeat(1000),null,()->"alice");
+                    var post=service.create(ReadingPostsService.Kind.ARTICLE,article,"文章随笔","# 标题\n\n"+"正文".repeat(1000),null,()->"alice");
                     assertEquals(ReviewVisibility.PRIVATE,post.visibility());
                     assertEquals(ReadingPostsService.Kind.ARTICLE,post.kind());
                     assertTrue(service.get(post.kind(),post.id(),()->"alice").markdown().length()>1000);
@@ -63,7 +63,7 @@ class ReadingPostsNativePersistenceTest {
                     assertEquals(2,changed.revision());
                     assertEquals("## 新内容",service.get(post.kind(),post.id(),()->"bob").markdown());
                     assertEquals(409,assertThrows(ApiException.class,()->service.update(post.kind(),post.id(),"过期","旧稿",null,1,()->"alice")).status().value());
-                    var hidden=service.create(ReadingPostsService.Kind.ARTICLE,privateArticle,"显式共享的博文","私有来源",ReviewVisibility.LIBRARY,()->"alice");
+                    var hidden=service.create(ReadingPostsService.Kind.ARTICLE,privateArticle,"显式共享的随笔","私有来源",ReviewVisibility.LIBRARY,()->"alice");
                     assertEquals(404,assertThrows(ApiException.class,()->service.get(hidden.kind(),hidden.id(),()->"bob")).status().value());
                     assertEquals(404,assertThrows(ApiException.class,()->service.create(ReadingPostsService.Kind.ARTICLE,privateArticle,"越权来源","正文",null,()->"bob")).status().value());
                     assertEquals(400,assertThrows(ApiException.class,()->service.create(ReadingPostsService.Kind.ALL,article,"无效类型","正文",null,()->"alice")).status().value());
@@ -79,7 +79,7 @@ class ReadingPostsNativePersistenceTest {
                     second.items().forEach(item->assertTrue(ids.add(item.id())));
                     assertEquals(35,ids.size());
                     assertNull(second.nextCursor());
-                    var bobsPost=service.create(ReadingPostsService.Kind.ARTICLE,article,"已有公开来源的私人博文","自己的既有思考",null,()->"bob");
+                    var bobsPost=service.create(ReadingPostsService.Kind.ARTICLE,article,"已有公开来源的私人随笔","自己的既有思考",null,()->"bob");
                     db.execute("update articles set visibility='PRIVATE' where id=?",article);
                     assertEquals("原文不可用",service.get(bobsPost.kind(),bobsPost.id(),()->"bob").sourceTitle());
                     assertEquals("自己的既有思考",service.get(bobsPost.kind(),bobsPost.id(),()->"bob").markdown());

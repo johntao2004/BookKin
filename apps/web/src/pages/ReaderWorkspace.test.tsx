@@ -25,7 +25,7 @@ vi.mock("../components/readers/EpubDocumentReader", () => ({
 function independentSource(): IndependentReaderSource {
   return {
     id: "article-shared", title: "文章阅读", author: "作者", format: "EPUB", contentUrl: "blob:article",
-    flow: "scrolled-doc", label: "文章", backLabel: "返回撷文斋", progress: 0.1, annotations: [], onBack: vi.fn(), onPosition: vi.fn(),
+    flow: "scrolled-doc", label: "文章", backLabel: "返回文钞馆", progress: 0.1, annotations: [], onBack: vi.fn(), onPosition: vi.fn(),
     createAnnotation: vi.fn(async draft => ({ ...draft, id: "new-entry", bookId: "article-shared", createdAt: "2026-10-20T00:00:00Z" })),
     deleteAnnotation: vi.fn(async () => undefined),
   };

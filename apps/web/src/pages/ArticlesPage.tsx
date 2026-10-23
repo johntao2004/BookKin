@@ -154,7 +154,7 @@ export function ArticlesPage() {
     <PageContainer>
       <PageHeader
         eyebrow="ARTICLES"
-        title="撷文斋"
+        title="文钞馆"
       />
       <div className="bk-content-stack bk-articles-content">
         {error && (
@@ -202,7 +202,7 @@ export function ArticlesPage() {
                   }}
                   status={article.visibility === "PUBLIC" ? "公开" : "私有"}
                   actions={[
-                    ...(can("articles.collections.edit") ? [{ label: "加入合集", onClick: () => setCollectionArticle(article) }] : []),
+                    ...(can("articles.collections.edit") ? [{ label: "加入选集", onClick: () => setCollectionArticle(article) }] : []),
                     ...(manager ? [
                     {
                       label: "编辑文章",

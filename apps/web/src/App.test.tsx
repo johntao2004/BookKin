@@ -51,7 +51,7 @@ describe("App route permissions", () => {
     vi.spyOn(articles, "list").mockResolvedValue([]);
     vi.spyOn(readingPosts, "list").mockResolvedValue({ items: [], nextCursor: null });
     render(<TestProviders initialPath={initialPath}><RouteLocationProbe /><App /></TestProviders>);
-    expect(await screen.findByRole("heading", { name: "札记轩", level: 1 })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "读书录", level: 1 })).toBeInTheDocument();
     expect(screen.getByTestId("route-location")).toHaveTextContent(expectedPath);
     expect(screen.queryByRole("tab")).not.toBeInTheDocument();
     expect(screen.queryByText("书籍+文章")).not.toBeInTheDocument();
@@ -62,12 +62,12 @@ describe("App route permissions", () => {
     const stats = vi.spyOn(api, "getWeeklyReadingStats");
     const publicBooks = vi.spyOn(api, "listDisplayBooks").mockResolvedValue({ items: [], revision: 1 });
     render(<TestProviders initialPath="/library?scope=all"><App /></TestProviders>);
-    expect(await screen.findByRole("heading", { name: "藏书阁", level: 1 })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "藏书楼", level: 1 })).toBeInTheDocument();
     await waitFor(() => expect(publicBooks).toHaveBeenCalled());
     expect(privateBooks).not.toHaveBeenCalled();
     expect(stats).not.toHaveBeenCalled();
     expect(screen.queryByRole("button", { name: "上传书籍" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "撷文斋" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "文钞馆" })).not.toBeInTheDocument();
   });
 
   it.each(["MEMBER", "ADMIN", "OWNER"])("opens the merged library for %s and retains management permissions", async role => {
@@ -76,9 +76,9 @@ describe("App route permissions", () => {
     render(<TestProviders initialPath="/library"><App /></TestProviders>);
     expect(await screen.findByRole("heading", { name: "全部藏书" })).toBeInTheDocument();
     expect(Boolean(screen.queryByRole("button", { name: "上传书籍" }))).toBe(role !== "MEMBER");
-    expect(screen.queryByRole("link", { name: "知识图谱" })).not.toBeInTheDocument();
-    fireEvent.mouseEnter(screen.getByRole("link", { name: "藏书阁" }));
-    expect(await screen.findByRole("link", { name: "知识图谱" })).toHaveAttribute("href", "/knowledge-graph");
+    expect(screen.queryByRole("link", { name: "学脉图" })).not.toBeInTheDocument();
+    fireEvent.mouseEnter(screen.getByRole("link", { name: "藏书楼" }));
+    expect(await screen.findByRole("link", { name: "学脉图" })).toHaveAttribute("href", "/knowledge-graph");
   });
 
   it("blocks anonymous overview access before private requests mount", async () => {
@@ -96,7 +96,7 @@ describe("App route permissions", () => {
     sessionStorage.setItem("bookkin-demo-session", JSON.stringify({ ...member, role }));
     vi.spyOn(api, "listBooks").mockResolvedValue({ items: [] });
     render(<TestProviders initialPath="/library/overview"><App /></TestProviders>);
-    expect(await screen.findByRole("heading", { name: "阁中一览", level: 1 })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "楼中一览", level: 1 })).toBeInTheDocument();
     expect(await screen.findByRole("region", { name: "书库概览" })).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "全部藏书" })).not.toBeInTheDocument();
   });
@@ -119,7 +119,7 @@ describe("App route permissions", () => {
     render(<TestProviders initialPath={path}><><App /><RouteLocationProbe /><ReturnToProbe /></></TestProviders>);
 
     expect(await screen.findByRole("heading", { name: "这间书房暂未为你开门" })).toBeInTheDocument();
-    expect(screen.queryByRole("heading", { name: "撷文斋" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "文钞馆" })).not.toBeInTheDocument();
     expect(list).not.toHaveBeenCalled();
     expect(get).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole("link", { name: "登录" }));
@@ -132,9 +132,9 @@ describe("App route permissions", () => {
     const list = vi.spyOn(articles, "list").mockResolvedValue([]);
     render(<TestProviders initialPath="/articles"><App /></TestProviders>);
 
-    expect(await screen.findByRole("heading", { name: "撷文斋" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "文钞馆" })).toBeInTheDocument();
     await waitFor(() => expect(list).toHaveBeenCalled());
-    expect(screen.getByRole("link", { name: "撷文斋" })).toHaveAttribute("href", "/articles");
+    expect(screen.getByRole("link", { name: "文钞馆" })).toHaveAttribute("href", "/articles");
   });
 
   it("blocks a signed-out direct visit before private library content mounts", async () => {
@@ -161,9 +161,9 @@ describe("App route permissions", () => {
   it("keeps the explicit public discovery route available anonymously", async () => {
     render(<TestProviders initialPath="/library"><App /></TestProviders>);
 
-    expect(await screen.findByRole("heading", { name: "藏书阁", level: 1 })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "藏书楼", level: 1 })).toBeInTheDocument();
     expect(screen.queryByText("401 · 需要登录")).not.toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "撷文斋" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "文钞馆" })).not.toBeInTheDocument();
   });
 
   it("redirects legacy category routes into the signed-in library and preserves filters", async () => {

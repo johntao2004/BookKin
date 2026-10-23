@@ -32,7 +32,7 @@ export function LibraryOverviewPage() {
   if (!user) return null;
   const featured = overviewQuery.data?.featuredBook;
   return <PageContainer>
-    <PageHeader eyebrow="OVERVIEW" title="阁中一览" action={<Button component={Link} to="/library">全部藏书</Button>} />
+    <PageHeader eyebrow="OVERVIEW" title="楼中一览" action={<Button component={Link} to="/library">全部藏书</Button>} />
     {overviewQuery.isError && !overviewQuery.data ? <Alert severity="error" action={<Button onClick={() => void overviewQuery.refetch()}>重试</Button>}>阅读概览暂时无法读取。</Alert> : (
         <Box
           id="library-overview"

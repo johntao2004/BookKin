@@ -71,9 +71,9 @@ export function NotesFeed({ kind }: { kind: PostFilter }) {
             { title: "日期", dataIndex: "updatedAt", width: tokens.spacing[24], render: value => new Date(value).toLocaleDateString("zh-CN") },
             { title: "原文", key: "location", width: tokens.spacing[24], render: (_, note) => <Button component={Link} to={noteSourceHref(note)}>原文</Button> },
           ]} />
-          {postItems.length > 0 && <Box sx={{ mt: `${tokens.spacing[6]}px` }}><NotesMasonry label="博文" items={items.filter(item => item.key.startsWith("post:"))} /></Box>}
+          {postItems.length > 0 && <Box sx={{ mt: `${tokens.spacing[6]}px` }}><NotesMasonry label="随笔" items={items.filter(item => item.key.startsWith("post:"))} /></Box>}
         </> : <NotesMasonry label="阅读札记卡片" items={items} />}
-    {kind === "ALL" && posts.hasNextPage && <Button disabled={posts.isFetchingNextPage} onClick={() => void posts.fetchNextPage()}>更多博文</Button>}
+    {kind === "ALL" && posts.hasNextPage && <Button disabled={posts.isFetchingNextPage} onClick={() => void posts.fetchNextPage()}>更多随笔</Button>}
   </>;
 }
 

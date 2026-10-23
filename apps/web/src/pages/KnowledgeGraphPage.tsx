@@ -1,5 +1,5 @@
 import { usePermissions } from "../auth/permissions";
-// 藏书阁图谱只显示书籍正文的知识点和关联；分析由用户显式触发。
+// 藏书楼图谱只显示书籍正文的知识点和关联；分析由用户显式触发。
 // The library graph contains book evidence only; analysis starts explicitly on user action.
 import { type NetworkGraphOptions } from '@ant-design/graphs';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -112,7 +112,7 @@ export function KnowledgeGraphPage() {
   const pending = catalog.isPending || knowledgeQuery.isPending;
   const error = catalog.isError || knowledgeQuery.isError;
   return <PageContainer>
-    <PageHeader eyebrow="KNOWLEDGE GRAPH" title="知识图谱" action={
+    <PageHeader eyebrow="KNOWLEDGE GRAPH" title="学脉图" action={
       <div className="bk-knowledge-header-actions">
         <div className="bk-knowledge-controls" role="group" aria-label="搜索和视图操作">
           <TextField className="bk-knowledge-search" slotProps={{ input: { startAdornment: <SearchRounded fontSize="small" /> } }} aria-label="搜索知识点或书籍" placeholder="搜索知识点、书名或作者" allowClear value={query} onChange={event => { setQuery(event.target.value); setPage(1); setSelectedId(null); }} />
@@ -124,7 +124,7 @@ export function KnowledgeGraphPage() {
     <section className="bk-knowledge" aria-label="正文知识网络">
       <div className={`bk-knowledge-workspace${selected ? ' has-selection' : ''}`}>
         <div className="bk-knowledge-canvas" aria-label="可拖动缩放的知识点网络">
-          {error ? <Alert type="error" showIcon title="暂时无法加载知识图谱" action={<Button onClick={() => { void catalog.refetch(); void knowledgeQuery.refetch(); }}>重试</Button>} />
+          {error ? <Alert type="error" showIcon title="暂时无法加载学脉图" action={<Button onClick={() => { void catalog.refetch(); void knowledgeQuery.refetch(); }}>重试</Button>} />
             : pending ? <Skeleton active paragraph={{ rows: 10 }} />
             : !data.nodes.length ? <div className="bk-knowledge-empty"><Empty description={query ? '没有匹配的正文知识点' : '还没有正文知识点'} />{query ? <Button onClick={() => setQuery('')}>清除搜索</Button> : null}</div>
             : <><KnowledgeNetwork key={mode} options={options} /><div className="bk-knowledge-zoom"><Button aria-label="放大图谱" onClick={() => void graphRef.current?.zoomBy(1.25)}>＋</Button><Button aria-label="缩小图谱" onClick={() => void graphRef.current?.zoomBy(0.8)}>−</Button><Button onClick={() => void graphRef.current?.fitView()}>适应</Button></div></>}

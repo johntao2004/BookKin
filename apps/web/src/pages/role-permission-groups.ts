@@ -2,8 +2,8 @@ import { permissionCatalog } from "../auth/permissions";
 import { settingsGroups } from "./settings-navigation";
 
 const contentPages = [
-  ["藏书阁", "藏书阁"], ["阅读器", "阅读器"], ["书单", "书目"], ["知识图谱", "知识图谱"],
-  ["虚拟书库", "虚拟书库"], ["文章收藏", "文章与合集"], ["阅读笔记", "阅读笔记"], ["禁书库", "秘藏阁"],
+  ["藏书楼", "藏书楼"], ["阅读器", "阅读器"], ["书单", "书目"], ["学脉图", "学脉图"],
+  ["书楼漫游", "书楼漫游"], ["文章收藏", "文钞馆"], ["阅读笔记", "读书录"], ["禁书库", "秘阁"],
 ];
 const sections = [
   { title: "内容与阅读", value: "content", pages: contentPages.map(([value, title]) => ({ value, title })) },
