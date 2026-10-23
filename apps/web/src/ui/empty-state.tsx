@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { Stack, Typography } from "./primitives";
 import { tokens } from "../theme/generated-tokens";
 
-// 空集合共用知识图谱采用的 Ant Design 空态插图。
+// 空集合共用学脉图采用的 Ant Design 空态插图。
 /** Reuse the knowledge graph's Ant Design illustration across empty collections. */
 export function EmptyStateIllustration({ compact = false }: { compact?: boolean }) {
   return <Empty image={Empty.PRESENTED_IMAGE_DEFAULT} description={false} style={{ margin: 0 }}

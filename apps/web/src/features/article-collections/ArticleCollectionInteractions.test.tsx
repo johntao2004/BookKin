@@ -59,7 +59,7 @@ describe("article collection interactions", () => {
     const view = render(<TestProviders><AddToArticleCollectionDialog articleId={articlePrivate.id} articleTitle={articlePrivate.title} articleVisibility="PRIVATE" open onClose={vi.fn()} onSaved={onSaved} /></TestProviders>);
     expect(await screen.findByText("周末阅读")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "不可加入" })).toBeDisabled();
-    expect(screen.getByText("仅自己的文章不能加入共享合集")).toBeInTheDocument();
+    expect(screen.getByText("仅自己的文章不能加入共享选集")).toBeInTheDocument();
     expect(add).not.toHaveBeenCalled();
     view.unmount();
 
@@ -86,7 +86,7 @@ describe("article collection interactions", () => {
     expect(await screen.findByText("第二篇")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "加入" }));
     await waitFor(() => expect(add).toHaveBeenCalledWith(initial.id, [articleB.id], initial.revision));
-    await waitFor(() => expect(changed).toHaveBeenCalledWith(expect.objectContaining({ revision: 3 }), expect.stringContaining("加入合集")));
+    await waitFor(() => expect(changed).toHaveBeenCalledWith(expect.objectContaining({ revision: 3 }), expect.stringContaining("加入选集")));
 
     fireEvent.click(screen.getByRole("button", { name: "下移 第一篇" }));
     fireEvent.click(screen.getByRole("button", { name: "保存顺序" }));
@@ -94,7 +94,7 @@ describe("article collection interactions", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "移出 第一篇" }));
     await waitFor(() => expect(remove).toHaveBeenCalledWith(initial.id, articleA.id, 4));
-    await waitFor(() => expect(changed).toHaveBeenCalledWith(expect.objectContaining({ revision: 5 }), expect.stringContaining("移出合集")));
+    await waitFor(() => expect(changed).toHaveBeenCalledWith(expect.objectContaining({ revision: 5 }), expect.stringContaining("移出选集")));
     expect(source).toHaveBeenCalled();
   });
 

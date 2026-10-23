@@ -15,7 +15,7 @@ const show = () => render(<TestProviders><ConfigProvider theme={{ token: { motio
 beforeEach(() => { vi.restoreAllMocks(); vi.spyOn(vaultAccessApi, "lock").mockResolvedValue(undefined); vi.spyOn(vaultAccessApi, "renew").mockResolvedValue(state({ verified: true })); });
 it("blocks an unconfigured or disabled feature without mounting vault content", async () => {
   vi.spyOn(vaultAccessApi, "status").mockResolvedValue(state({ enabled: false })); show();
-  expect(await screen.findByText("秘藏阁尚未启用")).toBeVisible(); expect(screen.queryByText("加密书库内容")).not.toBeInTheDocument();
+  expect(await screen.findByText("秘阁尚未启用")).toBeVisible(); expect(screen.queryByText("加密书库内容")).not.toBeInTheDocument();
 });
 it("guides an unbound user through password, QR, confirmation and saved backup codes", async () => {
   const status = vi.spyOn(vaultAccessApi, "status").mockResolvedValue(state({ bound: false }));

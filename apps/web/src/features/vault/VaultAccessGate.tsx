@@ -97,11 +97,11 @@ export function VaultAccessGate({ children }: { children: ReactNode }) {
   const verificationDialog = data?.enabled && data.configured && data.bound && !codes.length;
   if (query.isFetchedAfterMount && data?.enabled && data.configured && data.verified && !closed && !codes.length && !reset && !query.isError) return children;
   return <PageContainer>
-    <PageHeader eyebrow="PRIVATE VAULT" title="秘藏阁" />
+    <PageHeader eyebrow="PRIVATE VAULT" title="秘阁" />
     <div className="bk-content-stack">
       {error && !verificationDialog && <Alert type="error" title={error} closable onClose={() => setError("")} />}
-      {query.isPending ? <Skeleton active /> : query.isError ? <Alert type="error" title="无法确认秘藏阁访问权限。" action={<Button onClick={() => void query.refetch()}>重试</Button>} />
-        : !data?.enabled ? <Alert type="info" title="秘藏阁尚未启用" description="请联系主人在管理设置的安全设置中启用。" />
+      {query.isPending ? <Skeleton active /> : query.isError ? <Alert type="error" title="无法确认秘阁访问权限。" action={<Button onClick={() => void query.refetch()}>重试</Button>} />
+        : !data?.enabled ? <Alert type="info" title="秘阁尚未启用" description="请联系主人在管理设置的安全设置中启用。" />
         : !data.configured ? <Alert type="warning" title="身份验证器服务尚未配置，请联系主人。" />
         : codes.length ? <Card title="保存 2FA 备用码">
           <div className="bk-content-stack">
@@ -116,7 +116,7 @@ export function VaultAccessGate({ children }: { children: ReactNode }) {
         </Card>
         : !data.bound ? <Card title="绑定身份验证器">
           <div className="bk-content-stack">
-            <p>进入秘藏阁前需要绑定支持 TOTP 的身份验证器。绑定成功后，每次重新进入均需验证动态码。</p>
+            <p>进入秘阁前需要绑定支持 TOTP 的身份验证器。绑定成功后，每次重新进入均需验证动态码。</p>
             {!enrollment ? <Form layout="vertical" onFinish={() => void run(async active => { const value = await vaultAccessApi.begin(password); if (!active()) return; setEnrollment(value); setPassword(""); setCode(""); })}>
               <Form.Item label="当前登录密码"><Input.Password aria-label="当前登录密码" value={password} autoComplete="current-password" onChange={e => setPassword(e.target.value)} /></Form.Item>
               <Button type="primary" htmlType="submit" disabled={!password} loading={busy}>获取绑定二维码</Button>

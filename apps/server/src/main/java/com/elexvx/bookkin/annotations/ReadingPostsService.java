@@ -87,7 +87,7 @@ public class ReadingPostsService {
         var existing=articles.visible(id,user.id()).filter(post -> post.userId().equals(user.id())).orElseThrow(this::missing);
         String label=ownedSourceTitle(kind,existing.sourceId(),principal);
         var saved=articles.update(id,user.id(),revision,title.trim(),markdown,visibility==null ? ReviewVisibility.PRIVATE : visibility)
-                .orElseThrow(() -> ApiException.conflict("REVISION_CONFLICT","博文已在其他页面更新，请刷新后重试。"));
+                .orElseThrow(() -> ApiException.conflict("REVISION_CONFLICT","随笔已在其他页面更新，请刷新后重试。"));
         return decorate(article(saved),label,true);
     }
 
@@ -111,7 +111,7 @@ public class ReadingPostsService {
         if (title==null || title.isBlank() || title.length()>200) throw ApiException.badRequest("POST_TITLE_INVALID","请填写不超过 200 字的标题。");
         if (markdown==null || markdown.isBlank() || markdown.length()>500_000) throw ApiException.badRequest("POST_BODY_INVALID","请填写不超过 500000 字的正文。");
     }
-    private ApiException missing() { return ApiException.notFound("POST_NOT_FOUND","博文不存在或无权访问。"); }
+    private ApiException missing() { return ApiException.notFound("POST_NOT_FOUND","随笔不存在或无权访问。"); }
     private Post book(BookReview row) { return new Post(row.id(),Kind.BOOK,row.bookId(),null,row.userId(),row.authorName(),row.title(),row.markdown(),null,row.visibility(),row.revision(),row.createdAt(),row.updatedAt()); }
     private Post article(ArticlePostRepository.ArticlePost row) { return new Post(row.id(),Kind.ARTICLE,row.sourceId(),null,row.userId(),row.authorName(),row.title(),row.markdown(),null,row.visibility(),row.revision(),row.createdAt(),row.updatedAt()); }
     private Post decorate(Post post,String sourceTitle,boolean body) { return new Post(post.id(),post.kind(),post.sourceId(),sourceTitle,post.userId(),post.authorName(),post.title(),body?post.markdown():null,post.markdown().substring(0,Math.min(240,post.markdown().length())),post.visibility(),post.revision(),post.createdAt(),post.updatedAt()); }

@@ -30,7 +30,7 @@ it("removes revoked page links and denies a bookmarked page", () => {
   login("MEMBER");
   sessionStorage.setItem("bookkin-demo-role-permissions", JSON.stringify({ revision: 1, grants: { OWNER: defaultGrants("OWNER"), ADMIN: defaultGrants("ADMIN"), MEMBER: defaultGrants("MEMBER").filter(p => p !== "articles.view") } }));
   render(<TestProviders initialPath="/articles"><AppShell><p>文章数据</p></AppShell></TestProviders>);
-  expect(screen.queryByRole("link", { name: "撷文斋" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("link", { name: "文钞馆" })).not.toBeInTheDocument();
   expect(screen.queryByText("文章数据")).not.toBeInTheDocument(); expect(screen.getByText("403 · 权限受限")).toBeInTheDocument();
 });
 it("allows a page while separately denying its write action", () => {
@@ -48,12 +48,12 @@ it("shows role ceilings and recursively updates dependent page/action grants in 
   expect(screen.getByRole("checkbox", { name: "成员 · 重命名与写回文件" })).toBeDisabled();
   fireEvent.click(library);
   fireEvent.mouseDown(screen.getByRole("combobox", { name: "选择权限页面" }));
-  fireEvent.click(await screen.findByText("知识图谱", { exact: true }));
-  expect(screen.getByRole("checkbox", { name: "管理员 · 查看书籍知识图谱" })).not.toBeChecked();
+  fireEvent.click(await screen.findByText("学脉图", { exact: true }));
+  expect(screen.getByRole("checkbox", { name: "管理员 · 查看书籍学脉图" })).not.toBeChecked();
   expect(screen.getByRole("checkbox", { name: "管理员 · 分析书籍正文" })).not.toBeChecked();
   fireEvent.click(screen.getByRole("checkbox", { name: "管理员 · 分析书籍正文" }));
   fireEvent.mouseDown(screen.getByRole("combobox", { name: "选择权限页面" }));
-  fireEvent.click(await screen.findByText("藏书阁", { exact: true }));
+  fireEvent.click(await screen.findByText("藏书楼", { exact: true }));
   expect(screen.getByRole("checkbox", { name: "管理员 · 全部藏书与书籍详情" })).toBeChecked();
   expect(screen.getByRole("checkbox", { name: "管理员 · 上传书籍" })).not.toBeChecked();
   // Draft edits never save until the explicit confirmation action.

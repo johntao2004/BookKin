@@ -16,7 +16,7 @@ it("keeps the catalog independent of overview data and removes the visibility sw
   const stats = vi.spyOn(api, "getWeeklyReadingStats");
   const annotations = vi.spyOn(api, "listAnnotations");
   render(<TestProviders initialPath="/library"><LibraryPage /></TestProviders>);
-  expect(await screen.findByRole("heading", { name: "藏书阁", level: 1 })).toBeInTheDocument();
+  expect(await screen.findByRole("heading", { name: "藏书楼", level: 1 })).toBeInTheDocument();
   expect(screen.getByRole("heading", { name: "全部藏书", level: 2 })).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "上传书籍" })).toBeInTheDocument();
   expect(screen.queryByRole("region", { name: "书库概览" })).not.toBeInTheDocument();

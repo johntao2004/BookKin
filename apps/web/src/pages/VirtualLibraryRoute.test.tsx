@@ -32,10 +32,10 @@ it('waits for settings and never imports the scene when disabled', async () => {
   vi.spyOn(api,'siteSettings').mockReturnValue(new Promise(done => {resolve=done;}));
   const imports = scene.imported.mock.calls.length;
   renderRoute();
-  expect(screen.getByRole('status',{name:'正在读取虚拟书库设置'})).toBeInTheDocument();
+  expect(screen.getByRole('status',{name:'正在读取书楼漫游设置'})).toBeInTheDocument();
   expect(scene.imported).toHaveBeenCalledTimes(imports);
   await act(async () => resolve({...DEFAULT_SITE_SETTINGS,virtualLibraryEnabled:false}));
-  expect(await screen.findByRole('heading',{name:'虚拟书库未启用'})).toBeInTheDocument();
+  expect(await screen.findByRole('heading',{name:'书楼漫游未启用'})).toBeInTheDocument();
   expect(scene.imported).toHaveBeenCalledTimes(imports);
   expect(screen.getByRole('link',{name:'返回藏书库'})).toHaveAttribute('href','/library/all');
 });
@@ -44,7 +44,7 @@ it('does not mount 3D when settings cannot be verified', async () => {
   vi.spyOn(api,'siteSettings').mockRejectedValue(new Error('offline'));
   const imports = scene.imported.mock.calls.length;
   renderRoute();
-  expect(await screen.findByText('无法确认虚拟书库是否已启用，请稍后重试。')).toBeInTheDocument();
+  expect(await screen.findByText('无法确认书楼漫游是否已启用，请稍后重试。')).toBeInTheDocument();
   expect(scene.imported).toHaveBeenCalledTimes(imports);
 });
 
@@ -60,7 +60,7 @@ it('mounts only after enabling, retains the scene during revalidation and stops 
   expect(screen.getByText('Active 3D scene')).toBeInTheDocument();
   expect(scene.stopped).toHaveBeenCalledTimes(stopped);
   await act(async () => resolve({...DEFAULT_SITE_SETTINGS,virtualLibraryEnabled:false}));
-  expect(await screen.findByRole('heading',{name:'虚拟书库未启用'})).toBeInTheDocument();
+  expect(await screen.findByRole('heading',{name:'书楼漫游未启用'})).toBeInTheDocument();
   expect(scene.stopped).toHaveBeenCalledTimes(stopped+1);
 });
 
@@ -82,10 +82,10 @@ it('revalidates cached enabled settings before importing the scene on re-entry',
   vi.spyOn(api,'siteSettings').mockReturnValue(new Promise(done => {resolve=done;}));
   const imports = scene.imported.mock.calls.length;
   renderRoute({...DEFAULT_SITE_SETTINGS,virtualLibraryEnabled:true});
-  expect(screen.getByRole('status',{name:'正在读取虚拟书库设置'})).toBeInTheDocument();
+  expect(screen.getByRole('status',{name:'正在读取书楼漫游设置'})).toBeInTheDocument();
   expect(screen.queryByText('Active 3D scene')).not.toBeInTheDocument();
   await act(async () => resolve({...DEFAULT_SITE_SETTINGS,virtualLibraryEnabled:false}));
-  expect(await screen.findByRole('heading',{name:'虚拟书库未启用'})).toBeInTheDocument();
+  expect(await screen.findByRole('heading',{name:'书楼漫游未启用'})).toBeInTheDocument();
   expect(scene.imported).toHaveBeenCalledTimes(imports);
 });
 
@@ -95,7 +95,7 @@ it('does not trust cached enablement while an offline entry cannot revalidate', 
   const view = renderRoute({...DEFAULT_SITE_SETTINGS,virtualLibraryEnabled:true});
   await act(async () => {await Promise.resolve();});
   expect(request).not.toHaveBeenCalled();
-  expect(screen.getByRole('status',{name:'正在读取虚拟书库设置'})).toBeInTheDocument();
+  expect(screen.getByRole('status',{name:'正在读取书楼漫游设置'})).toBeInTheDocument();
   expect(screen.queryByText('Active 3D scene')).not.toBeInTheDocument();
   view.unmount();
 });

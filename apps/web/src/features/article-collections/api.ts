@@ -1,4 +1,4 @@
-// 文章合集只保存文章引用与顺序，不复制文章正文。
+// 文章选集只保存文章引用与顺序，不复制文章正文。
 // Article collections store references and ordering without copying article bodies.
 import { request } from "../../api/client";
 import type { ArticleSummary } from "../content/api";

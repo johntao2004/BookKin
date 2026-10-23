@@ -33,12 +33,12 @@ export function BookReviewsPanel({ bookId, bookTitle = "书籍" }: { bookId: str
   if (!user || !can("notes.view")) return null;
   return <Box component="section" aria-labelledby={headingId} sx={{ mt: `${tokens.spacing[10]}px`, pt: `${tokens.spacing[6]}px`, borderTop: 1, borderColor: "divider" }}>
     <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between", gap: `${tokens.spacing[3]}px`, mb: `${tokens.spacing[5]}px` }}>
-      <Typography id={headingId} variant="h4" component="h2">博文</Typography>
-      {can("notes.edit") && <Button variant="outlined" onClick={() => open()}>写博文</Button>}
+      <Typography id={headingId} variant="h4" component="h2">随笔</Typography>
+      {can("notes.edit") && <Button variant="outlined" onClick={() => open()}>写随笔</Button>}
     </Stack>
     {notice && <Typography role="status" color="text.secondary" sx={{ mb: `${tokens.spacing[3]}px` }}>{notice}</Typography>}
-    {query.isPending ? <Skeleton active /> : query.isError ? <Stack spacing={2} sx={{ alignItems: "flex-start" }}><Alert severity="error">无法加载博文</Alert><Button onClick={() => void query.refetch()}>重试</Button></Stack>
-      : !query.data?.length ? <Typography color="text.secondary">暂无博文</Typography>
+    {query.isPending ? <Skeleton active /> : query.isError ? <Stack spacing={2} sx={{ alignItems: "flex-start" }}><Alert severity="error">无法加载随笔</Alert><Button onClick={() => void query.refetch()}>重试</Button></Stack>
+      : !query.data?.length ? <Typography color="text.secondary">暂无随笔</Typography>
         : <Stack spacing={3}>{query.data.map(review => <Box component="article" key={review.id} sx={{ p: { xs: `${tokens.spacing[4]}px`, md: `${tokens.spacing[6]}px` }, border: 1, borderColor: "divider", borderRadius: `${tokens.radius.md}px`, minWidth: 0 }}>
           <Stack direction="row" sx={{ alignItems: "flex-start", justifyContent: "space-between", gap: `${tokens.spacing[3]}px` }}>
             <Box sx={{ minWidth: 0 }}>
@@ -48,7 +48,7 @@ export function BookReviewsPanel({ bookId, bookTitle = "书籍" }: { bookId: str
                 <Chip size="small" variant="outlined" label={review.visibility === "PRIVATE" ? "仅自己" : "书库共享"} />
               </Stack>
             </Box>
-            {review.userId === user.id && can("notes.edit") && <Button variant="outlined" aria-label={`编辑博文：${review.title}`} onClick={() => open(review)}>编辑</Button>}
+            {review.userId === user.id && can("notes.edit") && <Button variant="outlined" aria-label={`编辑随笔：${review.title}`} onClick={() => open(review)}>编辑</Button>}
           </Stack>
           <Box className="bk-content-prose bk-markdown-prose bk-article-markdown-preview" sx={{ maxWidth: `${tokens.layout.readingMax}px` }} dangerouslySetInnerHTML={{ __html: reviewMarkdownToHtml(review.markdown) }} />
         </Box>)}</Stack>}

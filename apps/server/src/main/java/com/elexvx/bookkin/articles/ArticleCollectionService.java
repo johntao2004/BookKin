@@ -46,7 +46,7 @@ public class ArticleCollectionService {
         var viewer = actor(principal);
         String query = q == null || q.isBlank() ? null : q.trim();
         if (query != null && query.length() > 200)
-            throw ApiException.badRequest("COLLECTION_QUERY_TOO_LONG", "合集搜索词不能超过 200 个字符。");
+            throw ApiException.badRequest("COLLECTION_QUERY_TOO_LONG", "选集搜索词不能超过 200 个字符。");
         var items = new ArrayList<Summary>();
         for (var row : collections.findReadableCollections(viewer, query)) {
             var articles = visibleArticles(row, viewer);
@@ -86,7 +86,7 @@ public class ArticleCollectionService {
             var sources = collections.findSources(related, viewer, false, true);
             if (sources.size() != related.size()) throw ApiException.notFound("ARTICLE_NOT_FOUND", "部分文章不存在或无法访问。");
             if (sources.stream().anyMatch(source -> !"PUBLIC".equals(source.visibility())))
-                throw ApiException.conflict("COLLECTION_PRIVATE_ARTICLES", "合集含有私有文章，无法设为成员共享。");
+                throw ApiException.conflict("COLLECTION_PRIVATE_ARTICLES", "选集含有私有文章，无法设为成员共享。");
         }
         if (!collections.updateCollection(row.id(), viewer.id(), revision, cleanTitle, cleanDescription, cleanVisibility))
             throw revisionConflict();
@@ -115,10 +115,10 @@ public class ArticleCollectionService {
         var related = collections.findRelatedIds(row.id());
         if (related.size() > MAX_ARTICLES) throw tooManyArticles();
         if (requested.size() != articleIds.size())
-            throw ApiException.conflict("DUPLICATE_ARTICLE_ID", "请求中包含重复文章，请刷新合集后重试。");
+            throw ApiException.conflict("DUPLICATE_ARTICLE_ID", "请求中包含重复文章，请刷新选集后重试。");
         for (UUID articleId : requested) {
             if (related.contains(articleId))
-                throw ApiException.conflict("ARTICLE_ALREADY_IN_COLLECTION", "文章已在合集中，请刷新后重试。");
+                throw ApiException.conflict("ARTICLE_ALREADY_IN_COLLECTION", "文章已在选集中，请刷新后重试。");
         }
         var additions = List.copyOf(requested);
         if (related.size() + additions.size() > MAX_ARTICLES) throw tooManyArticles();
@@ -128,7 +128,7 @@ public class ArticleCollectionService {
             throw ApiException.notFound("ARTICLE_NOT_FOUND", "部分文章不存在或无法访问。");
         }
         if (shared && sources.stream().anyMatch(source -> !"PUBLIC".equals(source.visibility()))) {
-            throw ApiException.conflict("COLLECTION_ARTICLE_NOT_PUBLIC", "成员共享合集只能包含公开文章。");
+            throw ApiException.conflict("COLLECTION_ARTICLE_NOT_PUBLIC", "成员共享选集只能包含公开文章。");
         }
 
         if (!collections.bumpRevision(row.id(), viewer.id(), revision)) throw revisionConflict();
@@ -145,7 +145,7 @@ public class ArticleCollectionService {
         checkRevision(row, revision);
         UUID articleUuid = parseUuid(articleId, "ARTICLE_ID_INVALID", "文章 ID 格式无效。");
         if (!collections.findRelatedIds(row.id()).contains(articleUuid))
-            throw ApiException.notFound("COLLECTION_ARTICLE_NOT_FOUND", "合集内不存在这篇文章。");
+            throw ApiException.notFound("COLLECTION_ARTICLE_NOT_FOUND", "选集内不存在这篇文章。");
         if (!collections.bumpRevision(row.id(), viewer.id(), revision)) throw revisionConflict();
         if (!collections.deleteRelation(row.id(), articleUuid)) throw revisionConflict();
         return detailById(row.id(), viewer);
@@ -167,7 +167,7 @@ public class ArticleCollectionService {
         var current = visibleArticles(row, viewer).stream().map(ArticleCollectionRepository.ArticleRow::id).toList();
         if (current.size() > MAX_ARTICLES) throw tooManyArticles();
         if (!new HashSet<>(current).equals(unique) || current.size() != articleIds.size())
-            throw ApiException.conflict("COLLECTION_ORDER_CHANGED", "合集文章已变化，请刷新后重新排序。");
+            throw ApiException.conflict("COLLECTION_ORDER_CHANGED", "选集文章已变化，请刷新后重新排序。");
         var hidden = collections.findHiddenRelatedIds(row, viewer);
         var completeStoredOrder = new ArrayList<UUID>(articleIds.size() + hidden.size());
         completeStoredOrder.addAll(articleIds);
@@ -186,7 +186,7 @@ public class ArticleCollectionService {
     }
 
     private ArticleCollectionRepository.CollectionRow readable(String rawId, BookKinUser viewer) {
-        UUID id = parseUuid(rawId, "COLLECTION_ID_INVALID", "合集 ID 格式无效。");
+        UUID id = parseUuid(rawId, "COLLECTION_ID_INVALID", "选集 ID 格式无效。");
         var row = collections.findReadableCollection(id, viewer);
         if (row == null) throw collectionNotFound();
         return row;
@@ -195,7 +195,7 @@ public class ArticleCollectionService {
     private ArticleCollectionRepository.CollectionRow editable(String rawId, BookKinUser viewer) {
         var row = readable(rawId, viewer);
         if (!row.ownerId().equals(viewer.id()))
-            throw ApiException.forbidden("COLLECTION_EDIT_FORBIDDEN", "只有合集创建者可以编辑。");
+            throw ApiException.forbidden("COLLECTION_EDIT_FORBIDDEN", "只有选集创建者可以编辑。");
         return row;
     }
 
@@ -256,18 +256,18 @@ public class ArticleCollectionService {
 
     private static String validTitle(String title) {
         if (title == null || title.isBlank() || title.trim().length() > 240)
-            throw ApiException.badRequest("COLLECTION_TITLE_INVALID", "合集标题不能为空且不能超过 240 个字符。");
+            throw ApiException.badRequest("COLLECTION_TITLE_INVALID", "选集标题不能为空且不能超过 240 个字符。");
         return title.trim();
     }
 
     private static String validDescription(String description) {
         String value = description == null ? "" : description;
-        if (value.length() > 4000) throw ApiException.badRequest("COLLECTION_DESCRIPTION_TOO_LONG", "合集说明不能超过 4000 个字符。");
+        if (value.length() > 4000) throw ApiException.badRequest("COLLECTION_DESCRIPTION_TOO_LONG", "选集说明不能超过 4000 个字符。");
         return value;
     }
 
     private static String validVisibility(String visibility) {
-        if (!VISIBILITIES.contains(visibility)) throw ApiException.badRequest("COLLECTION_VISIBILITY_INVALID", "合集可见范围无效。");
+        if (!VISIBILITIES.contains(visibility)) throw ApiException.badRequest("COLLECTION_VISIBILITY_INVALID", "选集可见范围无效。");
         return visibility;
     }
 
@@ -280,14 +280,14 @@ public class ArticleCollectionService {
     }
 
     private static ApiException collectionNotFound() {
-        return ApiException.notFound("COLLECTION_NOT_FOUND", "合集不存在或无权访问。");
+        return ApiException.notFound("COLLECTION_NOT_FOUND", "选集不存在或无权访问。");
     }
 
     private static ApiException revisionConflict() {
-        return ApiException.conflict("REVISION_CONFLICT", "合集已被其他操作更新，请刷新后重试。");
+        return ApiException.conflict("REVISION_CONFLICT", "选集已被其他操作更新，请刷新后重试。");
     }
 
     private static ApiException tooManyArticles() {
-        return ApiException.badRequest("COLLECTION_ARTICLE_LIMIT", "每个合集最多包含 1000 篇文章。");
+        return ApiException.badRequest("COLLECTION_ARTICLE_LIMIT", "每个选集最多包含 1000 篇文章。");
     }
 }

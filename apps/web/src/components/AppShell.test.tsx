@@ -49,26 +49,41 @@ describe("AppShell", () => {
   beforeEach(() => { localStorage.clear(); authState.signedIn = true; });
   afterEach(() => {vi.restoreAllMocks(); vi.useRealTimers();});
 
+  it.each(["/library/books/book-1", "/annotations/books", "/vault"])("does not select an article entry outside the article section on %s", async (path) => {
+    renderShell(path);
+    fireEvent.click(screen.getByRole("button", { name: "打开导航" }));
+    const drawer = await screen.findByRole("dialog");
+    const group = within(drawer).getByRole("group", { name: "文钞馆二级菜单" });
+    for (const name of ["全部文章", "选集"]) {
+      const entry = within(group).getByRole("button", { name });
+      expect(entry).not.toHaveAttribute("aria-current");
+      expect(entry).not.toHaveAttribute("aria-pressed");
+    }
+    fireEvent.click(within(drawer).getByRole("button", { name: "文钞馆二级菜单" }));
+    expect(within(drawer).queryByRole("group", { name: "文钞馆二级菜单" })).not.toBeInTheDocument();
+    expect(screen.getByTestId("search-route")).toHaveTextContent(path);
+  });
+
   it("groups article collections below articles and keeps their parent active on desktop and mobile", async () => {
     renderShell("/article-collections/collection-1");
-    const trigger = screen.getByRole("link", { name: "撷文斋" });
+    const trigger = screen.getByRole("link", { name: "文钞馆" });
     expect(trigger).toHaveAttribute("aria-current", "page");
     fireEvent.keyDown(trigger, { key: "ArrowDown" });
     const menu = await screen.findByRole("menu");
-    expect(within(menu).getByRole("link", { name: "合集" })).toHaveAttribute("href", "/article-collections");
+    expect(within(menu).getByRole("link", { name: "选集" })).toHaveAttribute("href", "/article-collections");
     expect(within(menu).getByRole("link", { name: "全部文章" })).toHaveAttribute("href", "/articles");
-    fireEvent.click(within(menu).getByRole("link", { name: "合集" }));
+    fireEvent.click(within(menu).getByRole("link", { name: "选集" }));
     fireEvent.click(screen.getByRole("button", { name: "打开导航" }));
     const drawer = await screen.findByRole("dialog");
-    const group = within(drawer).getByRole("group", { name: "撷文斋二级菜单" });
-    expect(within(group).getByRole("button", { name: "合集" })).toHaveAttribute("aria-current", "page");
+    const group = within(drawer).getByRole("group", { name: "文钞馆二级菜单" });
+    expect(within(group).getByRole("button", { name: "选集" })).toHaveAttribute("aria-current", "page");
     fireEvent.click(within(group).getByRole("button", { name: "全部文章" }));
     expect(screen.getByTestId("search-route")).toHaveTextContent("/articles");
   });
 
   it("groups the two source pages below the reading-note overview in desktop and mobile navigation", async () => {
     renderShell("/annotations/articles");
-    const trigger = screen.getByRole("link", { name: "札记轩" });
+    const trigger = screen.getByRole("link", { name: "读书录" });
     expect(trigger).toHaveAttribute("aria-current", "page");
     fireEvent.keyDown(trigger, { key: "ArrowDown" });
     const menu = await screen.findByRole("menu");
@@ -78,7 +93,7 @@ describe("AppShell", () => {
     expect(trigger).toHaveAttribute("href", "/annotations");
     fireEvent.keyDown(trigger, { key: "Escape" });
     fireEvent.click(screen.getByRole("button", { name: "打开导航" }));
-    const children = await screen.findByRole("group", { name: "札记轩二级菜单" });
+    const children = await screen.findByRole("group", { name: "读书录二级菜单" });
     fireEvent.click(within(children).getByRole("button", { name: "读书札记" }));
     expect(screen.getByTestId("search-route")).toHaveTextContent("/annotations/books");
   });
@@ -144,14 +159,14 @@ describe("AppShell", () => {
     expect(wordmark.previousElementSibling).toHaveAccessibleName("打开导航");
     expect(screen.queryByRole("link", { name: "分类" })).not.toBeInTheDocument();
     expect(within(screen.getByRole("navigation", { name: "全站导航" })).queryByRole("link", { name: "书目" })).not.toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "藏书阁" })).toHaveAttribute("aria-haspopup", "menu");
-    expect(screen.getByRole("link", { name: "札记轩" })).toBeInTheDocument();
-    fireEvent.click(within(screen.getByRole("navigation", { name: "全站导航" })).getByRole("link", { name: "秘藏阁" }));
+    expect(screen.getByRole("link", { name: "藏书楼" })).toHaveAttribute("aria-haspopup", "menu");
+    expect(screen.getByRole("link", { name: "读书录" })).toBeInTheDocument();
+    fireEvent.click(within(screen.getByRole("navigation", { name: "全站导航" })).getByRole("link", { name: "秘阁" }));
     expect(screen.getByTestId("search-route")).toHaveTextContent("/vault");
-    expect(screen.getByRole("link", { name: "秘藏阁" })).toHaveAttribute("aria-current", "page");
-    expect(screen.queryByRole("link", { name: "虚拟书库" })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "秘阁" })).toHaveAttribute("aria-current", "page");
+    expect(screen.queryByRole("link", { name: "书楼漫游" })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "首页" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "知识图谱" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "学脉图" })).not.toBeInTheDocument();
     expect(screen.queryByText("已同步")).not.toBeInTheDocument();
   });
 
@@ -179,14 +194,14 @@ describe("AppShell", () => {
     expect(within(screen.getByRole("dialog", { name: "BookKin" })).getByRole("heading", { name: "BookKin" })).toBeInTheDocument();
     for (const label of managementLabels) expect(within(drawer).queryByText(label)).not.toBeInTheDocument();
     expect(within(drawer).queryByText("展示书目设置")).not.toBeInTheDocument();
-    for (const name of ["藏书阁", "撷文斋", "书目", "札记轩", "秘藏阁"]) expect(within(drawer).getByRole("button", { name })).toBeInTheDocument();
-    const children = within(drawer).getByRole("group", { name: "藏书阁二级菜单" });
-    for (const name of ["阁中一览", "书目", "知识图谱", "虚拟书库"]) expect(within(children).getByRole("button", { name })).toBeInTheDocument();
+    for (const name of ["藏书楼", "文钞馆", "书目", "读书录", "秘阁"]) expect(within(drawer).getByRole("button", { name })).toBeInTheDocument();
+    const children = within(drawer).getByRole("group", { name: "藏书楼二级菜单" });
+    for (const name of ["楼中一览", "书目", "学脉图", "书楼漫游"]) expect(within(children).getByRole("button", { name })).toBeInTheDocument();
 
-    fireEvent.click(within(drawer).getByRole("button", { name: "阁中一览" }));
+    fireEvent.click(within(drawer).getByRole("button", { name: "楼中一览" }));
     fireEvent.click(await screen.findByRole("button", { name: "账户菜单" }));
     const accountMenu = screen.getByRole("menu");
-    expect(within(accountMenu).queryByRole("menuitem", { name: "秘藏阁" })).not.toBeInTheDocument();
+    expect(within(accountMenu).queryByRole("menuitem", { name: "秘阁" })).not.toBeInTheDocument();
     expect(within(accountMenu).queryByRole("menuitem", { name: "用户管理" })).not.toBeInTheDocument();
     for (const label of managementLabels) expect(within(accountMenu).getByRole("menuitem", { name: label })).toBeInTheDocument();
     expect(within(accountMenu).queryByRole("menuitem", { name: "展示书目设置" })).not.toBeInTheDocument();
@@ -197,7 +212,7 @@ describe("AppShell", () => {
     const listBooks = vi.spyOn(api, "listBooks").mockResolvedValue({ items: [] });
     const revision = vi.spyOn(api, "catalogRevision");
     renderShell("/library");
-    const link = screen.getByRole("link", { name: "藏书阁" });
+    const link = screen.getByRole("link", { name: "藏书楼" });
     fireEvent.mouseEnter(link); fireEvent.focus(link); fireEvent.touchStart(link);
     await act(() => vi.advanceTimersByTimeAsync(2_000));
     expect(sceneImported).not.toHaveBeenCalled();
@@ -207,25 +222,25 @@ describe("AppShell", () => {
 
   it("hides the disabled 3D child in desktop and mobile navigation", async () => {
     renderShell("/library", false);
-    const trigger = screen.getByRole("link", { name: "藏书阁" });
+    const trigger = screen.getByRole("link", { name: "藏书楼" });
     fireEvent.mouseEnter(trigger);
     const menu = await screen.findByRole("menu");
-    expect(within(menu).getByRole("link", { name: "知识图谱" })).toBeInTheDocument();
-    expect(within(menu).queryByText("虚拟书库")).not.toBeInTheDocument();
+    expect(within(menu).getByRole("link", { name: "学脉图" })).toBeInTheDocument();
+    expect(within(menu).queryByText("书楼漫游")).not.toBeInTheDocument();
     fireEvent.keyDown(menu, { key: "Escape" });
     fireEvent.click(screen.getByRole("button", { name: "打开导航" }));
-    expect(within(screen.getByRole("navigation", { name: "移动端导航" })).queryByText("虚拟书库")).not.toBeInTheDocument();
+    expect(within(screen.getByRole("navigation", { name: "移动端导航" })).queryByText("书楼漫游")).not.toBeInTheDocument();
   });
 
   it("opens a secondary route from the desktop dropdown and keeps the parent selected", async () => {
     renderShell("/library");
-    const trigger = screen.getByRole("link", { name: "藏书阁" });
+    const trigger = screen.getByRole("link", { name: "藏书楼" });
     fireEvent.mouseEnter(trigger);
     const menu = await screen.findByRole("menu");
-    expect(within(menu).getAllByRole("menuitem").map(item => item.textContent)).toEqual(["阁中一览", "书目", "知识图谱", "虚拟书库"]);
+    expect(within(menu).getAllByRole("menuitem").map(item => item.textContent)).toEqual(["楼中一览", "书目", "学脉图", "书楼漫游"]);
     expect(screen.getByTestId("search-route")).toHaveTextContent("/library");
-    expect(within(menu).getByRole("link", { name: "阁中一览" })).toHaveAttribute("href", "/library/overview");
-    fireEvent.click(within(menu).getByRole("link", { name: "知识图谱" }));
+    expect(within(menu).getByRole("link", { name: "楼中一览" })).toHaveAttribute("href", "/library/overview");
+    fireEvent.click(within(menu).getByRole("link", { name: "学脉图" }));
     expect(screen.getByTestId("search-route")).toHaveTextContent("/knowledge-graph");
     expect(trigger).toHaveAttribute("aria-expanded", "false");
     expect(trigger).toHaveAttribute("aria-current", "page");
@@ -233,7 +248,7 @@ describe("AppShell", () => {
 
   it.each(["/booklists", "/booklists/list-one"])("keeps booklists nested and the library active at %s", async (path) => {
     renderShell(path);
-    const parent = screen.getByRole("link", { name: "藏书阁" });
+    const parent = screen.getByRole("link", { name: "藏书楼" });
     expect(parent).toHaveAttribute("aria-current", "page");
     fireEvent.keyDown(parent, { key: "ArrowDown" });
     const menu = await screen.findByRole("menu");
@@ -247,7 +262,7 @@ describe("AppShell", () => {
 
   it("keeps the parent a direct catalog link when its submenu is open", async () => {
     renderShell("/knowledge-graph");
-    const parent = screen.getByRole("link", { name: "藏书阁" });
+    const parent = screen.getByRole("link", { name: "藏书楼" });
     expect(parent).toHaveAttribute("href", "/library");
     fireEvent.mouseEnter(parent);
     await screen.findByRole("menu");
@@ -261,17 +276,17 @@ describe("AppShell", () => {
     renderShell("/library/overview");
     fireEvent.click(screen.getByRole("button", { name: "打开导航" }));
     const drawer = screen.getByRole("navigation", { name: "移动端导航" });
-    fireEvent.click(within(drawer).getByRole("button", { name: "藏书阁" }));
+    fireEvent.click(within(drawer).getByRole("button", { name: "藏书楼" }));
     expect(screen.getByTestId("search-route")).toHaveTextContent("/library");
     await waitFor(() => expect(screen.queryByRole("navigation", { name: "移动端导航" })).not.toBeInTheDocument());
   });
 
   it("supports keyboard opening and Escape closing of the secondary menu", async () => {
     renderShell("/virtual-library");
-    const trigger = screen.getByRole("link", { name: "藏书阁" });
+    const trigger = screen.getByRole("link", { name: "藏书楼" });
     fireEvent.keyDown(trigger, { key: "ArrowDown" });
     const menu = await screen.findByRole("menu");
-    expect(within(menu).getByRole("link", { name: "虚拟书库" })).toHaveAttribute("aria-current", "page");
+    expect(within(menu).getByRole("link", { name: "书楼漫游" })).toHaveAttribute("aria-current", "page");
     fireEvent.keyDown(menu, { key: "Escape" });
     await waitFor(() => expect(trigger).toHaveAttribute("aria-expanded", "false"));
   });
@@ -280,16 +295,16 @@ describe("AppShell", () => {
     renderShell("/knowledge-graph");
     fireEvent.click(screen.getByRole("button", { name: "打开导航" }));
     const drawer = screen.getByRole("navigation", { name: "移动端导航" });
-    const parent = within(drawer).getByRole("button", { name: "藏书阁" });
+    const parent = within(drawer).getByRole("button", { name: "藏书楼" });
     expect(parent).toHaveAttribute("aria-pressed", "true");
-    const toggle = within(drawer).getByRole("button", { name: "藏书阁二级菜单" });
+    const toggle = within(drawer).getByRole("button", { name: "藏书楼二级菜单" });
     fireEvent.click(toggle);
     expect(toggle).toHaveAttribute("aria-expanded", "false");
-    expect(within(drawer).queryByRole("group", { name: "藏书阁二级菜单" })).not.toBeInTheDocument();
+    expect(within(drawer).queryByRole("group", { name: "藏书楼二级菜单" })).not.toBeInTheDocument();
     fireEvent.click(toggle);
-    const graph = within(drawer).getByRole("button", { name: "知识图谱" });
+    const graph = within(drawer).getByRole("button", { name: "学脉图" });
     expect(graph).toHaveAttribute("aria-current", "page");
-    fireEvent.click(within(drawer).getByRole("button", { name: "虚拟书库" }));
+    fireEvent.click(within(drawer).getByRole("button", { name: "书楼漫游" }));
     expect(screen.getByTestId("search-route")).toHaveTextContent("/virtual-library");
     await waitFor(() => expect(screen.queryByRole("navigation", { name: "移动端导航" })).not.toBeInTheDocument());
   });
@@ -297,18 +312,18 @@ describe("AppShell", () => {
   it("keeps public booklists under the library and hides private secondary entries when signed out", async () => {
     authState.signedIn = false;
     renderShell("/library");
-    expect(screen.getByRole("link", { name: "藏书阁" })).toHaveAttribute("href", "/library");
-    expect(screen.queryByRole("button", { name: "藏书阁" })).not.toBeInTheDocument();
-    expect(screen.queryByText("知识图谱")).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "藏书楼" })).toHaveAttribute("href", "/library");
+    expect(screen.queryByRole("button", { name: "藏书楼" })).not.toBeInTheDocument();
+    expect(screen.queryByText("学脉图")).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "打开导航" }));
     const drawer = screen.getByRole("navigation", { name: "移动端导航" });
-    expect(screen.queryByText("秘藏阁")).not.toBeInTheDocument();
-    const children = within(drawer).getByRole("group", { name: "藏书阁二级菜单" });
+    expect(screen.queryByText("秘阁")).not.toBeInTheDocument();
+    const children = within(drawer).getByRole("group", { name: "藏书楼二级菜单" });
     expect(within(children).getAllByRole("button")).toHaveLength(1);
     expect(within(children).getByRole("button", { name: "书目" })).toBeInTheDocument();
-    expect(within(drawer).queryByText("阁中一览")).not.toBeInTheDocument();
-    expect(within(drawer).queryByText("知识图谱")).not.toBeInTheDocument();
-    expect(within(drawer).queryByText("虚拟书库")).not.toBeInTheDocument();
+    expect(within(drawer).queryByText("楼中一览")).not.toBeInTheDocument();
+    expect(within(drawer).queryByText("学脉图")).not.toBeInTheDocument();
+    expect(within(drawer).queryByText("书楼漫游")).not.toBeInTheDocument();
   });
 
   it("switches the whole site to the same night theme used by the reader", async () => {

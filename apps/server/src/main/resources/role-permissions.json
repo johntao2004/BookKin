@@ -1,7 +1,7 @@
 [
   {
     "code": "library.view",
-    "group": "藏书阁",
+    "group": "藏书楼",
     "label": "全部藏书与书籍详情",
     "kind": "page",
     "roles": [
@@ -13,7 +13,7 @@
   },
   {
     "code": "library.overview",
-    "group": "藏书阁",
+    "group": "藏书楼",
     "label": "阅读概览",
     "kind": "page",
     "roles": [
@@ -27,7 +27,7 @@
   },
   {
     "code": "library.upload",
-    "group": "藏书阁",
+    "group": "藏书楼",
     "label": "上传书籍",
     "kind": "action",
     "roles": [
@@ -40,7 +40,7 @@
   },
   {
     "code": "library.edit",
-    "group": "藏书阁",
+    "group": "藏书楼",
     "label": "编辑书目、封面与公开状态",
     "kind": "action",
     "roles": [
@@ -53,7 +53,7 @@
   },
   {
     "code": "library.organize",
-    "group": "藏书阁",
+    "group": "藏书楼",
     "label": "管理书籍分类",
     "kind": "action",
     "roles": [
@@ -66,7 +66,7 @@
   },
   {
     "code": "library.files",
-    "group": "藏书阁",
+    "group": "藏书楼",
     "label": "重命名与写回文件",
     "kind": "action",
     "roles": [
@@ -79,7 +79,7 @@
   },
   {
     "code": "library.trash",
-    "group": "藏书阁",
+    "group": "藏书楼",
     "label": "删除书籍到回收站",
     "kind": "action",
     "roles": [
@@ -120,8 +120,8 @@
   },
   {
     "code": "knowledge.view",
-    "group": "知识图谱",
-    "label": "查看书籍知识图谱",
+    "group": "学脉图",
+    "label": "查看书籍学脉图",
     "kind": "page",
     "roles": [
       "OWNER",
@@ -134,7 +134,7 @@
   },
   {
     "code": "knowledge.generate",
-    "group": "知识图谱",
+    "group": "学脉图",
     "label": "分析书籍正文",
     "kind": "action",
     "roles": [
@@ -147,8 +147,8 @@
   },
   {
     "code": "virtual.view",
-    "group": "虚拟书库",
-    "label": "访问虚拟书库",
+    "group": "书楼漫游",
+    "label": "访问书楼漫游",
     "kind": "page",
     "roles": [
       "OWNER",
@@ -200,7 +200,7 @@
   {
     "code": "articles.collections.edit",
     "group": "文章收藏",
-    "label": "管理自己的合集与文章归类",
+    "label": "管理自己的选集与文章归类",
     "kind": "action",
     "roles": ["OWNER", "ADMIN", "MEMBER"],
     "requires": ["articles.view"]
@@ -236,7 +236,7 @@
   {
     "code": "notes.view",
     "group": "阅读笔记",
-    "label": "查看自己的批注、书评与博文",
+    "label": "查看自己的批注、书评与随笔",
     "kind": "page",
     "roles": [
       "OWNER",
@@ -248,7 +248,7 @@
   {
     "code": "notes.edit",
     "group": "阅读笔记",
-    "label": "撰写和编辑自己的书评、博文",
+    "label": "撰写和编辑自己的书评、随笔",
     "kind": "action",
     "roles": [
       "OWNER",

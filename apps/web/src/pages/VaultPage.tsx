@@ -66,7 +66,7 @@ function VaultContent() {
     const controller = new AbortController(), revision = epoch.current;
     setOpening(true); setOpeningError("");
     void (async () => {
-      if (!userId) throw new Error("请重新登录后进入秘藏阁。");
+      if (!userId) throw new Error("请重新登录后进入秘阁。");
       if (!window.isSecureContext || !crypto.subtle) throw new Error("加密功能需要 HTTPS 或本机 localhost 安全环境。");
       let access: Awaited<ReturnType<typeof vaultApi.open>>;
       try { access = await vaultApi.open(); }
@@ -94,7 +94,7 @@ function VaultContent() {
         setItems(list); setMaster(bytes);
       } finally { if (key.current !== bytes) bytes.fill(0); }
     })().catch(reason => {
-      if (revision === epoch.current && !controller.signal.aborted) setOpeningError(reason instanceof Error ? reason.message : "无法打开秘藏阁，请重试。");
+      if (revision === epoch.current && !controller.signal.aborted) setOpeningError(reason instanceof Error ? reason.message : "无法打开秘阁，请重试。");
     }).finally(() => { if (revision === epoch.current && !controller.signal.aborted) setOpening(false); });
     return () => {
       epoch.current++; controller.abort(); operation.current?.abort();
@@ -103,7 +103,7 @@ function VaultContent() {
   }, [loadAttempt, userId]);
   const current = items.find(item => item.id === selected);
   return <PageContainer>
-    <PageHeader eyebrow="PRIVATE VAULT" title={current ? current.metadata.title : "秘藏阁"} action={<Button onClick={lock}>锁定</Button>} />
+    <PageHeader eyebrow="PRIVATE VAULT" title={current ? current.metadata.title : "秘阁"} action={<Button onClick={lock}>锁定</Button>} />
     <div className="bk-content-stack">
       {error && <Alert type="error" title={error} closable onClose={() => setError("")} />}
       {opening ? <Skeleton active /> : openingError ? <Alert type="error" title={openingError} action={<Button onClick={() => setLoadAttempt(value => value + 1)}>重试</Button>} />
@@ -112,7 +112,7 @@ function VaultContent() {
           : <>
             <CatalogSection title="全部藏书" tools={<CatalogFilters
               actions={<Button variant="contained" disabled={busy} onClick={() => uploadInput.current?.click()} sx={{ whiteSpace: "nowrap" }}>上传书籍</Button>}
-              extraTools={<TextField aria-label="搜索秘藏阁" placeholder="搜索书名" value={query} onChange={event => setQuery(event.target.value)}
+              extraTools={<TextField aria-label="搜索秘阁" placeholder="搜索书名" value={query} onChange={event => setQuery(event.target.value)}
                 sx={{ width: { xs: "100%", sm: tokens.spacing[24] * 2.5 }, maxWidth: "100%" }} />}
             />}>
               <input ref={uploadInput} hidden disabled={busy} type="file" accept=".epub,.pdf" onChange={event => {
@@ -125,7 +125,7 @@ function VaultContent() {
                 });
               }} />
               {busy && <p role="status">正在加密导入 {Math.round(progress * 100)}%</p>}
-              {!items.length ? <BookCatalogEmptyState title="秘藏阁暂无书籍" />
+              {!items.length ? <BookCatalogEmptyState title="秘阁暂无书籍" />
                 : !items.some(item => item.metadata.title.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase())) ? <BookCatalogEmptyState title="未找到匹配的书籍" />
                   : <Box sx={bookGridSx}>{items.filter(item => item.metadata.title.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase())).map(item => <BookCardPresentation key={item.id}
                     book={{ id: item.id, title: item.metadata.title, author: `${item.metadata.format} · 已读 ${Math.round(item.reading.progress * 100)}%` }}

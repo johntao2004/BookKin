@@ -26,6 +26,6 @@ it('returns a 3D-library reading session to its previous camera without changing
   </Routes></TestProviders>);
   fireEvent.click(screen.getByRole('button', {name: 'Open real catalog book'}));
   await screen.findByRole('heading', {name: '灯下'});
-  fireEvent.click(screen.getByRole('button', {name: '返回虚拟书库'}));
+  fireEvent.click(screen.getByRole('button', {name: '返回书楼漫游'}));
   expect(JSON.parse(screen.getByLabelText('Restored library camera').textContent ?? '{}')).toEqual(returnState);
 });

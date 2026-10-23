@@ -37,7 +37,7 @@ describe("ArticleCollectionsPage routes and visibility", () => {
       <Route path="/article-collections/:collectionId" element={<><ArticleCollectionDetailPage /><LocationProbe /></>} />
     </Routes></TestProviders>);
 
-    expect(await screen.findByRole("heading", { name: "我的合集" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "我的选集" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "书库共享" })).toBeInTheDocument();
     expect(screen.getByText("我的周末")).toBeInTheDocument();
     expect(screen.getByText("书库共读")).toBeInTheDocument();
@@ -45,7 +45,7 @@ describe("ArticleCollectionsPage routes and visibility", () => {
 
     expect(await screen.findByRole("heading", { name: "我的周末" })).toBeInTheDocument();
     await waitFor(() => expect(screen.getByTestId("location")).toHaveTextContent("/article-collections/own-collection?from=%2Farticle-collections%3Fq%3Driver%26sort%3Dupdated"));
-    fireEvent.click(screen.getByRole("link", { name: "返回合集列表" }));
+    fireEvent.click(screen.getByRole("link", { name: "返回选集列表" }));
     await waitFor(() => expect(screen.getByTestId("location")).toHaveTextContent("/article-collections?q=river&sort=updated"));
   });
 
@@ -57,7 +57,7 @@ describe("ArticleCollectionsPage routes and visibility", () => {
 
     expect(await screen.findByRole("heading", { name: "我的周末" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "整理文章" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "编辑合集" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "编辑选集" })).toBeInTheDocument();
     const articleMenu = screen.getByRole("button", { name: "海边读书更多操作" });
     fireEvent.click(articleMenu);
     expect(await screen.findByRole("menuitem", { name: "打开文章" })).toBeInTheDocument();

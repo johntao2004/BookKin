@@ -143,7 +143,7 @@ export function AiSettingsPage() {
     <Stack spacing={3}>
       <SettingsPanel
         title="匹配策略"
-        description="入库书目匹配只发送结构化书目信息；助读与编辑辅助经逐次确认后发送有界正文采样或当前草稿。秘藏阁内容不接入外部 AI。"
+        description="入库书目匹配只发送结构化书目信息；助读与编辑辅助经逐次确认后发送有界正文采样或当前草稿。秘阁内容不接入外部 AI。"
         action={<SaveButton disabled={busy || !can("settings.ai.edit")} onClick={() => void save("strategy")}>{busy ? "保存中…" : "保存策略"}</SaveButton>}
       >
         <Stack spacing={1.5}>

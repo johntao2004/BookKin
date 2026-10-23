@@ -39,10 +39,10 @@ import { bookKinThemeOptions } from "../theme/theme";
 import { useOrdinaryPageScale } from "../theme/useOrdinaryPageScale";
 
 const navigation = [
-  { label: "藏书阁", path: "/library", icon: <LibraryBooksOutlined /> },
-  { label: "撷文斋", path: "/articles", icon: <NotesOutlined /> },
-  { label: "札记轩", path: "/annotations", icon: <NotesOutlined /> },
-  { label: "秘藏阁", path: "/vault", icon: <LockOutlined /> },
+  { label: "藏书楼", path: "/library", icon: <LibraryBooksOutlined /> },
+  { label: "文钞馆", path: "/articles", icon: <NotesOutlined /> },
+  { label: "读书录", path: "/annotations", icon: <NotesOutlined /> },
+  { label: "秘阁", path: "/vault", icon: <LockOutlined /> },
 ];
 
 const headerControlSx = {
@@ -86,10 +86,10 @@ export function AppShell({ children }: PropsWithChildren) {
   const themeMenuSelectionRef = useRef(false);
   const libraryNavigation = (user ? navigation : navigation.filter(item => item.path === "/library")).filter(item => canVisit(item.path));
   const librarySections = [
-    ...(user ? [{ label: "阁中一览", path: "/library/overview" }] : []),
+    ...(user ? [{ label: "楼中一览", path: "/library/overview" }] : []),
     { label: "书目", path: "/booklists" },
-    ...(user ? [{ label: "知识图谱", path: "/knowledge-graph" }] : []),
-    ...(user && siteQuery.isSuccess && site.virtualLibraryEnabled ? [{ label: "虚拟书库", path: "/virtual-library" }] : []),
+    ...(user ? [{ label: "学脉图", path: "/knowledge-graph" }] : []),
+    ...(user && siteQuery.isSuccess && site.virtualLibraryEnabled ? [{ label: "书楼漫游", path: "/virtual-library" }] : []),
   ].filter(item => canVisit(item.path));
   const notesSections = [
     { label: "读书札记", path: "/annotations/books" },
@@ -97,7 +97,7 @@ export function AppShell({ children }: PropsWithChildren) {
   ].filter(item => canVisit(item.path));
   const articlesSections = [
     { label: "全部文章", path: "/articles" },
-    { label: "合集", path: "/article-collections" },
+    { label: "选集", path: "/article-collections" },
   ].filter(item => canVisit(item.path));
   const searchLabel = "搜索书籍、笔记、书目";
   const searchableLibrary = canVisit("/search");
@@ -113,7 +113,8 @@ export function AppShell({ children }: PropsWithChildren) {
     || (path === "/articles" && location.pathname.startsWith("/article-collections"))
     || (path === "/library" && ["/knowledge-graph", "/virtual-library", "/booklists"].some(section => location.pathname === section || location.pathname.startsWith(`${section}/`)));
   const selectedLibraryPath = librarySections.find(section => location.pathname === section.path || location.pathname.startsWith(`${section.path}/`))?.path;
-  const selectedArticlesPath = location.pathname.startsWith("/article-collections") ? "/article-collections" : "/articles";
+  const selectedArticlesPath = location.pathname.startsWith("/article-collections") ? "/article-collections"
+    : isActivePath("/articles") ? "/articles" : undefined;
   const selectedNotesPath = location.pathname.startsWith("/annotations/posts/book/") ? "/annotations/books"
     : location.pathname.startsWith("/annotations/posts/article/") ? "/annotations/articles"
       : notesSections.find(section => isActivePath(section.path))?.path;
@@ -342,8 +343,10 @@ export function AppShell({ children }: PropsWithChildren) {
         </AppBar>
 
         <Drawer
+          className="bk-navigation-drawer"
           open={drawerOpen}
           onClose={() => setDrawerOpen(false)}
+          slotProps={{ paper: { sx: { bgcolor: "var(--color-surface-card)" } } }}
           size={`min(${tokens.spacing[24] * 3}px, calc(100vw - ${tokens.spacing[6]}px))`}
           title={<Typography variant="h5" sx={{ fontFamily: tokens.typography.fontFamily.display, fontWeight: tokens.typography.fontWeight.regular }}>{site.name}</Typography>}
         >
@@ -353,7 +356,7 @@ export function AppShell({ children }: PropsWithChildren) {
             sx={{
               width: "100%",
               minWidth: 0,
-              px: `${tokens.spacing[3]}px`,
+              px: "calc(var(--bk-drawer-gutter) - var(--spacing-3))",
               py: `${tokens.spacing[4]}px`,
               overflowX: "hidden",
             }}
@@ -366,11 +369,11 @@ export function AppShell({ children }: PropsWithChildren) {
                 const sections = group === "library" ? librarySections : group === "articles" ? articlesSections : notesSections;
                 const selectedPath = group === "library" ? selectedLibraryPath : group === "articles" ? selectedArticlesPath : selectedNotesPath;
                 return group ? <Box key={item.path}>
-                <Stack direction="row" sx={{ alignItems: "center" }}>
+                <Stack direction="row" className={`bk-navigation-row${isActivePath(item.path) ? " bk-navigation-row-active" : ""}`} sx={{ alignItems: "center" }}>
                 <ListItemButton selected={isActivePath(item.path)}
                   onClick={() => { setDrawerOpen(false); navigate(item.path); }}
-                  sx={{ flex: 1, minWidth: 0, minHeight: `${tokens.layout.touchTarget}px`, px: { xs: `${tokens.spacing[1]}px`, sm: `${tokens.spacing[3]}px` } }}>
-                  <ListItemIcon sx={{ minWidth: `${tokens.layout.touchTarget}px` }}>{item.icon}</ListItemIcon>
+                  sx={{ flex: 1, minWidth: 0 }}>
+                  <ListItemIcon>{item.icon}</ListItemIcon>
                   <ListItemText primary={item.label} />
                 </ListItemButton>
                 <IconButton aria-label={`${item.label}二级菜单`} aria-expanded={groupOpen} aria-controls={`${group}-navigation-children`}
@@ -379,11 +382,11 @@ export function AppShell({ children }: PropsWithChildren) {
                   <ExpandMoreRounded className="bk-nav-chevron" sx={{ transform: groupOpen ? "rotate(180deg)" : undefined }} />
                 </IconButton>
                 </Stack>
-                {groupOpen && <List id={`${group}-navigation-children`} role="group" aria-label={`${item.label}二级菜单`} sx={{ pl: `${tokens.layout.touchTarget}px` }}>
+                {groupOpen && <List id={`${group}-navigation-children`} role="group" aria-label={`${item.label}二级菜单`}>
                   {sections.map(section => <ListItemButton key={section.path}
                     selected={selectedPath === section.path} aria-current={selectedPath === section.path ? "page" : undefined}
                     onClick={() => { setDrawerOpen(false); navigate(section.path); }}
-                    sx={{ minWidth: 0, minHeight: `${tokens.layout.touchTarget}px`, px: `${tokens.spacing[3]}px` }}>
+                    sx={{ minWidth: 0 }}>
                     <ListItemText primary={section.label} />
                   </ListItemButton>)}
                 </List>}
@@ -392,9 +395,9 @@ export function AppShell({ children }: PropsWithChildren) {
                   key={item.path}
                   selected={isActivePath(item.path)}
                   onClick={() => { setDrawerOpen(false); navigate(item.path); }}
-                  sx={{ minWidth: 0, minHeight: `${tokens.layout.touchTarget}px`, px: { xs: `${tokens.spacing[1]}px`, sm: `${tokens.spacing[3]}px` } }}
+                  sx={{ minWidth: 0 }}
                 >
-                  <ListItemIcon sx={{ minWidth: `${tokens.layout.touchTarget}px` }}>{item.icon}</ListItemIcon>
+                  <ListItemIcon>{item.icon}</ListItemIcon>
                   <ListItemText primary={item.label} />
                 </ListItemButton>
               );})}

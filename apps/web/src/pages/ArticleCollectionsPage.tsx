@@ -51,21 +51,21 @@ export function ArticleCollectionsPage() {
 
   if (collectionsQuery.isError && !collectionsQuery.data) return <RequestErrorPage error={collectionsQuery.error} retrying={collectionsQuery.isFetching} onRetry={() => void collectionsQuery.refetch()} />;
   return <PageContainer>
-    <PageHeader eyebrow="ARTICLE COLLECTIONS" title="合集" action={can("articles.collections.edit") ? <Button variant="contained" onClick={() => setCreateOpen(true)}>新建私人合集</Button> : undefined} />
-    <CatalogSection title="查找合集" tools={<TextField aria-label="搜索合集" placeholder="搜索合集名称或说明" value={query} onChange={(event: any) => updateQuery(event.target.value)} fullWidth />}>{null}</CatalogSection>
+    <PageHeader eyebrow="ARTICLE COLLECTIONS" title="选集" action={can("articles.collections.edit") ? <Button variant="contained" onClick={() => setCreateOpen(true)}>新建私人选集</Button> : undefined} />
+    <CatalogSection title="查找选集" tools={<TextField aria-label="搜索选集" placeholder="搜索选集名称或说明" value={query} onChange={(event: any) => updateQuery(event.target.value)} fullWidth />}>{null}</CatalogSection>
     {collectionsQuery.isPending ? (
-      <Stack role="status" aria-label="正在加载合集" sx={{ alignItems: "center", py: `${tokens.spacing[20]}px` }}><CircularProgress /></Stack>
+      <Stack role="status" aria-label="正在加载选集" sx={{ alignItems: "center", py: `${tokens.spacing[20]}px` }}><CircularProgress /></Stack>
     ) : collectionsQuery.isError ? (
-      <Alert severity="error" action={<Button color="inherit" onClick={() => void collectionsQuery.refetch()}>重试</Button>}>合集暂时无法读取。</Alert>
+      <Alert severity="error" action={<Button color="inherit" onClick={() => void collectionsQuery.refetch()}>重试</Button>}>选集暂时无法读取。</Alert>
     ) : (
       <Stack sx={{ gap: `${tokens.spacing[10]}px` }}>
-        <CatalogSection title="我的合集">
+        <CatalogSection title="我的选集">
           {mine.length ? <CollectionGrid items={mine} returnTo={returnTo} /> : <BookCatalogEmptyState
-            title={query ? "没有找到匹配的私人合集" : "你还没有创建合集"}
+            title={query ? "没有找到匹配的私人选集" : "你还没有创建选集"}
           />}
         </CatalogSection>
         <CatalogSection title="书库共享">
-          {shared.length ? <CollectionGrid items={shared} returnTo={returnTo} /> : <BookCatalogEmptyState title={query ? "没有找到匹配的共享合集" : "暂无书库共享合集"} />}
+          {shared.length ? <CollectionGrid items={shared} returnTo={returnTo} /> : <BookCatalogEmptyState title={query ? "没有找到匹配的共享选集" : "暂无书库共享选集"} />}
         </CatalogSection>
       </Stack>
     )}
@@ -79,7 +79,7 @@ export function ArticleCollectionsPage() {
 }
 
 function CollectionGrid({ items, returnTo }: { items: ArticleCollectionSummary[]; returnTo: string }) {
-  return <Box component="section" aria-label="合集列表" sx={{ display: "grid", gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: `repeat(auto-fill, minmax(min(100%, ${tokens.layout.bookCardMinWidth}px), 1fr))` }, gap: { xs: `${tokens.spacing[8]}px`, md: `${tokens.spacing[10]}px` }, minWidth: 0 }}>
+  return <Box component="section" aria-label="选集列表" sx={{ display: "grid", gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: `repeat(auto-fill, minmax(min(100%, ${tokens.layout.bookCardMinWidth}px), 1fr))` }, gap: { xs: `${tokens.spacing[8]}px`, md: `${tokens.spacing[10]}px` }, minWidth: 0 }}>
     {items.map((collection) => <CollectionCard key={collection.id} collection={collection} returnTo={returnTo} />)}
   </Box>;
 }
@@ -91,7 +91,7 @@ function CollectionCard({ collection, returnTo }: { collection: ArticleCollectio
       <ArticleCollectionPreview articles={collection.previewArticles.filter((article) => collection.ownedByViewer || collection.visibility !== "MEMBERS" || article.visibility !== "PRIVATE")} title={collection.title} />
       <Stack sx={{ minWidth: 0, gap: `${tokens.spacing[2]}px`, pt: `${tokens.spacing[4]}px` }}>
         <Typography variant="h5" component="h2" sx={{ overflowWrap: "anywhere" }}>{collection.title}</Typography>
-        <Typography color="text.secondary" sx={{ minHeight: "2lh", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", overflowWrap: "anywhere" }}>{collection.description || "还没有合集说明。"}</Typography>
+        <Typography color="text.secondary" sx={{ minHeight: "2lh", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", overflowWrap: "anywhere" }}>{collection.description || "还没有选集说明。"}</Typography>
         <Stack direction="row" sx={{ alignItems: "center", flexWrap: "wrap", gap: `${tokens.spacing[2]}px` }}>
           <Chip size="small" variant="outlined" icon={collection.visibility === "PRIVATE" ? <LockOutlined /> : <PeopleAltOutlined />} label={collection.visibility === "PRIVATE" ? "仅自己" : "书库共享"} />
           <Typography variant="caption" color="text.secondary">{collection.articleCount} 篇文章{collection.ownerDisplayName ? ` · ${collection.ownerDisplayName}` : ""}</Typography>

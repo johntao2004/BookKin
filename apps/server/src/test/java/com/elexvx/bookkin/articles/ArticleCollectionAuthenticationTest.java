@@ -62,7 +62,7 @@ class ArticleCollectionAuthenticationTest {
         mvc.perform(get("/api/v1/article-collections")).andExpect(status().isUnauthorized());
         mvc.perform(get("/api/v1/article-collections/00000000-0000-4000-8000-000000000001")).andExpect(status().isUnauthorized());
         mvc.perform(post("/api/v1/article-collections").contentType("application/json")
-                .content("{\"title\":\"合集\",\"description\":\"\",\"visibility\":\"PRIVATE\"}"))
+                .content("{\"title\":\"选集\",\"description\":\"\",\"visibility\":\"PRIVATE\"}"))
                 .andExpect(status().isForbidden());
     }
 
