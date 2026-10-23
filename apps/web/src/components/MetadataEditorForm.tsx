@@ -1,4 +1,5 @@
 import { BookCover } from "./BookCover";
+import { AiAssistantButton } from "../features/ai/AiAssistant";
 import type { ReactNode } from "react";
 import { Box, Stack, Typography } from "@/ui/primitives";
 import { TextField, Switch } from "@/ui/forms";
@@ -18,10 +19,10 @@ const fields = [
 
 // 已入库书籍与暂存上传共用同一个书目表单。
 /** Both saved books and staged uploads render this single bibliographic form. */
-export function MetadataEditorForm({ value, onChange, coverUrl, coverAlt, coverActions, coverDetails, extraFields, children, disabled = false }: {
+export function MetadataEditorForm({ value, onChange, coverUrl, coverAlt, coverActions, coverDetails, extraFields, children, disabled = false, aiEnabled = false }: {
   value: MetadataEditorValues; onChange: (key: keyof MetadataEditorValues, value: string | boolean) => void;
   coverUrl?: string; coverAlt: string; coverActions: ReactNode; coverDetails?: ReactNode;
-  extraFields?: ReactNode; children?: ReactNode; disabled?: boolean;
+  extraFields?: ReactNode; children?: ReactNode; disabled?: boolean; aiEnabled?: boolean;
 }) {
   return <Box sx={{ display: "grid", gridTemplateColumns: { xs: "minmax(0, 1fr)", md: `${tokens.spacing[20] * 3}px minmax(0, 1fr)` }, gap: 4 }}>
     <Stack spacing={1.5} sx={{ minWidth: 0, alignItems: "stretch" }}>
@@ -35,6 +36,9 @@ export function MetadataEditorForm({ value, onChange, coverUrl, coverAlt, coverA
         <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between", gap: 2 }}><Typography>公开展示</Typography><Switch aria-label="公开展示" checked={value.publiclyVisible} disabled={disabled} onChange={(_, checked) => onChange("publiclyVisible", checked)} /></Stack>
         {extraFields}
       </Box>
+      {aiEnabled && <AiAssistantButton source="METADATA_DRAFT" label="AI 简介与标签" disabled={disabled}
+        draft={JSON.stringify({ title: value.title, authors: value.authors, description: value.description, tags: value.tags, tableOfContents: value.tableOfContents ?? "" }, null, 2)}
+        applyActions={["DESCRIPTION", "TAGS"]} onApply={(text, action) => onChange(action === "TAGS" ? "tags" : "description", text)} />}
       <TextField label="简介" value={value.description} multiline minRows={5} disabled={disabled} onChange={(event: React.ChangeEvent<HTMLInputElement>) => onChange("description", event.target.value)} />
       <TextField label="作者介绍" value={value.authorBiography ?? ""} multiline minRows={3} disabled={disabled} onChange={(event: React.ChangeEvent<HTMLInputElement>) => onChange("authorBiography", event.target.value)} />
       <TextField label="目录" value={value.tableOfContents ?? ""} multiline minRows={5} disabled={disabled} helperText="可从原书目录识别，也可手工校对；不修改阅读器原有目录。" onChange={(event: React.ChangeEvent<HTMLInputElement>) => onChange("tableOfContents", event.target.value)} />

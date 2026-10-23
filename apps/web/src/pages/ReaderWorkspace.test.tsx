@@ -38,6 +38,23 @@ describe("ReaderWorkspace independent source", () => {
   });
   afterEach(() => vi.restoreAllMocks());
 
+  it("opens short-note AI only with consent and retains the draft until normal note save", async () => {
+    const source = independentSource();
+    render(<TestProviders><ReaderWorkspace source={source} /></TestProviders>);
+    fireEvent.click(await screen.findByRole("button", { name: "选择文章文字" }));
+    fireEvent.click(screen.getByRole("button", { name: "高亮＋笔记" }));
+    const note = "沿着同一条路线观察，能给下一次散步留下可以比较的线索。";
+    fireEvent.change(screen.getByRole("textbox", { name: "写下这段文字带来的想法" }), { target: { value: note } });
+    fireEvent.click(screen.getByRole("button", { name: "AI 整理笔记" }));
+    expect(screen.getByRole("checkbox", { name: "我同意本次将上述内容发送给已配置的 AI 平台" })).not.toBeChecked();
+    expect(screen.getByRole("button", { name: "生成建议" })).toBeDisabled();
+    expect(source.createAnnotation).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "关闭助手" }));
+    expect(screen.getByRole("textbox", { name: "写下这段文字带来的想法" })).toHaveValue(note);
+    fireEvent.click(screen.getByRole("button", { name: "保存笔记" }));
+    await waitFor(() => expect(source.createAnnotation).toHaveBeenCalledWith(expect.objectContaining({ note, quote: "文章中的一句话" })));
+  });
+
   it("uses the existing reader chrome and renderer without requesting book data", async () => {
     const book = vi.spyOn(api, "getBook");
     const display = vi.spyOn(api, "getDisplayBook");

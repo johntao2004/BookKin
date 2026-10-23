@@ -6,6 +6,7 @@ import { PageBackAction, PageContainer, PageTitle } from "../components/PageHead
 import { articleGridSx } from "../components/bookGrid";
 import { useAuth } from "../auth/AuthContext";
 import { usePermissions } from "../auth/permissions";
+import { AiAssistantButton } from "../features/ai/AiAssistant";
 import { Alert, Chip, CircularProgress } from "@/ui/feedback";
 import { Box, Breadcrumbs, Link as UiLink, Snackbar, Stack, Typography } from "@/ui/primitives";
 import { Button } from "@/ui/buttons";
@@ -90,6 +91,7 @@ export function ArticleCollectionDetailPage() {
         <PageTitle>{collection.title}</PageTitle>
         <Typography color="text.secondary" sx={{ maxWidth: tokens.layout.readingMax, whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{collection.description || "创建者还没有写下这份合集的说明。"}</Typography>
         <Typography variant="body2" color="text.secondary">{collection.ownerDisplayName ? `由 ${collection.ownerDisplayName} 创建` : "合集"} · {collection.articleCount} 篇文章</Typography>
+        {can("articles.view") && <Box><AiAssistantButton source="COLLECTION" id={collection.id} label="AI 合集导读" /></Box>}
         {mayEdit && <Stack direction={{ xs: "column", sm: "row" }} sx={{ gap: `${tokens.spacing[3]}px`, mt: `${tokens.spacing[2]}px`, alignItems: { xs: "stretch", sm: "center" } }}>
           <Button variant="contained" onClick={() => setOrganizerOpen(true)}>整理文章</Button>
           <Button variant="outlined" onClick={() => setEditOpen(true)}>编辑合集</Button>

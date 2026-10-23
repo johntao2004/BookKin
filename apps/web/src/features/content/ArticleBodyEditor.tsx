@@ -1,12 +1,14 @@
 import { useRef, useState } from "react";
+import { AiAssistantButton } from "../ai/AiAssistant";
 import { Button } from "../../ui/buttons";
 import { TextField } from "../../ui/forms";
 import { articleHtmlToMarkdown } from "./article-markdown";
 import { safeHtml } from "./import";
 import { highlightSanitizedCodeHtml } from "./code-highlighting";
 
-export function ArticleBodyEditor({ markdown, onChange, html, preview, disabled, onPreviewChange, onImportImages }: {
+export function ArticleBodyEditor({ markdown, onChange, html, preview, disabled, onPreviewChange, onImportImages, aiEnabled = false }: {
   markdown: string;
+  aiEnabled?: boolean;
   onChange: (value: string) => void;
   html: string;
   preview: boolean;
@@ -58,6 +60,7 @@ export function ArticleBodyEditor({ markdown, onChange, html, preview, disabled,
         {!preview && <Button disabled={disabled} onClick={() => picker.current?.click()}>上传图片</Button>}
       </div>
     </div>
+    {aiEnabled && <AiAssistantButton source="ARTICLE_DRAFT" label="AI 编辑辅助" draft={markdown} disabled={disabled} onApply={onChange} />}
     <input ref={picker} type="file" hidden multiple accept="image/jpeg,image/png,image/webp" aria-label="上传正文图片" disabled={disabled || preview}
       onChange={event => { const files = Array.from(event.target.files ?? []); event.target.value = ""; void importImages(files); }} />
     {preview ? <section aria-label="文章正文预览" className="bk-content-prose bk-markdown-prose bk-content-editor bk-article-markdown-preview" dangerouslySetInnerHTML={{ __html: highlightSanitizedCodeHtml(safeHtml(html)) }} />

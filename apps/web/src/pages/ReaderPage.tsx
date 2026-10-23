@@ -1,5 +1,6 @@
 import { HttpErrorPage, pageFailure } from "./HttpErrorPage";
 import { usePermissions } from "../auth/permissions";
+import { AiAssistantButton } from "../features/ai/AiAssistant";
 import { EmptyState } from "../ui/empty-state";
 import type { IndependentReaderSource } from "../components/readers/independent-reader-source";
 import { registerSessionSaver } from "../auth/session-save";
@@ -301,6 +302,7 @@ export function ReaderWorkspace({ source }: { source?: IndependentReaderSource }
         onToggleBookmark={() => void toggleBookmark()}
         onOpenSettings={(event: any) => setSettingsAnchor(event.currentTarget)}
         onOpenNotes={() => setNotesOpen(true)}
+        assistant={!guest && can(source ? "articles.view" : "reader.read") ? <AiAssistantButton source={source ? "ARTICLE" : "BOOK"} id={bookId} /> : undefined}
       />
 
       {source?.error && <Alert severity="error">{source.error}</Alert>}
@@ -355,6 +357,7 @@ export function ReaderWorkspace({ source }: { source?: IndependentReaderSource }
           <Typography variant="caption" color="text.secondary">高亮颜色</Typography>
           <AnnotationColorSwatches value={highlightColor} onChange={setHighlightColor} disabled={annotationBusy} compact />
           <TextField label="写下这段文字带来的想法" multiline minRows={3} fullWidth value={note} onChange={(event: any) => setNote(event.target.value)} autoFocus />
+          {noteComposerOpen && can("notes.edit") && <AiAssistantButton source="NOTE_DRAFT" label="AI 整理笔记" draft={note} disabled={annotationBusy} onApply={setNote} />}
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2.5, justifyContent: "space-between" }}><Button color="inherit" disabled={annotationBusy} onClick={() => { setNoteComposerOpen(false); setNote(""); }}>返回</Button><Button variant="contained" disabled={!note.trim() || annotationBusy} onClick={() => void saveAnnotation("HIGHLIGHT", true)}>保存笔记</Button></DialogActions>
       </Dialog>

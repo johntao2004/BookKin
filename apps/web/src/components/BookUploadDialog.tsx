@@ -167,7 +167,7 @@ export function UploadReview({ upload, onChanged, onCommitted, onCancel, cancell
     {cropDialog}
     {upload.similarBookIds.length > 0 && <Alert severity="warning" icon={<WarningAmberRounded />}>发现标题和作者相似的藏书。它不是完全重复文件，确认后仍可作为独立版本入库。</Alert>}
     {(upload.encrypted || upload.drmProtected || upload.digitallySigned) && <Alert severity="warning">该文件包含{upload.encrypted ? "加密" : ""}{upload.drmProtected ? " DRM" : ""}{upload.digitallySigned ? "数字签名" : ""}标记；可以入库，但默认禁止元数据写回原文件。</Alert>}
-    <MetadataEditorForm value={{
+    <MetadataEditorForm aiEnabled value={{
       title: draft.title, subtitle: draft.subtitle ?? "", authors: draft.authors.join("，"), translators: draft.translators.join("，"),
       language: draft.language ?? "", publisher: draft.publisher ?? "", publishedDate: draft.publishedDate ?? "", isbn: draft.isbn ?? "",
       series: draft.series ?? "", seriesIndex: draft.seriesIndex?.toString() ?? "", tags: draft.tags.join("，"), description: draft.description ?? "", authorBiography: draft.authorBiography ?? "", tableOfContents: draft.tableOfContents ?? "", publiclyVisible: draft.publiclyVisible ?? true,

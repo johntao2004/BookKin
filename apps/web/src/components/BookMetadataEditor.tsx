@@ -313,7 +313,7 @@ export function BookMetadataEditor({ book, onClose, onCompleted, onSavedImmediat
             <Typography>正在准备写回确认…</Typography>
           </Stack>
         ) : !preview ? (
-          <MetadataEditorForm value={form} onChange={update} disabled={busy}
+          <MetadataEditorForm value={form} onChange={update} disabled={busy} aiEnabled={can("library.edit")}
             coverUrl={query.data?.coverUrl ?? book?.coverUrl} coverAlt="当前书籍封面"
             coverDetails={<Chip label={book?.format} variant="outlined" />}
             coverActions={<>

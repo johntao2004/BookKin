@@ -4,8 +4,9 @@ import { usePermissions } from "../auth/permissions";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Alert } from "@/ui/feedback";
+import { _AntAlert } from "@/ui/antd";
 import { Box } from "@/ui/primitives";
-import { SaveButton } from "@/ui/buttons";
+import { Button, SaveButton } from "@/ui/buttons";
 import { Checkbox } from "@/ui/forms";
 import { CircularProgress } from "@/ui/feedback";
 import { FormControl } from "@/ui/primitives";
@@ -18,7 +19,7 @@ import { Switch } from "@/ui/forms";
 import { TextField } from "@/ui/forms";
 import { Typography } from "@/ui/primitives";
 import { SectionHeader, PageContainer } from "../components/PageHeader";
-import { api } from "../api/client";
+import { api, request } from "../api/client";
 import type { AiProviderSetting, AiProviderSettingInput, AiSettings, AiSettingsInput } from "../domain/types";
 import { tokens } from "../theme/generated-tokens";
 import type { ReactNode } from "react";
@@ -37,7 +38,7 @@ const modelPresetsByProvider: Record<string, ModelPreset[]> = {
     { value: "gpt-4o-mini", label: "GPT-4o mini" },
   ],
   deepseek: [
-    { value: "deepseek-v4-flash", label: "deepseek-v4-flash" },
+    { value: "deepseek-flash", label: "deepseek-flash" },
     { value: "deepseek-v4-pro", label: "deepseek-v4-pro" },
   ],
   qwen: [
@@ -82,6 +83,7 @@ export function AiSettingsPage() {
   const [currentSettings, setCurrentSettings] = useState<AiSettings | null>(null);
   const [selectedProviderId, setSelectedProviderId] = useState("");
   const [busy, setBusy] = useState(false);
+  const [testing, setTesting] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
@@ -136,16 +138,16 @@ export function AiSettingsPage() {
 
   const selectedProvider = draft.providers.find((provider) => provider.id === selectedProviderId) ?? draft.providers[0];
   return <PageContainer>
-    {message && <Alert severity="success" sx={{ mb: 2 }}>{message}</Alert>}
-    {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+    {message && <_AntAlert type="success" description={message} showIcon />}
+    {error && <_AntAlert type="error" description={error} showIcon />}
     <Stack spacing={3}>
       <SettingsPanel
         title="匹配策略"
-        description="AI 只接收解析出的结构化书目信息，不会上传 EPUB/PDF 原文。"
+        description="入库书目匹配只发送结构化书目信息；助读与编辑辅助经逐次确认后发送有界正文采样或当前草稿。秘藏阁内容不接入外部 AI。"
         action={<SaveButton disabled={busy || !can("settings.ai.edit")} onClick={() => void save("strategy")}>{busy ? "保存中…" : "保存策略"}</SaveButton>}
       >
         <Stack spacing={1.5}>
-          <FormControlLabel control={<Switch disabled={!can("settings.ai.edit")} checked={draft.enabled} onChange={(_, checked) => update("enabled", checked)} />} label={<SettingLabel title="启用 AI 书目匹配" description="关闭后不会调用任何 AI 平台，普通本地和在线书目识别仍可使用。" />} />
+          <FormControlLabel control={<Switch disabled={!can("settings.ai.edit")} checked={draft.enabled} onChange={(_, checked) => update("enabled", checked)} />} label={<SettingLabel title="启用 AI 服务" description="统一控制助读、编辑辅助、知识点提取与书目匹配；关闭后不会调用 AI 平台。" />} />
           <FormControlLabel control={<Switch checked={draft.autoMatch} disabled={!draft.enabled || !can("settings.ai.edit")} onChange={(_, checked) => update("autoMatch", checked)} />} label={<SettingLabel title="入库时自动查找未匹配书目" description="常规来源没有强 ISBN 或书名/作者匹配时，自动请求已启用的平台。" />} />
           <Stack sx={{ display: "grid", gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))" }, gap: `${tokens.spacing[4]}px`, pt: `${tokens.spacing[1]}px` }}>
             <TextField fullWidth label="最多候选数" type="number" value={draft.maxCandidates} slotProps={{ htmlInput: { min: 1, max: 10 } }} onChange={(event) => update("maxCandidates", clampNumber(event.target.value, 1, 10, 4))} />
@@ -157,7 +159,13 @@ export function AiSettingsPage() {
       <SettingsPanel
         title="AI 平台"
         description="选择要使用的厂商，配置模型和接口后保存。"
-        action={<SaveButton disabled={busy || !can("settings.ai.edit")} onClick={() => void save("provider")}>{busy ? "保存中…" : "保存平台"}</SaveButton>}
+        action={<Stack direction="row" sx={{ flexWrap: "wrap", gap: 1 }}><Button disabled={testing || busy || !can("settings.ai.edit")} onClick={() => {
+          setTesting(true); setError(""); setMessage("");
+          void request<{ provider: string; model: string; elapsedMs: number }>("/ai/test", { method: "POST" }, { timeoutMs: 150000 })
+            .then(result => setMessage(`${result.provider} · ${result.model} 连接成功（${(result.elapsedMs / 1000).toFixed(1)} 秒）。使用已保存配置，未发送书籍或私人内容。`))
+            .catch(reason => setError(reason instanceof Error ? reason.message : "连接测试失败，请重试。"))
+            .finally(() => setTesting(false));
+        }}>{testing ? "检测中…" : "测试已保存配置"}</Button><SaveButton disabled={busy || testing || !can("settings.ai.edit")} onClick={() => void save("provider")}>{busy ? "保存中…" : "保存平台"}</SaveButton></Stack>}
       >
         <Stack spacing={2} sx={{ width: "100%", maxWidth: "none" }}>
           <FormControl fullWidth>
