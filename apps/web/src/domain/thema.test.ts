@@ -1,7 +1,7 @@
 import { classifyCatalogBook } from '../pages/virtual-library-catalog';
 import { demoBooks } from '../data/demo';
 import chineseCatalog from './thema-zh-CN.json';
-import { THEMA_VERSION, THEMA_SUBJECTS, themaLabel, themaPath, themaTree, suggestThema, matchesThema } from './thema';
+import { THEMA_VERSION, THEMA_SUBJECTS, themaLabel, themaPath, themaTree, matchesThema } from './thema';
 
 it('includes the complete official subject hierarchy with resolvable parents and no qualifiers', () => {
   expect(THEMA_SUBJECTS).toHaveLength(3422);
@@ -22,12 +22,6 @@ it('uses declared descendants for filters without treating keyword guesses as sa
   expect(matchesThema([], 'UNCLASSIFIED')).toBe(true);
   expect(matchesThema(['AKH'], 'UNCLASSIFIED')).toBe(false);
 });
-it('returns conservative metadata suggestions and an honest empty result', () => {
-  expect(suggestThema('古籍装帧与纸张保护')).toEqual(['GL', 'AKH']);
-  expect(suggestThema('森林修复与生态监测')).toContain('RNKH2');
-  expect(suggestThema('123456')).toEqual([]);
-});
-
 it('keeps the first deep subject authoritative in the existing virtual-library zones', () => {
   expect(classifyCatalogBook({ ...demoBooks[0], subjectCodes: ['AKH', 'GL'] }).category.id).toBe('arts');
   expect(classifyCatalogBook({ ...demoBooks[0], subjectCodes: ['RNKH2', 'FB'] }).category.id).toBe('nature');

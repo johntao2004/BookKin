@@ -921,6 +921,76 @@ paths:
       operationId: listAiProviders
       responses:
         '200': { description: AI providers available to managers, content: { application/json: { schema: { $ref: '#/components/schemas/AiProviderList' } } } }
+  /metadata-terms:
+    get:
+      operationId: searchMetadataTerms
+      description: Shared vocabulary search; requires library.edit or library.upload.
+      parameters:
+        - { name: kind, in: query, required: true, schema: { type: string, enum: [LANGUAGE, SERIES, TAG, KNOWLEDGE] } }
+        - { name: q, in: query, schema: { type: string, maxLength: 200 } }
+        - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 30, default: 30 } }
+      responses:
+        '200': { description: Matching shared terms }
+    post:
+      operationId: createMetadataTerm
+      description: Creates or reuses one normalized term. Requires library.edit or library.upload.
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/MetadataTermInput' } } } }
+      responses:
+        '200': { description: Canonical reusable term }
+  /metadata-terms/ensure:
+    post:
+      operationId: ensureMetadataTerms
+      description: Atomically creates or reuses up to 50 terms in input order; requires library.edit or library.upload.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, required: [kind, items], properties: { kind: { type: string, enum: [LANGUAGE, SERIES, TAG, KNOWLEDGE] }, items: { type: array, maxItems: 50, items: { $ref: '#/components/schemas/MetadataTermInput' } } } }
+      responses:
+        '200': { description: Canonical reusable terms in input order }
+  /ai/metadata-terms:
+    post:
+      operationId: previewMetadataTerms
+      description: Language or explicitly evidenced series suggestions from authorized bounded book text. Does not persist vocabulary until adopted.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, required: [kind, source, id, consent], properties: { kind: { type: string, enum: [LANGUAGE, SERIES] }, source: { type: string, enum: [BOOK, UPLOAD] }, id: { type: string, format: uuid }, consent: { type: boolean } } }
+      responses:
+        '200': { description: At most five value/label suggestions }
+  /ai/book-knowledge:
+    post:
+      tags: [AI]
+      operationId: previewBookKnowledge
+      description: Consent-based preview of evidence-backed knowledge points extracted only from bounded PDF/EPUB body samples. BOOK requires reader.read and library.edit; UPLOAD requires library.upload and OWNER or ADMIN. Results are never persisted until explicitly included in a metadata edit or upload confirmation.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/BookKnowledgeRequest' }
+      responses:
+        '200': { description: Preview knowledge points with source fingerprint and server-measured sample coverage, content: { application/json: { schema: { $ref: '#/components/schemas/KnowledgeDraft' } } } }
+  /ai/book-classification:
+    post:
+      tags: [AI]
+      operationId: classifyBookBody
+      description: Consent-based, read-only suggestions derived only from bounded PDF/EPUB body samples. BOOK requires reader.read and library.edit; UPLOAD requires library.upload and OWNER or ADMIN. No metadata is saved.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/BookClassificationRequest' }
+      responses:
+        '200': { description: Thema subjects and evidence-backed ordinary tags from sampled body text, content: { application/json: { schema: { $ref: '#/components/schemas/BookClassificationResult' } } } }
+  /knowledge/books/{bookId}:
+    get:
+      tags: [Knowledge]
+      operationId: getBookKnowledgeDraft
+      description: Returns the saved evidence-backed knowledge points for the current available file, or an empty draft with its current fingerprint. Requires knowledge.view and reader.read.
+      parameters: [{ name: bookId, in: path, required: true, schema: { type: string, format: uuid } }]
+      responses:
+        '200': { description: Current knowledge points and source fingerprint, content: { application/json: { schema: { $ref: '#/components/schemas/KnowledgeDraft' } } } }
   /ai/settings:
     get:
       tags: [AI]
@@ -1118,6 +1188,26 @@ paths:
       parameters: [{ $ref: '#/components/parameters/Id' }]
       requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/BookMetadataDraft' } } } }
       responses: { '200': { description: Reviewed metadata saved, content: { application/json: { schema: { $ref: '#/components/schemas/BookUpload' } } } } }
+  /book-uploads/{id}/match:
+    post:
+      tags: [Book uploads]
+      operationId: matchBookUpload
+      description: Searches editions for one upload and persists candidates without changing its draft. Refresh bypasses provider and AI caches. Failures retain previous candidates.
+      parameters: [{ $ref: '#/components/parameters/Id' }]
+      requestBody: { required: false, content: { application/json: { schema: { $ref: '#/components/schemas/OnlineMatchRequest' } } } }
+      responses: { '200': { description: Saved edition candidates or persistent retry error, content: { application/json: { schema: { $ref: '#/components/schemas/BookUpload' } } } } }
+  /metadata-providers:
+    get:
+      tags: [Book uploads]
+      operationId: getMetadataProviderSettings
+      description: Requires OWNER or ADMIN role and settings.ai.view.
+      responses: { '200': { description: Fixed metadata sources and availability, content: { application/json: { schema: { $ref: '#/components/schemas/MetadataProviderSettings' } } } } }
+    put:
+      tags: [Book uploads]
+      operationId: updateMetadataProviderSettings
+      description: Requires OWNER or ADMIN role and settings.ai.edit. Arbitrary source URLs and credentials are not accepted.
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/MetadataProviderSettingsInput' } } } }
+      responses: { '200': { description: Saved source switches, content: { application/json: { schema: { $ref: '#/components/schemas/MetadataProviderSettings' } } } } }
   /book-uploads/{id}/enrich:
     post:
       tags: [Book uploads]
@@ -1203,6 +1293,14 @@ components:
       description: RFC 9457 problem
       content: { application/problem+json: { schema: { $ref: '#/components/schemas/Problem' } } }
   schemas:
+    MetadataTermInput:
+      type: object
+      required: [label]
+      properties:
+        kind: { type: string, enum: [LANGUAGE, SERIES, TAG, KNOWLEDGE] }
+        value: { type: string, maxLength: 1024 }
+        label: { type: string, maxLength: 1024 }
+
     VaultPolicy:
       type: object
       required: [enabled, configured, revision]
@@ -1552,13 +1650,13 @@ components:
     CommitBookUploadRequest:
       type: object
       properties: { publishToDisplay: { type: boolean, default: false } }
-    MetadataSource: { type: string, enum: [FILE, FILENAME, OPEN_LIBRARY, GOOGLE_BOOKS, AI, MANUAL] }
+    MetadataSource: { type: string, enum: [FILE, FILENAME, OPEN_LIBRARY, WIKIDATA, GOOGLE_BOOKS, AI, MANUAL] }
     CoverSource: { type: string, enum: [EMBEDDED, PDF_FIRST_PAGE, OPEN_LIBRARY, GOOGLE_BOOKS, CUSTOM, GENERATED] }
     BookUploadStatus: { type: string, enum: [RECEIVING, INSPECTING, ENRICHING, READY_FOR_REVIEW, COMMITTING, SUCCEEDED, DUPLICATE, FAILED, CANCELLED, EXPIRED] }
     BookMetadata:
       type: object
       required: [id, title, authors, translators, tags, subjectCodes, sources]
-      properties: { publiclyVisible: { type: boolean }, authorBiography: { type: [string, "null"], maxLength: 20000 }, tableOfContents: { type: [string, "null"], maxLength: 40000 }, id: { type: string, format: uuid }, title: { type: string }, subtitle: { type: [string, 'null'] }, authors: { type: array, items: { type: string } }, translators: { type: array, items: { type: string } }, language: { type: [string, 'null'] }, publisher: { type: [string, 'null'] }, publishedDate: { type: [string, 'null'] }, isbn: { type: [string, 'null'] }, description: { type: [string, 'null'] }, series: { type: [string, 'null'] }, seriesIndex: { type: [number, 'null'] }, tags: { type: array, items: { type: string } }, subjectCodes: { type: array, items: { type: string, maxLength: 32 } }, coverCacheKey: { type: [string, 'null'] }, coverUrl: { type: [string, 'null'] }, sources: { type: object, additionalProperties: { $ref: '#/components/schemas/MetadataSource' } } }
+      properties: { knowledgeTerms: { type: array, maxItems: 50, items: { type: string, maxLength: 60 } }, publiclyVisible: { type: boolean }, authorBiography: { type: [string, "null"], maxLength: 20000 }, tableOfContents: { type: [string, "null"], maxLength: 40000 }, id: { type: string, format: uuid }, title: { type: string }, subtitle: { type: [string, 'null'] }, authors: { type: array, items: { type: string } }, translators: { type: array, items: { type: string } }, language: { type: [string, 'null'] }, publisher: { type: [string, 'null'] }, publishedDate: { type: [string, 'null'] }, isbn: { type: [string, 'null'] }, description: { type: [string, 'null'] }, series: { type: [string, 'null'] }, seriesIndex: { type: [number, 'null'] }, tags: { type: array, items: { type: string } }, subjectCodes: { type: array, items: { type: string, maxLength: 32 } }, coverCacheKey: { type: [string, 'null'] }, coverUrl: { type: [string, 'null'] }, sources: { type: object, additionalProperties: { $ref: '#/components/schemas/MetadataSource' } } }
     BookMetadataDraft:
       type: object
       required: [title, authors, translators, tags, sources, targetPath]
@@ -1567,6 +1665,8 @@ components:
         subjectCodes: { type: array, maxItems: 4, items: { type: string } }
         authorBiography: { type: [string, "null"], maxLength: 20000 }
         tableOfContents: { type: [string, "null"], maxLength: 40000 }
+        knowledgeTerms: { type: array, maxItems: 50, items: { type: string, maxLength: 60 } }
+        knowledgeDraft: { oneOf: [{ $ref: '#/components/schemas/KnowledgeDraft' }, { type: 'null' }] }
         title: { type: string, maxLength: 500 }
         subtitle: { type: [string, 'null'], maxLength: 500 }
         authors: { type: array, maxItems: 20, items: { type: string, maxLength: 300 } }
@@ -1586,7 +1686,33 @@ components:
     MetadataCandidate:
       type: object
       required: [id, provider]
-      properties: { id: { type: string }, provider: { $ref: '#/components/schemas/MetadataSource' }, providerLabel: { type: [string, 'null'] }, title: { type: [string, 'null'] }, subtitle: { type: [string, 'null'] }, authors: { type: array, items: { type: string } }, publisher: { type: [string, 'null'] }, publishedDate: { type: [string, 'null'] }, isbn: { type: [string, 'null'] }, description: { type: [string, 'null'] }, tags: { type: array, items: { type: string } }, coverUrl: { type: [string, 'null'], format: uri }, confidence: { type: [number, 'null'], minimum: 0, maximum: 1 }, matchReason: { type: [string, 'null'] }, requiresReview: { type: boolean } }
+      properties: { id: { type: string }, provider: { $ref: '#/components/schemas/MetadataSource' }, providerLabel: { type: [string, 'null'] }, title: { type: [string, 'null'] }, subtitle: { type: [string, 'null'] }, authors: { type: array, items: { type: string } }, publisher: { type: [string, 'null'] }, publishedDate: { type: [string, 'null'] }, isbn: { type: [string, 'null'] }, description: { type: [string, 'null'] }, tags: { type: array, items: { type: string } }, coverUrl: { type: [string, 'null'], format: uri }, confidence: { type: [number, 'null'], minimum: 0, maximum: 1 }, matchReason: { type: [string, 'null'] }, requiresReview: { type: boolean }, edition: { type: [string, 'null'] }, language: { type: [string, 'null'] }, sourceUrl: { type: [string, 'null'], format: uri } }
+    OnlineMatchRequest:
+      type: object
+      properties: { refresh: { type: boolean, default: false }, providerId: { type: [string, 'null'], maxLength: 80 } }
+    MetadataProviderId: { type: string, enum: [OPEN_LIBRARY, WIKIDATA, GOOGLE_BOOKS] }
+    MetadataProviderSettings:
+      type: object
+      required: [providers]
+      properties:
+        providers:
+          type: array
+          items:
+            type: object
+            required: [id, label, enabled, available, description, homepage]
+            properties: { id: { $ref: '#/components/schemas/MetadataProviderId' }, label: { type: string }, enabled: { type: boolean }, available: { type: boolean }, description: { type: string }, homepage: { type: string, format: uri } }
+    MetadataProviderSettingsInput:
+      type: object
+      required: [providers]
+      properties:
+        providers:
+          type: array
+          minItems: 1
+          maxItems: 3
+          items:
+            type: object
+            required: [id, enabled]
+            properties: { id: { $ref: '#/components/schemas/MetadataProviderId' }, enabled: { type: boolean } }
     AiProviderType: { type: string, enum: [OPENAI_COMPATIBLE, ANTHROPIC, GEMINI] }
     AiProvider:
       type: object
@@ -1596,6 +1722,54 @@ components:
       type: object
       required: [items]
       properties: { items: { type: array, items: { $ref: '#/components/schemas/AiProvider' } } }
+    BookClassificationRequest:
+      type: object
+      required: [source, id, consent]
+      properties:
+        source: { type: string, enum: [BOOK, UPLOAD] }
+        id: { type: string, format: uuid }
+        consent: { type: boolean, enum: [true] }
+    BookKnowledgeRequest:
+      type: object
+      required: [source, id, consent]
+      properties:
+        source: { type: string, enum: [BOOK, UPLOAD] }
+        id: { type: string, format: uuid }
+        consent: { type: boolean, enum: [true] }
+    KnowledgePoint:
+      type: object
+      required: [name, quote, locator]
+      properties:
+        name: { type: string, minLength: 2, maxLength: 60 }
+        quote: { type: string, minLength: 12, maxLength: 300 }
+        locator: { type: string, minLength: 1, maxLength: 500 }
+    KnowledgeDraft:
+      type: object
+      required: [points, fingerprint, sampledSections, totalSections]
+      properties:
+        points: { type: array, maxItems: 10, items: { $ref: '#/components/schemas/KnowledgePoint' } }
+        fingerprint: { type: string }
+        sampledSections: { type: integer, minimum: 0 }
+        totalSections: { type: integer, minimum: 0 }
+        providerId: { type: [string, 'null'] }
+    BookClassificationEvidence:
+      type: object
+      required: [locator, quote]
+      properties: { locator: { type: string }, quote: { type: string } }
+    BookClassificationSubject:
+      type: object
+      required: [code, reason, evidence]
+      properties: { code: { type: string }, reason: { type: string }, evidence: { type: array, items: { $ref: '#/components/schemas/BookClassificationEvidence' } } }
+    BookClassificationResult:
+      type: object
+      required: [subjects, tags, included, total, coverage]
+      properties:
+        subjects: { type: array, maxItems: 4, items: { $ref: '#/components/schemas/BookClassificationSubject' } }
+        tags: { type: array, maxItems: 5, items: { type: string } }
+        evidence: { type: array, items: { $ref: '#/components/schemas/BookClassificationEvidence' }, description: Optional distinct evidence aggregated from returned subject and tag suggestions. }
+        included: { type: integer, minimum: 0 }
+        total: { type: integer, minimum: 0 }
+        coverage: { type: string }
     AiProviderSetting:
       type: object
       required: [id, label, type, enabled, baseUrl, model, configured, available, apiKeyConfigured]
@@ -1754,7 +1928,7 @@ components:
       properties: { id: { type: string, format: uuid }, bookId: { type: string, format: uuid }, bookTitle: { type: string }, bookAuthor: { type: string }, format: { $ref: '#/components/schemas/BookFormat' }, coverUrl: { type: string }, originalPath: { type: string }, trashPath: { type: string }, sizeBytes: { type: integer, format: int64 }, deletedBy: { type: string }, deletedAt: { type: string, format: date-time }, expiresAt: { type: string, format: date-time }, fingerprint: { type: string } }
     MetadataRequest:
       type: object
-      properties: { publiclyVisible: { type: boolean }, authorBiography: { type: [string, "null"], maxLength: 20000 }, tableOfContents: { type: [string, "null"], maxLength: 40000 }, title: { type: string }, subtitle: { type: string }, authors: { type: array, items: { type: string } }, translators: { type: array, items: { type: string } }, language: { type: string }, publisher: { type: string }, publishedDate: { type: string }, isbn: { type: string }, description: { type: string }, series: { type: string }, seriesIndex: { type: number }, tags: { type: array, items: { type: string } }, subjectCodes: { type: array, maxItems: 4, items: { type: string, maxLength: 32 } }, manualFields: { type: array, items: { type: string } }, writeBack: { type: boolean }, bookFileId: { type: string, format: uuid }, expectedFingerprint: { type: string } }
+      properties: { publiclyVisible: { type: boolean }, authorBiography: { type: [string, "null"], maxLength: 20000 }, tableOfContents: { type: [string, "null"], maxLength: 40000 }, knowledgeTerms: { type: array, maxItems: 50, items: { type: string, maxLength: 60 } }, knowledgeDraft: { oneOf: [{ $ref: '#/components/schemas/KnowledgeDraft' }, { type: 'null' }] }, title: { type: string }, subtitle: { type: string }, authors: { type: array, items: { type: string } }, translators: { type: array, items: { type: string } }, language: { type: string }, publisher: { type: string }, publishedDate: { type: string }, isbn: { type: string }, description: { type: string }, series: { type: string }, seriesIndex: { type: number }, tags: { type: array, items: { type: string } }, subjectCodes: { type: array, maxItems: 4, items: { type: string, maxLength: 32 } }, manualFields: { type: array, items: { type: string } }, writeBack: { type: boolean }, bookFileId: { type: string, format: uuid }, expectedFingerprint: { type: string } }
 
     ArticleNoteEntry:
       type: object

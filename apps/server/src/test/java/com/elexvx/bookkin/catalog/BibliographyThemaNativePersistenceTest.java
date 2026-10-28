@@ -44,8 +44,13 @@ class BibliographyThemaNativePersistenceTest {
                     ingestion.createUploaded(book,owner,root,"fixture.epub","fixture.epub",BookFormat.EPUB,attributes,"sha256:fixture",new FileInspector.Inspection(true,false,false,false),metadata,"{}",new String[0],null);
                     var repository=new BookMetadataRepository(db,new ObjectMapper());
                     assertThat(repository.find(book).orElseThrow().subjectCodes()).containsExactly("RNKH2");
+                    assertThat(repository.find(book).orElseThrow().language()).isEqualTo("zh");
                     assertThat(repository.find(book).orElseThrow().authorBiography()).isEqualTo("作者介绍");
                     assertThat(repository.find(book).orElseThrow().tableOfContents()).isEqualTo("第一章\n第二章");
+                    String languages=String.join(",",java.util.Collections.nCopies(340,"en"))+",abcd";
+                    assertThat(languages).hasSize(1024);
+                    repository.update(book,new BookMetadataRepository.MetadataPatch(null,null,null,null,languages,null,null,null,null,null,null,null,List.of(),new String[]{"language"},null,null));
+                    assertThat(repository.find(book).orElseThrow().language()).isEqualTo(languages);
                     // Second and unclassified books use the same normal persistence gateway.
                     ingestion.createUploaded(privateBook,owner,root,"private.epub","private.epub",BookFormat.EPUB,attributes,"sha256:private",new FileInspector.Inspection(true,false,false,false),metadata,"{}",new String[0],null);
                     var empty=new ExtractedBook("未分类书",null,List.of("作者"),List.of(),null,"zh",null,null,null,null,null,List.of(),null,null,null);
@@ -61,7 +66,9 @@ class BibliographyThemaNativePersistenceTest {
                     ingestion.upsert(root,"fixture.epub","fixture.epub",BookFormat.EPUB,attributes,"quick","sha256:fixture",new FileInspector.Inspection(true,false,false,false),metadata,null);
                     var saved=repository.find(book).orElseThrow();
                     assertThat(saved.subjectCodes()).containsExactly("AKH");assertThat(saved.authorBiography()).isEqualTo("手工作者介绍");assertThat(saved.tableOfContents()).isEqualTo("手工目录");
+                    assertThat(saved.language()).isEqualTo(languages);
                     assertThat(saved.sources()).containsEntry("subjectCodes","MANUAL");
+                    assertThat(saved.sources()).containsEntry("language","MANUAL");
                     assertThrows(com.elexvx.bookkin.common.ApiException.class,()->repository.update(book,new BookMetadataRepository.MetadataPatch(null,null,null,null,null,null,null,null,null,null,null,null,List.of("1FPC"),new String[]{"subjectCodes"})));
                     assertThat(repository.find(book).orElseThrow().subjectCodes()).containsExactly("AKH");
                 }

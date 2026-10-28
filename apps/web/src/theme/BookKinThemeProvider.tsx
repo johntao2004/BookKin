@@ -1,6 +1,7 @@
 // 统一整站与阅读器主题状态，把持久选择传播至 Ant Design 和共享 UI。
 // Shares theme state across site and reader, propagating persisted choices to Ant Design and shared UI.
 import zhCN from "antd/locale/zh_CN";
+import "dayjs/locale/zh-cn";
 import { FeedbackProvider } from "../ui/notifications";
 import { ConfirmationProvider } from "../ui/confirmations";
 import { ConfigProvider } from "../ui/antd";

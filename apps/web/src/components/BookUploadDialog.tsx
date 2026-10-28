@@ -1,6 +1,9 @@
 import { ThemaSubjectField } from "./ThemaSubjectField";
+import { formatLanguages } from "../domain/languages";
+import { formatPublicationDate } from "../domain/publication-date";
 import { BookCover } from "./BookCover";
 import { MetadataEditorForm } from "./MetadataEditorForm";
+import type { ContentMetadataSource } from "./BookContentSuggestionButton";
 import { useCoverCrop } from "./CoverCropDialog";
 import { useNavigate } from "react-router-dom";
 import { randomId } from "../utils/random-id";
@@ -21,11 +24,13 @@ import { IconButton } from "@/ui/buttons";
 import { LinearProgress } from "@/ui/feedback";
 import { Stack } from "@/ui/primitives";
 import { Typography } from "@/ui/primitives";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState, type DragEvent } from "react";
 import { api } from "../api/client";
-import type { BookMetadataDraft, BookUpload, LibraryRoot, MetadataCandidate, MetadataSource } from "../domain/types";
+import { useAuth } from "../auth/AuthContext";
+import type { BookMetadataDraft, BookUpload, LibraryRoot, MetadataCandidate } from "../domain/types";
 import { tokens } from "../theme/generated-tokens";
+import { useBookUploadMetadataAutosave } from "./useBookUploadMetadataAutosave";
 
 interface LocalUpload {
   id: string;
@@ -36,27 +41,21 @@ interface LocalUpload {
   error?: string;
 }
 
-const sourceText: Record<MetadataSource, string> = {
-  FILE: "文件内置",
-  FILENAME: "文件名推断",
-  OPEN_LIBRARY: "Open Library",
-  GOOGLE_BOOKS: "Google Books",
-  AI: "AI 候选",
-  MANUAL: "手工编辑",
-};
-
 export function BookUploadDialog({ open, initialRootId, onClose }: {
   open: boolean; initialRootId?: string; publishToDisplay?: boolean;
   onClose: () => void; onCompleted: (message: string) => void;
 }) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
   const fileInput = useRef<HTMLInputElement>(null);
   const uploading = useRef(false);
   const [local, setLocal] = useState<LocalUpload[]>([]);
+  const [freshUploadIds, setFreshUploadIds] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const rootsQuery = useQuery({ queryKey: ["library-roots"], queryFn: () => api.listLibraryRoots(), enabled: open });
-  const pendingQuery = useQuery({ queryKey: ["book-uploads"], queryFn: api.listBookUploads, enabled: open });
+  const pendingQuery = useQuery({ queryKey: ["book-uploads", user?.id], queryFn: api.listBookUploads, enabled: open && Boolean(user?.id) });
   const writableRoots = useMemo(() => (rootsQuery.data ?? []).filter(isWritable), [rootsQuery.data]);
   const rootId = (writableRoots.find(root => root.id === initialRootId) ?? writableRoots[0])?.id ?? "";
   const completedIds = local.filter(item => item.state === "UPLOADED" && item.uploadId).map(item => item.uploadId!);
@@ -78,6 +77,7 @@ export function BookUploadDialog({ open, initialRootId, onClose }: {
         try {
           const session = await api.createBookUpload({ libraryRootId: rootId, filename: item.file.name, sizeBytes: item.file.size });
           await api.uploadBookContent(session.id, item.file, progress => setLocal(current => patchLocal(current, item.id, { progress })));
+          setFreshUploadIds(current => [...current, session.id]);
           setLocal(current => patchLocal(current, item.id, { uploadId: session.id, state: "UPLOADED", progress: 100 }));
         } catch (reason) {
           setLocal(current => patchLocal(current, item.id, { state: "FAILED", error: errorMessage(reason) }));
@@ -85,7 +85,14 @@ export function BookUploadDialog({ open, initialRootId, onClose }: {
       }
     };
     try { await Promise.all([worker(), worker()]); }
-    finally { uploading.current = false; setBusy(false); }
+    finally {
+      try {
+        if (user?.id) await queryClient.invalidateQueries({ queryKey: ["book-uploads"] });
+      } finally {
+        uploading.current = false;
+        setBusy(false);
+      }
+    }
   };
   const addFiles = (files: FileList | File[]) => {
     if (uploading.current || !rootId) return;
@@ -98,9 +105,10 @@ export function BookUploadDialog({ open, initialRootId, onClose }: {
   const edit = () => {
     onClose();
     setLocal([]);
-    navigate(`/library/uploads/${editIds[0]}?${new URLSearchParams({ next: editIds.slice(1).join(",")})}`);
+    navigate(`/library/uploads/${editIds[0]}?${new URLSearchParams({ next: editIds.slice(1).join(",")})}`, { state: { freshUploadIds: completedIds.filter(id => freshUploadIds.includes(id)) } });
+    setFreshUploadIds([]);
   };
-  return <Dialog open={open} onClose={busy ? undefined : onClose} fullWidth maxWidth="sm">
+  return <Dialog open={open} onClose={busy ? undefined : () => { setFreshUploadIds([]); onClose(); }} fullWidth maxWidth="sm">
     <DialogTitle>上传书籍</DialogTitle>
     <DialogContent>
       <Stack spacing={2}>
@@ -132,79 +140,345 @@ function LocalQueue({ items, onRemove }: { items: LocalUpload[]; onRemove: (id: 
   ))}</Stack>;
 }
 
-export function UploadReview({ upload, onChanged, onCommitted, onCancel, cancelling = false }: { upload: BookUpload; publishToDisplay?: boolean; onChanged: () => Promise<void>; onCommitted: () => Promise<void>; onCancel?: () => Promise<void>; cancelling?: boolean }) {
+export function UploadReview({ upload, onChanged, onCommitted, onCancel, cancelling = false }: { upload: BookUpload; publishToDisplay?: boolean; onChanged: () => Promise<void>; onCommitted: (commitResult: BookUpload) => Promise<void>; onCancel?: () => Promise<void>; cancelling?: boolean }) {
   const { requestCrop, cropDialog } = useCoverCrop();
   const coverInput = useRef<HTMLInputElement>(null);
-  const [draft, setDraft] = useState<BookMetadataDraft | null>(upload.draftMetadata ?? null);
+  const initialDraft = upload.draftMetadata ?? null;
+  const [draft, setDraft] = useState<BookMetadataDraft | null>(initialDraft);
+  const draftRef = useRef<BookMetadataDraft | null>(initialDraft);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [completed, setCompleted] = useState(upload.status === "SUCCEEDED");
+  const [resultDialogOpen, setResultDialogOpen] = useState(false);
+  const [resultDialogBusy, setResultDialogBusy] = useState(false);
+  const [resultStatus, setResultStatus] = useState<"idle" | "loading" | "results" | "empty" | "error">("idle");
+  const [resultCandidates, setResultCandidates] = useState<MetadataCandidate[] | null>(null);
+  const [resultMessage, setResultMessage] = useState("");
+  const [selectionMessage, setSelectionMessage] = useState("");
+  const [matchInFlight, setMatchInFlight] = useState(false);
+  const [resultTitle, setResultTitle] = useState("在线匹配结果");
+  const resultDialogOpenRef = useRef(false);
+  const resultActionId = useRef(0);
+  const matchInFlightRef = useRef(false);
+  const mountedRef = useRef(true);
+  const autosave = useBookUploadMetadataAutosave(upload.id, upload.status === "READY_FOR_REVIEW" && !completed);
 
-  useEffect(() => setDraft(upload.draftMetadata ?? null), [upload]);
+  useEffect(() => {
+    // A late initial query may fill a not-yet-ready draft, but same-upload refetches never replace edits.
+    if (draftRef.current === null && upload.draftMetadata) {
+      draftRef.current = upload.draftMetadata;
+      setDraft(upload.draftMetadata);
+    }
+  }, [upload.id, upload.draftMetadata]);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      resultDialogOpenRef.current = false;
+      resultActionId.current += 1;
+    };
+  }, []);
+
   if (!draft) return <Alert severity="info">正在准备书籍信息…</Alert>;
 
-  const update = <K extends keyof BookMetadataDraft>(key: K, value: BookMetadataDraft[K]) => setDraft((current) => current ? ({ ...current, [key]: value, sources: { ...current.sources, [key]: "MANUAL" } }) : current);
-  const save = async () => run(async () => { await api.updateBookUploadMetadata(upload.id, draft); await onChanged(); });
-  const commit = async () => run(async () => { await api.updateBookUploadMetadata(upload.id, draft); await api.commitBookUpload(upload.id, draft.publiclyVisible ?? true); await onCommitted(); });
-  const run = async (action: () => Promise<void>) => { setBusy(true); setError(""); try { await action(); } catch (reason) { setError(errorMessage(reason)); } finally { setBusy(false); } };
-  const useCandidate = (candidate: MetadataCandidate) => {
-    const provider = candidate.provider;
-    setDraft((current) => current ? ({
-      ...current,
-      title: candidate.title ?? current.title,
-      subtitle: candidate.subtitle ?? current.subtitle,
-      authors: candidate.authors?.length ? candidate.authors : current.authors,
-      publisher: candidate.publisher ?? current.publisher,
-      publishedDate: candidate.publishedDate ?? current.publishedDate,
-      isbn: candidate.isbn ?? current.isbn,
-      description: candidate.description ?? current.description,
-      tags: candidate.tags?.length ? candidate.tags : current.tags,
-      sources: { ...current.sources, title: provider, subtitle: provider, authors: provider, publisher: provider, publishedDate: provider, isbn: provider, description: provider, tags: provider },
-    }) : current);
+  const editable = upload.status === "READY_FOR_REVIEW" && !completed;
+  const changeDraft = (change: BookMetadataDraft | null | ((current: BookMetadataDraft | null) => BookMetadataDraft | null)) => {
+    const next = typeof change === "function" ? change(draftRef.current) : change;
+    draftRef.current = next;
+    setDraft(next);
+    if (next) autosave.schedule(next);
   };
-  const coverChanged = async (file: File) => run(async () => { const blob = await requestCrop(file); if (!blob) return; await api.uploadBookCover(upload.id, blob); await onChanged(); });
+  const update = <K extends keyof BookMetadataDraft>(key: K, value: BookMetadataDraft[K]) => changeDraft((current) => current ? ({ ...current, [key]: value, sources: { ...current.sources, [key]: "MANUAL" } }) : current);
+  const run = async (action: () => Promise<void>) => { setBusy(true); setError(""); try { await action(); } catch (reason) { setError(errorMessage(reason)); } finally { setBusy(false); } };
+  const runAfterFlush = async (action: () => Promise<void>) => run(async () => {
+    autosave.pause();
+    try { await autosave.flush(); await action(); }
+    finally { autosave.resume(); }
+  });
+  const closeResultDialog = () => {
+    resultDialogOpenRef.current = false;
+    resultActionId.current += 1;
+    setResultDialogOpen(false);
+  };
+  const openResultDialog = () => {
+    if (resultStatus === "idle") {
+      const responseError = metadataResponseError(upload);
+      setResultCandidates(upload.metadataCandidates);
+      setResultStatus(responseError ? "error" : upload.metadataCandidates.length ? "results" : "empty");
+      setResultMessage(responseError);
+    }
+    setResultTitle("在线匹配结果");
+    resultDialogOpenRef.current = true;
+    setResultDialogOpen(true);
+  };
+  const lookupMetadata = async (refresh: boolean) => {
+    if (!editable || matchInFlightRef.current) return;
+    matchInFlightRef.current = true;
+    resultDialogOpenRef.current = true;
+    setResultDialogOpen(true);
+    setResultTitle("在线匹配结果");
+    const previousCandidates = resultCandidates ?? upload.metadataCandidates;
+    if (!previousCandidates.length) setResultStatus("loading");
+    setResultMessage("");
+    setSelectionMessage("");
+    setBusy(true);
+    setMatchInFlight(true);
+    setError("");
+    autosave.pause();
+    try {
+      await autosave.flush();
+      const updated = await api.matchBookUpload(upload.id, { refresh });
+      if (!mountedRef.current) return;
+      setResultCandidates(updated.metadataCandidates);
+      await onChanged();
+      if (!mountedRef.current) return;
+      const responseError = metadataResponseError(updated);
+      if (responseError) {
+        setResultMessage(responseError);
+        setResultStatus("error");
+      } else {
+        setResultStatus(updated.metadataCandidates.length ? "results" : "empty");
+      }
+    } catch (reason) {
+      if (mountedRef.current) {
+        setResultMessage(errorMessage(reason));
+        setResultStatus("error");
+      }
+    } finally {
+      autosave.resume();
+      if (mountedRef.current) {
+        setBusy(false);
+        setMatchInFlight(false);
+      }
+      matchInFlightRef.current = false;
+    }
+  };
+  const showOrMatch = () => {
+    const candidates = resultCandidates ?? upload.metadataCandidates;
+    if (candidates.length || resultStatus !== "idle" || metadataResponseError(upload)) openResultDialog();
+    else void lookupMetadata(false);
+  };
+  const useCandidate = async (candidate: MetadataCandidate) => {
+    const actionId = ++resultActionId.current;
+    setBusy(true);
+    setResultDialogBusy(true);
+    setResultMessage("");
+    autosave.pause();
+    try {
+      await autosave.flush();
+      if (actionId !== resultActionId.current || !resultDialogOpenRef.current) return;
+      const current = draftRef.current;
+      if (!current) return;
+      const applied = applyCandidate(current, candidate);
+      changeDraft(applied.draft);
+      await autosave.flush();
+      if (actionId !== resultActionId.current || !resultDialogOpenRef.current) return;
+      if (applied.protectedFields.length) {
+        setSelectionMessage(`已使用此版本并保存；以下手工字段已保留：${applied.protectedFields.join("、")}。`);
+      } else {
+        setSelectionMessage("已使用此版本并保存到草稿。");
+      }
+      closeResultDialog();
+    } catch (reason) {
+      if (mountedRef.current && actionId === resultActionId.current && resultDialogOpenRef.current) setResultMessage(errorMessage(reason));
+    } finally {
+      autosave.resume();
+      if (mountedRef.current) {
+        setBusy(false);
+        setResultDialogBusy(false);
+      }
+    }
+  };
+  const useCandidateCover = async (candidate: MetadataCandidate) => {
+    const actionId = ++resultActionId.current;
+    setBusy(true);
+    setResultDialogBusy(true);
+    setResultMessage("");
+    autosave.pause();
+    try {
+      await autosave.flush();
+      if (actionId !== resultActionId.current || !resultDialogOpenRef.current) return;
+      await api.selectBookUploadCover(upload.id, candidate.id);
+      await onChanged();
+      if (actionId === resultActionId.current && resultDialogOpenRef.current) closeResultDialog();
+    } catch (reason) {
+      if (mountedRef.current && actionId === resultActionId.current && resultDialogOpenRef.current) setResultMessage(errorMessage(reason));
+    } finally {
+      autosave.resume();
+      if (mountedRef.current) {
+        setBusy(false);
+        setResultDialogBusy(false);
+      }
+    }
+  };
+  const coverChanged = async (file: File) => runAfterFlush(async () => {
+    const blob = await requestCrop(file);
+    if (!blob) return;
+    await api.uploadBookCover(upload.id, blob);
+    await onChanged();
+  });
 
-  return <Stack spacing={2}>
+  const commit = async () => {
+    setBusy(true);
+    setError("");
+    autosave.pause();
+    let committed: BookUpload;
+    try {
+      await autosave.flush();
+      committed = await api.commitBookUpload(upload.id, draftRef.current?.publiclyVisible ?? true);
+    } catch (reason) {
+      autosave.resume();
+      setError(errorMessage(reason));
+      setBusy(false);
+      return;
+    }
+    autosave.complete();
+    setCompleted(true);
+    setBusy(false);
+    try { await onCommitted(committed); }
+    catch (reason) { setError(errorMessage(reason)); }
+  };
+  const cancel = async () => {
+    if (!onCancel) return;
+    setBusy(true);
+    setError("");
+    autosave.pause();
+    try {
+      await autosave.flush();
+      await onCancel();
+      autosave.complete();
+    } catch (reason) {
+      autosave.resume();
+      setError(errorMessage(reason));
+      setBusy(false);
+    }
+  };
+  const retrySave = () => { void autosave.flush().catch(() => undefined); };
+  const savedSuccessfully = completed || upload.status === "SUCCEEDED";
+  const saveStateText = savedSuccessfully ? "已确认入库" : autosave.state === "saving" ? "正在保存草稿…" : autosave.state === "dirty" ? "草稿待保存" : autosave.state === "error" ? `草稿保存失败：${autosave.error}` : "草稿已自动保存";
+  const contentSource: ContentMetadataSource | undefined = upload.status === "SUCCEEDED" && upload.committedBookId
+    ? { type: "BOOK", id: upload.committedBookId }
+    : upload.status === "READY_FOR_REVIEW" && !completed ? { type: "UPLOAD", id: upload.id } : undefined;
+
+  const visibleCandidates = resultCandidates ?? upload.metadataCandidates;
+
+  return <>
+  <Stack spacing={2}>
     {cropDialog}
     {upload.similarBookIds.length > 0 && <Alert severity="warning" icon={<WarningAmberRounded />}>发现标题和作者相似的藏书。它不是完全重复文件，确认后仍可作为独立版本入库。</Alert>}
     {(upload.encrypted || upload.drmProtected || upload.digitallySigned) && <Alert severity="warning">该文件包含{upload.encrypted ? "加密" : ""}{upload.drmProtected ? " DRM" : ""}{upload.digitallySigned ? "数字签名" : ""}标记；可以入库，但默认禁止元数据写回原文件。</Alert>}
-    <MetadataEditorForm aiEnabled value={{
+    <MetadataEditorForm actions={<>
+      {onCancel && <Button color="error" disabled={!editable || busy || cancelling} onClick={() => void cancel()}>取消上传</Button>}
+      <Button variant="outlined" onClick={showOrMatch} disabled={!editable || busy}>{visibleCandidates.length ? `在线匹配（${visibleCandidates.length}）` : "在线匹配"}</Button>
+      <Button variant="contained" startIcon={busy ? <CircularProgress size={18} color="inherit" /> : undefined} onClick={() => void commit()} disabled={!editable || busy || !draft.title.trim() || draft.authors.length === 0}>{completed || upload.status === "SUCCEEDED" ? "已入库" : busy ? "正在处理…" : "确认入库"}</Button>
+    </>} aiEnabled aiContentSource={contentSource} knowledgeDraft={draft.knowledgeDraft} knowledgeTerms={draft.knowledgeTerms}
+    onKnowledgeTermsChange={next => changeDraft(current => current ? { ...current, knowledgeTerms: next } : current)}
+    onKnowledgeChange={next => changeDraft(current => current ? { ...current, knowledgeDraft: next } : current)} value={{
       title: draft.title, subtitle: draft.subtitle ?? "", authors: draft.authors.join("，"), translators: draft.translators.join("，"),
       language: draft.language ?? "", publisher: draft.publisher ?? "", publishedDate: draft.publishedDate ?? "", isbn: draft.isbn ?? "",
       series: draft.series ?? "", seriesIndex: draft.seriesIndex?.toString() ?? "", tags: draft.tags.join("，"), description: draft.description ?? "", authorBiography: draft.authorBiography ?? "", tableOfContents: draft.tableOfContents ?? "", publiclyVisible: draft.publiclyVisible ?? true,
-    }} disabled={busy} onChange={(key, value) => {
-      if (key === "publiclyVisible") setDraft(current => current ? { ...current, publiclyVisible: Boolean(value) } : current);
+    }} disabled={!editable || busy} onChange={(key, value) => {
+      if (key === "publiclyVisible") changeDraft(current => current ? { ...current, publiclyVisible: Boolean(value) } : current);
       else if (key === "authors" || key === "translators" || key === "tags") update(key, split(String(value)));
       else if (key === "seriesIndex") update(key, value ? Number(value) : undefined);
       else update(key, String(value));
-    }} extraFields={<div style={{ gridColumn: "1 / -1", minWidth: 0 }}><ThemaSubjectField value={draft.subjectCodes ?? []} disabled={busy}
-      metadataText={`${draft.title} ${draft.description ?? ''} ${draft.tags.join(' ')}`} onChange={codes => update('subjectCodes', codes)} /></div>} coverUrl={upload.coverUrl} coverAlt={`${draft.title}封面`} coverDetails={
+    }} extraFields={() => <ThemaSubjectField value={draft.subjectCodes ?? []} disabled={!editable || busy} contentSource={contentSource}
+      onChange={codes => update('subjectCodes', codes)} />} coverUrl={upload.coverUrl} coverAlt={`${draft.title}封面`} coverDetails={
         <Stack direction="row" sx={{ gap: 1, flexWrap: "wrap" }}><Chip label={upload.format} variant="outlined" /><Chip label={formatBytes(upload.declaredSizeBytes)} variant="outlined" />{(draft.pageCount || draft.wordCount) && <Chip label={draft.pageCount ? `${draft.pageCount} 页` : `${draft.wordCount!.toLocaleString("zh-CN")} 字`} variant="outlined" />}</Stack>
     } coverActions={<>
-        <Button variant="outlined" onClick={() => coverInput.current?.click()}>更换封面</Button>
-        <input ref={coverInput} hidden type="file" accept="image/jpeg,image/png,image/webp" onChange={(event: any) => { const file = event.target.files?.[0]; if (file) void coverChanged(file); event.target.value = ""; }} />
+        <Button variant="outlined" disabled={!editable || busy} onClick={() => coverInput.current?.click()}>更换封面</Button>
+        <input ref={coverInput} hidden type="file" accept="image/jpeg,image/png,image/webp" disabled={!editable || busy} onChange={(event: any) => { const file = event.target.files?.[0]; if (file) void coverChanged(file); event.target.value = ""; }} />
     </>} />
-    {upload.metadataCandidates.length > 0 && <Stack spacing={1.5}><Typography variant="h6">候选书目信息</Typography>{upload.metadataCandidates.map((candidate) => <CandidateCard key={`${candidate.provider}-${candidate.id}`} candidate={candidate} onUse={() => useCandidate(candidate)} onCover={candidate.coverUrl ? () => run(async () => { await api.selectBookUploadCover(upload.id, candidate.id); await onChanged(); }) : undefined} />)}</Stack>}
     {error && <Alert severity="error">{error}</Alert>}
-    <Stack direction={{ xs: "column", sm: "row" }} sx={{ justifyContent: "flex-end", gap: 1.5 }}>
-      {onCancel && <Button color="error" disabled={busy || cancelling} onClick={() => void onCancel()}>取消上传</Button>}
-      <Button onClick={() => run(async () => { await api.enrichBookUpload(upload.id); await onChanged(); })} disabled={busy}>在线补全</Button>
-      <Button color="secondary" onClick={() => run(async () => { await api.aiMatchBookUpload(upload.id); await onChanged(); })} disabled={busy}>AI 匹配</Button>
-      <Button variant="outlined" onClick={save} disabled={busy}>保存草稿</Button>
-      <Button variant="contained" startIcon={busy ? <CircularProgress size={18} color="inherit" /> : undefined} onClick={commit} disabled={busy || !draft.title.trim() || draft.authors.length === 0}>{busy ? "正在处理…" : "确认入库"}</Button>
+    {selectionMessage && <Typography variant="body2" color="text.secondary" role="status">{selectionMessage}</Typography>}
+    <Stack direction="row" sx={{ alignItems: "center", justifyContent: "flex-end", gap: 1 }}>
+      <Typography variant="caption" color={!savedSuccessfully && autosave.state === "error" ? "error" : "text.secondary"} role="status" aria-live="polite">{saveStateText}</Typography>
+      {!savedSuccessfully && autosave.state === "error" && <Button size="small" variant="outlined" onClick={retrySave} disabled={busy}>重试保存</Button>}
     </Stack>
+
+  </Stack>
+  <Dialog open={resultDialogOpen} onClose={resultDialogBusy ? undefined : closeResultDialog} fullWidth maxWidth="sm">
+    <DialogTitle>{resultTitle}</DialogTitle>
+    <DialogContent>
+      <Stack spacing={1.5}>
+        {(matchInFlight || resultStatus === "loading") && <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}><CircularProgress size={18} /><Typography variant="body2">正在在线匹配…</Typography></Stack>}
+        {resultMessage && <Typography variant="body2" color="error" role="alert">{resultMessage}</Typography>}
+        {resultStatus === "empty" && <Typography variant="body2" color="text.secondary">没有找到可用的候选书目信息。</Typography>}
+        {visibleCandidates.map(candidate => <CandidateCard key={`${candidate.provider}-${candidate.id}`} candidate={candidate} draft={draft} disabled={!editable || busy} onUse={() => void useCandidate(candidate)} onCover={candidate.coverUrl ? () => void useCandidateCover(candidate) : undefined} />)}
+      </Stack>
+    </DialogContent>
+    <DialogActions>
+      <Button variant="outlined" disabled={!editable || busy} onClick={() => void lookupMetadata(true)}>{matchInFlight ? "正在匹配…" : resultMessage ? "重试匹配" : "重新匹配"}</Button>
+    </DialogActions>
+  </Dialog>
+  </>;
+}
+
+function CandidateCard({ candidate, draft, onUse, onCover, disabled = false }: { candidate: MetadataCandidate; draft: BookMetadataDraft; onUse: () => void; onCover?: () => void; disabled?: boolean }) {
+  const protectedFields = candidateProtectedFields(draft, candidate);
+  const facts = [
+    ["作者", candidate.authors?.filter(Boolean).join(" / ")],
+    ["出版社", candidate.publisher],
+    ["出版日期", formatPublicationDate(candidate.publishedDate)],
+    ["ISBN", candidate.isbn],
+    ["版次", candidate.edition],
+    ["语言", formatLanguages(candidate.language)],
+  ] as const;
+  return <Stack direction={{ xs: "column", sm: "row" }} sx={{ gap: 2, alignItems: { sm: "center" }, border: 1, borderColor: "divider", borderRadius: 2, p: 2 }}>
+    {candidate.coverUrl && <BookCover src={candidate.coverUrl} alt="在线候选封面" sx={{ width: `${tokens.spacing[12]}px` }} />}
+    <Box sx={{ flex: 1, minWidth: 0 }}>
+      <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap", mb: 0.75 }}><Typography variant="subtitle2">{candidate.title ?? "未提供书名"}</Typography></Stack>
+      <Stack spacing={0.25}>
+        {facts.map(([label, value]) => <Typography key={label} variant="caption" color="text.secondary">{label}：{value?.trim() || "未提供"}</Typography>)}
+      </Stack>
+      {protectedFields.length > 0 && <Typography variant="caption" color="warning.main" role="note">使用此版本时将保留手工字段：{protectedFields.join("、")}</Typography>}
+    </Box>
+    <Stack direction="row" spacing={1}>{onCover && <Button size="small" disabled={disabled} onClick={onCover}>采用封面</Button>}<Button size="small" variant="contained" aria-label={`使用此版本：${candidate.title ?? "未提供书名"}`} disabled={disabled} onClick={onUse}>使用此版本</Button></Stack>
   </Stack>;
 }
 
-function CandidateCard({ candidate, onUse, onCover }: { candidate: MetadataCandidate; onUse: () => void; onCover?: () => void }) {
-  return <Stack direction={{ xs: "column", sm: "row" }} sx={{ gap: 2, alignItems: { sm: "center" }, border: 1, borderColor: "divider", borderRadius: 2, p: 2 }}>
-    {candidate.coverUrl && <BookCover src={candidate.coverUrl} alt="在线候选封面" sx={{ width: `${tokens.spacing[12]}px` }} />}
-    <Box sx={{ flex: 1, minWidth: 0 }}><Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap" }}><Typography variant="subtitle2">{candidate.title ?? "未命名候选"}</Typography><Chip label={candidate.providerLabel ?? sourceText[candidate.provider]} size="small" />{candidate.requiresReview && <Chip label={`需核对${candidate.confidence != null ? ` · ${Math.round(candidate.confidence * 100)}%` : ""}`} size="small" color="warning" variant="outlined" />}</Stack><Typography variant="caption" color="text.secondary">{candidate.authors?.join(" / ")}{candidate.publisher ? ` · ${candidate.publisher}` : ""}{candidate.publishedDate ? ` · ${candidate.publishedDate}` : ""}</Typography>{candidate.matchReason && <Typography variant="caption" color="text.secondary">{candidate.matchReason}</Typography>}</Box>
-    <Stack direction="row" spacing={1}>{onCover && <Button size="small" onClick={onCover}>采用封面</Button>}<Button size="small" variant="outlined" onClick={onUse}>采用信息</Button></Stack>
-  </Stack>;
+function applyCandidate(current: BookMetadataDraft, candidate: MetadataCandidate) {
+  const draft: BookMetadataDraft = { ...current, sources: { ...current.sources } };
+  const protectedFields: string[] = [];
+  const apply = <K extends keyof BookMetadataDraft>(key: K, value: BookMetadataDraft[K] | undefined, label: string) => {
+    const hasValue = typeof value === "string" ? Boolean(value.trim()) : Array.isArray(value) ? value.length > 0 : value !== undefined && value !== null;
+    if (!hasValue) return;
+    if (current.sources[key] === "MANUAL") {
+      protectedFields.push(label);
+      return;
+    }
+    draft[key] = value as BookMetadataDraft[K];
+    draft.sources[key] = candidate.provider;
+  };
+  apply("title", candidate.title, "书名");
+  apply("subtitle", candidate.subtitle, "副标题");
+  apply("authors", candidate.authors?.length ? candidate.authors : undefined, "作者");
+  apply("language", candidate.language, "语言");
+  apply("publisher", candidate.publisher, "出版社");
+  apply("publishedDate", candidate.publishedDate, "出版日期");
+  apply("isbn", candidate.isbn, "ISBN");
+  apply("description", candidate.description, "内容简介");
+  apply("tags", candidate.tags?.length ? candidate.tags : undefined, "标签");
+  return { draft, protectedFields };
+}
+
+function candidateProtectedFields(draft: BookMetadataDraft, candidate: MetadataCandidate) {
+  const candidates = [
+    ["title", candidate.title, "书名"], ["subtitle", candidate.subtitle, "副标题"], ["authors", candidate.authors?.length ? candidate.authors : undefined, "作者"],
+    ["language", candidate.language, "语言"], ["publisher", candidate.publisher, "出版社"], ["publishedDate", candidate.publishedDate, "出版日期"],
+    ["isbn", candidate.isbn, "ISBN"], ["description", candidate.description, "内容简介"], ["tags", candidate.tags?.length ? candidate.tags : undefined, "标签"],
+  ] as const;
+  return candidates.filter(([key, value]) => value !== undefined && draft.sources[key] === "MANUAL").map(([, , label]) => label);
 }
 
 function patchLocal(items: LocalUpload[], id: string, patch: Partial<LocalUpload>) { return items.map((item) => item.id === id ? { ...item, ...patch } : item); }
 function isWritable(root: LibraryRoot) { return root.status === "ONLINE" && root.canWrite && root.canStage; }
 function split(value: string) { return value.split(/[，,;；]/).map((item) => item.trim()).filter(Boolean); }
+function metadataResponseError(upload: BookUpload) {
+  if (upload.errorDetail?.trim()) return upload.errorDetail;
+  if (upload.errorCode === "ENRICHMENT_FAILED" || upload.errorCode === "AI_MATCH_FAILED") return "在线匹配暂时不可用，本地识别结果仍可继续使用。";
+  return upload.errorCode ? `书目信息处理失败（${upload.errorCode}）。` : "";
+}
 function formatBytes(value?: number | null) { if (value == null) return "未知"; if (value >= 1_000_000_000) return `${(value / 1_000_000_000).toFixed(1)} GB`; if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)} MB`; return `${Math.max(1, Math.round(value / 1000))} KB`; }
 function errorMessage(reason: unknown) { return reason instanceof Error ? reason.message : "操作失败"; }

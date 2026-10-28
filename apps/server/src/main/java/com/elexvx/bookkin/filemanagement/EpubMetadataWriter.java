@@ -10,7 +10,10 @@ import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 import java.util.zip.CRC32;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -152,7 +155,7 @@ public class EpubMetadataWriter {
             if (metadataElement == null) throw new IOException("EPUB OPF 缺少 metadata");
             setDc(document, metadataElement, "title", metadata.title());
             setDc(document, metadataElement, "creator", metadata.author());
-            setDc(document, metadataElement, "language", metadata.language());
+            replaceLanguages(document, metadataElement, metadata.language());
             setDc(document, metadataElement, "publisher", metadata.publisher());
             setDc(document, metadataElement, "description", metadata.description());
             setDc(document, metadataElement, "identifier", metadata.isbn());
@@ -194,6 +197,26 @@ public class EpubMetadataWriter {
             metadata.appendChild(element);
         }
         element.setTextContent(value);
+    }
+
+    private void replaceLanguages(Document document, Element metadata, String value) {
+        if (value == null || value.isBlank()) return;
+        Set<String> seen = new HashSet<>();
+        List<String> languages = new ArrayList<>();
+        for (String rawCode : value.split(",")) {
+            String code = rawCode.strip();
+            if (!code.isBlank() && seen.add(code.toLowerCase(Locale.ROOT))) languages.add(code);
+        }
+        if (languages.isEmpty()) return;
+        var nodes = metadata.getElementsByTagNameNS(DC, "language");
+        List<Element> existing = new ArrayList<>();
+        for (int index = 0; index < nodes.getLength(); index++) existing.add((Element) nodes.item(index));
+        existing.forEach(metadata::removeChild);
+        for (String language : languages) {
+            Element element = document.createElementNS(DC, "dc:language");
+            element.setTextContent(language);
+            metadata.appendChild(element);
+        }
     }
 
     private void replaceSubjects(Document document, Element metadata, List<String> tags) {

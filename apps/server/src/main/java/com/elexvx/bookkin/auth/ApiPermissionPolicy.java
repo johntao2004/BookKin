@@ -10,6 +10,7 @@ public final class ApiPermissionPolicy {
         if (p.startsWith("/auth/")) return Set.of();
         if (p.equals("/site-settings") || p.equals("/site-settings/robots.txt")) return read ? Set.of() : Set.of("settings.site.edit");
         if (p.startsWith("/role-permissions") || p.matches("/users/[^/]+/role")) return Set.of("roles.manage");
+        if (p.equals("/metadata-providers")) return Set.of("settings.ai." + (read ? "view" : "edit"));
         if (p.startsWith("/users/login-logs")) return Set.of("settings.logs.view");
         if (p.startsWith("/users/active-sessions")) return Set.of("settings.sessions.view");
         if (p.matches("/users/[^/]+/sessions/revoke")) return Set.of("settings.sessions.revoke", "settings.users.manage");
@@ -18,6 +19,12 @@ public final class ApiPermissionPolicy {
         if (p.equals("/users") || p.startsWith("/users/")) return Set.of("settings.users." + (read ? "view" : p.equals("/users") ? "create" : "manage"));
         if (p.startsWith("/mail/")) return Set.of("settings.mail." + (read ? "view" : "edit"));
         if (p.equals("/ai/providers")) return Set.of("settings.ai.view", "library.upload", "library.edit", "knowledge.generate");
+        // The endpoint has source-specific authorization in its service; this route gate admits each valid source grant.
+        if (p.equals("/metadata-terms") || p.equals("/metadata-terms/ensure")) return Set.of("library.edit", "library.upload");
+        if (p.equals("/ai/metadata-terms")) return Set.of("reader.read", "library.edit", "library.upload");
+        if (p.equals("/ai/book-classification")) return Set.of("reader.read", "library.edit", "library.upload");
+        if (p.equals("/ai/book-knowledge")) return Set.of("reader.read", "library.edit", "library.upload");
+        if (read && p.matches("/knowledge/books/[^/]+")) return Set.of("knowledge.view", "reader.read");
         // The assistance service additionally requires the exact source/action grant and object access.
         if (p.equals("/ai/assistance")) return Set.of("reader.read", "articles.view", "notes.edit", "articles.edit", "library.edit", "library.upload");
         if (p.startsWith("/ai/")) return Set.of("settings.ai." + (read ? "view" : "edit"));

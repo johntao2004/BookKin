@@ -238,7 +238,8 @@ html:has(.ant-drawer-open) {
   text-decoration: none;
 }
 
-.bk-field {
+.bk-field,
+.bk-form-control {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-2);
@@ -930,6 +931,32 @@ input.ant-input,
 textarea.ant-input {
   padding-block: var(--layout-input-padding-block);
   padding-inline: var(--layout-input-padding-inline);
+}
+
+textarea.ant-input[rows="1"] {
+  padding-block: calc(var(--spacing-3) / 2);
+}
+
+.bk-input-action-group > .bk-field {
+  flex: 1;
+  min-width: 0;
+}
+
+.bk-input-action-group > .ant-btn {
+  flex-shrink: 0;
+  /* Field wrappers absorb Compact's input margin; overlap the native 1px borders here. */
+  margin-inline-start: -1px;
+}
+
+.bk-input-action-group .ant-input-compact-first-item:not(.ant-input-compact-last-item),
+.bk-input-action-group .ant-select-compact-first-item:not(.ant-select-compact-last-item) {
+  border-start-end-radius: 0 !important;
+  border-end-end-radius: 0 !important;
+}
+
+.bk-input-action-group .ant-btn-compact-last-item:not(.ant-btn-compact-first-item) {
+  border-start-start-radius: 0 !important;
+  border-end-start-radius: 0 !important;
 }
 
 .ant-input-affix-wrapper > input.ant-input {

@@ -32,8 +32,12 @@ class BibliographyRoundTripTest {
         assertEquals("第一章 生态\n第二章 修复",parsed.tableOfContents());
         assertEquals("原作者介绍",parsed.authorBiography());
         var written=directory.resolve("written.epub");
-        new EpubMetadataWriter().write(source,written,metadata(),directory);
+        new EpubMetadataWriter().write(source,written,metadata("fr,zh-CN,FR"),directory);
         var roundtrip=reader.read(written,BookFormat.EPUB);
+        assertEquals("fr,zh-CN",new BookMetadataExtractor().extract(written,BookFormat.EPUB,directory,"sha256:languages").language());
+        var singleWritten=directory.resolve("single-language.epub");
+        new EpubMetadataWriter().write(source,singleWritten,metadata("zh"),directory);
+        assertEquals("zh",new BookMetadataExtractor().extract(singleWritten,BookFormat.EPUB,directory,"sha256:single-language").language());
         assertEquals(List.of("RNKH2"),roundtrip.subjectCodes());
         assertEquals("新作者介绍",roundtrip.authorBiography());
         assertEquals("人工校对目录",roundtrip.tableOfContents());
@@ -70,7 +74,8 @@ class BibliographyRoundTripTest {
         assertEquals("旧版目录",reader.read(source,BookFormat.EPUB).tableOfContents());
     }
 
-    private BookMetadata metadata() { return new BookMetadata(UUID.randomUUID(),"标题",null,List.of("作者"),List.of(),"zh",null,null,null,"简介",null,null,List.of("普通标签"),List.of("RNKH2"),null,null,Map.of(),false,"新作者介绍","人工校对目录"); }
+    private BookMetadata metadata() { return metadata("zh"); }
+    private BookMetadata metadata(String language) { return new BookMetadata(UUID.randomUUID(),"标题",null,List.of("作者"),List.of(),language,null,null,null,"简介",null,null,List.of("普通标签"),List.of("RNKH2"),null,null,Map.of(),false,"新作者介绍","人工校对目录"); }
     private void epub(Path target,boolean unsafe) throws Exception {
         try(var zip=new ZipOutputStream(Files.newOutputStream(target))) {
             entry(zip,"mimetype","application/epub+zip");

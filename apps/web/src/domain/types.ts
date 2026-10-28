@@ -9,7 +9,7 @@ export type AnnotationStyle = "HIGHLIGHT" | "UNDERLINE" | "BOLD";
 export type HighlightColor = "YELLOW" | "GREEN" | "PINK" | "BLUE" | "ORANGE";
 export type AnnotationColor = HighlightColor | "CORAL" | "GOLD" | "TEAL";
 export type BookUploadStatus = "RECEIVING" | "INSPECTING" | "ENRICHING" | "READY_FOR_REVIEW" | "COMMITTING" | "SUCCEEDED" | "DUPLICATE" | "FAILED" | "CANCELLED" | "EXPIRED";
-export type MetadataSource = "FILE" | "FILENAME" | "OPEN_LIBRARY" | "GOOGLE_BOOKS" | "AI" | "MANUAL";
+export type MetadataSource = "FILE" | "FILENAME" | "OPEN_LIBRARY" | "GOOGLE_BOOKS" | "WIKIDATA" | "AI" | "MANUAL";
 export type CoverSource = "EMBEDDED" | "PDF_FIRST_PAGE" | "OPEN_LIBRARY" | "GOOGLE_BOOKS" | "CUSTOM" | "GENERATED";
 export type ReaderFontSource = "PRESET" | "CUSTOM";
 export type ReaderFontKind = "SERIF" | "SANS";
@@ -142,7 +142,22 @@ export interface BooklistList {
   items: BooklistSummary[];
 }
 
+export type MetadataTermKind = "LANGUAGE" | "SERIES" | "TAG" | "KNOWLEDGE";
+export interface MetadataTermInput { value: string; label: string }
+export interface MetadataTerm extends MetadataTermInput { id: string; kind: MetadataTermKind }
+
+export interface BookKnowledgePoint { name: string; quote: string; locator: string }
+export interface BookKnowledgeDraft {
+  points: BookKnowledgePoint[];
+  fingerprint: string;
+  sampledSections: number;
+  totalSections: number;
+  providerId?: string | null;
+}
+
 export interface BookMetadata {
+  knowledgeTerms?: string[];
+  knowledgeDraft?: BookKnowledgeDraft;
   authorBiography?: string;
   tableOfContents?: string;
   publiclyVisible?: boolean;
@@ -168,6 +183,8 @@ export interface BookMetadata {
 }
 
 export interface BookMetadataDraft {
+  knowledgeTerms?: string[];
+  knowledgeDraft?: BookKnowledgeDraft;
   authorBiography?: string;
   tableOfContents?: string;
   subjectCodes?: string[];
@@ -206,6 +223,9 @@ export interface MetadataCandidate {
   confidence?: number;
   matchReason?: string;
   requiresReview?: boolean;
+  edition?: string;
+  language?: string;
+  sourceUrl?: string;
 }
 
 export interface AiProviderInfo {
@@ -247,6 +267,18 @@ export interface AiSettingsInput {
   timeoutSeconds: number;
   providers: AiProviderSettingInput[];
 }
+
+export type MetadataProviderId = "OPEN_LIBRARY" | "WIKIDATA" | "GOOGLE_BOOKS";
+export interface MetadataProviderSetting {
+  id: MetadataProviderId;
+  label: string;
+  enabled: boolean;
+  available: boolean;
+  description: string;
+  homepage: string;
+}
+export interface MetadataProviderSettings { providers: MetadataProviderSetting[] }
+export interface MetadataProviderSettingsInput { providers: { id: MetadataProviderId; enabled: boolean }[] }
 
 export interface AiProviderSettingInput {
   id: string;

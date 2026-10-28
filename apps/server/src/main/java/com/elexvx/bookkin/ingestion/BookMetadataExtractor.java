@@ -17,9 +17,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import javax.imageio.ImageIO;
@@ -41,9 +43,13 @@ public class BookMetadataExtractor {
     private static final long MAX_TEXT_BYTES = 100L * 1024 * 1024;
 
     public ExtractedBook extract(Path file, BookFormat format, Path root, String cacheKey) throws IOException {
+        return extract(file, format, root, cacheKey, filenameTitle(file));
+    }
+
+    public ExtractedBook extract(Path file, BookFormat format, Path root, String cacheKey, String fallbackTitle) throws IOException {
         ExtractedBook extracted = switch (format) {
-            case EPUB -> epub(file, root, cacheKey);
-            case PDF -> pdf(file, root, cacheKey);
+            case EPUB -> epub(file, root, cacheKey, fallbackTitle);
+            case PDF -> pdf(file, root, cacheKey, fallbackTitle);
         };
         if (extracted.coverCacheKey() != null) return extracted;
         String generated = generateCover(root, cacheKey, extracted.title(), extracted.author());
@@ -53,16 +59,16 @@ public class BookMetadataExtractor {
                 extracted.pageCount(), extracted.wordCount(), extracted.subjectCodes(), extracted.authorBiography(), extracted.tableOfContents());
     }
 
-    private ExtractedBook epub(Path file, Path root, String cacheKey) throws IOException {
+    private ExtractedBook epub(Path file, Path root, String cacheKey, String fallbackTitle) throws IOException {
         try (ZipFile zip = new ZipFile(file.toFile(), StandardCharsets.UTF_8)) {
             String opfPath = packagePath(zip);
             Document document = parseLimited(zip.getInputStream(zip.getEntry(opfPath)));
             Element metadata = (Element) document.getElementsByTagNameNS("*", "metadata").item(0);
             CreatorGroups contributors = contributors(metadata);
-            String title = firstNonBlank(text(metadata, "title"), filenameTitle(file));
+            String title = firstNonBlank(text(metadata, "title"), fallbackTitle);
             String subtitle = refinedValue(metadata, "title-type", "subtitle", "title");
             String description = text(metadata, "description");
-            String language = text(metadata, "language");
+            String language = languages(texts(metadata, "language"));
             String publisher = text(metadata, "publisher");
             String published = text(metadata, "date");
             String isbn = isbn(metadata);
@@ -81,7 +87,7 @@ public class BookMetadataExtractor {
         }
     }
 
-    private ExtractedBook pdf(Path file, Path root, String cacheKey) throws IOException {
+    private ExtractedBook pdf(Path file, Path root, String cacheKey, String fallbackTitle) throws IOException {
         try (var document = Loader.loadPDF(file.toFile())) {
             var info = document.getDocumentInformation();
             String title = info.getTitle();
@@ -102,7 +108,7 @@ public class BookMetadataExtractor {
                             title = firstNonBlank(dc.getTitle(), title);
                             if (dc.getCreators() != null && !dc.getCreators().isEmpty()) authors = dc.getCreators();
                             description = firstNonBlank(dc.getDescription(), description);
-                            language = first(dc.getLanguages());
+                            language = languages(dc.getLanguages());
                             publisher = first(dc.getPublishers());
                             isbn = firstNonBlank(dc.getIdentifier(), isbn);
                             if (dc.getSubjects() != null && !dc.getSubjects().isEmpty()) tags = dc.getSubjects();
@@ -122,7 +128,7 @@ public class BookMetadataExtractor {
                 ImageIO.write(image, "JPEG", target.toFile());
                 cover = relative(root, target);
             }
-            return new ExtractedBook(firstNonBlank(title, filenameTitle(file)), null, authors, List.of(), description,
+            return new ExtractedBook(firstNonBlank(title, fallbackTitle), null, authors, List.of(), description,
                     language, publisher, published, isbn, null, null, tags, cover, document.getNumberOfPages(), null,
                     com.elexvx.bookkin.catalog.ThemaSubjects.extract(splitTags(info.getCustomMetadataValue("Thema"))),
                     info.getCustomMetadataValue("BookKinAuthorBiography"),
@@ -352,6 +358,20 @@ public class BookMetadataExtractor {
         List<String> values = new ArrayList<>();
         for (int index = 0; index < nodes.getLength(); index++) values.add(nodes.item(index).getTextContent().strip());
         return values;
+    }
+
+    private String languages(List<String> values) {
+        if (values == null || values.isEmpty()) return null;
+        Set<String> seen = new HashSet<>();
+        List<String> codes = new ArrayList<>();
+        for (String value : values) {
+            if (value == null) continue;
+            for (String rawCode : value.split(",")) {
+                String code = rawCode.strip();
+                if (!code.isBlank() && seen.add(code.toLowerCase(Locale.ROOT))) codes.add(code);
+            }
+        }
+        return codes.isEmpty() ? null : String.join(",", codes);
     }
 
     private String metaContent(Element metadata, String name) {

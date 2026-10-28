@@ -339,6 +339,16 @@ const headingSizes: Record<string, SxObject> = {
   h3: { xs: tokens.typography.fontSize.titleSm, sm: tokens.typography.fontSize.title },
 };
 
+export function headingTypographySx(level: string): SxObject {
+  return {
+    fontFamily: tokens.typography.fontFamily.display,
+    fontWeight: tokens.typography.fontWeight.regular,
+    lineHeight: tokens.typography.lineHeight.titleLg,
+    letterSpacing: "normal",
+    ...(headingSizes[level] ? { fontSize: headingSizes[level] } : {}),
+  };
+}
+
 export function Typography({ variant = "body1", component, color, noWrap, align, sx, className, children, ...props }: BoxProps & { variant?: string; component?: ElementType; color?: string; noWrap?: boolean; align?: CSSProperties["textAlign"] }) {
   const Component = component ?? typographyElements[variant] ?? "span";
   const theme = useTheme();
@@ -349,13 +359,7 @@ export function Typography({ variant = "body1", component, color, noWrap, align,
   // 阅读正文及字体示例自行管理字体。
   // Reader content and font specimens deliberately own their typeface.
   const customTypeface = resolvedSx.fontFamily && resolvedSx.fontFamily !== tokens.typography.fontFamily.display;
-  const headingStyle = heading && !customTypeface ? {
-    fontFamily: tokens.typography.fontFamily.display,
-    fontWeight: tokens.typography.fontWeight.regular,
-    lineHeight: tokens.typography.lineHeight.titleLg,
-    letterSpacing: "normal",
-    ...(headingSizes[Component as string] ? { fontSize: headingSizes[Component as string] } : {}),
-  } : {};
+  const headingStyle = heading && !customTypeface ? headingTypographySx(Component as string) : {};
   // 基础排版与调用方 sx 放在同一生成样式表；内联字体声明会压过媒体查询，使响应式字号失效。
   // Keep the base typography and the caller's `sx` in the same generated
   // stylesheet.  Inline font declarations prevent responsive sx values (for

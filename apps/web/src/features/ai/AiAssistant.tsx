@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { MetadataAiAssistantButton } from "./MetadataAiAssistant";
 import { request } from "../../api/client";
 import { useAuth } from "../../auth/AuthContext";
 import { Button } from "../../ui/buttons";
@@ -10,17 +11,19 @@ import { reviewMarkdownToHtml } from "../reviews/markdown";
 import "../content/content.css";
 
 export type AiSource = "BOOK" | "ARTICLE" | "COLLECTION" | "NOTE_DRAFT" | "ARTICLE_DRAFT" | "METADATA_DRAFT";
-export type AiAction = "SUMMARY" | "OUTLINE" | "QUESTIONS" | "ASK" | "READING_PLAN" | "POLISH" | "TITLES" | "DESCRIPTION" | "TAGS";
+export type AiAction = "SUMMARY" | "OUTLINE" | "QUESTIONS" | "ASK" | "READING_PLAN" | "POLISH" | "TITLES" | "DESCRIPTION" | "TAGS" | "AUTHOR_BIOGRAPHY";
 export interface AiResult {
   text: string; evidence: { locator: string; quote: string }[]; provider: string; model: string;
   sourceTitle: string; included: number; total: number; coverage: string;
 }
 interface Props {
   source: AiSource; id?: string; draft?: string; label?: string; disabled?: boolean;
+  actionLabel?: string;
+  directAction?: "DESCRIPTION" | "TAGS" | "AUTHOR_BIOGRAPHY";
   onApply?: (text: string, action: AiAction) => void;
   applyActions?: AiAction[];
 }
-const labels: Record<AiAction, string> = { SUMMARY: "内容摘要", OUTLINE: "结构提纲", QUESTIONS: "讨论问题", ASK: "原文问答", READING_PLAN: "阅读顺序与导读", POLISH: "润色正文", TITLES: "标题建议", DESCRIPTION: "简介建议", TAGS: "标签建议" };
+const labels: Record<AiAction, string> = { SUMMARY: "内容摘要", OUTLINE: "结构提纲", QUESTIONS: "讨论问题", ASK: "原文问答", READING_PLAN: "阅读顺序与导读", POLISH: "润色正文", TITLES: "标题建议", DESCRIPTION: "简介建议", TAGS: "标签建议", AUTHOR_BIOGRAPHY: "作者介绍建议" };
 function Alert({ severity, children }: { severity: "info" | "warning" | "error" | "success"; children: ReactNode }) {
   return <_AntAlert type={severity} description={children} showIcon />;
 }
@@ -32,6 +35,7 @@ const actions = (source: AiSource): AiAction[] => source === "METADATA_DRAFT" ? 
 export function AiAssistantButton(props: Props) {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
+  if (props.source === "METADATA_DRAFT") return <MetadataAiAssistantButton {...props} />;
   if (!user) return null;
   return <>
     <Button type="button" disabled={props.disabled} onClick={() => setOpen(true)}>{props.label ?? "AI 助读"}</Button>

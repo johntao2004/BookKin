@@ -57,12 +57,12 @@ public class BookUploadProcessor {
             }
             var inspection = inspector.inspect(staged, upload.format());
             if (!inspection.parseable()) throw new IllegalArgumentException("文件无法被解析");
-            ExtractedBook extracted = extractor.extract(staged, upload.format(), rootPath, upload.fingerprint());
+            ExtractedBook extracted = extractor.extract(staged, upload.format(), rootPath, upload.fingerprint(), filenameTitle(upload.originalFilename()));
             MetadataDraft detected = draft(extracted, upload.originalFilename(), upload.format());
             MetadataDraft ready = withTarget(detected, defaultTarget(detected, upload.format()));
             var ai = aiSettings.effective();
             var enrichmentResult = enrichment.enrich(ready, ai.enabled() && ai.autoMatch(), null, false);
-            ready = enrichmentResult.draft();
+            ready = withTarget(enrichmentResult.draft(), defaultTarget(enrichmentResult.draft(), upload.format()));
             java.util.UUID[] similar = catalog.similarBooks(ready.title(), String.join(" / ", ready.authors()));
             CoverSource coverSource = upload.format() == BookFormat.PDF && extracted.pageCount() != null && extracted.pageCount() > 0
                     ? CoverSource.PDF_FIRST_PAGE : CoverSource.EMBEDDED;
@@ -98,7 +98,8 @@ public class BookUploadProcessor {
     private MetadataDraft withTarget(MetadataDraft value, String target) {
         return new MetadataDraft(value.title(), value.subtitle(), value.authors(), value.translators(), value.language(),
                 value.publisher(), value.publishedDate(), value.isbn(), value.description(), value.series(),
-                value.seriesIndex(), value.tags(), value.pageCount(), value.wordCount(), value.sources(), target, value.publiclyVisible(), value.subjectCodes(), value.authorBiography(), value.tableOfContents());
+                value.seriesIndex(), value.tags(), value.pageCount(), value.wordCount(), value.sources(), target, value.publiclyVisible(),
+                value.subjectCodes(), value.authorBiography(), value.tableOfContents(), value.knowledgeDraft(), value.knowledgeTerms());
     }
 
     private String defaultTarget(MetadataDraft value, BookFormat format) {
@@ -107,9 +108,7 @@ public class BookUploadProcessor {
     }
 
     private String safeSegment(String raw) {
-        String value = raw == null ? "未命名" : raw.replaceAll("[\\\\/:*?\"<>|\\p{Cntrl}]", " ").replaceAll("\\s+", " ").strip();
-        while (value.endsWith(".") || value.endsWith(" ")) value = value.substring(0, value.length() - 1);
-        return value.isBlank() ? "未命名" : value.length() > 180 ? value.substring(0, 180).strip() : value;
+        return com.elexvx.bookkin.filemanagement.BookTitleFilename.segment(raw);
     }
 
     private String filenameTitle(String filename) {

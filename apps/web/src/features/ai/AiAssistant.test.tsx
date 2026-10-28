@@ -1,3 +1,5 @@
+import { StrictMode } from "react";
+import { InputActionGroup, TextField } from "../../ui/forms";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, expect, it, vi } from "vitest";
 import { BookKinThemeProvider } from "../../theme/BookKinThemeProvider";
@@ -92,4 +94,62 @@ it("names the action selector and requires a question before sending a Q&A reque
   fireEvent.click(screen.getByRole("button", { name: "生成建议" }));
   await screen.findByLabelText("AI 生成结果");
   expect(JSON.parse(vi.mocked(request).mock.calls[0][1]!.body as string)).toMatchObject({ action: "ASK", question: "作者建议观察哪些现象？" });
+});
+
+it.each<"DESCRIPTION" | "TAGS" | "AUTHOR_BIOGRAPHY">(["DESCRIPTION", "TAGS", "AUTHOR_BIOGRAPHY"])("directly generates the selected metadata action (%s) once", async action => {
+  const apply = vi.fn();
+  render(<StrictMode><BookKinThemeProvider><InputActionGroup><TextField aria-label="资料" /><AiAssistantButton source="METADATA_DRAFT" id="book-id" label="字段建议" directAction={action}
+    draft='{"title":"书名","authors":"作者"}' applyActions={[action]} onApply={apply} /></InputActionGroup></BookKinThemeProvider></StrictMode>);
+  fireEvent.click(screen.getByRole("button", { name: "字段建议" }));
+
+  const title = { DESCRIPTION: "AI 简介建议", TAGS: "AI 标签建议", AUTHOR_BIOGRAPHY: "AI 作者介绍建议" }[action];
+  expect(await screen.findByRole("dialog", { name: title })).toBeInTheDocument();
+  expect(screen.queryByRole("combobox", { name: "AI 操作" })).not.toBeInTheDocument();
+  expect(await screen.findByLabelText("AI 生成结果")).toHaveTextContent(value.text);
+  await waitFor(() => expect(request).toHaveBeenCalledTimes(1));
+  expect(JSON.parse(vi.mocked(request).mock.calls[0][1]!.body as string)).toEqual({
+    source: "METADATA_DRAFT", id: "book-id", action, draft: '{"title":"书名","authors":"作者"}', consent: true,
+  });
+  expect(screen.getByRole("button", { name: "采用建议" })).toBeEnabled();
+  expect(screen.getByRole("button", { name: "采用建议" })).not.toHaveClass("ant-btn-compact-item");
+  expect(apply).not.toHaveBeenCalled();
+  const regenerate = screen.getByRole("button", { name: "重新生成" });
+  const adopt = screen.getByRole("button", { name: "采用建议" });
+  expect(regenerate).toHaveClass("ant-btn-default");
+  expect(adopt).toHaveClass("ant-btn-primary");
+  expect(regenerate.compareDocumentPosition(adopt) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  expect(screen.queryByRole("button", { name: "关闭助手" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "复制结果" })).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "采用建议" }));
+  expect(apply).toHaveBeenCalledWith(value.text, action);
+});
+
+it("aborts a direct request on close and automatically generates again when reopened", async () => {
+  vi.mocked(request).mockReturnValueOnce(new Promise<AiResult>(() => {})).mockResolvedValueOnce(value);
+  render(<BookKinThemeProvider><AiAssistantButton source="METADATA_DRAFT" label="字段建议" directAction="TAGS" draft="草稿" /></BookKinThemeProvider>);
+  const opener = () => fireEvent.click(screen.getByRole("button", { name: "字段建议" }));
+  opener();
+  await waitFor(() => expect(request).toHaveBeenCalledTimes(1));
+  const firstSignal = vi.mocked(request).mock.calls[0][1]!.signal as AbortSignal;
+  fireEvent.click(screen.getByRole("button", { name: /^关闭$/ }));
+  expect(firstSignal.aborted).toBe(true);
+  expect(screen.queryByLabelText("AI 生成结果")).not.toBeInTheDocument();
+
+  opener();
+  expect(await screen.findByLabelText("AI 生成结果")).toHaveTextContent(value.text);
+  await waitFor(() => expect(request).toHaveBeenCalledTimes(2));
+  expect(JSON.parse(vi.mocked(request).mock.calls[1][1]!.body as string)).toMatchObject({ action: "TAGS", consent: true });
+});
+
+it("keeps the direct metadata action available for retry after automatic generation fails", async () => {
+  vi.mocked(request).mockRejectedValueOnce(new Error("AI 平台暂不可用"));
+  render(<BookKinThemeProvider><AiAssistantButton source="METADATA_DRAFT" label="字段建议" directAction="DESCRIPTION" draft="草稿" /></BookKinThemeProvider>);
+  fireEvent.click(screen.getByRole("button", { name: "字段建议" }));
+  expect(await screen.findByText("AI 平台暂不可用")).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "生成建议" }));
+  expect(await screen.findByLabelText("AI 生成结果")).toHaveTextContent(value.text);
+  await waitFor(() => expect(request).toHaveBeenCalledTimes(2));
+  for (const [, options] of vi.mocked(request).mock.calls) {
+    expect(JSON.parse(options!.body as string)).toMatchObject({ action: "DESCRIPTION", consent: true });
+  }
 });

@@ -6,15 +6,22 @@ import AntRadio from "antd/es/radio";
 import AntSelect from "antd/es/select";
 import AntSlider from "antd/es/slider";
 import AntSwitch from "antd/es/switch";
+import AntSpaceCompact from "antd/es/space/Compact";
 import type { ReactNode } from "react";
 import { Children, isValidElement, useId } from "react";
 import { mergeClassNames, sxClassName, useTheme, type BoxProps, type SxProps } from "./primitives";
 
-export function TextField({ label, helperText, error, multiline, minRows, maxRows, type, value, defaultValue, onChange, sx, className, slotProps, InputProps, placeholder, fullWidth, size: _size, variant: _variant, startAdornment: _startAdornment, ...props }: BoxProps & {
+/** Joins a field and its contextual action through Ant Design's compact control context. */
+export function InputActionGroup({ children }: { children: ReactNode }) {
+  return <AntSpaceCompact block className="bk-input-action-group" style={{ width: "100%", alignItems: "flex-start" }}>{children}</AntSpaceCompact>;
+}
+
+export function TextField({ label, helperText, error, multiline, resizable = true, minRows, maxRows, type, value, defaultValue, onChange, sx, className, slotProps, InputProps, placeholder, fullWidth, size: _size, variant: _variant, startAdornment: _startAdornment, ...props }: BoxProps & {
   label?: ReactNode;
   helperText?: ReactNode;
   error?: boolean;
   multiline?: boolean;
+  resizable?: boolean;
   minRows?: number;
   maxRows?: number;
   sx?: SxProps;
@@ -50,7 +57,8 @@ export function TextField({ label, helperText, error, multiline, minRows, maxRow
     size: "middle",
   };
   const control = multiline
-    ? <AntInput.TextArea {...(common as any)} autoSize={{ minRows, maxRows }} />
+    ? <AntInput.TextArea {...(common as any)} autoSize={resizable ? false : { minRows, maxRows }}
+        rows={resizable ? minRows : undefined} style={resizable ? { resize: props.disabled ? "none" : "vertical", height: minRows === 1 ? "var(--layout-control-height)" : undefined, maxWidth: "100%" } : undefined} />
     : type === "password"
       ? <AntInput.Password {...(common as any)} visibilityToggle={suffix ? false : undefined} />
       : <AntInput {...(common as any)} />;

@@ -24,17 +24,17 @@ export function MetadataEditPage() {
     <PageBackAction onClick={onReturn}>{fromDetail ? "返回详情" : "返回书库"}</PageBackAction>
     <Stack spacing={3}>
       <PageHeader eyebrow="EDIT BOOK INFO" title="编辑书籍信息" />
-      {uploadId ? <UploadMetadataEditor key={uploadId} /> : <SavedBookEditor key={bookId} bookId={bookId} onReturn={onReturn} />}
+      {uploadId ? <UploadMetadataEditor key={uploadId} returnTo={catalogReturnTo} /> : <SavedBookEditor key={bookId} bookId={bookId} onSaved={() => navigate(`/library/books/${encodeURIComponent(bookId)}`, { replace: true, state: { bookReturnTo: catalogReturnTo } })} />}
     </Stack>
   </PageContainer>;
 }
 
-function SavedBookEditor({ bookId, onReturn }: { bookId: string; onReturn: () => void }) {
+function SavedBookEditor({ bookId, onSaved }: { bookId: string; onSaved: () => void }) {
   const feedback = useFeedback();
   const query = useQuery({ queryKey: ["book", bookId], queryFn: () => api.getBook(bookId) });
   if (query.isPending) return <Skeleton active />;
   if (query.isError) return <Stack spacing={2}><Alert severity="error">无法加载书籍信息。</Alert><Button onClick={() => void query.refetch()}>重试</Button></Stack>;
-  return <BookMetadataEditor book={query.data} onClose={onReturn}
+  return <BookMetadataEditor book={query.data} onClose={onSaved}
     onCompleted={message => feedback?.success({ title: message })}
     onSavedImmediately={message => feedback?.success({ title: message })}
     onSaveFailed={message => feedback?.error({ title: message, duration: 0 })} />;

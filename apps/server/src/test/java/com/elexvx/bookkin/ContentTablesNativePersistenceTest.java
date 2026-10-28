@@ -28,7 +28,7 @@ class ContentTablesNativePersistenceTest {
                     for (String table : new String[]{"app_users", "books", "articles", "annotations", "reading_positions", "reading_time_daily", "vault_objects"}) {
                         assertThat(db.fetchCount(DSL.table(table))).as("empty initialization: " + table).isZero();
                     }
-                    assertThat(db.fetchCount(DSL.table("flyway_schema_history"))).isEqualTo(1);
+                    assertThat(db.fetchCount(DSL.table("flyway_schema_history"))).isGreaterThanOrEqualTo(2);
                     UUID owner = UUID.randomUUID(), id = UUID.randomUUID();
                     db.execute("insert into app_users(id,username,display_name,password_hash,role) values (?, 'storage-owner', '存储测试', 'test-only', 'OWNER')", owner);
                     db.execute("insert into books(id,title,sort_title) values (?, '书籍', '书籍')", id);

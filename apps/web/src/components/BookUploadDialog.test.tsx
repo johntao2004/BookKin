@@ -1,6 +1,7 @@
 // 验证局域网 HTTP 上传与键盘选文件入口，上传成功后进入持久校对路由而非直接假定入库。
 // Checks LAN-HTTP upload and keyboard file selection, leading to persistent review rather than assuming catalog commit.
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { useState } from "react";
 import { afterEach, expect, it, vi } from "vitest";
 import { useLocation } from "react-router-dom";
 import { TestProviders } from "../test/TestProviders";
@@ -8,7 +9,7 @@ import { api } from "../api/client";
 import { BookUploadDialog } from "./BookUploadDialog";
 
 afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals(); });
-function Location() { return <output>{useLocation().pathname}</output>; }
+function Location() { const location = useLocation(); return <><output>{location.pathname}</output><output data-testid="upload-state">{JSON.stringify(location.state)}</output></>; }
 it("automatically uploads on LAN HTTP and confirms into a persistent editor route", async () => {
   vi.stubGlobal("crypto", { getRandomValues: crypto.getRandomValues.bind(crypto) });
   vi.spyOn(api, "listLibraryRoots").mockResolvedValue([{ id: "root", name: "主书库", status: "ONLINE", canWrite: true, canStage: true } as any]);
@@ -25,6 +26,7 @@ it("automatically uploads on LAN HTTP and confirms into a persistent editor rout
   expect(screen.queryByText('识别与入库队列')).not.toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: '编辑信息' }));
   expect(screen.getByText('/library/uploads/upload-test')).toBeInTheDocument();
+  expect(screen.getByTestId('upload-state')).toHaveTextContent('"freshUploadIds":["upload-test"]');
 });
 
 it('lets the upload surface open the picker by click or keyboard without extra divider or subtitle', async () => {
@@ -40,4 +42,24 @@ it('lets the upload surface open the picker by click or keyboard without extra d
   expect(picker).toHaveBeenCalledTimes(3);
   expect(screen.queryByText('选择或拖入文件即可自动上传。')).not.toBeInTheDocument();
   expect(document.querySelector('.bk-dialog-content')).not.toHaveStyle({borderTop: '1px solid var(--color-border)'});
+});
+
+it('does not keep the first-upload exemption after closing and reopening the upload dialog', async () => {
+  vi.spyOn(api, 'listLibraryRoots').mockResolvedValue([{ id: 'root', name: '主书库', status: 'ONLINE', canWrite: true, canStage: true } as any]);
+  vi.spyOn(api, 'listBookUploads').mockResolvedValue([]);
+  vi.spyOn(api, 'createBookUpload').mockResolvedValue({ id: 'later-review' } as any);
+  vi.spyOn(api, 'uploadBookContent').mockResolvedValue({ id: 'later-review', status: 'INSPECTING' } as any);
+  function UploadAgain() {
+    const [open, setOpen] = useState(true);
+    return <><button onClick={() => setOpen(true)}>再次打开上传</button><BookUploadDialog open={open} onClose={() => setOpen(false)} onCompleted={vi.fn()} /><Location /></>;
+  }
+  render(<TestProviders><UploadAgain /></TestProviders>);
+  await waitFor(() => expect(screen.getByRole('button', { name: '开始上传' })).toBeEnabled());
+  fireEvent.change(document.querySelector('input[type="file"]')!, { target: { files: [new File(['test'], 'later.pdf', { type: 'application/pdf' })] } });
+  await screen.findByRole('button', { name: '编辑信息' });
+  fireEvent.click(within(screen.getByRole('dialog', { name: '上传书籍' })).getByRole('button', { name: '关闭' }));
+  fireEvent.click(screen.getByRole('button', { name: '再次打开上传' }));
+  fireEvent.click(await screen.findByRole('button', { name: '编辑信息' }));
+  expect(screen.getByText('/library/uploads/later-review')).toBeInTheDocument();
+  expect(screen.getByTestId('upload-state')).toHaveTextContent('"freshUploadIds":[]');
 });

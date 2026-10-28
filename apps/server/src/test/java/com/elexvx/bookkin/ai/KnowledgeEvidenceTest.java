@@ -34,4 +34,31 @@ class KnowledgeEvidenceTest {
         assertThrows(Exception.class, () -> service.verifiedKnowledge("{\"candidates\":[]}", List.of()));
         assertThrows(com.elexvx.bookkin.common.ApiException.class, () -> service.extractKnowledge(List.of()));
     }
+
+    @Test void selectedKnowledgeMustBeUniqueSafeAndGroundedAndCannotExceedTenPoints() {
+        var passage = new AiMetadataService.KnowledgePassage("page:3", "认知偏差会影响人们处理信息时的判断和决策。");
+        var selected = new AiMetadataService.KnowledgePoint("认知偏差",
+                "认知偏差会影响人们处理信息时的判断和决策。", "page:3");
+        assertEquals(List.of(selected), service.verifyKnowledgeSelection(List.of(selected), List.of(passage)));
+        assertThrows(com.elexvx.bookkin.common.ApiException.class,
+                () -> service.verifyKnowledgeSelection(List.of(selected), List.of()));
+        assertThrows(com.elexvx.bookkin.common.ApiException.class,
+                () -> service.verifyKnowledgeSelection(List.of(
+                        new AiMetadataService.KnowledgePoint("<script>概念</script>",
+                                "认知偏差会影响人们处理信息时的判断和决策。", "page:3")), List.of(passage)));
+        assertThrows(com.elexvx.bookkin.common.ApiException.class,
+                () -> service.verifyKnowledgeSelection(java.util.Collections.nCopies(11, selected), List.of(passage)));
+    }
+
+    @Test void selectedKnowledgeAcceptsExactMultilineSourceQuotesButRejectsOtherControlCharacters() {
+        String quote = "认知偏差会影响人们处理\n信息时的判断和决策。";
+        var passage = new AiMetadataService.KnowledgePassage("chapter:1", "前文。" + quote + "后文。");
+        var selected = new AiMetadataService.KnowledgePoint("认知偏差", quote, "chapter:1");
+
+        assertEquals(List.of(selected), service.verifyKnowledgeSelection(List.of(selected), List.of(passage)));
+        var nul = new AiMetadataService.KnowledgePoint("认知偏差",
+                "认知偏差会影响人们\u0000处理信息时的判断和决策。", "chapter:1");
+        assertThrows(com.elexvx.bookkin.common.ApiException.class,
+                () -> service.verifyKnowledgeSelection(List.of(nul), List.of(passage)));
+    }
 }

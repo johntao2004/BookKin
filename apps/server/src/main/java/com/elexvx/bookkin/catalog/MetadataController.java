@@ -1,6 +1,7 @@
 package com.elexvx.bookkin.catalog;
 
 import com.elexvx.bookkin.catalog.BookMetadataRepository.MetadataPatch;
+import com.elexvx.bookkin.catalog.knowledge.KnowledgeDraft;
 import com.elexvx.bookkin.common.ApiException;
 import com.elexvx.bookkin.filemanagement.FileOperationModels.Preview;
 import com.elexvx.bookkin.filemanagement.FileOperationModels.PreviewRequest;
@@ -66,7 +67,8 @@ public class MetadataController {
         metadata.find(id).orElseThrow(() -> ApiException.notFound("BOOK_NOT_FOUND", "未找到这本书。"));
         editing.update(id, new MetadataPatch(input.title(), input.subtitle(), input.authors(), input.translators(),
                 input.language(), input.publisher(), input.publishedDate(), input.isbn(), input.description(), input.series(),
-                input.seriesIndex(), input.tags(), input.subjectCodes(), input.manualFields(), input.authorBiography(), input.tableOfContents()), input.publiclyVisible(), principal);
+                input.seriesIndex(), input.tags(), input.subjectCodes(), input.manualFields(), input.authorBiography(), input.tableOfContents()),
+                input.publiclyVisible(), input.knowledgeDraft(), input.knowledgeTerms(), principal);
         Preview preview = null;
         if (input.writeBack()) {
             var file = input.bookFileId() == null ? books.findPreferredFile(id).orElseThrow() : books.findFile(input.bookFileId()).orElseThrow();
@@ -85,13 +87,39 @@ public class MetadataController {
 
     public record MetadataRequest(@Size(max = 500) String title, @Size(max = 500) String subtitle,
                                   List<@Size(max = 300) String> authors, List<@Size(max = 300) String> translators,
-                                  @Size(max = 32) String language, @Size(max = 500) String publisher,
+                                  @Size(max = 1024) String language, @Size(max = 500) String publisher,
                                   @Size(max = 40) String publishedDate, @Size(max = 40) String isbn,
                                   @Size(max = 20_000) String description, @Size(max = 500) String series,
                                   BigDecimal seriesIndex, List<@Size(max = 200) String> tags,
                                   @Size(max = 4) List<@Size(max = 32) String> subjectCodes,
                                   String[] manualFields, boolean writeBack, UUID bookFileId, String expectedFingerprint, Boolean publiclyVisible,
-                                  @Size(max = 20_000) String authorBiography, @Size(max = 40_000) String tableOfContents) {
+                                  @Size(max = 20_000) String authorBiography, @Size(max = 40_000) String tableOfContents,
+                                  KnowledgeDraft knowledgeDraft, @Size(max = 50) List<@Size(max = 60) String> knowledgeTerms) {
+        public MetadataRequest(@Size(max = 500) String title, @Size(max = 500) String subtitle,
+                               List<@Size(max = 300) String> authors, List<@Size(max = 300) String> translators,
+                               @Size(max = 1024) String language, @Size(max = 500) String publisher,
+                               @Size(max = 40) String publishedDate, @Size(max = 40) String isbn,
+                               @Size(max = 20_000) String description, @Size(max = 500) String series,
+                               BigDecimal seriesIndex, List<@Size(max = 200) String> tags,
+                               @Size(max = 4) List<@Size(max = 32) String> subjectCodes,
+                               String[] manualFields, boolean writeBack, UUID bookFileId, String expectedFingerprint,
+                               Boolean publiclyVisible, @Size(max = 20_000) String authorBiography,
+                               @Size(max = 40_000) String tableOfContents) {
+            this(title, subtitle, authors, translators, language, publisher, publishedDate, isbn, description, series,
+                    seriesIndex, tags, subjectCodes, manualFields, writeBack, bookFileId, expectedFingerprint,
+                    publiclyVisible, authorBiography, tableOfContents, null, null);
+        }
+
+        public MetadataRequest(String title, String subtitle, List<String> authors, List<String> translators,
+                String language, String publisher, String publishedDate, String isbn, String description, String series,
+                BigDecimal seriesIndex, List<String> tags, List<String> subjectCodes, String[] manualFields,
+                boolean writeBack, UUID bookFileId, String expectedFingerprint, Boolean publiclyVisible,
+                String authorBiography, String tableOfContents, KnowledgeDraft knowledgeDraft) {
+            this(title, subtitle, authors, translators, language, publisher, publishedDate, isbn, description, series,
+                    seriesIndex, tags, subjectCodes, manualFields, writeBack, bookFileId, expectedFingerprint,
+                    publiclyVisible, authorBiography, tableOfContents, knowledgeDraft, null);
+        }
+
         public MetadataRequest {
             if (manualFields == null) {
                 List<String> supplied = new ArrayList<>();

@@ -72,6 +72,33 @@ class AiAssistanceServiceTest {
         assertThatThrownBy(() -> service.assist(input(AiAssistanceService.SourceType.METADATA_DRAFT, AiAssistanceService.Action.TAGS, true), principal)).isInstanceOf(ApiException.class);
         verifyNoInteractions(ai);
     }
+    @Test void authorBiographyUsesOnlySuppliedMetadataDraftAndRequiresEvidenceBasedPrompt() throws Exception {
+        String draft = "书名：河岸植物观察；作者：林青；现有材料：长期记录本地河岸植物变化。";
+        var metadataDraft = new AiAssistanceController.Input(AiAssistanceService.SourceType.METADATA_DRAFT, null,
+                AiAssistanceService.Action.AUTHOR_BIOGRAPHY, null, draft, true);
+        when(permissions.snapshot(principal)).thenReturn(new RolePermissionService.Snapshot(UserRole.MEMBER, 1, Set.of("library.edit")));
+        when(ai.generateStructured(anyString(), anyMap())).thenReturn(output("林青长期记录本地河岸植物变化。", "draft", "这句不在草稿材料中。"));
+
+        var result = service.assist(metadataDraft, principal);
+
+        assertThat(result.text()).isEqualTo("林青长期记录本地河岸植物变化。");
+        assertThat(result.evidence()).isEmpty();
+        var prompt = org.mockito.ArgumentCaptor.forClass(String.class);
+        var request = org.mockito.ArgumentCaptor.forClass(Map.class);
+        verify(ai).generateStructured(prompt.capture(), request.capture());
+        assertThat(prompt.getValue()).contains("AUTHOR_BIOGRAPHY", "不得按姓名、书名、时代、籍贯等推断", "现有材料不足以确认作者介绍");
+        assertThat(request.getValue()).containsEntry("action", AiAssistanceService.Action.AUTHOR_BIOGRAPHY);
+        assertThat(request.getValue().get("passages")).isEqualTo(List.of(new AiAssistanceService.Passage("draft", draft)));
+        verifyNoInteractions(books, texts, articles, collections);
+    }
+    @Test void authorBiographyIsRejectedOutsideMetadataDrafts() {
+        for (var source : List.of(AiAssistanceService.SourceType.BOOK, AiAssistanceService.SourceType.NOTE_DRAFT)) {
+            var error = catchThrowableOfType(() -> service.assist(input(source, AiAssistanceService.Action.AUTHOR_BIOGRAPHY, true), principal), ApiException.class);
+            assertThat(error).isNotNull();
+            assertThat(error.code()).isEqualTo("AI_ACTION_INVALID");
+        }
+        verifyNoInteractions(ai, books, texts, articles, collections);
+    }
     @Test void onlyExactEvidenceAndSamplingCoverageAreReturned() throws Exception {
         var result = service.assist(input(AiAssistanceService.SourceType.BOOK, AiAssistanceService.Action.SUMMARY, true), principal);
         assertThat(result.text()).isEqualTo("先观察水位。");

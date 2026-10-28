@@ -7,13 +7,17 @@ import com.elexvx.bookkin.ai.AiSettingsService;
 import com.elexvx.bookkin.audit.AuditService;
 import com.elexvx.bookkin.catalog.BookFormat;
 import com.elexvx.bookkin.catalog.DisplayCatalogService;
+import com.elexvx.bookkin.catalog.knowledge.KnowledgeDraft;
+import com.elexvx.bookkin.catalog.knowledge.KnowledgeDraftService;
 import com.elexvx.bookkin.common.ApiException;
 import com.elexvx.bookkin.config.BookKinProperties;
 import com.elexvx.bookkin.filemanagement.FileFingerprints;
 import com.elexvx.bookkin.filemanagement.FileInspector;
 import com.elexvx.bookkin.filemanagement.PathPolicy;
+import com.elexvx.bookkin.filemanagement.infrastructure.BookTextSampler;
 import com.elexvx.bookkin.ingestion.CatalogIngestionRepository;
 import com.elexvx.bookkin.ingestion.CatalogIngestionRepository.DuplicateFingerprintException;
+import com.elexvx.bookkin.ingestion.UploadedBookIngestionService;
 import com.elexvx.bookkin.ingestion.ExtractedBook;
 import com.elexvx.bookkin.ingestion.LibraryRoot;
 import com.elexvx.bookkin.ingestion.LibraryRootRepository;
@@ -45,9 +49,11 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 import javax.imageio.ImageIO;
 import org.springframework.http.HttpStatus;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -55,6 +61,10 @@ import org.springframework.stereotype.Service;
 // Coordinates staging, review and ingestion; filesystem placement and database commits use explicit compensation, not one transaction.
 @Service
 public class BookUploadService {
+    private static final Set<String> METADATA_SOURCE_FIELDS = Set.of("title", "subtitle", "authors", "translators",
+            "language", "publisher", "publishedDate", "isbn", "description", "authorBiography",
+            "tableOfContents", "subjectCodes", "series", "seriesIndex", "tags");
+
     private final BookUploadRepository uploads;
     private final BookUploadProcessor processor;
     private final MetadataEnrichmentService enrichment;
@@ -70,12 +80,16 @@ public class BookUploadService {
     private final BookKinProperties properties;
     private final AuditService audit;
     private final ObjectMapper json;
+    private final KnowledgeDraftService knowledgeDrafts;
+    private final UploadedBookIngestionService uploadedBooks;
 
+    @Autowired
     public BookUploadService(BookUploadRepository uploads, BookUploadProcessor processor,
                              MetadataEnrichmentService enrichment, AiMetadataService ai, AiSettingsService aiSettings, LibraryRootRepository roots,
                              CatalogIngestionRepository catalog, UserRepository users, FileInspector inspector,
                              FileFingerprints fingerprints, PathPolicy paths, BookKinProperties properties,
-                             AuditService audit, ObjectMapper json, DisplayCatalogService displayCatalog) {
+                             AuditService audit, ObjectMapper json, DisplayCatalogService displayCatalog,
+                             KnowledgeDraftService knowledgeDrafts, UploadedBookIngestionService uploadedBooks) {
         this.uploads = uploads;
         this.processor = processor;
         this.enrichment = enrichment;
@@ -91,6 +105,17 @@ public class BookUploadService {
         this.properties = properties;
         this.audit = audit;
         this.json = json;
+        this.knowledgeDrafts = knowledgeDrafts;
+        this.uploadedBooks = uploadedBooks;
+    }
+
+    public BookUploadService(BookUploadRepository uploads, BookUploadProcessor processor,
+                             MetadataEnrichmentService enrichment, AiMetadataService ai, AiSettingsService aiSettings, LibraryRootRepository roots,
+                             CatalogIngestionRepository catalog, UserRepository users, FileInspector inspector,
+                             FileFingerprints fingerprints, PathPolicy paths, BookKinProperties properties,
+                             AuditService audit, ObjectMapper json, DisplayCatalogService displayCatalog) {
+        this(uploads, processor, enrichment, ai, aiSettings, roots, catalog, users, inspector, fingerprints, paths,
+                properties, audit, json, displayCatalog, null, null);
     }
 
     public BookUpload create(UUID rootId, String filename, long size, Principal principal) {
@@ -159,16 +184,35 @@ public class BookUploadService {
     public BookUpload updateDraft(UUID id, MetadataDraft requested, Principal principal) {
         UUID actor = actor(principal);
         var upload = requireReady(owned(id, actor));
-        validateDraft(requested, upload.format());
-        Map<String, MetadataSource> sources = new HashMap<>(requested.sources());
-        markChanges(sources, upload.draftMetadata(), requested);
+        if (requested == null) throw ApiException.badRequest("INVALID_METADATA", "书目资料格式无效。");
         String target = paths.normalizeRelative(requested.targetPath());
-        MetadataDraft normalized = new MetadataDraft(requested.title().strip(), blank(requested.subtitle()), clean(requested.authors()),
+        validateExtension(target, upload.format());
+        if (requested.title() != null && !requested.title().isBlank()) {
+            target = com.elexvx.bookkin.filemanagement.BookTitleFilename.inDirectory(target, requested.title(), upload.format(), paths);
+        }
+        MetadataDraft sanitized = new MetadataDraft(draftTitle(requested.title()), blank(requested.subtitle()), clean(requested.authors()),
                 clean(requested.translators()), blank(requested.language()), blank(requested.publisher()), blank(requested.publishedDate()),
                 blank(requested.isbn()), blank(requested.description()), blank(requested.series()), requested.seriesIndex(), clean(requested.tags()),
-                upload.draftMetadata().pageCount(), upload.draftMetadata().wordCount(), sources, target, requested.publiclyVisible(), com.elexvx.bookkin.catalog.ThemaSubjects.validate(requested.subjectCodes()),
-                blank(requested.authorBiography()), blank(requested.tableOfContents()));
-        uploads.updateDraft(id, normalized);
+                upload.draftMetadata().pageCount(), upload.draftMetadata().wordCount(), requested.sources(), target, requested.publiclyVisible(), com.elexvx.bookkin.catalog.ThemaSubjects.validate(requested.subjectCodes()),
+                blank(requested.authorBiography()), blank(requested.tableOfContents()),
+                requested.knowledgeDraft() == null ? upload.draftMetadata().knowledgeDraft() : requested.knowledgeDraft(),
+                validateKnowledgeTerms(requested.knowledgeTerms() == null
+                        ? upload.draftMetadata().knowledgeTerms() : requested.knowledgeTerms()));
+        validateDraftSafety(sanitized, upload.format());
+        if (sanitized.knowledgeDraft() != null) {
+            if (knowledgeDrafts == null) throw new IllegalStateException("知识点草稿服务未配置");
+            BookTextSampler.Sample knowledgeSample = sanitized.knowledgeDraft().points() == null
+                    || sanitized.knowledgeDraft().points().isEmpty() ? null : sampleUploadTextForDraft(id, principal);
+            knowledgeDrafts.validateUpload(sanitized.knowledgeDraft(), upload.fingerprint(), knowledgeSample);
+        }
+        Map<String, MetadataSource> sources = new HashMap<>(upload.draftMetadata().sources());
+        markChanges(sources, upload.draftMetadata(), sanitized, requested.sources(), upload.metadataCandidates());
+        MetadataDraft normalized = new MetadataDraft(sanitized.title(), sanitized.subtitle(), sanitized.authors(),
+                sanitized.translators(), sanitized.language(), sanitized.publisher(), sanitized.publishedDate(), sanitized.isbn(),
+                sanitized.description(), sanitized.series(), sanitized.seriesIndex(), sanitized.tags(), sanitized.pageCount(),
+                sanitized.wordCount(), sources, sanitized.targetPath(), sanitized.publiclyVisible(), sanitized.subjectCodes(),
+                sanitized.authorBiography(), sanitized.tableOfContents(), sanitized.knowledgeDraft(), sanitized.knowledgeTerms());
+        if (!uploads.updateDraft(id, normalized)) throw ApiException.conflict("UPLOAD_STATE", "上传已开始确认入库，不能继续修改草稿。");
         audit.record(actor, "BOOK_UPLOAD_METADATA_EDITED", "BOOK_UPLOAD", id.toString(), upload.originalFilename(), target,
                 upload.fingerprint(), upload.fingerprint(), "SUCCEEDED", "{}");
         return uploads.findOwned(id, actor).orElseThrow().view();
@@ -179,11 +223,11 @@ public class BookUploadService {
     public BookUpload enrich(UUID id, Principal principal) {
         UUID actor = actor(principal);
         var upload = requireReady(owned(id, actor));
-        uploads.processing(id, BookUploadStatus.ENRICHING);
+        if (!uploads.processing(id, BookUploadStatus.ENRICHING)) throw ApiException.conflict("UPLOAD_STATE", "上传状态已变化，请重新打开草稿后重试。");
         try {
             var result = enrichment.enrich(upload.draftMetadata(), aiSettings.effective().enabled(), null, false);
             uploads.ready(id, upload.encrypted(), upload.drmProtected(), upload.digitallySigned(), upload.detectedMetadata(),
-                    result.draft().withPubliclyVisible(upload.draftMetadata().publiclyVisible()), result.candidates(), upload.coverCacheKey(), upload.selectedCoverSource(),
+                    namedDraft(result.draft(), upload.format()).withPubliclyVisible(upload.draftMetadata().publiclyVisible()), result.candidates(), upload.coverCacheKey(), upload.selectedCoverSource(),
                     upload.similarBookIds().toArray(UUID[]::new));
         } catch (Exception exception) {
             uploads.resetReady(id, "ENRICHMENT_FAILED", "在线补全暂时不可用，本地识别结果仍可继续使用。");
@@ -197,11 +241,11 @@ public class BookUploadService {
         if (!ai.hasAvailableProvider(providerId)) {
             throw ApiException.conflict("AI_PROVIDER_UNAVAILABLE", "没有可用的 AI 平台，请先在服务端配置并启用至少一个平台。");
         }
-        uploads.processing(id, BookUploadStatus.ENRICHING);
+        if (!uploads.processing(id, BookUploadStatus.ENRICHING)) throw ApiException.conflict("UPLOAD_STATE", "上传状态已变化，请重新打开草稿后重试。");
         try {
             var result = enrichment.enrich(upload.draftMetadata(), true, providerId, true);
             uploads.ready(id, upload.encrypted(), upload.drmProtected(), upload.digitallySigned(), upload.detectedMetadata(),
-                    result.draft().withPubliclyVisible(upload.draftMetadata().publiclyVisible()), result.candidates(), upload.coverCacheKey(), upload.selectedCoverSource(),
+                    namedDraft(result.draft(), upload.format()).withPubliclyVisible(upload.draftMetadata().publiclyVisible()), result.candidates(), upload.coverCacheKey(), upload.selectedCoverSource(),
                     upload.similarBookIds().toArray(UUID[]::new));
             audit.record(actor, "BOOK_UPLOAD_AI_MATCHED", "BOOK_UPLOAD", id.toString(), upload.originalFilename(), null,
                     upload.fingerprint(), upload.fingerprint(), "SUCCEEDED", "{\"providerId\":\"" + safeAudit(providerId) + "\"}");
@@ -209,6 +253,112 @@ public class BookUploadService {
             uploads.resetReady(id, "AI_MATCH_FAILED", "AI 平台暂时不可用，本地识别结果仍可继续使用。");
         }
         return uploads.findOwned(id, actor).orElseThrow().view();
+    }
+
+    /** Searches for book editions and persists review candidates without changing the draft. */
+    public BookUpload match(UUID id, boolean refresh, String providerId, Principal principal) {
+        UUID actor = actor(principal);
+        requireReady(owned(id, actor));
+        if (!uploads.processing(id, BookUploadStatus.ENRICHING)) {
+            throw ApiException.conflict("UPLOAD_STATE", "上传状态已变化，请重新打开草稿后重试。");
+        }
+        try {
+            // Read after the state CAS: this is the latest owned draft and can no longer be edited while matching.
+            var latest = owned(id, actor);
+            var result = enrichment.match(latest.draftMetadata(), providerId, refresh);
+            if (result.candidates().isEmpty()) {
+                String detail = result.errorDetail() == null ? "未找到匹配的版本，可修改书目资料后重试。" : result.errorDetail();
+                uploads.resetReady(id, "MATCH_NO_RESULTS", detail);
+                audit.record(actor, "BOOK_UPLOAD_MATCHED", "BOOK_UPLOAD", id.toString(), latest.originalFilename(), null,
+                        latest.fingerprint(), latest.fingerprint(), "FAILED", "{}");
+                return uploads.findOwned(id, actor).orElseThrow().view();
+            }
+            String errorCode = result.errorDetail() == null ? null : "MATCH_PARTIAL";
+            if (!uploads.matchCompleted(id, result.candidates(), errorCode, result.errorDetail())) {
+                throw ApiException.conflict("UPLOAD_STATE", "上传状态已变化，请重新打开草稿后重试。");
+            }
+            audit.record(actor, "BOOK_UPLOAD_MATCHED", "BOOK_UPLOAD", id.toString(), latest.originalFilename(), null,
+                    latest.fingerprint(), latest.fingerprint(), errorCode == null ? "SUCCEEDED" : "PARTIAL",
+                    "{\"refresh\":" + refresh + ",\"providerId\":\"" + safeAudit(providerId) + "\"}");
+        } catch (ApiException exception) {
+            throw exception;
+        } catch (Exception exception) {
+            uploads.resetReady(id, "MATCH_FAILED", "在线匹配暂时不可用，可稍后重试。" + safeMessage(exception));
+            audit.record(actor, "BOOK_UPLOAD_MATCHED", "BOOK_UPLOAD", id.toString(), null, null,
+                    null, null, "FAILED", "{}");
+        }
+        return uploads.findOwned(id, actor).orElseThrow().view();
+    }
+
+    /** Reads a bounded sample from this manager's still-active upload draft without changing the staged file. */
+    public BookTextSampler.Sample sampleText(UUID id, Principal principal) throws Exception {
+        var source = requireTextSource(id, principal);
+        try {
+            return new BookTextSampler().sample(source.staged(), source.upload().format());
+        } finally {
+            requireUploadFingerprint(source.staged(), source.upload().fingerprint());
+        }
+    }
+
+    /** Revalidates the current staged bytes after an external provider has analyzed the sampled text. */
+    public void verifyTextSource(UUID id, Principal principal) {
+        requireTextSource(id, principal);
+    }
+
+    private UploadTextSource requireTextSource(UUID id, Principal principal) {
+        var manager = users.findByUsername(principal.getName()).orElseThrow();
+        if (!manager.canManageFiles()) {
+            throw ApiException.forbidden("UPLOAD_TEXT_FORBIDDEN", "只有主人或管理员可以分析上传正文。");
+        }
+        var upload = requireReady(owned(id, manager.id()));
+        if (upload.expiresAt() == null || !upload.expiresAt().isAfter(OffsetDateTime.now())) {
+            throw ApiException.conflict("UPLOAD_EXPIRED", "上传草稿已过期，无法分析正文。");
+        }
+
+        LibraryRoot root = roots.findById(upload.libraryRootId())
+                .orElseThrow(() -> ApiException.notFound("LIBRARY_ROOT_NOT_FOUND", "未找到书库根目录。"));
+        if (root.status() == LibraryRoot.RootStatus.OFFLINE || !root.canRead()) {
+            throw ApiException.conflict("ROOT_OFFLINE", "书库根目录当前不可读取。");
+        }
+        Path rootPath = rootPath(root);
+        Path staged = uploadStagingFile(rootPath, upload);
+        long stagedSize;
+        try {
+            stagedSize = Files.size(staged);
+        } catch (Exception exception) {
+            throw ApiException.conflict("UPLOAD_FILE_MISSING", "无法读取上传暂存文件。");
+        }
+        if (upload.receivedBytes() != upload.declaredSizeBytes() || stagedSize != upload.declaredSizeBytes()) {
+            throw ApiException.conflict("UPLOAD_FILE_CHANGED", "暂存文件大小与上传记录不一致。");
+        }
+        requireUploadFingerprint(staged, upload.fingerprint());
+        return new UploadTextSource(upload, staged);
+    }
+
+    private MetadataDraft namedDraft(MetadataDraft draft, BookFormat format) {
+        return new MetadataDraft(draft.title(), draft.subtitle(), draft.authors(), draft.translators(), draft.language(),
+                draft.publisher(), draft.publishedDate(), draft.isbn(), draft.description(), draft.series(), draft.seriesIndex(),
+                draft.tags(), draft.pageCount(), draft.wordCount(), draft.sources(),
+                com.elexvx.bookkin.filemanagement.BookTitleFilename.inDirectory(draft.targetPath(), draft.title(), format, paths),
+                draft.publiclyVisible(), draft.subjectCodes(), draft.authorBiography(), draft.tableOfContents(), draft.knowledgeDraft(),
+                draft.knowledgeTerms());
+    }
+
+    private List<String> validateKnowledgeTerms(List<String> values) {
+        if (values == null) return null;
+        if (values.size() > 50) throw ApiException.badRequest("INVALID_METADATA_TERM_BATCH", "知识点数量不能超过 50 项。");
+        var seen = new java.util.HashSet<String>();
+        var result = new ArrayList<String>();
+        for (String value : values) {
+            String safe;
+            try { safe = com.elexvx.bookkin.catalog.terms.MetadataTermText.clean(value,
+                    com.elexvx.bookkin.catalog.terms.MetadataTermKind.KNOWLEDGE); }
+            catch (IllegalArgumentException invalid) {
+                throw ApiException.badRequest("INVALID_METADATA_TERM", "知识点词条内容无效。");
+            }
+            if (seen.add(com.elexvx.bookkin.catalog.terms.MetadataTermText.normalizedKey(safe))) result.add(safe);
+        }
+        return List.copyOf(result);
     }
 
     public BookUpload customCover(UUID id, byte[] input, Principal principal) {
@@ -247,11 +397,23 @@ public class BookUploadService {
             // A replay must not undo a later per-book visibility change.
             return current.view();
         }
+        if (current.status() == BookUploadStatus.READY_FOR_REVIEW) {
+            validateCommitDraft(current.draftMetadata(), current.format());
+            validateUploadKnowledgeDraft(current.view(), principal);
+        }
         var upload = uploads.beginCommit(id, actor, idempotencyKey);
+        if (upload.status() == BookUploadStatus.SUCCEEDED && idempotencyKey.equals(upload.idempotencyKey())) return upload.view();
+        try {
+            validateCommitDraft(upload.draftMetadata(), upload.format());
+        } catch (ApiException invalidDraft) {
+            uploads.rollbackUnstartedCommit(id, idempotencyKey);
+            throw invalidDraft;
+        }
         LibraryRoot root = writableRoot(upload.libraryRootId(), upload.declaredSizeBytes());
         Path rootPath = rootPath(root);
         Path staged = internalTarget(rootPath, upload.stagingPath());
-        String normalizedTarget = paths.normalizeRelative(upload.draftMetadata().targetPath());
+        String normalizedTarget = com.elexvx.bookkin.filemanagement.BookTitleFilename.inDirectory(
+                upload.draftMetadata().targetPath(), upload.draftMetadata().title(), upload.format(), paths);
         validateExtension(normalizedTarget, upload.format());
         Path target;
         Path selectedCover = null;
@@ -262,6 +424,7 @@ public class BookUploadService {
         try {
             if (!Files.isRegularFile(staged, LinkOption.NOFOLLOW_LINKS) || Files.isSymbolicLink(staged)) throw new IllegalArgumentException("暂存文件不存在");
             if (!Objects.equals(fingerprints.sha256(staged), upload.fingerprint())) throw new IllegalArgumentException("暂存文件指纹已变化");
+            validateUploadKnowledgeDraft(upload.view(), staged);
             UUID duplicate = catalog.duplicateBookId(upload.fingerprint());
             if (duplicate != null) throw new DuplicateFingerprintException(duplicate);
             FileStore store = Files.getFileStore(rootPath);
@@ -269,7 +432,7 @@ public class BookUploadService {
             target = paths.resolveTarget(rootPath, normalizedTarget);
             if (Files.exists(target, LinkOption.NOFOLLOW_LINKS) || paths.hasCaseInsensitiveConflict(target)) throw new IllegalArgumentException("目标路径已有文件，BookKin不会覆盖它");
             ensureInternalDirectory(rootPath, target.getParent());
-            Files.move(staged, target, StandardCopyOption.ATOMIC_MOVE);
+            Files.move(staged, target);
             bookMoved = true;
 
             CatalogIngestionRepository.CoverAssetInput asset = null;
@@ -294,14 +457,28 @@ public class BookUploadService {
             String sourcesJson = json.writeValueAsString(draft.sources());
             String[] overrides = draft.sources().entrySet().stream().filter(entry -> entry.getValue() == MetadataSource.MANUAL)
                     .map(Map.Entry::getKey).toArray(String[]::new);
-            catalog.createUploaded(bookId, actor, root.id(), normalizedTarget, normalizedTarget.toLowerCase(Locale.ROOT), upload.format(),
-                    attributes, upload.fingerprint(), inspection, metadata, sourcesJson, overrides, asset);
+            if (uploadedBooks == null) {
+                if (draft.knowledgeDraft() != null || draft.knowledgeTerms() != null) {
+                    throw new IllegalStateException("知识词条上传入库服务未配置");
+                }
+                catalog.createUploaded(bookId, actor, root.id(), normalizedTarget, normalizedTarget.toLowerCase(Locale.ROOT), upload.format(),
+                        attributes, upload.fingerprint(), inspection, metadata, sourcesJson, overrides, asset);
+            } else {
+                if (knowledgeDrafts == null && draft.knowledgeDraft() != null) throw new IllegalStateException("知识点草稿服务未配置");
+                uploadedBooks.createUploaded(bookId, actor, root.id(), normalizedTarget, normalizedTarget.toLowerCase(Locale.ROOT),
+                        upload.format(), attributes, upload.fingerprint(), inspection, metadata, sourcesJson, overrides, asset,
+                        draft.knowledgeDraft(), draft.knowledgeTerms());
+            }
             if (publishToDisplay) displayCatalog.publish(bookId, actor);
             uploads.succeeded(id, bookId);
             cleanupEmpty(staged.getParent());
             audit.record(actor, "BOOK_UPLOAD_COMMITTED", "BOOK", bookId.toString(), upload.stagingPath(), normalizedTarget,
                     null, upload.fingerprint(), "SUCCEEDED", "{\"uploadId\":\"" + id + "\"}");
             return uploads.findOwned(id, actor).orElseThrow().view();
+        } catch (ApiException rejected) {
+            compensate(staged, targetOrNull(rootPath, normalizedTarget), bookMoved, selectedCover, assetTarget, coverMoved);
+            uploads.resetReady(id, "COMMIT_FAILED", safeMessage(rejected));
+            throw rejected;
         } catch (DuplicateFingerprintException duplicate) {
             compensate(staged, targetOrNull(rootPath, normalizedTarget), bookMoved, selectedCover, assetTarget, coverMoved);
             uploads.duplicate(id, duplicate.bookId());
@@ -347,8 +524,7 @@ public class BookUploadService {
     @Scheduled(fixedDelayString = "1h", initialDelayString = "10m")
     public void cleanupExpired() {
         for (var upload : uploads.expired()) {
-            deleteUploadFiles(upload);
-            uploads.expired(upload.id());
+            if (uploads.expired(upload.id())) deleteUploadFiles(upload);
         }
     }
 
@@ -401,46 +577,145 @@ public class BookUploadService {
         }
     }
 
-    private void validateDraft(MetadataDraft draft, BookFormat format) {
-        if (draft == null || draft.title() == null || draft.title().isBlank() || draft.title().length() > 500) throw new IllegalArgumentException("书名不能为空且不能超过500字");
-        if (draft.authors() == null || clean(draft.authors()).isEmpty() || draft.authors().size() > 20) throw new IllegalArgumentException("至少需要一位作者，最多20位");
-        if (draft.translators() != null && draft.translators().size() > 20) throw new IllegalArgumentException("译者最多20位");
-        if (draft.tags() != null && draft.tags().size() > 50) throw new IllegalArgumentException("标签最多50个");
+    private void validateDraftSafety(MetadataDraft draft, BookFormat format) {
+        if (draft == null) throw ApiException.badRequest("INVALID_METADATA", "书目资料格式无效。");
+        validateLength(draft.title(), 500);
+        validateLength(draft.subtitle(), 500);
+        validateLength(draft.language(), 1024);
+        validateLength(draft.publisher(), 500);
+        validateLength(draft.publishedDate(), 40);
+        validateLength(draft.isbn(), 40);
+        validateLength(draft.description(), 20_000);
+        validateLength(draft.series(), 500);
+        validateLength(draft.authorBiography(), 20_000);
+        validateLength(draft.tableOfContents(), 40_000);
+        validateList(draft.authors(), 20, 500);
+        validateList(draft.translators(), 20, 500);
+        validateList(draft.tags(), 50, 200);
+        if (draft.seriesIndex() != null) {
+            var seriesIndex = draft.seriesIndex().stripTrailingZeros();
+            if (Math.max(0, seriesIndex.scale()) > 3 || seriesIndex.precision() - seriesIndex.scale() > 7) {
+                throw ApiException.badRequest("INVALID_SERIES_INDEX", "丛书序号超出允许范围。");
+            }
+        }
         com.elexvx.bookkin.catalog.ThemaSubjects.validate(draft.subjectCodes());
-        if (draft.description() != null && draft.description().length() > 20_000 || draft.authorBiography() != null && draft.authorBiography().length() > 20_000 || draft.tableOfContents() != null && draft.tableOfContents().length() > 40_000) throw ApiException.badRequest("METADATA_TOO_LONG", "书目资料超出长度限制。");
-        validateExtension(draft.targetPath(), format);
+        if (draft.sources().size() > METADATA_SOURCE_FIELDS.size()
+                || draft.sources().keySet().stream().anyMatch(key -> !METADATA_SOURCE_FIELDS.contains(key))) {
+            throw ApiException.badRequest("INVALID_METADATA_SOURCE", "书目来源字段无效。");
+        }
+        validateExtension(paths.normalizeRelative(draft.targetPath()), format);
+    }
+
+    private void validateCommitDraft(MetadataDraft draft, BookFormat format) {
+        validateDraftSafety(draft, format);
+        if (draft.title() == null || draft.title().isBlank()) {
+            throw ApiException.badRequest("INVALID_BOOK_TITLE", "书名不能为空。");
+        }
+        if (clean(draft.authors()).isEmpty()) {
+            throw ApiException.badRequest("INVALID_BOOK_AUTHORS", "至少需要一位作者。");
+        }
+    }
+
+    private void validateUploadKnowledgeDraft(BookUpload upload, Principal principal) {
+        KnowledgeDraft draft = upload.draftMetadata().knowledgeDraft();
+        if (draft == null) return;
+        if (knowledgeDrafts == null) throw new IllegalStateException("知识点草稿服务未配置");
+        BookTextSampler.Sample sample = draft.points() == null || draft.points().isEmpty() ? null : sampleUploadTextForDraft(upload.id(), principal);
+        knowledgeDrafts.validateUpload(draft, upload.fingerprint(), sample);
+    }
+
+    private BookTextSampler.Sample sampleUploadTextForDraft(UUID id, Principal principal) {
+        try {
+            return sampleText(id, principal);
+        } catch (ApiException exception) {
+            throw exception;
+        } catch (InterruptedException exception) {
+            Thread.currentThread().interrupt();
+            throw ApiException.conflict("UPLOAD_FILE_CHANGED", "读取上传正文时被中断，请重新打开草稿后重试。");
+        } catch (Exception exception) {
+            throw ApiException.conflict("UPLOAD_FILE_CHANGED", "无法验证上传正文知识点，请重新分析后重试。");
+        }
+    }
+
+    private void validateUploadKnowledgeDraft(BookUpload upload, Path staged) throws Exception {
+        KnowledgeDraft draft = upload.draftMetadata().knowledgeDraft();
+        if (draft == null) return;
+        if (knowledgeDrafts == null) throw new IllegalStateException("知识点草稿服务未配置");
+        BookTextSampler.Sample sample = null;
+        if (draft.points() != null && !draft.points().isEmpty()) {
+            requireUploadFingerprint(staged, upload.fingerprint());
+            sample = new BookTextSampler().sample(staged, upload.format());
+            requireUploadFingerprint(staged, upload.fingerprint());
+        }
+        knowledgeDrafts.validateUpload(draft, upload.fingerprint(), sample);
+    }
+
+    private void validateLength(String value, int max) {
+        if (value != null && value.length() > max) throw ApiException.badRequest("METADATA_TOO_LONG", "书目资料超出长度限制。");
+    }
+
+    private void validateList(List<String> values, int maxItems, int maxLength) {
+        if (values.size() > maxItems || values.stream().anyMatch(value -> value.length() > maxLength)) {
+            throw ApiException.badRequest("METADATA_TOO_LONG", "书目资料超出长度限制。");
+        }
     }
 
     private void validateExtension(String path, BookFormat format) {
         if (path == null || !path.toLowerCase(Locale.ROOT).endsWith("." + format.name().toLowerCase(Locale.ROOT))) {
-            throw new IllegalArgumentException("目标文件扩展名必须与书籍格式一致");
+            throw ApiException.badRequest("UPLOAD_TARGET_FORMAT_MISMATCH", "目标文件扩展名必须与书籍格式一致。");
         }
     }
 
-    private void markChanges(Map<String, MetadataSource> sources, MetadataDraft before, MetadataDraft after) {
-        mark(sources, "title", before.title(), after.title());
-        mark(sources, "subtitle", before.subtitle(), after.subtitle());
-        mark(sources, "authors", before.authors(), clean(after.authors()));
-        mark(sources, "translators", before.translators(), clean(after.translators()));
-        mark(sources, "language", before.language(), after.language());
-        mark(sources, "publisher", before.publisher(), after.publisher());
-        mark(sources, "publishedDate", before.publishedDate(), after.publishedDate());
-        mark(sources, "isbn", before.isbn(), after.isbn());
-        mark(sources, "description", before.description(), after.description());
-        mark(sources, "authorBiography", before.authorBiography(), after.authorBiography());
-        mark(sources, "tableOfContents", before.tableOfContents(), after.tableOfContents());
-        if (!Objects.equals(before.subjectCodes(), after.subjectCodes())) sources.put("subjectCodes", MetadataSource.MANUAL);
-        mark(sources, "series", before.series(), after.series());
-        mark(sources, "seriesIndex", before.seriesIndex(), after.seriesIndex());
-        mark(sources, "tags", before.tags(), clean(after.tags()));
+    private void markChanges(Map<String, MetadataSource> sources, MetadataDraft before, MetadataDraft after,
+                             Map<String, MetadataSource> requestedSources, List<MetadataCandidate> candidates) {
+        mark(sources, "title", before.title(), after.title(), requestedSources, after, candidates);
+        mark(sources, "subtitle", before.subtitle(), after.subtitle(), requestedSources, after, candidates);
+        mark(sources, "authors", before.authors(), after.authors(), requestedSources, after, candidates);
+        mark(sources, "translators", before.translators(), after.translators(), requestedSources, after, candidates);
+        mark(sources, "language", before.language(), after.language(), requestedSources, after, candidates);
+        mark(sources, "publisher", before.publisher(), after.publisher(), requestedSources, after, candidates);
+        mark(sources, "publishedDate", before.publishedDate(), after.publishedDate(), requestedSources, after, candidates);
+        mark(sources, "isbn", before.isbn(), after.isbn(), requestedSources, after, candidates);
+        mark(sources, "description", before.description(), after.description(), requestedSources, after, candidates);
+        mark(sources, "authorBiography", before.authorBiography(), after.authorBiography(), requestedSources, after, candidates);
+        mark(sources, "tableOfContents", before.tableOfContents(), after.tableOfContents(), requestedSources, after, candidates);
+        mark(sources, "subjectCodes", before.subjectCodes(), after.subjectCodes(), requestedSources, after, candidates);
+        mark(sources, "series", before.series(), after.series(), requestedSources, after, candidates);
+        mark(sources, "seriesIndex", before.seriesIndex(), after.seriesIndex(), requestedSources, after, candidates);
+        mark(sources, "tags", before.tags(), after.tags(), requestedSources, after, candidates);
     }
 
-    private void mark(Map<String, MetadataSource> sources, String field, Object before, Object after) {
-        MetadataSource requested = sources.get(field);
-        if (!Objects.equals(before, after) && requested != MetadataSource.OPEN_LIBRARY && requested != MetadataSource.GOOGLE_BOOKS
-                && requested != MetadataSource.AI) {
+    private void mark(Map<String, MetadataSource> sources, String field, Object before, Object after,
+                      Map<String, MetadataSource> requestedSources, MetadataDraft draft, List<MetadataCandidate> candidates) {
+        MetadataSource requested = requestedSources.get(field);
+        if (Objects.equals(before, after)) {
+            if (sources.get(field) == MetadataSource.MANUAL) return;
+            if ((requested == MetadataSource.OPEN_LIBRARY || requested == MetadataSource.GOOGLE_BOOKS
+                    || requested == MetadataSource.WIKIDATA || requested == MetadataSource.AI)
+                    && matchesCandidate(field, requested, draft, candidates)) sources.put(field, requested);
+            return;
+        }
+        if (requested != MetadataSource.OPEN_LIBRARY && requested != MetadataSource.GOOGLE_BOOKS
+                && requested != MetadataSource.WIKIDATA && requested != MetadataSource.AI) {
             sources.put(field, MetadataSource.MANUAL);
+            return;
         }
+        sources.put(field, matchesCandidate(field, requested, draft, candidates) ? requested : MetadataSource.MANUAL);
+    }
+
+    private boolean matchesCandidate(String field, MetadataSource source, MetadataDraft draft, List<MetadataCandidate> candidates) {
+        return candidates.stream().filter(candidate -> candidate.provider() == source).anyMatch(candidate -> switch (field) {
+            case "title" -> blank(candidate.title()) != null && Objects.equals(blank(candidate.title()), draft.title());
+            case "subtitle" -> blank(candidate.subtitle()) != null && Objects.equals(blank(candidate.subtitle()), draft.subtitle());
+            case "authors" -> candidate.authors() != null && !candidate.authors().isEmpty() && clean(candidate.authors()).equals(draft.authors());
+            case "language" -> blank(candidate.language()) != null && Objects.equals(blank(candidate.language()), draft.language());
+            case "publisher" -> blank(candidate.publisher()) != null && Objects.equals(blank(candidate.publisher()), draft.publisher());
+            case "publishedDate" -> blank(candidate.publishedDate()) != null && Objects.equals(blank(candidate.publishedDate()), draft.publishedDate());
+            case "isbn" -> blank(candidate.isbn()) != null && Objects.equals(blank(candidate.isbn()), draft.isbn());
+            case "description" -> blank(candidate.description()) != null && Objects.equals(blank(candidate.description()), draft.description());
+            case "tags" -> candidate.tags() != null && !candidate.tags().isEmpty() && clean(candidate.tags()).equals(draft.tags());
+            default -> false;
+        });
     }
 
     private LibraryRoot writableRoot(UUID id, long requiredBytes) {
@@ -467,6 +742,42 @@ public class BookUploadService {
         if (!target.startsWith(root)) throw new IllegalArgumentException("内部路径越过书库");
         return target;
     }
+
+    private Path uploadStagingFile(Path root, BookUploadModels.UploadEntity upload) {
+        String expectedRelative = ".bookkin-staging/uploads/" + upload.id() + "/book.part";
+        if (!expectedRelative.equals(upload.stagingPath())) {
+            throw ApiException.conflict("UPLOAD_STAGING_PATH_INVALID", "上传暂存路径与会话不匹配。");
+        }
+        Path staged = internalTarget(root, expectedRelative);
+        Path current = root;
+        for (Path segment : root.relativize(staged)) {
+            current = current.resolve(segment);
+            if (Files.isSymbolicLink(current)) {
+                throw ApiException.conflict("UPLOAD_STAGING_PATH_INVALID", "上传暂存路径不能包含软链接。");
+            }
+        }
+        if (!Files.isRegularFile(staged, LinkOption.NOFOLLOW_LINKS) || !Files.isReadable(staged)) {
+            throw ApiException.conflict("UPLOAD_FILE_MISSING", "上传暂存文件不存在或不可读取。");
+        }
+        return staged;
+    }
+
+    private void requireUploadFingerprint(Path staged, String expectedFingerprint) {
+        if (expectedFingerprint == null || expectedFingerprint.isBlank()) {
+            throw ApiException.conflict("UPLOAD_FILE_CHANGED", "上传记录缺少文件指纹。");
+        }
+        try {
+            if (!expectedFingerprint.equals(fingerprints.sha256(staged))) {
+                throw ApiException.conflict("UPLOAD_FILE_CHANGED", "暂存文件指纹与上传记录不一致。");
+            }
+        } catch (ApiException exception) {
+            throw exception;
+        } catch (Exception exception) {
+            throw ApiException.conflict("UPLOAD_FILE_MISSING", "无法读取上传暂存文件。");
+        }
+    }
+
+    private record UploadTextSource(BookUploadModels.UploadEntity upload, Path staged) {}
 
     private void ensureInternalDirectory(Path root, Path directory) throws Exception {
         Path relative = root.relativize(directory.normalize());
@@ -530,6 +841,7 @@ public class BookUploadService {
         return name;
     }
     private List<String> clean(List<String> values) { return values == null ? List.of() : values.stream().filter(value -> value != null && !value.isBlank()).map(String::strip).distinct().toList(); }
+    private String draftTitle(String value) { return value == null ? "" : value.strip(); }
     private String blank(String value) { return value == null || value.isBlank() ? null : value.strip(); }
     private String relative(Path root, Path target) { return root.relativize(target).toString().replace('\\', '/'); }
     private static boolean isContentClaimConflict(Throwable error) {

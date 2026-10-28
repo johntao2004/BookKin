@@ -43,6 +43,14 @@ public class KnowledgeRepository {
         });
     }
 
+    /** Returns points only when they belong to this exact current file identity and fingerprint. */
+    public java.util.Optional<KnowledgeBook> current(BookFile file) {
+        return dsl.fetchOptional("""
+                select k.*, k.points::text as points_text from book_knowledge k
+                 where k.book_id = ? and k.file_id = ? and k.fingerprint = ?
+                """, file.bookId(), file.id(), file.fingerprint()).map(this::mapKnowledge);
+    }
+
     public UUID claim(BookFile file) {
         UUID operation = UUID.randomUUID();
         int updated = dsl.execute("""
@@ -63,8 +71,39 @@ public class KnowledgeRepository {
                 """, provider, samples, total, json.writeValueAsString(points), bookId, operation);
         if (updated != 1) throw ApiException.conflict("KNOWLEDGE_SUPERSEDED", "提取任务已被更新，请刷新图谱。");
     }
+
+    /** Explicitly adopted metadata points supersede any older in-flight generation for this book. */
+    public void saveSelected(BookFile file, List<KnowledgePoint> points, int sampledSections, int totalSections) {
+        String serialized;
+        try { serialized = json.writeValueAsString(points); }
+        catch (Exception invalid) { throw new IllegalStateException("知识点无法序列化", invalid); }
+        dsl.execute("""
+                insert into book_knowledge(book_id, file_id, fingerprint, status, operation_id, started_at,
+                    generated_at, provider_id, sampled_sections, total_sections, points)
+                values (?, ?, ?, 'READY', ?, now(), now(), null, ?, ?, ?::jsonb)
+                on conflict (book_id) do update set file_id = excluded.file_id, fingerprint = excluded.fingerprint,
+                    status = 'READY', operation_id = excluded.operation_id, started_at = now(), generated_at = now(),
+                    provider_id = null, sampled_sections = excluded.sampled_sections,
+                    total_sections = excluded.total_sections, points = excluded.points
+                """, file.bookId(), file.id(), file.fingerprint(), UUID.randomUUID(), sampledSections,
+                totalSections, serialized);
+    }
     public void fail(UUID bookId, UUID operation) {
         dsl.execute("update book_knowledge set status = 'FAILED' where book_id = ? and operation_id = ?", bookId, operation);
+    }
+
+    private KnowledgeBook mapKnowledge(org.jooq.Record row) {
+        var points = new ArrayList<KnowledgePoint>();
+        try {
+            for (var point : json.readTree(row.get("points_text", String.class))) {
+                points.add(new KnowledgePoint(point.path("name").asText(), point.path("quote").asText(), point.path("locator").asText()));
+            }
+        } catch (Exception invalid) { throw new IllegalStateException("知识点存储格式无效", invalid); }
+        String status = row.get("status", String.class);
+        if ("GENERATING".equals(status) && row.get("started_at", OffsetDateTime.class).isBefore(OffsetDateTime.now().minusMinutes(5))) status = "FAILED";
+        return new KnowledgeBook(row.get("book_id", UUID.class), status, row.get("provider_id", String.class),
+                row.get("sampled_sections", Integer.class), row.get("total_sections", Integer.class),
+                row.get("generated_at", OffsetDateTime.class), List.copyOf(points));
     }
     public record KnowledgeBook(UUID bookId, String status, String providerId, int sampledSections, int totalSections,
                                 OffsetDateTime generatedAt, List<KnowledgePoint> points) {}

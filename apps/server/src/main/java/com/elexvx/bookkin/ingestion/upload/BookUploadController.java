@@ -64,6 +64,12 @@ public class BookUploadController {
     @PostMapping("/{id}/enrich")
     BookUpload enrich(@PathVariable UUID id, Principal principal) { return service.enrich(id, principal); }
 
+    @PostMapping("/{id}/match")
+    BookUpload match(@PathVariable UUID id, @Valid @RequestBody(required = false) MatchRequest input, Principal principal) {
+        return service.match(id, input != null && Boolean.TRUE.equals(input.refresh()),
+                input == null ? null : input.providerId(), principal);
+    }
+
     @PostMapping("/{id}/ai-match")
     BookUpload aiMatch(@PathVariable UUID id, @Valid @RequestBody(required = false) AiMatchRequest input, Principal principal) {
         return service.aiMatch(id, input == null ? null : input.providerId(), principal);
@@ -95,6 +101,7 @@ public class BookUploadController {
 
     public record CreateUpload(@NotNull UUID libraryRootId, @NotBlank String filename, @Positive long sizeBytes) {}
     public record CoverSelection(@NotBlank String candidateId) {}
+    public record MatchRequest(Boolean refresh, @Size(max = 80) String providerId) {}
     public record AiMatchRequest(@Size(max = 80) String providerId) {}
     public record CommitRequest(Boolean publishToDisplay) {}
     public record UploadList(List<BookUpload> items) {}

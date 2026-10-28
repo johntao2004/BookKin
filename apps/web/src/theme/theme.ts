@@ -172,6 +172,17 @@ export function createAntdTheme(mode: ReaderTheme) {
         paddingBlockSM: 0,
         paddingBlockLG: 0,
       },
+      DatePicker: {
+        activeBorderColor: colors.primary,
+        hoverBorderColor: colors.primary,
+        activeShadow: tokens.shadow.focus,
+        colorBgContainer: colors.surfaceInput,
+        colorBorder: colors.borderStrong,
+        controlHeight: tokens.layout.controlHeight,
+        borderRadius: tokens.radius.md,
+        inputFontSize: tokens.typography.fontSize.body,
+        paddingInline: tokens.layout.inputPaddingInline,
+      },
       Modal: {
         borderRadiusLG: tokens.radius.lg,
         contentBg: colors.surfaceCard,

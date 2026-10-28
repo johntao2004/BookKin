@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.elexvx.bookkin.catalog.BookFormat;
 import java.nio.charset.StandardCharsets;
+import java.io.ByteArrayOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Base64;
@@ -15,6 +16,9 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
+import org.apache.pdfbox.pdmodel.common.PDMetadata;
+import org.apache.xmpbox.XMPMetadata;
+import org.apache.xmpbox.xml.XmpSerializer;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -37,7 +41,8 @@ class BookMetadataExtractorTest {
                     <meta refines="#sub-title" property="title-type">subtitle</meta>
                     <dc:creator id="a1">作者甲</dc:creator><dc:creator id="a2">作者乙</dc:creator>
                     <dc:contributor id="t1">译者丙</dc:contributor><meta refines="#t1" property="role">trl</meta>
-                    <dc:language>zh-CN</dc:language><dc:publisher>BookKin出版社</dc:publisher><dc:date>2026-08-21</dc:date>
+                    <dc:language>zh-CN</dc:language><dc:language>en</dc:language><dc:language>zh-cn</dc:language>
+                    <dc:publisher>BookKin出版社</dc:publisher><dc:date>2026-08-21</dc:date>
                     <dc:identifier opf:scheme="ISBN">978-7-0000-0000-1</dc:identifier><dc:subject>文学</dc:subject><dc:subject opf:scheme="Thema">PSAF</dc:subject>
                     <meta name="calibre:series" content="山河集"/><meta name="calibre:series_index" content="2.5"/>
                     <meta name="cover" content="cover"/></metadata>
@@ -50,6 +55,7 @@ class BookMetadataExtractorTest {
 
         var value = extractor.extract(epub, BookFormat.EPUB, directory, "sha256:test");
         assertEquals("真实测试书", value.title());
+        assertEquals("zh-CN,en", value.language());
         assertEquals(java.util.List.of("PSAF"), value.subjectCodes());
         assertEquals(java.util.List.of("文学"), value.tags());
         assertEquals("副标题", value.subtitle());
@@ -79,6 +85,36 @@ class BookMetadataExtractorTest {
         assertEquals(1, value.pageCount());
         assertNotNull(value.coverCacheKey());
         assertTrue(Files.isRegularFile(directory.resolve(value.coverCacheKey())));
+    }
+
+    @Test
+    void extractsAllPdfXmpLanguagesInOrderWithoutDuplicates() throws Exception {
+        Path pdf = directory.resolve("languages.pdf");
+        var xmp = XMPMetadata.createXMPMetadata();
+        var dc = xmp.createAndAddDublinCoreSchema();
+        dc.addLanguage("fr");
+        dc.addLanguage("zh-CN");
+        dc.addLanguage("fr");
+        ByteArrayOutputStream metadataBytes = new ByteArrayOutputStream();
+        new XmpSerializer().serialize(xmp, metadataBytes, true);
+        try (var document = new PDDocument()) {
+            document.addPage(new PDPage());
+            var metadata = new PDMetadata(document);
+            metadata.importXMPMetadata(metadataBytes.toByteArray());
+            document.getDocumentCatalog().setMetadata(metadata);
+            document.save(pdf.toFile());
+        }
+        assertEquals("fr,zh-CN", extractor.extract(pdf, BookFormat.PDF, directory, "sha256:pdf-languages").language());
+    }
+
+    @Test
+    void stagingWithoutEmbeddedTitleUsesOriginalFilenameFallback() throws Exception {
+        Path staged = directory.resolve("book.part");
+        try (var document = new PDDocument()) {
+            document.addPage(new PDPage());
+            document.save(staged.toFile());
+        }
+        assertEquals("原上传文件名", extractor.extract(staged, BookFormat.PDF, directory, "sha256:fallback", "原上传文件名").title());
     }
 
     private void entry(ZipOutputStream output, String name, byte[] bytes) throws Exception {

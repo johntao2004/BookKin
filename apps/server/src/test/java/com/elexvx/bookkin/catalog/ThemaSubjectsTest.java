@@ -16,4 +16,12 @@ class ThemaSubjectsTest {
         assertThrows(com.elexvx.bookkin.common.ApiException.class, () -> ThemaSubjects.filter("P%"));
         assertEquals(List.of("RNKH2"), ThemaSubjects.extract(List.of("rnkh2", "unknown", "1FPC")));
     }
+
+    @Test void exposesAnImmutableBoundedRootCatalog() {
+        assertEquals(20, ThemaSubjects.roots().size());
+        assertTrue(ThemaSubjects.catalog().size() > 3000);
+        assertTrue(ThemaSubjects.underRoots(List.of("P", "invalid")).stream().allMatch(subject -> subject.code().startsWith("P")));
+        assertFalse(ThemaSubjects.underRoots(List.of("P")).stream().anyMatch(subject -> subject.code().startsWith("Y")));
+        assertThrows(UnsupportedOperationException.class, () -> ThemaSubjects.roots().add(new ThemaSubjects.Subject("Z", "bad", null)));
+    }
 }

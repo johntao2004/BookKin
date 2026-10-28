@@ -6,6 +6,7 @@ import com.elexvx.bookkin.common.ApiException;
 import com.elexvx.bookkin.filemanagement.infrastructure.KnowledgeTextGateway;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -16,8 +17,14 @@ public class KnowledgeService {
     private final KnowledgeRepository knowledge;
     private final KnowledgeTextGateway text;
     private final AiMetadataService ai;
+    private final KnowledgeDraftService drafts;
+    @Autowired
+    public KnowledgeService(BookRepository books, KnowledgeRepository knowledge, KnowledgeTextGateway text,
+                            AiMetadataService ai, KnowledgeDraftService drafts) {
+        this.books = books; this.knowledge = knowledge; this.text = text; this.ai = ai; this.drafts = drafts;
+    }
     public KnowledgeService(BookRepository books, KnowledgeRepository knowledge, KnowledgeTextGateway text, AiMetadataService ai) {
-        this.books = books; this.knowledge = knowledge; this.text = text; this.ai = ai;
+        this(books, knowledge, text, ai, null);
     }
     public List<KnowledgeRepository.KnowledgeBook> list() { return knowledge.list(); }
     public void generate(UUID bookId) {
@@ -32,7 +39,8 @@ public class KnowledgeService {
             if (!current.id().equals(file.id()) || !current.fingerprint().equals(file.fingerprint())) {
                 throw ApiException.conflict("KNOWLEDGE_SOURCE_CHANGED", "书籍已变化，请重新提取知识点。");
             }
-            knowledge.complete(bookId, operation, result.providerId(), sample.passages().size(), sample.totalSections(), result.points());
+            if (drafts == null) knowledge.complete(bookId, operation, result.providerId(), sample.passages().size(), sample.totalSections(), result.points());
+            else drafts.completeGenerated(bookId, operation, result.providerId(), sample.passages().size(), sample.totalSections(), result.points());
         } catch (ApiException exception) {
             knowledge.fail(bookId, operation); throw exception;
         } catch (Exception exception) {

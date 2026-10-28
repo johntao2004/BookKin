@@ -11,6 +11,19 @@ import org.springframework.core.type.filter.AnnotationTypeFilter;
 import org.springframework.web.bind.annotation.*;
 /** Contract across actual controller routes: new endpoints must enter the permission catalog explicitly. */
 class ApiPermissionCoverageTest {
+    @Test void metadataSourcesUseExternalServiceSettingsGrants() {
+        assertThat(ApiPermissionPolicy.required("GET", "/api/v1/metadata-providers")).isEqualTo(Set.of("settings.ai.view"));
+        assertThat(ApiPermissionPolicy.required("PUT", "/api/v1/metadata-providers")).isEqualTo(Set.of("settings.ai.edit"));
+        assertThat(ApiPermissionPolicy.required("POST", "/api/v1/book-uploads/example/match")).contains("library.upload");
+    }
+    @Test void bookClassificationDefersExactSourceGrantToItsService() {
+        assertThat(ApiPermissionPolicy.required("POST", "/api/v1/ai/book-classification"))
+                .isEqualTo(Set.of("reader.read", "library.edit", "library.upload"));
+        assertThat(ApiPermissionPolicy.required("POST", "/api/v1/ai/book-knowledge"))
+                .isEqualTo(Set.of("reader.read", "library.edit", "library.upload"));
+        assertThat(ApiPermissionPolicy.required("GET", "/api/v1/knowledge/books/example"))
+                .isEqualTo(Set.of("knowledge.view", "reader.read"));
+    }
     @Test void collectionsHaveTheirOwnWriteGrantWithoutGrantingArticleEditing() {
         assertThat(ApiPermissionPolicy.required("GET", "/api/v1/article-collections/example")).isEqualTo(Set.of("articles.view"));
         assertThat(ApiPermissionPolicy.required("POST", "/api/v1/article-collections/example/articles")).isEqualTo(Set.of("articles.collections.edit"));

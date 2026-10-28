@@ -41,12 +41,15 @@ public class BookMetadataRepository {
                          where ba.book_id = b.id and ba.contributor_role = 'AUTHOR' order by ba.position), array[]::text[]) as authors,
                        coalesce(array(select a.name from book_authors ba join authors a on a.id = ba.author_id
                          where ba.book_id = b.id and ba.contributor_role = 'TRANSLATOR' order by ba.position), array[]::text[]) as translators,
+                       coalesce(array(select kt.value from book_knowledge_terms bkt join knowledge_terms kt on kt.id = bkt.term_id
+                         where bkt.book_id = b.id order by lower(kt.label), kt.id), array[]::text[]) as knowledge_terms,
                        b.metadata_sources::text as metadata_sources_text
                   from books b left join series s on s.id = b.series_id where b.id = ?
                 """, bookId).map(record -> {
             String[] tags = record.get("tags", String[].class);
             String[] authors = record.get("authors", String[].class);
             String[] translators = record.get("translators", String[].class);
+            String[] knowledgeTerms = record.get("knowledge_terms", String[].class);
             String[] subjectCodes = record.get("subject_codes", String[].class);
             return new BookMetadata(bookId, record.get("title", String.class), record.get("subtitle", String.class),
                     list(authors, record.get("primary_author", String.class)), list(translators, null),
@@ -58,7 +61,8 @@ public class BookMetadataRepository {
                     record.get("cover_cache_key", String.class), "/api/v1/books/" + bookId + "/cover?v="
                             + record.get("updated_at", java.time.OffsetDateTime.class).toInstant().toEpochMilli(),
                     sources(record.get("metadata_sources_text", String.class)), record.get("publicly_visible", Boolean.class),
-                    record.get("author_biography", String.class), record.get("table_of_contents", String.class));
+                    record.get("author_biography", String.class), record.get("table_of_contents", String.class),
+                    knowledgeTerms == null ? List.of() : Arrays.asList(knowledgeTerms));
         });
     }
 
@@ -203,13 +207,22 @@ public class BookMetadataRepository {
                                String language, String publisher, String publishedDate, String isbn, String description,
                                String series, BigDecimal seriesIndex, List<String> tags, List<String> subjectCodes, String coverCacheKey,
                                String coverUrl, Map<String, String> sources, boolean publiclyVisible,
-                               String authorBiography, String tableOfContents) {
+                               String authorBiography, String tableOfContents, List<String> knowledgeTerms) {
+        public BookMetadata(UUID id, String title, String subtitle, List<String> authors, List<String> translators,
+                            String language, String publisher, String publishedDate, String isbn, String description,
+                            String series, BigDecimal seriesIndex, List<String> tags, List<String> subjectCodes, String coverCacheKey,
+                            String coverUrl, Map<String, String> sources, boolean publiclyVisible,
+                            String authorBiography, String tableOfContents) {
+            this(id, title, subtitle, authors, translators, language, publisher, publishedDate, isbn, description,
+                    series, seriesIndex, tags, subjectCodes, coverCacheKey, coverUrl, sources, publiclyVisible,
+                    authorBiography, tableOfContents, List.of());
+        }
         public BookMetadata(UUID id, String title, String subtitle, List<String> authors, List<String> translators,
                             String language, String publisher, String publishedDate, String isbn, String description,
                             String series, BigDecimal seriesIndex, List<String> tags, List<String> subjectCodes, String coverCacheKey,
                             String coverUrl, Map<String, String> sources, boolean publiclyVisible) {
             this(id, title, subtitle, authors, translators, language, publisher, publishedDate, isbn, description,
-                    series, seriesIndex, tags, subjectCodes, coverCacheKey, coverUrl, sources, publiclyVisible, null, null);
+                    series, seriesIndex, tags, subjectCodes, coverCacheKey, coverUrl, sources, publiclyVisible, null, null, List.of());
         }
         public BookMetadata(UUID id, String title, String subtitle, List<String> authors, List<String> translators,
                             String language, String publisher, String publishedDate, String isbn, String description,

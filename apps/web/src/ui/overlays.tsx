@@ -2,6 +2,7 @@
 // Unifies drawer/dialog structure and viewport bounds; closing is not a business commit.
 import AntDrawer from "antd/es/drawer";
 import AntModal from "antd/es/modal";
+import { NoCompactStyle } from "antd/es/space/Compact";
 import type { CSSProperties, ReactNode } from "react";
 import { createContext, useContext, useId } from "react";
 import { Box, flattenSx, mergeClassNames, Stack, Typography, useTheme, sxClassName, type BoxProps, type SxProps } from "./primitives";
@@ -32,7 +33,7 @@ export function Dialog({ open, onClose, children, fullWidth, maxWidth = "sm", fu
   const titleId = useId();
   const theme = useTheme();
   const width = fullScreen ? "100vw" : maxWidth === "xs" ? 360 : maxWidth === "sm" ? 560 : maxWidth === "md" ? 760 : maxWidth === "lg" ? 1040 : 1280;
-  return <DialogContext.Provider value={{ titleId }}><AntModal {...(props as any)} open={open} onCancel={onClose} destroyOnHidden role="presentation" footer={null} className="bk-dialog" width={fullWidth ? width : undefined} centered={!fullScreen} transitionName="" maskTransitionName="" modalRender={(node) => <div role="dialog" aria-modal="true" aria-labelledby={titleId}>{node}</div>} classNames={{ container: sxClassName({ bgcolor: "var(--color-surface)", ...flattenSx(sx, theme), ...flattenSx(slotProps?.paper?.sx, theme) }, theme) }} styles={{ container: { padding: 0, borderRadius: "var(--radius-xl)" }, body: { overflow: "auto", padding: 0 } } as Record<string, CSSProperties>}>{children}</AntModal></DialogContext.Provider>;
+  return <DialogContext.Provider value={{ titleId }}><AntModal {...(props as any)} open={open} onCancel={onClose} destroyOnHidden role="presentation" footer={null} className="bk-dialog" width={fullWidth ? width : undefined} centered={!fullScreen} transitionName="" maskTransitionName="" modalRender={(node) => <NoCompactStyle><div role="dialog" aria-modal="true" aria-labelledby={titleId}>{node}</div></NoCompactStyle>} classNames={{ container: sxClassName({ bgcolor: "var(--color-surface)", ...flattenSx(sx, theme), ...flattenSx(slotProps?.paper?.sx, theme) }, theme) }} styles={{ container: { padding: 0, borderRadius: "var(--radius-xl)" }, body: { overflow: "auto", padding: 0 } } as Record<string, CSSProperties>}>{children}</AntModal></DialogContext.Provider>;
 }
 
 export function DialogTitle({ sx, className, children, ...props }: BoxProps) {

@@ -27,6 +27,10 @@ public class KnowledgeTextGateway {
     public BookTextSampler.Sample sample(BookFile file) throws Exception {
         return read(file, path -> sampler.sample(path, file.format()));
     }
+    /** Verifies current file identity under the same read lease without parsing document contents. */
+    public void verify(BookFile file) throws Exception {
+        read(file, path -> null);
+    }
     public BookBibliographyReader.Source bibliography(BookFile file) throws Exception {
         return read(file, path -> new BookBibliographyReader().read(path, file.format()));
     }

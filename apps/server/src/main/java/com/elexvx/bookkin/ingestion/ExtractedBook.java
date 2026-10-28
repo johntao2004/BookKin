@@ -50,6 +50,12 @@ public record ExtractedBook(
         return String.join(" / ", authors);
     }
 
+    public ExtractedBook withCatalogTerms(String selectedSeries, List<String> selectedTags) {
+        return new ExtractedBook(title, subtitle, authors, translators, description, language, publisher, publishedDate,
+                isbn, selectedSeries, seriesIndex, selectedTags, coverCacheKey, pageCount, wordCount, subjectCodes,
+                authorBiography, tableOfContents);
+    }
+
     private static List<String> clean(List<String> values) {
         return values == null ? List.of() : values.stream()
                 .filter(value -> value != null && !value.isBlank()).map(String::strip).distinct().toList();

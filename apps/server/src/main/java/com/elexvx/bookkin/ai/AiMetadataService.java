@@ -46,10 +46,12 @@ public class AiMetadataService {
             你是电子书书目匹配助手。你的任务是根据文件中已提取的书名、作者、ISBN等信息，提出可核对的书目候选。
             只返回 JSON，不要 Markdown，不要解释 JSON 以外的内容。
             不要凭空编造 ISBN、出版社、出版日期或简介；不确定的字段必须为 null 或空数组。
+            只提供有证据支持的具体版本；书名相同但版次、语言、出版社、出版日期或 ISBN 不同的版本应分别列出，不得互相合并。相关字段没有依据时必须留空。
+            sourceUrl 只能引用可信书目或出版社来源的安全 HTTP(S) 页面，不要提供脚本、文件或本地网络地址。
             每个候选都必须标记 0 到 1 的 confidence，并用一句话说明 reason。
             AI 候选不是权威来源，永远需要人工复核；不要输出 coverUrl。
             JSON 结构必须是：
-            {"candidates":[{"title":"...","subtitle":null,"authors":["..."],"publisher":null,"publishedDate":null,"isbn":null,"description":null,"tags":[],"confidence":0.0,"reason":"..."}]}
+            {"candidates":[{"title":"...","subtitle":null,"authors":["..."],"publisher":null,"publishedDate":null,"isbn":null,"edition":null,"language":null,"sourceUrl":null,"description":null,"tags":[],"confidence":0.0,"reason":"..."}]}
             """;
 
     private final Supplier<BookKinProperties.Ai> configuration;
@@ -95,6 +97,10 @@ public class AiMetadataService {
     }
 
     public MatchResult match(MetadataDraft draft, List<MetadataCandidate> existing, String requestedId) {
+        return match(draft, existing, requestedId, false);
+    }
+
+    public MatchResult match(MetadataDraft draft, List<MetadataCandidate> existing, String requestedId, boolean refresh) {
         BookKinProperties.Ai config = configuration.get();
         if (!config.enabled()) return new MatchResult(List.of(), List.of(), List.of("AI 功能未启用"));
         List<AiProvider> selected = config.providers().stream()
@@ -121,10 +127,10 @@ public class AiMetadataService {
             try {
                 String cacheProvider = cacheProvider(provider);
                 String queryHash = sha256(prompt);
-                String cached = uploads.cached(cacheProvider, queryHash);
+                String cached = refresh ? null : uploads.cached(cacheProvider, queryHash);
                 String response = cached == null ? invoke(provider, prompt) : cached;
                 List<MetadataCandidate> values = parseCandidates(response, provider, draft);
-                if (cached == null && !values.isEmpty()) {
+                if ((cached == null || refresh) && !values.isEmpty()) {
                     try {
                         uploads.cache(cacheProvider, queryHash, json.writeValueAsString(values), java.time.OffsetDateTime.now().plusDays(7));
                     } catch (Exception cacheException) {
@@ -132,7 +138,7 @@ public class AiMetadataService {
                     }
                 }
                 for (MetadataCandidate candidate : values) {
-                    String key = normalize(candidate.title()) + "|" + String.join("|", candidate.authors()).toLowerCase(Locale.ROOT);
+                    String key = candidate.provider().name() + "|" + candidate.id();
                     if (seen.add(key)) candidates.add(candidate);
                 }
             } catch (Exception exception) {
@@ -173,12 +179,57 @@ public class AiMetadataService {
             String name = value.path("name").asText("").strip();
             String quote = value.path("quote").asText("").strip();
             String locator = value.path("locator").asText("");
-            if (name.length() < 2 || name.length() > 60 || quote.length() < 12 || quote.length() > 300) continue;
-            boolean grounded = passages.stream().anyMatch(p -> p.locator().equals(locator) && p.text().contains(quote) && quote.contains(name));
-            if (grounded && seen.add(name.toLowerCase(Locale.ROOT))) result.add(new KnowledgePoint(name, quote, locator));
+            KnowledgePoint point = new KnowledgePoint(name, quote, locator);
+            if (verifiedKnowledgePoint(point, passages) && seen.add(name.toLowerCase(Locale.ROOT))) result.add(point);
             if (result.size() == 10) break;
         }
         return List.copyOf(result);
+    }
+
+    /** Validates user-selected evidence with the same source-grounding rules used for AI output. */
+    public List<KnowledgePoint> verifyKnowledgeSelection(List<KnowledgePoint> points, List<KnowledgePassage> passages) {
+        if (points == null || points.size() > 10) {
+            throw com.elexvx.bookkin.common.ApiException.badRequest("INVALID_KNOWLEDGE_POINTS", "知识点数量不能超过 10 个。");
+        }
+        var result = new ArrayList<KnowledgePoint>();
+        var seen = new HashSet<String>();
+        for (KnowledgePoint point : points) {
+            if (point == null || !verifiedKnowledgePoint(point, passages)) {
+                throw com.elexvx.bookkin.common.ApiException.badRequest("INVALID_KNOWLEDGE_EVIDENCE", "知识点必须包含当前正文中的真实出处和连续引文。");
+            }
+            String key = point.name().strip().toLowerCase(Locale.ROOT);
+            if (!seen.add(key)) {
+                throw com.elexvx.bookkin.common.ApiException.badRequest("DUPLICATE_KNOWLEDGE_POINT", "知识点名称不能重复。");
+            }
+            result.add(new KnowledgePoint(point.name().strip(), point.quote().strip(), point.locator()));
+        }
+        return List.copyOf(result);
+    }
+
+    private boolean verifiedKnowledgePoint(KnowledgePoint point, List<KnowledgePassage> passages) {
+        if (point == null || passages == null) return false;
+        String name = point.name() == null ? "" : point.name().strip();
+        String quote = point.quote() == null ? "" : point.quote().strip();
+        String locator = point.locator() == null ? "" : point.locator();
+        if (name.length() < 2 || name.length() > 60 || quote.length() < 12 || quote.length() > 300
+                || locator.isBlank() || locator.length() > 500 || unsafeKnowledgeText(name)
+                || unsafeKnowledgeQuote(quote) || unsafeKnowledgeText(locator) || !quote.contains(name)) return false;
+        return passages.stream().anyMatch(p -> p != null && locator.equals(p.locator())
+                && p.text() != null && p.text().contains(quote));
+    }
+
+    private boolean unsafeKnowledgeQuote(String value) {
+        String lower = value.toLowerCase(Locale.ROOT);
+        return value.codePoints().anyMatch(codePoint -> Character.isISOControl(codePoint)
+                        && codePoint != '\n' && codePoint != '\r' && codePoint != '\t')
+                || value.indexOf('<') >= 0 || value.indexOf('>') >= 0
+                || lower.contains("javascript:") || lower.contains("<script") || lower.contains("</script");
+    }
+
+    private boolean unsafeKnowledgeText(String value) {
+        String lower = value.toLowerCase(Locale.ROOT);
+        return value.codePoints().anyMatch(Character::isISOControl) || value.indexOf('<') >= 0 || value.indexOf('>') >= 0
+                || lower.contains("javascript:") || lower.contains("<script") || lower.contains("</script");
     }
 
     public record KnowledgePassage(String locator, String text) {}
@@ -313,12 +364,16 @@ public class AiMetadataService {
             List<String> authors = strings(node.path("authors"), 20, 300);
             if (authors.isEmpty()) authors = meaningfulAuthors(draft.authors());
             Double confidence = number(node, "confidence");
-            String fingerprint = sha256(provider.id() + "|" + node.toString());
-            candidates.add(new MetadataCandidate("ai:" + provider.id() + ":" + fingerprint.substring(0, 20), MetadataSource.AI,
+            String identity = candidateIdentity(node, title, authors);
+            String fingerprint = sha256(provider.id() + "|" + identity);
+            String cachedId = MetadataSource.AI.name().equals(node.path("provider").asText()) ? text(node, "id") : null;
+            String candidateId = cachedId == null ? "ai:" + provider.id() + ":" + fingerprint.substring(0, 20) : cachedId;
+            candidates.add(new MetadataCandidate(candidateId, MetadataSource.AI,
                     provider.label(), title, limit(text(node, "subtitle"), 500), authors,
                     limit(text(node, "publisher"), 500), limit(text(node, "publishedDate"), 40), limit(text(node, "isbn"), 40),
                     limit(text(node, "description"), 20_000), strings(node.path("tags"), 20, 200), null,
-                    confidence == null ? 0.0 : Math.max(0, Math.min(1, confidence)), limit(text(node, "reason"), 500), true));
+                    confidence == null ? 0.0 : Math.max(0, Math.min(1, confidence)), limit(text(node, "reason"), 500), true,
+                    limit(text(node, "edition"), 500), limit(text(node, "language"), 80), safeSourceUrl(text(node, "sourceUrl"))));
         }
         return candidates;
     }
@@ -335,10 +390,20 @@ public class AiMetadataService {
         input.put("isbn", draft.isbn());
         input.put("series", draft.series());
         input.put("tags", draft.tags());
-        input.put("existingCandidates", existing == null ? List.of() : existing.stream().limit(5).map(candidate -> Map.of(
-                "provider", candidate.provider().name(), "title", candidate.title() == null ? "" : candidate.title(),
-                "authors", candidate.authors() == null ? List.of() : candidate.authors(),
-                "isbn", candidate.isbn() == null ? "" : candidate.isbn())).toList());
+        input.put("existingCandidates", existing == null ? List.of() : existing.stream().limit(15).map(candidate -> {
+            Map<String, Object> summary = new LinkedHashMap<>();
+            summary.put("provider", candidate.provider().name());
+            summary.put("id", candidate.id());
+            summary.put("title", candidate.title());
+            summary.put("authors", candidate.authors() == null ? List.of() : candidate.authors());
+            summary.put("isbn", candidate.isbn());
+            summary.put("publisher", candidate.publisher());
+            summary.put("publishedDate", candidate.publishedDate());
+            summary.put("edition", candidate.edition());
+            summary.put("language", candidate.language());
+            summary.put("sourceUrl", candidate.sourceUrl());
+            return summary;
+        }).toList());
         try {
             return "请根据以下已提取信息，查找或归一化可能的书目候选。无法确认的字段不要猜测。\nINPUT=" + json.writeValueAsString(input);
         } catch (Exception exception) {
@@ -383,6 +448,35 @@ public class AiMetadataService {
     private String text(JsonNode node, String field) {
         JsonNode value = node.path(field);
         return value.isTextual() && !value.asText().isBlank() ? value.asText().strip() : null;
+    }
+
+    private String safeSourceUrl(String value) {
+        if (value == null || value.isBlank()) return null;
+        try {
+            URI uri = URI.create(value.strip());
+            String host = uri.getHost() == null ? "" : uri.getHost().toLowerCase(Locale.ROOT);
+            if (!"https".equalsIgnoreCase(uri.getScheme()) || host.isBlank() || host.equals("localhost")
+                    || host.endsWith(".local") || host.matches("[0-9.]+") || host.contains(":")
+                    || uri.getUserInfo() != null || uri.getPort() > 65535) return null;
+            return uri.toASCIIString();
+        } catch (IllegalArgumentException exception) {
+            return null;
+        }
+    }
+
+    private String candidateIdentity(JsonNode node, String title, List<String> authors) {
+        String id = text(node, "id");
+        if (id != null) return "id|" + id;
+        String isbn = normalize(text(node, "isbn"));
+        String publisher = normalize(text(node, "publisher"));
+        String publishedDate = normalize(text(node, "publishedDate"));
+        String edition = normalize(text(node, "edition"));
+        String language = normalize(text(node, "language"));
+        if (!isbn.isBlank() || !publisher.isBlank() || !publishedDate.isBlank() || !edition.isBlank() || !language.isBlank()) {
+            return "edition|" + isbn + "|" + publisher + "|" + publishedDate + "|" + edition + "|" + language;
+        }
+        return "book|" + normalize(title) + "|" + normalize(String.join("|", authors))
+                + "|" + normalize(text(node, "subtitle")) + "|" + normalize(text(node, "sourceUrl"));
     }
 
     private Double number(JsonNode node, String field) {

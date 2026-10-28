@@ -5,6 +5,10 @@ import { demoBooks, demoRecycleBin, demoUsers } from "../data/demo";
 import type {
   Book,
   BookKnowledge,
+  BookKnowledgeDraft,
+  MetadataTerm,
+  MetadataTermInput,
+  MetadataTermKind,
   BooklistDetail,
   BooklistKind,
   BooklistList,
@@ -22,6 +26,8 @@ import type {
   AiProviderInfo,
   AiSettings,
   AiSettingsInput,
+  MetadataProviderSettings,
+  MetadataProviderSettingsInput,
   FileOperation,
   FileOperationPreview,
   FileOperationType,
@@ -386,6 +392,14 @@ export interface MailSettings {
   enabled: boolean; host: string; port: number; security: string; username: string;
   password: string; sender: string; publicUrl: string; passwordConfigured: boolean;
 }
+let demoMetadataProviders: MetadataProviderSettings = { providers: [
+  { id: "OPEN_LIBRARY", label: "Open Library", enabled: true, available: true, description: "按 ISBN、书名与作者查询作品及各版本资料。", homepage: "https://openlibrary.org/developers/api" },
+  { id: "WIKIDATA", label: "Wikidata", enabled: false, available: true, description: "查询开放书目、版本与出版信息。", homepage: "https://www.wikidata.org/wiki/Wikidata:Data_access" },
+  { id: "GOOGLE_BOOKS", label: "Google Books", enabled: false, available: false, description: "查询 Google Books 书目资料，需要配置 API 密钥。", homepage: "https://developers.google.com/books" },
+] };
+
+const demoMetadataTerms: MetadataTerm[] = [];
+
 export const api = {
   siteSettings: async (signal?: AbortSignal): Promise<SiteSettings> => demoMode ? {...demoSiteSettings}
     : {...DEFAULT_SITE_SETTINGS, ...await request<SiteSettings>("/site-settings", {signal})},
@@ -1211,12 +1225,23 @@ export const api = {
     return request(`/book-uploads/${uploadId}`);
   },
 
-  async updateBookUploadMetadata(uploadId: string, draft: BookMetadataDraft): Promise<BookUpload> {
-    return request(`/book-uploads/${uploadId}/metadata`, { method: "PATCH", body: JSON.stringify(draft) });
+  async updateBookUploadMetadata(uploadId: string, draft: BookMetadataDraft, options: { keepalive?: boolean } = {}): Promise<BookUpload> {
+    return request(`/book-uploads/${uploadId}/metadata`, {
+      method: "PATCH",
+      body: JSON.stringify(draft),
+      ...(options.keepalive ? { keepalive: true } : {}),
+    });
   },
 
   async enrichBookUpload(uploadId: string): Promise<BookUpload> {
     return request(`/book-uploads/${uploadId}/enrich`, { method: "POST" });
+  },
+
+  async matchBookUpload(uploadId: string, options: { refresh?: boolean; providerId?: string } = {}): Promise<BookUpload> {
+    return request(`/book-uploads/${uploadId}/match`, {
+      method: "POST",
+      body: JSON.stringify({ refresh: options.refresh ?? false, ...(options.providerId ? { providerId: options.providerId } : {}) }),
+    });
   },
 
   async aiMatchBookUpload(uploadId: string, providerId?: string): Promise<BookUpload> {
@@ -1224,6 +1249,29 @@ export const api = {
       method: "POST",
       body: JSON.stringify(providerId ? { providerId } : {}),
     });
+  },
+
+  async listMetadataTerms(kind: MetadataTermKind, query = "", signal?: AbortSignal): Promise<{ items: MetadataTerm[] }> {
+    if (demoMode) return { items: demoMetadataTerms.filter(term => term.kind === kind
+      && `${term.label} ${term.value}`.toLowerCase().includes(query.trim().toLowerCase())).slice(0, 30) };
+    return request(`/metadata-terms?${new URLSearchParams({ kind, q: query, limit: "30" })}`, { signal });
+  },
+
+  async ensureMetadataTerms(kind: MetadataTermKind, items: MetadataTermInput[]): Promise<{ items: MetadataTerm[] }> {
+    if (demoMode) return { items: items.map(item => {
+      const key = item.value.normalize("NFKC").trim().toLowerCase();
+      const existing = demoMetadataTerms.find(term => term.kind === kind && term.value.normalize("NFKC").trim().toLowerCase() === key);
+      if (existing) return existing;
+      const term = { ...item, id: randomId(), kind };
+      demoMetadataTerms.push(term);
+      return term;
+    }) };
+    return request("/metadata-terms/ensure", { method: "POST", body: JSON.stringify({ kind, items }) });
+  },
+
+  async getBookKnowledge(bookId: string, signal?: AbortSignal): Promise<BookKnowledgeDraft> {
+    if (demoMode) return { points: [], fingerprint: books.find(book => book.id === bookId)?.fingerprint ?? "", sampledSections: 0, totalSections: 0 };
+    return request(`/knowledge/books/${encodeURIComponent(bookId)}`, { signal });
   },
 
   async listBookKnowledge(signal?: AbortSignal): Promise<BookKnowledge[]> {
@@ -1244,6 +1292,19 @@ export const api = {
     if (!demoMode) return request("/ai/settings");
     await pause(80);
     return structuredClone(demoAiSettings);
+  },
+
+  async getMetadataProviderSettings(): Promise<MetadataProviderSettings> {
+    if (demoMode) return structuredClone(demoMetadataProviders);
+    return request("/metadata-providers");
+  },
+
+  async updateMetadataProviderSettings(input: MetadataProviderSettingsInput): Promise<MetadataProviderSettings> {
+    if (demoMode) {
+      demoMetadataProviders = { providers: demoMetadataProviders.providers.map(provider => ({ ...provider, enabled: provider.available && (input.providers.find(item => item.id === provider.id)?.enabled ?? provider.enabled) })) };
+      return structuredClone(demoMetadataProviders);
+    }
+    return request("/metadata-providers", { method: "PUT", body: JSON.stringify(input) });
   },
 
   async updateAiSettings(input: AiSettingsInput): Promise<AiSettings> {
