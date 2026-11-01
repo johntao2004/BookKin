@@ -109,10 +109,10 @@ export const tokens = {
   },
   "typography": {
     "fontFamily": {
-      "display": "Noto Serif SC, Source Han Serif SC, Songti SC, serif",
-      "body": "Inter, Noto Sans SC, PingFang SC, system-ui, sans-serif",
-      "readerSerif": "Noto Serif SC, Source Han Serif SC, Songti SC, serif",
-      "readerSans": "Noto Sans SC, Source Han Sans SC, PingFang SC, system-ui, sans-serif",
+      "display": "Source Han Sans SC, sans-serif",
+      "body": "Source Han Sans SC, sans-serif",
+      "readerSerif": "Source Han Sans SC, sans-serif",
+      "readerSans": "Source Han Sans SC, sans-serif",
       "mono": "JetBrains Mono, SFMono-Regular, monospace"
     },
     "fontSize": {

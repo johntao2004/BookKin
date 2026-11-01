@@ -11,9 +11,20 @@ describe("reader settings", () => {
     expect(readReaderSettings("reader", PRESET_READER_FONTS)).toEqual({ ...DEFAULT_READER_SETTINGS, fontSize: 26, theme: "NIGHT" });
   });
 
-  it("keeps serif and sans families distinguishable", () => {
-    expect(readerFontFamily(PRESET_READER_FONTS[0])).toContain("Noto Serif SC");
-    expect(readerFontFamily(PRESET_READER_FONTS[1])).toContain("Noto Sans SC");
+  it("uses the shared Source Han Sans preset for all built-in reading", () => {
+    expect(PRESET_READER_FONTS).toHaveLength(1);
+    expect(PRESET_READER_FONTS[0]).toMatchObject({ id: "source-han-sans-sc", familyName: "Source Han Sans SC", kind: "SANS" });
+    expect(readerFontFamily(PRESET_READER_FONTS[0])).toContain("Source Han Sans SC");
+  });
+
+  it.each(["noto-serif-sc", "source-han-serif-sc", "noto-sans-sc", "alibaba-puhuiti"])("migrates the legacy built-in font %s", (fontId) => {
+    localStorage.setItem("reader", JSON.stringify({ ...DEFAULT_READER_SETTINGS, fontId }));
+    expect(readReaderSettings("reader", PRESET_READER_FONTS).fontId).toBe("source-han-sans-sc");
+  });
+
+  it("preserves an uploaded serif font and falls back to the shared Sans family", () => {
+    const family = readerFontFamily({ familyName: "My Custom Serif", kind: "SERIF", source: "CUSTOM" });
+    expect(family).toBe('"My Custom Serif", Source Han Sans SC, sans-serif');
   });
 
   it("keeps a custom font id until the enabled font list is loaded", () => {

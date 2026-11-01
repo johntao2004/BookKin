@@ -91,10 +91,10 @@
   --radius-2xl: 7.416408px;
   --radius-pill: 9999px;
   --radius-full: 9999px;
-  --typography-font-family-display: Noto Serif SC, Source Han Serif SC, Songti SC, serif;
-  --typography-font-family-body: Inter, Noto Sans SC, PingFang SC, system-ui, sans-serif;
-  --typography-font-family-reader-serif: Noto Serif SC, Source Han Serif SC, Songti SC, serif;
-  --typography-font-family-reader-sans: Noto Sans SC, Source Han Sans SC, PingFang SC, system-ui, sans-serif;
+  --typography-font-family-display: Source Han Sans SC, sans-serif;
+  --typography-font-family-body: Source Han Sans SC, sans-serif;
+  --typography-font-family-reader-serif: Source Han Sans SC, sans-serif;
+  --typography-font-family-reader-sans: Source Han Sans SC, sans-serif;
   --typography-font-family-mono: JetBrains Mono, SFMono-Regular, monospace;
   --typography-font-size-caption: 13px;
   --typography-font-size-caption-uppercase: 12px;

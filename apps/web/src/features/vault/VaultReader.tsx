@@ -195,7 +195,7 @@ export function VaultReader({
     annotations,
     theme,
     fontSize: 19,
-    fontFamily: '"Noto Serif SC", serif',
+    fontFamily: tokens.typography.fontFamily.readerSans,
     readOnly: true,
     pageTurnEnabled: false,
     target,

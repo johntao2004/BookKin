@@ -13,46 +13,13 @@ export interface ReaderSettings {
 }
 
 export const DEFAULT_READER_SETTINGS: ReaderSettings = {
-  fontId: "noto-serif-sc",
+  fontId: "source-han-sans-sc",
   fontSize: 19,
   pageTurnEnabled: true,
   theme: "PAPER",
 };
 
 export const PRESET_READER_FONTS: ReaderFont[] = [
-  {
-    id: "noto-serif-sc",
-    displayName: "Noto Serif SC",
-    familyName: "Noto Serif SC",
-    kind: "SERIF",
-    source: "PRESET",
-    status: "ENABLED",
-    format: "WOFF2",
-    contentUrl: "/fonts/noto-fonts.css",
-    licenseNote: "SIL Open Font License 1.1 · Google Noto CJK",
-  },
-  {
-    id: "noto-sans-sc",
-    displayName: "Noto Sans SC",
-    familyName: "Noto Sans SC",
-    kind: "SANS",
-    source: "PRESET",
-    status: "ENABLED",
-    format: "WOFF2",
-    contentUrl: "/fonts/noto-fonts.css",
-    licenseNote: "SIL Open Font License 1.1 · Google Noto CJK",
-  },
-  {
-    id: "source-han-serif-sc",
-    displayName: "Source Han Serif SC",
-    familyName: "Source Han Serif SC",
-    kind: "SERIF",
-    source: "PRESET",
-    status: "ENABLED",
-    format: "WOFF2",
-    contentUrl: "/fonts/source-han-serif-sc-regular.woff2",
-    licenseNote: "SIL Open Font License 1.1 · Adobe Source Han Serif",
-  },
   {
     id: "source-han-sans-sc",
     displayName: "思源黑体",
@@ -64,36 +31,35 @@ export const PRESET_READER_FONTS: ReaderFont[] = [
     contentUrl: "/fonts/source-han-sans-sc-regular.woff2",
     licenseNote: "SIL Open Font License 1.1 · Adobe Source Han Sans",
   },
-  {
-    id: "alibaba-puhuiti",
-    displayName: "阿里巴巴普惠体",
-    familyName: "Alibaba PuHuiTi",
-    kind: "SANS",
-    source: "PRESET",
-    status: "ENABLED",
-    format: "WOFF2",
-    contentUrl: "/fonts/alibaba-puhuiti-regular.woff2",
-    licenseNote: "阿里巴巴普惠体 3.0 · 阿里巴巴字体使用许可",
-  },
 ];
 
+const LEGACY_BUILT_IN_FONT_IDS = new Set([
+  "noto-serif-sc",
+  "noto-sans-sc",
+  "source-han-serif-sc",
+  "alibaba-puhuiti",
+]);
+
 export const READER_FONT_FAMILY_BY_KIND: Record<ReaderFontKind, string> = {
-  SERIF: tokens.typography.fontFamily.readerSerif,
+  SERIF: tokens.typography.fontFamily.readerSans,
   SANS: tokens.typography.fontFamily.readerSans,
 };
 
-export function readerFontFamily(font?: Pick<ReaderFont, "familyName" | "kind">): string {
-  if (!font) return READER_FONT_FAMILY_BY_KIND.SERIF;
+export function readerFontFamily(font?: Pick<ReaderFont, "familyName" | "kind" | "source">): string {
+  if (!font || font.source === "PRESET") return tokens.typography.fontFamily.readerSans;
   const fallback = READER_FONT_FAMILY_BY_KIND[font.kind];
-  if (font.familyName === "Noto Serif SC" || font.familyName === "Noto Sans SC") return fallback;
   return `"${font.familyName}", ${fallback}`;
 }
 
 export function readReaderSettings(storageKey: string, fonts?: ReaderFont[]): ReaderSettings {
   try {
     const parsed = JSON.parse(localStorage.getItem(storageKey) ?? "null") as Partial<ReaderSettings> | null;
-    const fontId = typeof parsed?.fontId === "string" && (!fonts || fonts.some((font) => font.id === parsed.fontId && font.status === "ENABLED"))
-      ? parsed.fontId
+    const storedFontId = typeof parsed?.fontId === "string" ? parsed.fontId : undefined;
+    const migratedFontId = storedFontId && LEGACY_BUILT_IN_FONT_IDS.has(storedFontId)
+      ? DEFAULT_READER_SETTINGS.fontId
+      : storedFontId;
+    const fontId = migratedFontId && (!fonts || fonts.some((font) => font.id === migratedFontId && font.status === "ENABLED"))
+      ? migratedFontId
       : DEFAULT_READER_SETTINGS.fontId;
     const fontSize = typeof parsed?.fontSize === "number" && parsed.fontSize >= 16 && parsed.fontSize <= 28
       ? parsed.fontSize
