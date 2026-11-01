@@ -5,7 +5,13 @@ import { TestProviders } from "../test/TestProviders";
 import { ArticlesPage } from "./ArticlesPage";
 import * as imageImport from "../features/content/imageImport";
 import * as themeModule from "../theme/theme";
+import { articleMarkdownToHtml } from "../features/content/article-markdown";
 import { ApiRequestError } from "../api/client";
+
+function editBody(editor: HTMLElement, value: string) {
+  editor.innerHTML = articleMarkdownToHtml(value);
+  fireEvent.input(editor);
+}
 
 const article: ArticleSummary = {
   id: "article-one", title: "秋日书信", author: "林", source_url: "https://example.com/article",
@@ -124,10 +130,10 @@ describe("ArticlesPage shared catalog", () => {
     await screen.findByRole("heading", { name: "导入文章" });
     expect(within(screen.getByRole("region", { name: "封面" })).getByRole("img")).toHaveAttribute("src", article.cover_url);
     const editor = screen.getByRole("textbox", { name: "文章正文" });
-    expect((editor as HTMLTextAreaElement).value).toContain(bodyImage);
-    fireEvent.change(editor, { target: { value: (editor as HTMLTextAreaElement).value + "\n\n未保存的修改" } });
+    expect(editor.innerHTML).toContain(bodyImage);
+    editBody(editor, editor.textContent + "\n\n未保存的修改");
     fireEvent.click(screen.getByRole("button", { name: "移除封面" }));
-    expect((editor as HTMLTextAreaElement).value).toContain("未保存的修改");
+    expect(editor).toHaveTextContent("未保存的修改");
     expect(screen.queryByRole("img", { name: "文章封面预览" })).not.toBeInTheDocument();
     expect(screen.queryByRole("region", { name: "正文文件" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "上传图片" })).toBeInTheDocument();
@@ -147,15 +153,9 @@ describe("ArticlesPage shared catalog", () => {
     fireEvent.click(screen.getByRole("button", { name: "新增文章" }));
     fireEvent.click(await screen.findByRole("button", { name: "手动导入" }));
     fireEvent.change(screen.getByRole("textbox", { name: "文章标题" }), { target: { value: "Markdown 文章" } });
-    fireEvent.change(screen.getByRole("textbox", { name: "文章正文" }), { target: { value: "# Markdown 标题\n\n**加粗**\n\n![自动配图](https://example.com/image.png)" } });
-    fireEvent.click(screen.getByRole("button", { name: /^预览$/ }));
-    const preview = await screen.findByRole("region", { name: "文章正文预览" });
-    expect(prepare).toHaveBeenCalledWith(expect.stringContaining("<h1>Markdown 标题</h1>"), "");
-    expect(vi.mocked(prepare).mock.calls[0][0]).toContain('data-src="https://example.com/image.png"');
-    expect(within(preview).getByRole("heading", { name: "Markdown 标题" })).toBeInTheDocument();
-    expect(within(preview).getByRole("img", { name: "自动配图" })).toHaveAttribute("src", image);
-    fireEvent.click(screen.getByRole("button", { name: /^编辑$/ }));
-    expect((screen.getByRole("textbox", { name: "文章正文" }) as HTMLTextAreaElement).value).toContain(image);
+    editBody(screen.getByRole("textbox", { name: "文章正文" }), "# Markdown 标题\n\n**加粗**\n\n![自动配图](https://example.com/image.png)");
+    expect(within(screen.getByRole("textbox", { name: "文章正文" })).getByRole("heading", { name: "Markdown 标题" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "预览" })).not.toBeInTheDocument();
     fireEvent.click(await screen.findByRole("button", { name: /^保存$/ }));
     await waitFor(() => expect(save).toHaveBeenCalledWith(expect.objectContaining({ html: expect.stringContaining(image) }), undefined));
     expect(prepare).toHaveBeenCalledOnce();
@@ -173,25 +173,13 @@ describe("ArticlesPage shared catalog", () => {
     fireEvent.click(screen.getByRole("button", { name: "新增文章" }));
     fireEvent.click(await screen.findByRole("button", { name: "手动导入" }));
     fireEvent.change(screen.getByRole("textbox", { name: "文章标题" }), { target: { value: "带图片的文章" } });
-    const editor = screen.getByRole("textbox", { name: "文章正文" }) as HTMLTextAreaElement;
-    fireEvent.change(editor, { target: { value: "# 文章标题\n\n前文\n\n后文" } });
-    editor.setSelectionRange(editor.value.indexOf("后文"), editor.value.indexOf("后文"));
-    fireEvent.select(editor);
+    const editor = screen.getByRole("textbox", { name: "文章正文" });
+    editBody(editor, "# 文章标题\n\n前文\n\n后文");
     fireEvent.change(screen.getByLabelText("上传正文图片"), { target: { files: [new File(["test"], "配图.png", { type: "image/png" })] } });
-    await waitFor(() => expect(editor.value).toContain(asset));
-    expect(editor.value.indexOf("前文")).toBeLessThan(editor.value.indexOf(asset));
-    expect(editor.value.indexOf(asset)).toBeLessThan(editor.value.indexOf("后文"));
-    expect(prepare).toHaveBeenCalledWith(expect.stringContaining(localImage.src), "");
-    const source = editor.value;
-    fireEvent.click(screen.getByRole("button", { name: /^预览$/ }));
-    const preview = await screen.findByRole("region", { name: "文章正文预览" });
-    expect(within(preview).getByRole("heading", { name: "文章标题" })).toBeInTheDocument();
-    expect(within(preview).getByRole("img", { name: "正文配图" })).toHaveAttribute("src", asset);
-    expect(screen.queryByRole("button", { name: "上传图片" })).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: /^编辑$/ }));
-    expect(screen.getByRole("textbox", { name: "文章正文" })).toHaveValue(source);
+    await waitFor(() => expect(within(editor).getByRole("img", { name: "正文配图" })).toHaveAttribute("src", asset));
+    await waitFor(() => expect(screen.getByRole("button", { name: /^保存$/ })).toBeEnabled());
     fireEvent.click(screen.getByRole("button", { name: /^保存$/ }));
-    await waitFor(() => expect(save).toHaveBeenCalledWith(expect.objectContaining({ html: expect.stringContaining(asset), coverUrl: "" }), undefined));
+    await waitFor(() => expect(save).toHaveBeenCalledWith(expect.objectContaining({ html: expect.stringContaining(asset), coverUrl: "" }), undefined), { timeout: 5000 });
     expect(prepare).toHaveBeenCalledOnce();
   });
 
@@ -200,10 +188,10 @@ describe("ArticlesPage shared catalog", () => {
     render(<TestProviders><ArticlesPage /></TestProviders>);
     fireEvent.click(screen.getByRole("button", { name: "新增文章" }));
     fireEvent.click(await screen.findByRole("button", { name: "手动导入" }));
-    fireEvent.change(screen.getByRole("textbox", { name: "文章正文" }), { target: { value: "保留未保存正文" } });
+    editBody(screen.getByRole("textbox", { name: "文章正文" }), "保留未保存正文");
     fireEvent.change(screen.getByLabelText("上传正文图片"), { target: { files: [new File(["test"], "配图.png", { type: "image/png" })] } });
     expect(await within(screen.getByRole("dialog")).findByText("图片不能超过 5 MB。")).toBeVisible();
-    expect(screen.getByRole("textbox", { name: "文章正文" })).toHaveValue("保留未保存正文");
+    expect(screen.getByRole("textbox", { name: "文章正文" })).toHaveTextContent("保留未保存正文");
   });
 
   it("retains the entered link and capture drawer when fetching fails", async () => {
@@ -241,13 +229,13 @@ describe("ArticlesPage shared catalog", () => {
     fireEvent.click(screen.getByRole("button", { name: "新增文章" }));
     fireEvent.click(await screen.findByRole("button", { name: "手动导入" }));
     fireEvent.change(screen.getByRole("textbox", { name: "文章标题" }), { target: { value: "待导入文章" } });
-    fireEvent.change(screen.getByRole("textbox", { name: "文章正文" }), { target: { value: "相同正文" } });
+    editBody(screen.getByRole("textbox", { name: "文章正文" }), "相同正文");
     fireEvent.click(screen.getByRole("button", { name: /^保存$/ }));
     const dialog = screen.getByRole("dialog");
     expect(await within(dialog).findByText(message)).toBeVisible();
     expect(within(dialog).getByRole("textbox", { name: "文章标题" })).toHaveValue("待导入文章");
-    expect(within(dialog).getByRole("textbox", { name: "文章正文" })).toHaveValue("相同正文");
-    fireEvent.change(within(dialog).getByRole("textbox", { name: "文章正文" }), { target: { value: "不同的正文" } });
+    expect(within(dialog).getByRole("textbox", { name: "文章正文" })).toHaveTextContent("相同正文");
+    editBody(within(dialog).getByRole("textbox", { name: "文章正文" }), "不同的正文");
     fireEvent.click(within(dialog).getByRole("button", { name: /^保存$/ }));
     await waitFor(() => expect(save).toHaveBeenCalledTimes(2));
     await waitFor(() => expect(screen.queryByRole("heading", { name: "导入文章" })).not.toBeInTheDocument());

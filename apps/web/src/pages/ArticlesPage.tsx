@@ -71,8 +71,7 @@ export function ArticlesPage() {
     [url, setUrl] = useState("");
   const [captureOpen, setCaptureOpen] = useState(false);
   const [draft, setDraft] = useState<Draft | null>(null),
-    [editId, setEditId] = useState<string>(),
-    [preview, setPreview] = useState(false);
+    [editId, setEditId] = useState<string>();
   const [markdown, setMarkdown] = useState("");
   const [bodyDirty, setBodyDirty] = useState(false);
   const tags = [...new Set(items.flatMap(item => articleTags(item.tags)))].sort(articleCollator.compare);
@@ -110,25 +109,12 @@ export function ArticlesPage() {
     setEditId(id);
     setMarkdown(articleHtmlToMarkdown(value.html));
     setBodyDirty(false);
-    setPreview(false);
   };
   const prepareBody = async (html: string, sourceUrl: string) => {
     const document = new DOMParser().parseFromString(html, "text/html");
     const needsDownload = Array.from(document.images).some(image =>
       !/^\/api\/v1\/articles\/assets\/[0-9a-f-]{36}$/iu.test(image.getAttribute("src") || ""));
     return needsDownload ? (await articles.prepare(html, sourceUrl)).html : html;
-  };
-  const changePreview = (next: boolean) => {
-    if (!draft || busy || next === preview) return;
-    if (!next) { setPreview(false); return; }
-    void run(async () => {
-      const sourceHtml = bodyDirty ? articleMarkdownToHtml(markdown) : draft.html;
-      const html = await prepareBody(sourceHtml, draft.sourceUrl);
-      setDraft(previous => previous ? { ...previous, html } : previous);
-      if (html !== sourceHtml) setMarkdown(articleHtmlToMarkdown(html));
-      setBodyDirty(false);
-      setPreview(true);
-    });
   };
   const importBodyImages = async (files: File[]) => {
     let inserted: string | undefined;
@@ -288,7 +274,7 @@ export function ArticlesPage() {
               onClick={() =>
                 void run(async () => {
                   if (!draft) return;
-                  const html = preview || !bodyDirty ? draft.html : await prepareBody(articleMarkdownToHtml(markdown), draft.sourceUrl);
+                  const html = !bodyDirty ? draft.html : await prepareBody(articleMarkdownToHtml(markdown), draft.sourceUrl);
                   await articles.save(
                     {
                       ...draft,
@@ -362,9 +348,9 @@ export function ArticlesPage() {
               />
             </label>
             <ArticleCoverField
+              readOnly={false}
               value={draft.coverUrl}
               disabled={busy}
-              readOnly={preview}
               onImport={file => run(async () => {
                 const image = await readArticleImage(file);
                 setDraft(previous => previous ? { ...previous, coverUrl: image.src } : previous);
@@ -375,9 +361,7 @@ export function ArticlesPage() {
               markdown={markdown}
               onChange={value => { setMarkdown(value); setBodyDirty(true); }}
               html={draft.html}
-              preview={preview}
               disabled={busy}
-              onPreviewChange={changePreview}
               onImportImages={importBodyImages}
             />
           </div>
