@@ -66,12 +66,13 @@ public class DisplayCatalogRepository {
                   join books b on b.id = e.book_id
                   left join lateral (
                     select f.id, f.format, f.status from book_files f
-                     where f.book_id = b.id and (?::varchar is null or f.format = ?)
-                     order by case f.status when 'AVAILABLE' then 0 when 'TRASHED' then 1 else 2 end,
+                     where f.book_id = b.id and f.status not in ('TRASHED', 'DELETED')
+                       and (?::varchar is null or f.format = ?)
+                     order by case f.status when 'AVAILABLE' then 0 else 1 end,
                               case f.format when 'EPUB' then 0 else 1 end, f.id
                      limit 1
                   ) bf on true
-                 where e.catalog_id = 1
+                 where e.catalog_id = 1 and bf.id is not null
                    and (?::uuid is null or exists (select 1 from book_categories bc where bc.book_id = b.id and bc.category_id = ?))
                    and (?::text is null or exists (select 1 from unnest(case when cardinality(b.subject_codes)=0 then array['UNCLASSIFIED']::text[] else b.subject_codes end) code where starts_with(code, ?)))
                    and (?::text is null or b.title ilike ? or b.primary_author ilike ? or coalesce(b.description, '') ilike ?)
@@ -104,17 +105,31 @@ public class DisplayCatalogRepository {
                   join books b on b.id = e.book_id
                   left join lateral (
                     select f.id, f.format, f.status from book_files f
-                     where f.book_id = b.id
-                     order by case f.status when 'AVAILABLE' then 0 when 'TRASHED' then 1 else 2 end,
+                     where f.book_id = b.id and f.status not in ('TRASHED', 'DELETED')
+                     order by case f.status when 'AVAILABLE' then 0 else 1 end,
                               case f.format when 'EPUB' then 0 else 1 end, f.id
                      limit 1
                   ) bf on true
-                 where e.catalog_id = 1 and e.book_id = ?
+                 where e.catalog_id = 1 and e.book_id = ? and bf.id is not null
                 """, bookId).map(this::map)
                 .orElseThrow(() -> ApiException.notFound("DISPLAY_BOOK_NOT_FOUND", "这本书不在公共展示书目中。"));
     }
 
     public boolean contains(UUID bookId) {
+        var record = dsl.fetchOne("""
+                select exists (
+                    select 1 from display_catalog_entries e
+                    join book_files f on f.book_id = e.book_id
+                    where e.catalog_id = 1 and e.book_id = ?
+                      and f.status not in ('TRASHED', 'DELETED')
+                )
+                """, bookId);
+        return record != null && Boolean.TRUE.equals(record.get(0, Boolean.class));
+    }
+
+    // 公开访问排除已回收的原书，但成员关系保留，以便恢复后重新显示。
+    // Public access hides recycled books while membership survives restoration.
+    private boolean containsEntry(UUID bookId) {
         var record = dsl.fetchOne("select exists(select 1 from display_catalog_entries where catalog_id = 1 and book_id = ?)", bookId);
         return record != null && Boolean.TRUE.equals(record.get(0, Boolean.class));
     }
@@ -127,13 +142,13 @@ public class DisplayCatalogRepository {
 
     public DisplayBook add(UUID bookId, UUID actorId, long expectedRevision) {
         lockAndCheckRevision(expectedRevision);
-        if (contains(bookId)) return find(bookId);
+        if (containsEntry(bookId)) return find(bookId);
         return insert(bookId, actorId);
     }
 
     public DisplayBook publish(UUID bookId, UUID actorId) {
         lockCatalog();
-        if (contains(bookId)) return find(bookId);
+        if (containsEntry(bookId)) return find(bookId);
         return insert(bookId, actorId);
     }
 

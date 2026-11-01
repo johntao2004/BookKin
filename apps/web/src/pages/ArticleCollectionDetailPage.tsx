@@ -6,7 +6,6 @@ import { PageBackAction, PageContainer, PageTitle } from "../components/PageHead
 import { articleGridSx } from "../components/bookGrid";
 import { useAuth } from "../auth/AuthContext";
 import { usePermissions } from "../auth/permissions";
-import { AiAssistantButton } from "../features/ai/AiAssistant";
 import { Alert, Chip, CircularProgress } from "@/ui/feedback";
 import { Box, Breadcrumbs, Link as UiLink, Snackbar, Stack, Typography } from "@/ui/primitives";
 import { Button } from "@/ui/buttons";
@@ -40,7 +39,7 @@ export function ArticleCollectionDetailPage() {
   const detailQuery = useQuery({
     queryKey: detailKey,
     queryFn: () => articleCollections.get(collectionId),
-    enabled: ready && Boolean(user) && can("articles.view") && Boolean(collectionId),
+    enabled: ready && Boolean(user) && can("articles.collections.details.view") && Boolean(collectionId),
   });
 
   const updateDetail = async (collection: ArticleCollectionDetail, message: string) => {
@@ -60,7 +59,7 @@ export function ArticleCollectionDetailPage() {
     setParams(next, { replace: true });
   };
 
-  if (!user || !can("articles.view")) return null;
+  if (!user || !can("articles.collections.details.view")) return null;
   if (detailQuery.isPending) return <PageContainer><PageBackAction to={returnTo}>返回选集列表</PageBackAction><Stack role="status" aria-label="正在加载选集" sx={{ alignItems: "center", py: `${tokens.spacing[20]}px` }}><CircularProgress /></Stack></PageContainer>;
   if (detailQuery.isError || !detailQuery.data) return <RequestErrorPage error={detailQuery.error} retrying={detailQuery.isFetching} onRetry={() => void detailQuery.refetch()} back={<PageBackAction to={returnTo}>返回选集列表</PageBackAction>} />;
 
@@ -91,7 +90,6 @@ export function ArticleCollectionDetailPage() {
         <PageTitle>{collection.title}</PageTitle>
         <Typography color="text.secondary" sx={{ maxWidth: tokens.layout.readingMax, whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{collection.description || "创建者还没有写下这份选集的说明。"}</Typography>
         <Typography variant="body2" color="text.secondary">{collection.ownerDisplayName ? `由 ${collection.ownerDisplayName} 创建` : "选集"} · {collection.articleCount} 篇文章</Typography>
-        {can("articles.view") && <Box><AiAssistantButton source="COLLECTION" id={collection.id} label="AI 选集导读" /></Box>}
         {mayEdit && <Stack direction={{ xs: "column", sm: "row" }} sx={{ gap: `${tokens.spacing[3]}px`, mt: `${tokens.spacing[2]}px`, alignItems: { xs: "stretch", sm: "center" } }}>
           <Button variant="contained" onClick={() => setOrganizerOpen(true)}>整理文章</Button>
           <Button variant="outlined" onClick={() => setEditOpen(true)}>编辑选集</Button>

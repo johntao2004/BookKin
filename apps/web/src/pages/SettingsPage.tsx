@@ -18,13 +18,14 @@ const Logins = lazy(() => import("./LoginLogsPage").then(m => ({ default: m.Logi
 const Security = lazy(() => import("./SecuritySettingsPage").then(m => ({ default: m.SecuritySettingsPage })));
 const Fonts = lazy(() => import("./ReaderFontsPage").then(m => ({ default: m.ReaderFontsPage })));
 const AiSettings = lazy(() => import("./AiSettingsPage").then(m => ({ default: m.AiSettingsPage })));
+const MetadataProviders = lazy(() => import("./MetadataProviderSettingsPage").then(m => ({ default: m.MetadataProviderSettingsPage })));
 const MailSettings = lazy(() => import("./MailSettingsPage").then(m => ({ default: m.MailSettingsPage })));
 const Personalization = lazy(() => import("./SiteSettingsPage").then(m => ({ default: m.SiteSettingsPage })));
 
 const Roles = lazy(() => import("./RolePermissionsPage").then(m => ({ default: m.RolePermissionsPage })));
 
 const panels = { roots: LibraryRoots, operations: Operations, recycle: RecycleBin, users: Users, roles: Roles,
-  security: Security, sessions: Sessions, logins: Logins, site: Personalization, fonts: Fonts, ai: AiSettings, mail: MailSettings };
+  security: Security, sessions: Sessions, logins: Logins, site: Personalization, fonts: Fonts, ai: AiSettings, metadata: MetadataProviders, mail: MailSettings };
 const groups = settingsGroups.map(group => ({ ...group, sections: group.sections.map(section => ({ ...section, component: panels[section.panel] })) }));
 
 export function SettingsPage() {

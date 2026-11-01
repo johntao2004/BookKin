@@ -22,6 +22,7 @@ import java.time.LocalDate;
 import java.util.UUID;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpMethod;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -82,6 +83,20 @@ public class ReadingController {
                  @RequestHeader(value = HttpHeaders.RANGE, required = false) String range,
                  HttpServletRequest request,
                  HttpServletResponse response) throws Exception {
+        streamContent(bookId, range, request, response, false);
+    }
+
+    /** Explicit attachment endpoint with its own permission; reader streaming remains governed by reader.read. */
+    @GetMapping("/download")
+    void download(@PathVariable UUID bookId,
+                  @RequestHeader(value = HttpHeaders.RANGE, required = false) String range,
+                  HttpServletRequest request,
+                  HttpServletResponse response) throws Exception {
+        streamContent(bookId, range, request, response, true);
+    }
+
+    private void streamContent(UUID bookId, String range, HttpServletRequest request,
+                               HttpServletResponse response, boolean attachment) throws Exception {
         var file = books.findPreferredFile(bookId).orElseThrow(() -> ApiException.notFound("BOOK_FILE_NOT_FOUND", "书籍文件不存在。"));
         String holder = "http:" + request.getSession().getId() + ":" + UUID.randomUUID();
         var lease = leases.acquireRead(file.id(), holder, Duration.ofMinutes(15));
@@ -99,6 +114,10 @@ public class ReadingController {
             throw exception;
         }
         try {
+            if (attachment) {
+                String filename = "book-" + bookId + "." + file.format().name().toLowerCase(java.util.Locale.ROOT);
+                response.setHeader(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.attachment().filename(filename).build().toString());
+        }
             BookContentResponse.write(response, path, file.format(), selected, size,
                     HttpMethod.HEAD.matches(request.getMethod()));
         } finally {

@@ -9,11 +9,15 @@ import { Button } from "@/ui/buttons";
 import { Card } from "@/ui/cards";
 import { BookCatalogEmptyState } from "../../components/BookCatalogEmptyState";
 import { annotationColorBackground, annotationColorHex } from "../../domain/annotation-colors";
+import { groupAnnotations } from "../../domain/annotation-groups";
 import type { Entry } from "../content/api";
 import { articleNotesApi, type ArticleNoteGroup } from "./api";
 import { tokens } from "../../theme/generated-tokens";
 import { Dropdown } from "../../ui/antd";
 import { collectNotes, downloadNotes } from "./note-records";
+
+type GroupedEntry = { annotation: Entry; ids: string[]; notes: string[]; latestAt: string };
+type ArticleNotesView = ArticleNoteGroup & { groupedAnnotations: GroupedEntry[] };
 
 export function ArticleNotes({
   userId,
@@ -30,8 +34,11 @@ export function ArticleNotes({
     enabled: userId !== "anonymous",
   });
   const articles = useMemo(() => (query.data ?? [])
-    .map((article) => ({ ...article, annotations: sortEntries(article.annotations) }))
-    .filter((article) => article.annotations.length > 0)
+    .map((article) => {
+      const annotations = sortEntries(article.annotations);
+      return { ...article, annotations, groupedAnnotations: groupEntries(annotations) };
+    })
+    .filter((article) => article.groupedAnnotations.length > 0)
     .sort((left, right) => right.annotations[0].createdAt.localeCompare(left.annotations[0].createdAt)), [query.data]);
 
   if (query.isPending) return <Loading />;
@@ -49,7 +56,7 @@ export function ArticleNotes({
   );
 }
 
-function ArticleNoteCard({ article, onOpen }: { article: ArticleNoteGroup; onOpen: () => void }) {
+function ArticleNoteCard({ article, onOpen }: { article: ArticleNotesView; onOpen: () => void }) {
   const [failedCover, setFailedCover] = useState(false);
   const cover = article.coverUrl && !failedCover ? (
     <Box component="img" src={article.coverUrl} alt={`${article.title}封面`} loading="lazy" decoding="async" onError={() => setFailedCover(true)} sx={{ display: "block", width: "100%", aspectRatio: "2.35 / 1", objectFit: "cover", bgcolor: "background.default" }} />
@@ -67,7 +74,7 @@ function ArticleNoteCard({ article, onOpen }: { article: ArticleNoteGroup; onOpe
           <Typography component="h2" variant="h5" title={article.title} noWrap>{article.title}</Typography>
           <Typography variant="body2" color="text.secondary" noWrap>{article.author || "未知作者"}</Typography>
           <Stack direction="row" sx={{ mt: `${tokens.spacing[2]}px` }}>
-            <Chip size="small" label={`${article.annotations.length} 条笔记`} />
+            <Chip size="small" label={`${article.groupedAnnotations.length} 条笔记`} />
           </Stack>
         </CardContent>
       </CardActionArea>
@@ -75,7 +82,7 @@ function ArticleNoteCard({ article, onOpen }: { article: ArticleNoteGroup; onOpe
   );
 }
 
-function ArticleNoteDetail({ article }: { article: ArticleNoteGroup }) {
+function ArticleNoteDetail({ article }: { article: ArticleNotesView }) {
   const [failedCover, setFailedCover] = useState(false);
   const cover = article.coverUrl && !failedCover ? (
     <Box component="img" src={article.coverUrl} alt={`${article.title}封面`} onError={() => setFailedCover(true)} sx={{ display: "block", width: "100%", maxWidth: `${tokens.layout.annotationCardMinWidth}px`, aspectRatio: "2.35 / 1", objectFit: "cover", borderRadius: `${tokens.radius.lg}px` }} />
@@ -87,18 +94,20 @@ function ArticleNoteDetail({ article }: { article: ArticleNoteGroup }) {
         {cover}
         <Box sx={{ minWidth: 0 }}>
           <Typography component="h2" variant="h4" sx={{ fontSize: { xs: tokens.typography.fontSize.title, sm: tokens.typography.fontSize.headingSm }, overflowWrap: "anywhere" }}>{article.title}</Typography>
-          <Typography color="text.secondary" sx={{ mt: `${tokens.spacing[2]}px` }}>{article.author || "未知作者"} · {article.annotations.length} 条笔记</Typography>
+          <Typography color="text.secondary" sx={{ mt: `${tokens.spacing[2]}px` }}>{article.author || "未知作者"} · {article.groupedAnnotations.length} 条笔记</Typography>
         </Box>
         <Dropdown trigger={["click"]} menu={{ items: [{ key: "md", label: "Markdown" }, { key: "csv", label: "CSV 表格" }], onClick: ({ key }) => downloadNotes(collectNotes([], [article]), key as "md" | "csv") }}><Button variant="outlined">导出笔记</Button></Dropdown>
       </Stack>
       <Stack component="section" aria-label={`${article.title}的阅文札记`} sx={{ gap: `${tokens.spacing[4]}px` }}>
-        {article.annotations.map((entry, index) => <ArticleAnnotationEntry key={entry.id} entry={entry} index={article.annotations.length - index} articleId={article.articleId} />)}
+        {article.groupedAnnotations.map((group, index) => <ArticleAnnotationEntry key={group.annotation.id} group={group} index={article.groupedAnnotations.length - index} articleId={article.articleId} />)}
       </Stack>
     </>
   );
 }
 
-function ArticleAnnotationEntry({ entry, index, articleId }: { entry: Entry; index: number; articleId: string }) {
+function ArticleAnnotationEntry({ group, index, articleId }: { group: GroupedEntry; index: number; articleId: string }) {
+  const entry = group.annotation;
+  const notes = group.notes.filter(note => note.trim()).join("\n\n");
   const sourceHref = `/articles/${encodeURIComponent(articleId)}?locator=${encodeURIComponent(entry.locator)}`;
   return (
     <Box component="article" sx={{ p: { xs: `${tokens.spacing[4]}px`, md: `${tokens.spacing[6]}px` }, bgcolor: "background.paper", border: 1, borderColor: "divider", borderRadius: `${tokens.radius.lg}px` }}>
@@ -107,10 +116,10 @@ function ArticleAnnotationEntry({ entry, index, articleId }: { entry: Entry; ind
           <Typography variant="caption" color="text.disabled">{String(index).padStart(2, "0")}</Typography>
           <Chip label={entryLabel(entry)} size="small" variant={entry.type === "NOTE" ? "filled" : "outlined"} />
         </Stack>
-        <Typography variant="caption" color="text.disabled">{formatDate(entry.createdAt)}</Typography>
+        <Typography variant="caption" color="text.disabled">{formatDate(group.latestAt)}</Typography>
       </Stack>
       {entry.quote && <Typography component="p" sx={{ mt: `${tokens.spacing[4]}px`, fontFamily: tokens.typography.fontFamily.display, fontSize: { xs: tokens.typography.fontSize.titleSm, md: tokens.typography.fontSize.title }, lineHeight: 1.85 }}><Box component="span" sx={quoteStyle(entry)}>{entry.quote}</Box></Typography>}
-      {entry.note && <Box sx={{ mt: `${tokens.spacing[4]}px`, p: `${tokens.spacing[3]}px`, bgcolor: "background.default", borderRadius: `${tokens.radius.md}px` }}><Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: `${tokens.spacing[1]}px` }}>我的阅文札记</Typography><Typography>{entry.note}</Typography></Box>}
+      {notes && <Box sx={{ mt: `${tokens.spacing[4]}px`, p: `${tokens.spacing[3]}px`, bgcolor: "background.default", borderRadius: `${tokens.radius.md}px` }}><Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: `${tokens.spacing[1]}px` }}>我的阅文札记</Typography><Typography sx={{ whiteSpace: "pre-wrap" }}>{notes}</Typography></Box>}
       <Button component={Link} to={sourceHref} variant="outlined" sx={{ mt: `${tokens.spacing[4]}px`, minHeight: `${tokens.spacing[10]}px` }}>返回原文</Button>
     </Box>
   );
@@ -118,6 +127,17 @@ function ArticleAnnotationEntry({ entry, index, articleId }: { entry: Entry; ind
 
 function sortEntries(entries: Entry[]) {
   return entries.filter((entry) => entry.type !== "BOOKMARK").sort((left, right) => right.createdAt.localeCompare(left.createdAt));
+}
+
+function groupEntries(entries: Entry[]): GroupedEntry[] {
+  const byId = new Map(entries.map(entry => [entry.id, entry]));
+  return groupAnnotations(entries).map(group => {
+    const latestAt = group.ids.reduce((latest, id) => {
+      const createdAt = byId.get(id)?.createdAt;
+      return createdAt && createdAt > latest ? createdAt : latest;
+    }, group.annotation.createdAt);
+    return { ...group, latestAt };
+  }).sort((left, right) => right.latestAt.localeCompare(left.latestAt));
 }
 
 function quoteStyle(entry: Entry) {

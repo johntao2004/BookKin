@@ -11,7 +11,7 @@ import { Snackbar } from "@/ui/primitives";
 import { Stack } from "@/ui/primitives";
 import { Tooltip } from "@/ui/feedback";
 import { Typography } from "@/ui/primitives";
-import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useDeferredValue, useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { api } from "../api/client";
@@ -24,6 +24,7 @@ import { BookCard } from "../components/BookCard";
 import { bookGridSx } from "../components/bookGrid";
 import { AddToBooklistDialog } from "../components/AddToBooklistDialog";
 import { BookUploadDialog } from "../components/BookUploadDialog";
+import { BookUploadDraftCard } from "../components/BookUploadDraftCard";
 import { BookCatalogEmptyState } from "../components/BookCatalogEmptyState";
 import { FileOperationDialog } from "../components/FileOperationDialog";
 import { flattenUniquePaginatedItems, PaginatedItemReveal } from "../components/PaginatedItemReveal";
@@ -31,6 +32,7 @@ import { PageContainer } from "../components/PageHeader";
 import { LibraryPageHeader, LibraryScopeFilter } from "../components/LibraryPageHeader";
 import { PublicLibraryPage } from "./PublicLibraryPage";
 import type { Book, FileOperationType } from "../domain/types";
+import { matchesThema } from "../domain/thema";
 import { useInfiniteScrollTrigger } from "../hooks/useInfiniteScrollTrigger";
 import { tokens } from "../theme/generated-tokens";
 import { EMPTY_CATALOG_TITLE } from "../ui/empty-state-copy";
@@ -57,11 +59,23 @@ function MemberLibraryPage() {
   const query = rawQuery.trim().toLocaleLowerCase("zh-CN");
   const deferredQuery = useDeferredValue(query);
   const { can } = usePermissions();
+  const canUpload = can("library.upload");
+  const canQuery = can("library.query");
+  const uploadsQuery = useQuery({
+    queryKey: ["book-uploads", user?.id],
+    queryFn: api.listBookUploads,
+    enabled: Boolean(user?.id && canUpload),
+    retry: false,
+    refetchInterval: query => query.state.data?.some(upload =>
+      upload.status === "RECEIVING" || upload.status === "INSPECTING" || upload.status === "ENRICHING" || upload.status === "COMMITTING",
+    ) ? 1200 : false,
+  });
   // 查询键包含检索、格式和排序；请求接收取消信号，游标页属于该组查询条件。
   // The query key includes search, format and sort; requests receive cancellation signals and cursor pages belong to those filters.
   const booksQuery = useInfiniteQuery({
     queryKey: ["books", deferredQuery, format, sort, categoryId, subjectCode, user?.id],
     initialPageParam: undefined as string | undefined,
+    enabled: canQuery,
     queryFn: ({ pageParam, signal }) => api.listBooks({
       q: deferredQuery || undefined,
       categoryId: categoryId || undefined, subjectCode: subjectCode || undefined,
@@ -85,6 +99,27 @@ function MemberLibraryPage() {
     return () => window.removeEventListener("scroll", updateBackToTopVisibility);
   }, []);
   const loadedBookEntries = useMemo(() => flattenUniquePaginatedItems(booksQuery.data?.pages), [booksQuery.data]);
+  const readyUploadDrafts = useMemo(() => (uploadsQuery.data ?? []).filter(upload => upload.status === "READY_FOR_REVIEW"), [uploadsQuery.data]);
+  const hasReadyUploadDrafts = canUpload && readyUploadDrafts.length > 0;
+  const filteredUploadDrafts = useMemo(() => {
+    if (!canUpload || categoryId) return [];
+    const matching = readyUploadDrafts.filter(upload => {
+      const metadata = upload.draftMetadata ?? upload.detectedMetadata;
+      const subjectCodes = upload.draftMetadata?.subjectCodes ?? upload.detectedMetadata?.subjectCodes;
+      const searchText = [upload.originalFilename, metadata?.title, metadata?.subtitle, ...(metadata?.authors ?? []), ...(metadata?.tags ?? []), metadata?.description]
+        .filter(Boolean).join(" ").toLocaleLowerCase("zh-CN");
+      return (!deferredQuery || searchText.includes(deferredQuery))
+        && (format === "ALL" || upload.format === format)
+        && matchesThema(subjectCodes, subjectCode);
+    });
+    return matching.sort((left, right) => {
+      const leftMetadata = left.draftMetadata ?? left.detectedMetadata;
+      const rightMetadata = right.draftMetadata ?? right.detectedMetadata;
+      if (sort === "title") return (leftMetadata?.title ?? left.originalFilename).localeCompare(rightMetadata?.title ?? right.originalFilename, "zh-CN");
+      if (sort === "author") return (leftMetadata?.authors.join(" / ") ?? "").localeCompare(rightMetadata?.authors.join(" / ") ?? "", "zh-CN");
+      return right.updatedAt.localeCompare(left.updatedAt);
+    });
+  }, [canUpload, categoryId, deferredQuery, format, readyUploadDrafts, sort, subjectCode]);
 
   const loadNextPage = useCallback(() => {
     if (booksQuery.hasNextPage && !booksQuery.isFetchingNextPage) void booksQuery.fetchNextPage();
@@ -106,31 +141,44 @@ function MemberLibraryPage() {
 
 
 
+        {canUpload && uploadsQuery.isError && <Stack role="alert" sx={{ alignItems: "flex-start", gap: `${tokens.spacing[3]}px`, mb: `${tokens.spacing[4]}px` }}>
+          <Typography color="error.main">草稿暂时无法读取，已入库书籍仍可继续浏览。</Typography>
+          <Button variant="outlined" disabled={uploadsQuery.isFetching} onClick={() => void uploadsQuery.refetch()}>{uploadsQuery.isFetching ? "正在重试" : "重试"}</Button>
+        </Stack>}
+        {canUpload && uploadsQuery.isPending && <Stack role="status" aria-label="正在读取书籍草稿" sx={{ minHeight: `${tokens.spacing[16]}px`, alignItems: "center", justifyContent: "center", mb: `${tokens.spacing[4]}px` }}><CircularProgress aria-label="正在读取书籍草稿" /></Stack>}
+        {filteredUploadDrafts.length > 0 && <Stack component="section" aria-label="待完善资料" spacing={2} sx={{ mb: `${tokens.spacing[6]}px` }}>
+          <Typography variant="h5" component="h2">待完善资料</Typography>
+          <Box sx={bookGridSx}>{filteredUploadDrafts.map(upload => <BookUploadDraftCard key={upload.id} upload={upload} onOpen={() => navigate(`/library/uploads/${upload.id}`, { state: { bookReturnTo: `${location.pathname}${location.search}` } })} />)}</Box>
+        </Stack>}
+
         <CatalogSection title="全部藏书" tools={
           <CatalogFilters
-            extraTools={<Stack direction="row" sx={{ flexWrap: "wrap", gap: `${tokens.spacing[3]}px` }}><LibraryScopeFilter /><CatalogAdvancedFilterToggle /></Stack>}
+            extraTools={<Stack direction="row" sx={{ flexWrap: "wrap", gap: `${tokens.spacing[3]}px` }}><LibraryScopeFilter />{canQuery && <CatalogAdvancedFilterToggle />}</Stack>}
             actions={can("library.upload") ? <Button variant="contained" onClick={() => setUploadOpen(true)} sx={{ whiteSpace: "nowrap" }}>上传书籍</Button> : undefined}
-            filter={{ label: "格式", value: format, onChange: value => updateParam("format", value, "ALL"), options: [
+            filter={canQuery ? { label: "格式", value: format, onChange: value => updateParam("format", value, "ALL"), options: [
               { value: "ALL", label: "全部格式" }, { value: "EPUB", label: "EPUB" }, { value: "PDF", label: "PDF" },
-            ] }}
-            sort={{ label: "排序", value: sort, onChange: value => updateParam("sort", value, "recent"), options: [
+            ] } : undefined}
+            sort={canQuery ? { label: "排序", value: sort, onChange: value => updateParam("sort", value, "recent"), options: [
               { value: "recent", label: "最近入库" }, { value: "title", label: "按书名" }, { value: "author", label: "按作者" },
-            ] }}
+            ] } : undefined}
           />
         }>
 
-        <CatalogAdvancedFilters />
+        {canQuery && <CatalogAdvancedFilters />}
 
-        {activeCount > 0 && <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>{query ? `找到 ${books.length} 本相关藏书` : `已加载 ${books.length} 本匹配藏书`}</Typography>}
+        {activeCount > 0 && <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>{query ? `找到 ${books.length} 本已入库藏书` : `已加载 ${books.length} 本已入库藏书`}</Typography>}
 
-        {booksQuery.isPending ? (
+        {!canQuery ? (
+          <Alert severity="info">当前角色没有查询书籍目录的权限。可切换到公开藏书范围查询公开书籍。</Alert>
+        ) : booksQuery.isPending ? (
           <BookGridSkeleton label="正在加载藏书" />
         ) : booksQuery.isError && !booksQuery.data ? (
           <Alert severity="error">书库暂时无法读取，请检查网络与书库连接。</Alert>
         ) : books.length === 0 ? (
-          <BookCatalogEmptyState title={activeCount ? "未找到匹配的书籍" : EMPTY_CATALOG_TITLE}
-            action={activeCount ? <Button variant="outlined" onClick={clearBookFilters}>清除筛选</Button> : undefined}
-          />
+          canUpload && uploadsQuery.isPending ? null :
+            <BookCatalogEmptyState title={activeCount ? (hasReadyUploadDrafts ? "未找到匹配的已入库书籍" : "未找到匹配的书籍") : (hasReadyUploadDrafts || (canUpload && uploadsQuery.isError) ? "暂无已入库书籍" : EMPTY_CATALOG_TITLE)}
+              action={activeCount ? <Button variant="outlined" onClick={clearBookFilters}>清除筛选</Button> : undefined}
+            />
         ) : (
           <Box sx={bookGridSx}>
             {bookEntries.map(({ item: book, pageIndex, itemIndex }) => (

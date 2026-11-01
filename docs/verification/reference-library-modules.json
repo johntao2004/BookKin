@@ -1,35 +1,98 @@
 {
-  "sourceBytes": 96570784,
-  "sourceSha256": "a6a95221d1a7807c32f0bacad8dfc4ab0faace3f1ce947c7aacda479b3ee1ef1",
+  "sourceBytes": 54130416,
+  "sourceSha256": "de91bc1a655851f001059fe0c56720449bf8207951467c649d7cac592a6f2e29",
   "modules": [
     {
       "name": "a-end",
-      "fileBytes": 1718868,
-      "sha256": "304b5f24f45e544707f96913ccad809bd342ae3e060b0e11b7931eb6d7160416",
-      "triangles": 53294,
+      "fileBytes": 1338948,
+      "sha256": "b3e24f5ab881f4a44fccde94603dc78485fa6f5fb73a9f63747a2ac4c628aa94",
+      "triangles": 51730,
       "primitives": 12,
-      "decodedGeometryBytes": 3120756,
+      "decodedGeometryBytes": 2377356,
       "bounds": {
         "min": [
-          -20.079999923706055,
-          0.02160000056028366,
+          -19.988000869750977,
+          0.019999999552965164,
           -20.204999923706055
         ],
         "max": [
-          20.079999923706055,
-          17.711999893188477,
-          -15.176774978637695
+          19.988000869750977,
+          17.405000686645508,
+          -15.095833778381348
         ]
       },
       "materialIds": [
         4,
         5,
+        6,
         11,
         12,
         13,
         14,
-        15,
-        16,
+        18,
+        19,
+        20,
+        21,
+        22
+      ]
+    },
+    {
+      "name": "b-end",
+      "fileBytes": 1502348,
+      "sha256": "d09eb40a603970a3e22cb09ee89e4d309e83e2ac7081fb22b858f1058db78800",
+      "triangles": 57403,
+      "primitives": 12,
+      "decodedGeometryBytes": 2789730,
+      "bounds": {
+        "min": [
+          -19.988000869750977,
+          0.019999999552965164,
+          13.420000076293945
+        ],
+        "max": [
+          19.988000869750977,
+          16.264999389648438,
+          20.204999923706055
+        ]
+      },
+      "materialIds": [
+        4,
+        5,
+        6,
+        11,
+        12,
+        13,
+        14,
+        18,
+        19,
+        20,
+        21,
+        22
+      ]
+    },
+    {
+      "name": "central-furniture-north",
+      "fileBytes": 326068,
+      "sha256": "9f621c27d5d12b4bd52871501546ff4a185985871e5635823af2978a151cced8",
+      "triangles": 12223,
+      "primitives": 7,
+      "decodedGeometryBytes": 552250,
+      "bounds": {
+        "min": [
+          -8.430000305175781,
+          0.07000000029802322,
+          -1.090000033378601
+        ],
+        "max": [
+          8.430000305175781,
+          7.211999893188477,
+          15.229999542236328
+        ]
+      },
+      "materialIds": [
+        4,
+        11,
+        13,
         17,
         18,
         19,
@@ -37,107 +100,51 @@
       ]
     },
     {
-      "name": "b-end",
-      "fileBytes": 2177396,
-      "sha256": "5d7e60d94804c68ee45d87657ea69c8d976978f3f19ed6a65f838258749f0621",
-      "triangles": 72226,
-      "primitives": 7,
-      "decodedGeometryBytes": 3794412,
-      "bounds": {
-        "min": [
-          -20.079999923706055,
-          0.02160000056028366,
-          13.420000076293945
-        ],
-        "max": [
-          20.079999923706055,
-          20.916000366210938,
-          20.204999923706055
-        ]
-      },
-      "materialIds": [
-        4,
-        5,
-        11,
-        12,
-        13,
-        14,
-        15
-      ]
-    },
-    {
-      "name": "central-furniture-north",
-      "fileBytes": 150060,
-      "sha256": "a90cf128528ca3eb9f276571846682f6d320c3a42216f3c4d82af17446707b51",
-      "triangles": 4924,
-      "primitives": 6,
-      "decodedGeometryBytes": 234024,
-      "bounds": {
-        "min": [
-          -8.430000305175781,
-          0,
-          -1.0499999523162842
-        ],
-        "max": [
-          8.430000305175781,
-          7.211999893188477,
-          15.596599578857422
-        ]
-      },
-      "materialIds": [
-        4,
-        5,
-        11,
-        21,
-        22,
-        23
-      ]
-    },
-    {
       "name": "central-furniture-south",
-      "fileBytes": 219644,
-      "sha256": "919cb63e79a92ad22e57f31067729e91745bd4c9e142fe94f08087ca386b6245",
-      "triangles": 7549,
-      "primitives": 6,
-      "decodedGeometryBytes": 362638,
+      "fileBytes": 570020,
+      "sha256": "282e1bafbeb08e3640f5557a005a0433969ab6a81c52bc07021728779428101a",
+      "triangles": 22063,
+      "primitives": 7,
+      "decodedGeometryBytes": 977210,
       "bounds": {
         "min": [
           -8.430000305175781,
-          0,
+          0.07000000029802322,
           -15.600000381469727
         ],
         "max": [
           8.430000305175781,
           7.440000057220459,
-          0.5965999960899353
+          0.43666666746139526
         ]
       },
       "materialIds": [
         4,
-        5,
         11,
-        21,
-        22,
-        23
+        13,
+        17,
+        18,
+        19,
+        20
       ]
     },
     {
       "name": "central-lighting",
-      "fileBytes": 664360,
-      "sha256": "bd518a8d377cc10eb717ac48efa5b5eebfba6118f3e1aabd331d9be9c8ddff40",
-      "triangles": 23554,
+      "fileBytes": 438792,
+      "sha256": "ca7c7d7e8dc28c157220da2469b84254a47c608b242bf48ed58e084819deedf3",
+      "triangles": 14800,
       "primitives": 7,
-      "decodedGeometryBytes": 1045900,
+      "decodedGeometryBytes": 761344,
       "bounds": {
         "min": [
-          -8.21780014038086,
+          -8.225000381469727,
           7.007999897003174,
-          -15.620800018310547
+          -15.600000381469727
         ],
         "max": [
-          8.21780014038086,
-          22.29599952697754,
-          15.620800018310547
+          8.225000381469727,
+          22.399999618530273,
+          15.135000228881836
         ]
       },
       "materialIds": [
@@ -146,17 +153,17 @@
         10,
         11,
         12,
-        23,
-        26
+        13,
+        17
       ]
     },
     {
       "name": "core",
-      "fileBytes": 626804,
-      "sha256": "c61a56f14aa4f78cb8353585c28548da29356b2f26015bd56bb5f84d0ce73616",
-      "triangles": 32876,
-      "primitives": 8,
-      "decodedGeometryBytes": 1718344,
+      "fileBytes": 679500,
+      "sha256": "fefe79897f50e61640dfcd0c75c96f6536f740d02f483b7df3049d070e888728",
+      "triangles": 34750,
+      "primitives": 11,
+      "decodedGeometryBytes": 1801012,
       "bounds": {
         "min": [
           -20.299999237060547,
@@ -165,7 +172,7 @@
         ],
         "max": [
           20.299999237060547,
-          0.07550808042287827,
+          0.07999999821186066,
           20.489999771118164
         ]
       },
@@ -177,49 +184,51 @@
         4,
         5,
         6,
-        12
+        12,
+        14,
+        15,
+        18
       ]
     },
     {
       "name": "core-enclosure",
-      "fileBytes": 7487828,
-      "sha256": "9b4fe8a3e5de8a8c4a62a25253b66a034f4ba9b6bb9d0f4ee5d45f30ed390709",
-      "triangles": 248544,
-      "primitives": 7,
-      "decodedGeometryBytes": 14068424,
+      "fileBytes": 1292676,
+      "sha256": "fe62ba06828856ce6700626c253d06c1e267cba603ddbe8eb26d5c308f90cd65",
+      "triangles": 47134,
+      "primitives": 6,
+      "decodedGeometryBytes": 2175732,
       "bounds": {
         "min": [
           -20.299999237060547,
-          0,
+          0.019999999552965164,
           -20.399999618530273
         ],
         "max": [
           20.299999237060547,
-          22.799999237060547,
+          22.5,
           20.399999618530273
         ]
       },
       "materialIds": [
-        6,
-        7,
-        8,
-        9,
+        12,
         13,
         14,
-        15
+        15,
+        16,
+        21
       ]
     },
     {
       "name": "core-gallery-floor",
-      "fileBytes": 82564,
-      "sha256": "559e51bdb84054bb5572db2bca7039db5cd35c1eceabee603ccd76cbf2e8f6f5",
-      "triangles": 2297,
-      "primitives": 3,
-      "decodedGeometryBytes": 175030,
+      "fileBytes": 822596,
+      "sha256": "3ea1143db1d142953d2430a55433b229b69571eb0a8e92aa81767ed3eee9a7c9",
+      "triangles": 33368,
+      "primitives": 6,
+      "decodedGeometryBytes": 1502576,
       "bounds": {
         "min": [
           -20,
-          6.857999801635742,
+          6.8424859046936035,
           -20.229999542236328
         ],
         "max": [
@@ -231,354 +240,346 @@
       "materialIds": [
         4,
         5,
-        10
+        11,
+        12,
+        13,
+        14
       ]
     },
     {
       "name": "core-vault",
-      "fileBytes": 132484,
-      "sha256": "030f5cd2c5f45a99c602b22b41b28c08a3460ed83aa6919432a2312248e4852a",
-      "triangles": 2548,
+      "fileBytes": 157172,
+      "sha256": "cc908865d4c54e6e34f0d67bf32aebb16e8e07aa56d1be803d8af637b6596442",
+      "triangles": 5286,
       "primitives": 2,
-      "decodedGeometryBytes": 196152,
+      "decodedGeometryBytes": 372996,
       "bounds": {
         "min": [
-          -9.260000228881836,
-          16.213376998901367,
-          -19.899999618530273
+          -9.59000015258789,
+          16.216045379638672,
+          -20.174999237060547
         ],
         "max": [
-          9.260000228881836,
-          17.74799919128418,
-          19.899999618530273
+          9.59000015258789,
+          22.440000534057617,
+          20.174999237060547
         ]
       },
       "materialIds": [
-        14,
-        15
+        12,
+        13
       ]
     },
     {
       "name": "enclosure-detail",
-      "fileBytes": 5754440,
-      "sha256": "614ebbe613f7406b1b741936f351b5ac4ab09ceaefc201829f1ac4d72ba6c029",
-      "triangles": 185492,
-      "primitives": 5,
-      "decodedGeometryBytes": 11636256,
+      "fileBytes": 2458756,
+      "sha256": "b3db8dfac6f21fba22d9f72da36ef32fc4b20dbc3bcfcf6c8a37ac4a514859c6",
+      "triangles": 78610,
+      "primitives": 7,
+      "decodedGeometryBytes": 4626348,
       "bounds": {
         "min": [
-          -20.079999923706055,
-          0,
+          -20,
+          0.03500000014901161,
           -20.229999542236328
         ],
         "max": [
-          20.079999923706055,
-          22.59600067138672,
+          20,
+          22.780000686645508,
           20.229999542236328
         ]
       },
       "materialIds": [
         4,
         5,
-        10,
+        6,
         11,
-        12
+        18,
+        19,
+        20
       ]
     },
     {
       "name": "gallery-guards",
-      "fileBytes": 1845304,
-      "sha256": "87293bf9835f923beb57b5de01d20ae18555eca244e0511e229996edad9c3f66",
-      "triangles": 60788,
-      "primitives": 3,
-      "decodedGeometryBytes": 3132120,
+      "fileBytes": 1183332,
+      "sha256": "fe991d273ef71dcc592021a511ff1df7a0134230d9846846954e3c123696b6ae",
+      "triangles": 43084,
+      "primitives": 6,
+      "decodedGeometryBytes": 2522184,
       "bounds": {
         "min": [
-          -9.210000038146973,
+          -9.739999771118164,
           6.659999847412109,
           -20
         ],
         "max": [
-          9.210000038146973,
-          11.706000328063965,
+          9.739999771118164,
+          8.98007869720459,
           20
         ]
       },
       "materialIds": [
         4,
         5,
-        12
+        11,
+        12,
+        13,
+        14
       ]
     },
     {
       "name": "globe",
-      "fileBytes": 578396,
-      "sha256": "866702b93b03c7793d80189ff82a1821d043e1515a5664a24dddcf543af43961",
-      "triangles": 26524,
+      "fileBytes": 576688,
+      "sha256": "8d667ca3b45a71f7e599ae304b92aa10771fb87401ae095b383d368345a7a9b0",
+      "triangles": 26486,
       "primitives": 5,
-      "decodedGeometryBytes": 865512,
+      "decodedGeometryBytes": 862724,
       "bounds": {
         "min": [
-          -3.8949999809265137,
-          7.465000152587891,
+          -3.884999990463257,
+          7.519999980926514,
           -16.08500099182129
         ],
         "max": [
-          3.8949999809265137,
+          3.884999990463257,
           9.950843811035156,
-          -13.59000015258789
+          -13.600000381469727
         ]
       },
       "materialIds": [
         4,
         5,
-        11,
-        24,
-        25
+        8,
+        9,
+        10
       ]
     },
     {
       "name": "sector-left-0",
-      "fileBytes": 3585848,
-      "sha256": "d00a4220cafceaf5a5f619e3472ee6b8fc694ef9858ee03f4ae380974b7d8c84",
-      "triangles": 136032,
-      "primitives": 10,
-      "decodedGeometryBytes": 6818210,
+      "fileBytes": 1576192,
+      "sha256": "b4a94112a0ff6bdd9c688d99df459379c9f6f6bde060169476902cac9ac7f2f0",
+      "triangles": 68892,
+      "primitives": 8,
+      "decodedGeometryBytes": 2794504,
       "bounds": {
         "min": [
-          -20.079999923706055,
+          -19.975000381469727,
           -0.25200000405311584,
-          -15.664999961853027
+          -15.600000381469727
         ],
         "max": [
-          -3.2300527095794678,
-          17.74799919128418,
-          -4.335000038146973
+          -3.3080637454986572,
+          17.600000381469727,
+          -4.425000190734863
         ]
       },
       "materialIds": [
         4,
         5,
-        10,
+        6,
+        7,
         11,
         12,
         13,
-        14,
-        15,
-        23,
-        26
+        14
       ]
     },
     {
       "name": "sector-left-1",
-      "fileBytes": 2538660,
-      "sha256": "96641d59b9027ccb6bc8526ce2f176f068177b634eb1b2e9144e4224bb0a0ccf",
-      "triangles": 83412,
-      "primitives": 10,
-      "decodedGeometryBytes": 4523352,
+      "fileBytes": 638792,
+      "sha256": "9cb5cc770b7c060bd70aed124cbc0d2e330fad02cb45f7bc75b9cd023025a546",
+      "triangles": 20988,
+      "primitives": 7,
+      "decodedGeometryBytes": 1151784,
       "bounds": {
         "min": [
-          -20.079999923706055,
-          0.02160000056028366,
-          -5.664999961853027
+          -19.975000381469727,
+          0.04560000076889992,
+          -5.574999809265137
         ],
         "max": [
-          -8.16450023651123,
-          17.74799919128418,
-          5.664999961853027
+          -8.221752166748047,
+          17.600000381469727,
+          5.574999809265137
         ]
       },
       "materialIds": [
         4,
         5,
-        10,
+        6,
         11,
         12,
         13,
-        14,
-        15,
-        23,
-        26
+        14
       ]
     },
     {
       "name": "sector-left-2",
-      "fileBytes": 2674408,
-      "sha256": "6b67140ec4ba8f7fd706d4bb0b0e086ef193ab42a806c60c391a5a568e61ef42",
-      "triangles": 88823,
-      "primitives": 10,
-      "decodedGeometryBytes": 4868266,
+      "fileBytes": 682628,
+      "sha256": "8999805d472c2a17aa62319e1224bb2af9aaeddf23bfc5cb99bca2711c98cd6e",
+      "triangles": 23222,
+      "primitives": 7,
+      "decodedGeometryBytes": 1256900,
       "bounds": {
         "min": [
-          -20.079999923706055,
-          0.02160000056028366,
-          4.335000038146973
+          -19.975000381469727,
+          0.04560000076889992,
+          4.425000190734863
         ],
         "max": [
-          -8.16450023651123,
-          17.74799919128418,
-          15.664999961853027
+          -8.221752166748047,
+          17.600000381469727,
+          15.574999809265137
         ]
       },
       "materialIds": [
         4,
         5,
-        10,
+        6,
         11,
         12,
         13,
-        14,
-        15,
-        23,
-        26
+        14
       ]
     },
     {
       "name": "sector-right-0",
-      "fileBytes": 3591648,
-      "sha256": "8b159e405ef3cd065f6455d26d1f62ee48a706ebe2ca574466e61621433d0cb7",
-      "triangles": 136030,
-      "primitives": 10,
-      "decodedGeometryBytes": 6819242,
+      "fileBytes": 1580764,
+      "sha256": "892ac19874ae1c808b38e6f73b31d72a384b2fe483cef69851a8c36b00b23f97",
+      "triangles": 68909,
+      "primitives": 8,
+      "decodedGeometryBytes": 2794734,
       "bounds": {
         "min": [
-          3.259047746658325,
+          3.3080637454986572,
           -0.25200000405311584,
-          -15.664999961853027
+          -15.600000381469727
         ],
         "max": [
-          20.079999923706055,
-          17.74799919128418,
-          -4.335000038146973
+          19.975000381469727,
+          17.600000381469727,
+          -4.425000190734863
         ]
       },
       "materialIds": [
         4,
         5,
-        10,
+        6,
+        7,
         11,
         12,
         13,
-        14,
-        15,
-        23,
-        26
+        14
       ]
     },
     {
       "name": "sector-right-1",
-      "fileBytes": 2525140,
-      "sha256": "1492d650563fd4cbf04be0c3a7d194b8be372a94c343dbdf5c42100fa2ed82b8",
-      "triangles": 83412,
-      "primitives": 10,
-      "decodedGeometryBytes": 4519992,
+      "fileBytes": 635296,
+      "sha256": "7d2b036437bad4bd497ef4cc7f2ec4cc0b6f18e0016bc69c0fd396b52fea92f6",
+      "triangles": 20990,
+      "primitives": 7,
+      "decodedGeometryBytes": 1151444,
       "bounds": {
         "min": [
-          8.16450023651123,
-          0.02160000056028366,
-          -5.664999961853027
+          8.221752166748047,
+          0.04560000076889992,
+          -5.574999809265137
         ],
         "max": [
-          20.079999923706055,
-          17.74799919128418,
-          5.664999961853027
+          19.975000381469727,
+          17.600000381469727,
+          5.574999809265137
         ]
       },
       "materialIds": [
         4,
         5,
-        10,
+        6,
         11,
         12,
         13,
-        14,
-        15,
-        23,
-        26
+        14
       ]
     },
     {
       "name": "sector-right-2",
-      "fileBytes": 2644888,
-      "sha256": "08626329f58013f2315946320977c5cc22df51b64cab8c4835d177e67b795227",
-      "triangles": 88821,
-      "primitives": 10,
-      "decodedGeometryBytes": 4867070,
+      "fileBytes": 674408,
+      "sha256": "f944ec7245e729e95e0c04af8875f4d13f9feca9d501502c37ba44971fecaf4c",
+      "triangles": 23214,
+      "primitives": 7,
+      "decodedGeometryBytes": 1255508,
       "bounds": {
         "min": [
-          8.16450023651123,
-          0.02160000056028366,
-          4.335000038146973
+          8.221752166748047,
+          0.04560000076889992,
+          4.425000190734863
         ],
         "max": [
-          20.079999923706055,
-          17.74799919128418,
-          15.664999961853027
+          19.975000381469727,
+          17.600000381469727,
+          15.574999809265137
         ]
       },
       "materialIds": [
         4,
         5,
-        10,
+        6,
         11,
         12,
         13,
-        14,
-        15,
-        23,
-        26
+        14
       ]
     },
     {
       "name": "spanning-detail",
-      "fileBytes": 10788,
-      "sha256": "6ddea43d199be540f20dc09e761f85df42dda022d69b96e40411485096183c91",
-      "triangles": 10,
-      "primitives": 1,
-      "decodedGeometryBytes": 764,
+      "fileBytes": 17608,
+      "sha256": "0f6891e2f86bc7343736329847b1a4051e1a38adcf72d135c211a12288600b17",
+      "triangles": 94,
+      "primitives": 5,
+      "decodedGeometryBytes": 6900,
       "bounds": {
         "min": [
-          -8.899999618530273,
+          -19.975000381469727,
           6.659999847412109,
-          -15.699999809265137
+          -20.174999237060547
         ],
         "max": [
-          8.899999618530273,
-          7.440000057220459,
-          15.699999809265137
-        ]
-      },
-      "materialIds": [
-        4
-      ]
-    },
-    {
-      "name": "vault-detail",
-      "fileBytes": 5458804,
-      "sha256": "b668a61b3cc4dc36a113da60372bb118f945b42ad83f632645f6f75d3ce299be",
-      "triangles": 209930,
-      "primitives": 7,
-      "decodedGeometryBytes": 9778232,
-      "bounds": {
-        "min": [
-          -14.581999778747559,
-          16.200000762939453,
-          -20.165000915527344
-        ],
-        "max": [
-          14.581999778747559,
-          22.72800064086914,
-          20.165000915527344
+          19.975000381469727,
+          17.899999618530273,
+          20.174999237060547
         ]
       },
       "materialIds": [
         4,
         5,
-        10,
         11,
         12,
-        23,
-        26
+        13
+      ]
+    },
+    {
+      "name": "vault-detail",
+      "fileBytes": 8252864,
+      "sha256": "ec777ef061d88c5bdb1003582894dae0d37332fac59bc87a2dfbffd24d4e6ccd",
+      "triangles": 370428,
+      "primitives": 3,
+      "decodedGeometryBytes": 15583880,
+      "bounds": {
+        "min": [
+          -9.135000228881836,
+          16.200010299682617,
+          -20.174999237060547
+        ],
+        "max": [
+          9.135000228881836,
+          22.780000686645508,
+          20.174999237060547
+        ]
+      },
+      "materialIds": [
+        5,
+        10,
+        11
       ]
     }
   ],
@@ -652,28 +653,14 @@
       "bytes": 171044,
       "sha256": "611ae3d9ed1da7df42ac45d6c5d7df874f328095cfdcc97ba25002d7b9f89351",
       "uri": "../textures/611ae3d9ed1da7df42ac45d6c5d7df874f328095cfdcc97ba25002d7b9f89351.png"
-    },
-    {
-      "id": 10,
-      "name": "gallery-paintings-original-r7",
-      "bytes": 3320272,
-      "sha256": "7a4e9dbd3354887ca5b232789b198e9c0840077b08d3e93908cf8a5fafcfb2ac",
-      "uri": "../textures/7a4e9dbd3354887ca5b232789b198e9c0840077b08d3e93908cf8a5fafcfb2ac.png"
-    },
-    {
-      "id": 11,
-      "name": "portrait-scholar-generated-r2",
-      "bytes": 2338425,
-      "sha256": "df0f8ee9d62a4d735c097bbc1f6bf1b3e500e01f35e17fa0703f8a6cc5d8fedd",
-      "uri": "../textures/df0f8ee9d62a4d735c097bbc1f6bf1b3e500e01f35e17fa0703f8a6cc5d8fedd.png"
     }
   ],
   "totals": {
     "modules": 20,
-    "triangles": 1547086,
-    "moduleBytes": 44468332,
-    "texturesBytes": 9731129,
-    "decodedGeometryBytes": 82544696,
-    "primitives": 139
+    "triangles": 1023674,
+    "moduleBytes": 25405448,
+    "texturesBytes": 4072432,
+    "decodedGeometryBytes": 47317116,
+    "primitives": 140
   }
 }

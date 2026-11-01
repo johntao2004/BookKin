@@ -146,6 +146,7 @@ export function BookMetadataEditor({ book, layout = "page", bibliographyFallback
   onSaveFailed: (message: string) => void;
 }) {
   const { can } = usePermissions();
+  const canEdit = can("library.edit");
   const queryClient = useQueryClient();
   const bookId = book?.id;
   const contentSource: ContentMetadataSource | undefined = bookId ? { type: "BOOK", id: bookId } : undefined;
@@ -258,7 +259,7 @@ export function BookMetadataEditor({ book, layout = "page", bibliographyFallback
   };
 
   const save = () => {
-    if (!book || !query.data) return;
+    if (!canEdit || !book || !query.data) return;
     const original = query.data;
     const subjectChanged = JSON.stringify(form.subjectCodes) !== JSON.stringify(original.subjectCodes ?? []);
     const authorFallbackUnchanged = layout === "detail"
@@ -355,7 +356,7 @@ export function BookMetadataEditor({ book, layout = "page", bibliographyFallback
   };
 
   const executeWriteBack = async () => {
-    if (!preview) return;
+    if (!can("library.files") || !preview) return;
     setBusy(true);
     setError("");
     try {
@@ -409,7 +410,7 @@ export function BookMetadataEditor({ book, layout = "page", bibliographyFallback
   };
 
   const replaceCover = async (file: File) => {
-    if (!book) return;
+    if (!canEdit || !book) return;
     setBusy(true);
     setError("");
     try {
@@ -431,7 +432,7 @@ export function BookMetadataEditor({ book, layout = "page", bibliographyFallback
       : preview ? <Button variant="contained" disabled={busy || preview.conflicts.length > 0} onClick={executeWriteBack}>
         {busy ? "正在提交…" : "确认写回原文件"}
       </Button>
-      : <Button variant="contained" disabled={busy || !form.title.trim() || !form.authors.trim()} onClick={save}>
+      : <Button variant="contained" disabled={!canEdit || busy || !form.title.trim() || !form.authors.trim()} onClick={save}>
         {busy ? "正在保存…" : form.writeBack ? "保存并预览" : "保存"}
       </Button>}
   </>;
@@ -444,8 +445,8 @@ export function BookMetadataEditor({ book, layout = "page", bibliographyFallback
         <DialogContent><Typography>当前上传的自定义封面图片将被删除，无法撤销。确认后将恢复书籍默认封面。</Typography></DialogContent>
         <DialogActions>
           <Button disabled={busy} onClick={() => setResetCoverOpen(false)}>取消</Button>
-          <Button variant="contained" disabled={busy} onClick={async () => {
-            if (!book) return;
+          <Button variant="contained" disabled={!canEdit || busy} onClick={async () => {
+            if (!canEdit || !book) return;
             setBusy(true); setError("");
             try {
               await api.resetBookCover(book.id);
@@ -460,7 +461,7 @@ export function BookMetadataEditor({ book, layout = "page", bibliographyFallback
       </Dialog>
       {query.isPending ? <Stack sx={{ py: 8, alignItems: "center" }}><CircularProgress /></Stack>
         : query.isError ? <Alert severity="error">无法读取书籍元数据。</Alert> : (
-          <MetadataEditorForm value={form} onChange={update} disabled={busy || preparingWriteBack || Boolean(preview)} aiEnabled={can("library.edit")} aiContentSource={contentSource}
+          <MetadataEditorForm value={form} onChange={update} disabled={!canEdit || busy || preparingWriteBack || Boolean(preview)} aiEnabled={canEdit} aiContentSource={contentSource}
             actions={editorActions}
             knowledgeAvailable={can("knowledge.view")}
             knowledgeTerms={knowledgeTermsEdited.current ? knowledgeTerms : query.data?.knowledgeTerms}
@@ -473,19 +474,19 @@ export function BookMetadataEditor({ book, layout = "page", bibliographyFallback
             coverUrl={query.data?.coverUrl ?? book?.coverUrl} coverAlt="当前书籍封面"
             coverDetails={<Chip label={book?.format} variant="outlined" />}
             coverActions={<>
-              <Button variant="outlined" disabled={busy || Boolean(preview)} onClick={() => coverInput.current?.click()}>更换封面</Button>
+              <Button variant="outlined" disabled={!canEdit || busy || Boolean(preview)} onClick={() => coverInput.current?.click()}>更换封面</Button>
               <Button variant="outlined" disabled={busy || Boolean(preview)} onClick={() => void readSource()}>读取原书资料</Button>
-                <Button color="inherit" disabled={busy || Boolean(preview)} onClick={() => setResetCoverOpen(true)}>恢复默认封面</Button>
-              <input ref={coverInput} hidden type="file" accept="image/jpeg,image/png,image/webp" onChange={(event: any) => { const file = event.target.files?.[0]; if (file) void replaceCover(file); event.target.value = ""; }} />
+              <Button color="inherit" disabled={!canEdit || busy || Boolean(preview)} onClick={() => setResetCoverOpen(true)}>恢复默认封面</Button>
+              <input ref={coverInput} hidden type="file" accept="image/jpeg,image/png,image/webp" disabled={!canEdit || busy || Boolean(preview)} onChange={(event: any) => { const file = event.target.files?.[0]; if (file) void replaceCover(file); event.target.value = ""; }} />
             </>} extraFields={() => (
-              <ThemaSubjectField value={form.subjectCodes} disabled={busy || Boolean(preview)} contentSource={contentSource}
+              <ThemaSubjectField value={form.subjectCodes} disabled={!canEdit || busy || Boolean(preview)} contentSource={contentSource}
                 onChange={subjectCodes => { editedFields.current.add("subjectCodes"); setForm(current => ({ ...current, subjectCodes })); setPreview(null); }} />
             )}>
             {preview ? <Stack spacing={2.25} sx={{ pt: 1 }}>
               <Typography variant="h5" component="h3">确认写回原文件</Typography>
               <Typography>是否将刚刚保存的元信息同步到原文件？</Typography>
               {preview.conflicts.map((conflict) => <Alert key={`${conflict.code}-${conflict.path}`} severity="error">{conflict.message}</Alert>)}
-            </Stack> : <FormControlLabel control={<Checkbox disabled={busy || !can("library.files")} checked={form.writeBack && can("library.files")} onChange={(event: any) => update("writeBack", event.target.checked)} />} label={`同时写回 ${book?.format ?? ""} 原文件`} />}
+            </Stack> : <FormControlLabel control={<Checkbox disabled={!canEdit || busy || !can("library.files")} checked={form.writeBack && can("library.files")} onChange={(event: any) => update("writeBack", event.target.checked)} />} label={`同时写回 ${book?.format ?? ""} 原文件`} />}
           </MetadataEditorForm>
         )}
         {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}

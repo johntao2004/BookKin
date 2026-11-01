@@ -37,12 +37,14 @@ const cssPairs = [
   ...Object.entries(tokens.typography.fontWeight).map(([key, value]) => [`--typography-font-weight-${kebab(key)}`, value]),
   ...Object.entries(tokens.shadow).map(([key, value]) => [`--shadow-${kebab(key)}`, value]),
   ...Object.entries(tokens.layout).map(([key, value]) => [`--layout-${kebab(key)}`, `${value}px`]),
+  ...Object.entries(tokens.mingLibrary?.interface ?? {}).map(([key, value]) => [`--ming-library-${kebab(key)}`, value]),
 ];
 const css = `/* Generated from design/tokens.json. Do not edit. */\n:root {\n${cssPairs.map(([key, value]) => `  ${key}: ${value};`).join("\n")}\n}\n`;
 
 const outputs = [
   [resolve(outDir, "generated-tokens.ts"), ts],
   [resolve(outDir, "generated-tokens.css"), css],
+  [resolve(root, "apps/web/public/assets/ming-library/design-tokens.css"), css],
 ];
 
 if (check) {

@@ -11,11 +11,16 @@ vi.mock("epubjs", () => ({ default: vi.fn() }));
 
 function createReaderMocks() {
   const contentsDocument = document.implementation.createHTMLDocument("EPUB contents");
+  const contents = {
+    document: contentsDocument,
+    window,
+    cfiFromRange: vi.fn((_range: Range, _ignoreClass?: string) => "epubcfi(stable-range)"),
+  };
   const callbacks: Record<string, unknown> = {};
   const rendition = {
     hooks: { content: { register: vi.fn() } },
     on: vi.fn((name: string, callback: unknown) => { callbacks[name] = callback; }),
-    getContents: vi.fn(() => [{ document: contentsDocument, window }]),
+    getContents: vi.fn(() => [contents]),
     themes: { register: vi.fn(), select: vi.fn(), fontSize: vi.fn() },
     display: vi.fn(async () => undefined),
     prev: vi.fn(async () => undefined),
@@ -37,7 +42,7 @@ function createReaderMocks() {
     },
     destroy: vi.fn(),
   };
-  return { book, callbacks, contentsDocument, rendition };
+  return { book, callbacks, contents, contentsDocument, rendition };
 }
 
 function baseProps(onPosition = vi.fn()) {
@@ -86,6 +91,35 @@ describe("EpubDocumentReader flow", () => {
     localStorage.removeItem("bookkin-site-theme");
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
+  });
+
+  it("activates current article notes through repainted fragments without reloading the book", async () => {
+    Object.defineProperty(mocks.contentsDocument, "defaultView", { configurable: true, value: window });
+    mocks.contentsDocument.body.innerHTML = '<p id="p-1">已有笔记原文</p><p id="p-2">纯高亮原文</p>';
+    const activate = vi.fn();
+    const props = { ...baseProps(), flow: "scrolled-doc" as const, onAnnotationActivate: activate,
+      annotations: [
+        { id: "note-one", bookId: "book-1", type: "NOTE" as const, style: "HIGHLIGHT" as const, locator: "article.xhtml#p-1", quote: "已有笔记原文", note: "已有笔记", createdAt: "2026-10-28" },
+        { id: "plain", bookId: "book-1", type: "HIGHLIGHT" as const, style: "HIGHLIGHT" as const, locator: "article.xhtml#p-2", quote: "纯高亮原文", createdAt: "2026-10-28" },
+      ] };
+    const view = render(<TestProviders><EpubDocumentReader {...props} /></TestProviders>);
+    await waitFor(() => expect(mocks.contentsDocument.querySelector("[data-annotation-id='note-one']")).not.toBeNull());
+    const note = () => mocks.contentsDocument.querySelector<HTMLElement>("[data-annotation-id='note-one']")!;
+    expect(note()).toHaveAttribute("role", "button");
+    expect(note()).toHaveAttribute("tabindex", "0");
+    fireEvent.click(note());
+    expect(activate).toHaveBeenCalledExactlyOnceWith("note-one");
+    fireEvent.click(mocks.contentsDocument.querySelector("[data-annotation-id='plain']")!);
+    expect(activate).toHaveBeenCalledTimes(1);
+    const updated = vi.fn();
+    view.rerender(<TestProviders><EpubDocumentReader {...props} onAnnotationActivate={updated} /></TestProviders>);
+    fireEvent.keyDown(note(), { key: "Enter" });
+    expect(updated).toHaveBeenCalledExactlyOnceWith("note-one");
+    expect(mocks.book.renderTo).toHaveBeenCalledTimes(1);
+    const remove = vi.spyOn(mocks.contentsDocument, "removeEventListener");
+    view.unmount();
+    expect(remove).toHaveBeenCalledWith("click", expect.any(Function), true);
+    expect(remove).toHaveBeenCalledWith("keydown", expect.any(Function), true);
   });
 
   it("resolves headings in one EPUB document to distinct bookmark boundaries without duplicate loads", async () => {
@@ -166,6 +200,30 @@ describe("EpubDocumentReader flow", () => {
     dispatchHorizontalSwipe(mocks.contentsDocument, 20, 260);
     expect(mocks.rendition.prev).not.toHaveBeenCalled();
     expect(mocks.rendition.next).not.toHaveBeenCalled();
+  });
+
+  it("rebuilds selected CFIs without inline annotation wrappers and falls back to epub.js's locator", async () => {
+    const props = baseProps();
+    const rect = { left: 20, top: 30, right: 70, bottom: 50, width: 50, height: 20 };
+    const nativeRange = { getBoundingClientRect: () => rect } as unknown as Range;
+    const nativeSelection = {
+      toString: () => "所选原文",
+      rangeCount: 1,
+      getRangeAt: () => nativeRange,
+    } as unknown as Selection;
+    const getSelection = vi.spyOn(window, "getSelection").mockReturnValue(nativeSelection);
+    render(<TestProviders><EpubDocumentReader {...props} flow="scrolled-doc" /></TestProviders>);
+    await waitFor(() => expect(mocks.callbacks.selected).toBeDefined());
+    const select = mocks.callbacks.selected as (locator: string, contents: typeof mocks.contents) => void;
+
+    act(() => select("epubcfi(event-locator)", mocks.contents));
+    expect(mocks.contents.cfiFromRange).toHaveBeenLastCalledWith(nativeRange, "page-annotation-inline");
+    expect(props.onSelect).toHaveBeenLastCalledWith(expect.objectContaining({ quote: "所选原文", locator: "epubcfi(stable-range)" }));
+
+    mocks.contents.cfiFromRange.mockImplementationOnce(() => { throw new Error("无法转换范围"); });
+    act(() => select("epubcfi(fallback-locator)", mocks.contents));
+    expect(props.onSelect).toHaveBeenLastCalledWith(expect.objectContaining({ locator: "epubcfi(fallback-locator)" }));
+    getSelection.mockRestore();
   });
 
   it("keeps the ordinary EPUB flow paginated with previous and next controls", async () => {

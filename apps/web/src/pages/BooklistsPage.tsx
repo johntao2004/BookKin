@@ -37,8 +37,8 @@ export function BooklistsPage() {
     enabled: ready,
   });
   const all = booklistsQuery.data?.items ?? [];
-  const mine = user ? all.filter((booklist) => booklist.ownedByViewer) : [];
-  const discovery = all.filter((booklist) => !user || !booklist.ownedByViewer);
+  const mine = user ? all.filter((booklist) => booklist.ownedByViewer && booklist.visibility === "PRIVATE") : [];
+  const discovery = all.filter((booklist) => booklist.visibility === "PUBLIC" || (user && booklist.visibility === "MEMBERS"));
 
   const updateQuery = (value: string) => {
     const next = new URLSearchParams(params);

@@ -28,6 +28,13 @@ beforeEach(() => {
 afterEach(() => vi.restoreAllMocks());
 
 describe("reading posts", () => {
+  it.each(["BOOK", "ARTICLE"] as const)("limits AI writing assistance to book posts (%s)", kind => {
+    render(<TestProviders><PostEditor initialKind={kind} initialSourceId="source-one" sourceTitle="当前来源" onClose={vi.fn()} onSaved={vi.fn()} /></TestProviders>);
+    expect(screen.getByRole("textbox", { name: "随笔正文" })).toBeInTheDocument();
+    if (kind === "BOOK") expect(screen.getByRole("button", { name: "AI 写作辅助" })).toBeInTheDocument();
+    else expect(screen.queryByRole("button", { name: "AI 写作辅助" })).not.toBeInTheDocument();
+  });
+
   it.each<PostFilter>(["BOOK", "ARTICLE", "ALL"])("loads only the requested %s collection and retains independent detail URLs", async kind => {
     render(<TestProviders initialPath={`/annotations/${kind.toLowerCase()}?view=posts`}><ReadingNotesPage kind={kind} /></TestProviders>);
     expect(screen.getByRole("heading", { name: "读书录", level: 1 })).toBeInTheDocument();

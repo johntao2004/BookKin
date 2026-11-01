@@ -24,6 +24,12 @@ public class AuditService {
     }
     public record LoginEntry(UUID id, UUID actorId, String subjectId, String outcome, String ip, java.time.OffsetDateTime occurredAt) {}
 
+    @org.springframework.transaction.annotation.Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
+    public void recordIndependent(UUID actorId, String eventType, String subjectType, String subjectId, String sourcePath,
+                                  String targetPath, String beforeFingerprint, String afterFingerprint, String outcome, String detail) {
+        record(actorId, eventType, subjectType, subjectId, sourcePath, targetPath, beforeFingerprint, afterFingerprint, outcome, detail);
+    }
+
     public void record(UUID actorId, String eventType, String subjectType, String subjectId, String sourcePath,
                        String targetPath, String beforeFingerprint, String afterFingerprint, String outcome, String detail) {
         dsl.execute("""

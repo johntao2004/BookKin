@@ -1,9 +1,9 @@
-// 按九张参考视图重建的项目尺度估计，并非游戏实测尺寸；Blender 使用相同约定，导出 Y 轴向上。
+// 宫殿内景沿用既有书架与通行尺寸；建筑为原创设计，Blender 导出 Y 轴向上。
 /**
- * Project-scale estimates reconstructed from the nine supplied views, not
- * surveyed game dimensions. Blender uses the same contract and exports Y-up.
+ * Original palace interior with stable catalog and circulation dimensions.
+ * These are project-scale estimates; Blender uses the same Y-up contract.
  */
-export const REFERENCE_LIBRARY_ASSET_REVISION = '20261020-terminal-arches-r42';
+export const REFERENCE_LIBRARY_ASSET_REVISION = '20261023-palace-furniture-r46';
 export const REFERENCE_LIBRARY_DELIVERY_REVISION = `${REFERENCE_LIBRARY_ASSET_REVISION}-loading-v1`;
 
 export const REFERENCE_LIBRARY = {
@@ -55,29 +55,13 @@ export const REFERENCE_BOOK_CENTER_OFFSET = REFERENCE_LIBRARY.shelfBackThickness
   + REFERENCE_LIBRARY.bookRearGap + REFERENCE_LIBRARY.book.coverWidth * 0.96 / 2;
 
 export function referenceLibraryRoofY(x: number, z = 0) {
-  if (Math.abs(x) <= REFERENCE_LIBRARY.galleryInnerX) {
-    const normalized = Math.min(1, Math.abs(x) / REFERENCE_LIBRARY.galleryInnerX);
-    return REFERENCE_LIBRARY.vaultSpring + (REFERENCE_LIBRARY.height - REFERENCE_LIBRARY.vaultSpring)
-      * Math.sqrt(Math.max(0, 1 - normalized * normalized));
-  }
-  // 侧桶拱横跨大厅，顶面高度随纵向位置变化；固定起拱高度会让飞行在每跨两端穿过曲面。
-  // Side barrels run across the hall, so their ceiling depends on the bay's
-  // longitudinal position. A constant spring height lets flight cross the
-  // curved surface near either end of every bay.
-  const endBay = Math.abs(z) >= 15;
-  const bayDistance = endBay ? Math.abs(Math.abs(z) - 17.5) : Math.min(...REFERENCE_BAY_BOUNDARIES.slice(1).map((end, i) =>
-    Math.abs(z - (REFERENCE_BAY_BOUNDARIES[i] + end) / 2)));
-  const normalized = Math.min(1, bayDistance / (endBay ? 2.5 : REFERENCE_LIBRARY.sideVaultRadius));
-  const sideRoof = REFERENCE_LIBRARY.sideVaultSpring + REFERENCE_LIBRARY.sideVaultRise
-    * Math.sqrt(Math.max(0, 1 - normalized * normalized));
-  // 窄木封边从主拱起点过渡至侧桶拱；飞行高度需低于真实过渡，包括较低两端。
-  // The narrow timber flashing rises/falls from the main spring to each side
-  // barrel. Keep flight below that actual transition, including its low ends.
-  if (Math.abs(x) < 8.97) {
-    return REFERENCE_LIBRARY.vaultSpring + (sideRoof - REFERENCE_LIBRARY.vaultSpring)
-      * ((Math.abs(x) - 8.79) / (8.97 - 8.79));
-  }
-  return sideRoof;
+  // 飞行上限与宫殿实体梁、藻井保持一致，跨梁时预留头部净空。
+  // Palace beams are actual solid colliders. The flight envelope also reserves
+  // headroom below the lowest transverse beam when crossing its footprint.
+  const beamDistance = Math.min(...REFERENCE_BAY_BOUNDARIES.map(bay => Math.abs(z - bay)));
+  if (Math.abs(x) >= 8.5) return beamDistance <= 0.6 ? 16.85 : 17.0;
+  if (beamDistance <= 0.6) return 16.85;
+  return 21.9; // Below the deepest coffer trim, whose underside is 21.99.
 }
 
 export interface ReferencePoint { x: number; y: number; z: number }

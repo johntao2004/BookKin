@@ -145,7 +145,7 @@ export function PostEditor({ saved, initialKind, initialSourceId, sourceTitle, a
       <TextField label="标题" fullWidth required disabled={busy} value={draft.title} slotProps={{ htmlInput: { maxLength: 200 } }} onChange={event => change({ title: event.target.value })} />
       <Stack spacing={1}><Typography component="label">可见范围</Typography><Select label="可见范围" aria-label="可见范围" value={draft.visibility} disabled={busy} onChange={event => change({ visibility: event.target.value })}><MenuItem value="PRIVATE">仅自己</MenuItem><MenuItem value="LIBRARY">书库共享</MenuItem></Select></Stack>
       </Box>
-      {can("notes.edit") && <Box><AiAssistantButton source="NOTE_DRAFT" label="AI 写作辅助" draft={draft.markdown} disabled={busy} onApply={text => change({ markdown: text })} /></Box>}
+      {draft.kind === "BOOK" && can("notes.edit") && <Box><AiAssistantButton source="NOTE_DRAFT" label="AI 写作辅助" draft={draft.markdown} disabled={busy} onApply={text => change({ markdown: text })} /></Box>}
       {preview ? <section aria-label="随笔预览" className={proseClass} dangerouslySetInnerHTML={{ __html: html }} /> : <TextField className="bk-post-writing-area" label="正文（Markdown）" aria-label="随笔正文" placeholder="# 阅读感想" fullWidth multiline required minRows={fullscreen ? 18 : 14} maxRows={fullscreen ? undefined : 24} disabled={busy} value={draft.markdown} slotProps={{ htmlInput: { maxLength: 500000 } }} onChange={event => change({ markdown: event.target.value })} />}
     </Box>
   </Drawer>;

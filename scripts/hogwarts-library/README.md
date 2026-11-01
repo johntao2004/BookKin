@@ -1,3 +1,29 @@
+# 当前：中式宫殿藏书楼 r46
+
+用户于 2026-10-23 要求替换西式建筑。当前唯一运行版本为 `20261023-palace-furniture-r46`。
+`build_library.py` 复用现有书架、楼梯和回廊的精确坐标；在高度变换后执行
+`palace_architecture.fragment`，替换西式建筑模块与碰撞，再统一导出。
+`palace_detail_helpers.fragment` 与 `palace_ornament.fragment` 提供曲面斗拱、卷草、莲瓣和浅浮雕。
+`palace_furniture.fragment` 与 `palace_doors.fragment` 重建硬木书案、长凳、木框台灯及带铜环的分格门墙。
+`source-textures.json` 保留建模输入图片的稳定映射，避免当前材质清单移除肖像材质后破坏重建。
+新建筑采用原创几何，未导入外部建筑模型。匾额转为网格；设置 `BOOKKIN_CJK_FONT`
+可指定中文字体，默认支持 macOS STHeiti 或 Linux Noto Sans CJK。
+
+```sh
+blender -b -t 2 --python-exit-code 1 --python scripts/hogwarts-library/build_library.py -- --stage full
+node scripts/hogwarts-library/export_modules.mjs
+# PYTHON 指向安装 NumPy 的解释器；Blender 自带 Python 可用。
+PYTHON=/path/to/python node scripts/hogwarts-library/verify_modules.mjs
+blender -b -t 2 --python-exit-code 1 --python scripts/hogwarts-library/verify_palace.py
+```
+
+`verify_palace.py` 对实际导出几何验证双层外侧通道、336 排书籍支撑、封闭屋顶与端墙、直梁及开间入口。
+旧的 `verify_walk_clearance.py` 和下文 r27–r42 专项检查固定旧建筑契约，仅作为历史记录，不代表当前验收。
+Web 端身体碰撞、楼梯、选书、资源生命周期测试和实际浏览器交互需要另外执行。
+可编辑 `.blend` 与未压缩 GLB 在 Git 忽略的 `deliverables/` 中，运行模块在 `apps/web/public/assets/hogwarts-library/`。
+
+## 历史说明
+
 Current model: `20261020-end-b-door-r38`. A closed paneled timber double door with brass hardware occupies the B-end ground wall between its two compass panels. The door stays flush to the wall, with its own collision; all r37 architecture and the gallery globe remain.
 
 Previous model: `20261020-gallery-globe-r35`. The existing globe stands on the A-end projecting upper platform below the central portrait at x=0, z=-15.0, baseY=7.44. Its dimensions are unchanged and collision follows it; retain the r34 vault repairs and ground-level search orb.

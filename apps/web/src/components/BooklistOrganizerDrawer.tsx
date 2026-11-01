@@ -162,9 +162,11 @@ export function BooklistOrganizerDrawer({ open, booklist, onClose, onChanged }: 
             ) : <EmptyState compact title="书目中暂无书籍" />}
           </Box>
           <Stack component="aside" sx={{ gap: `${tokens.spacing[3]}px`, position: { md: "sticky" }, top: `${tokens.spacing[6]}px` }}>
-            <Stack direction="row" sx={{ alignItems: "center", minHeight: tokens.layout.touchTarget, gap: `${tokens.spacing[2]}px` }}>
-              <Typography variant="h5" sx={{ flexShrink: 0 }}>加入藏书</Typography>
-              <TextField aria-label="搜索书名或作者" placeholder="搜索书名或作者" value={query} onChange={(event: any) => setQuery(event.target.value)} sx={{ flex: 1, minWidth: 0 }} />
+            <Stack sx={{ gap: `${tokens.spacing[3]}px` }}>
+              <Stack direction="row" sx={{ alignItems: "center", minHeight: tokens.layout.touchTarget }}>
+                <Typography variant="h5">加入藏书</Typography>
+              </Stack>
+              <TextField fullWidth aria-label="搜索书名或作者" placeholder="搜索书名或作者" value={query} onChange={(event: any) => setQuery(event.target.value)} />
             </Stack>
             {sourceQuery.isPending ? <Stack sx={{ alignItems: "center", py: `${tokens.spacing[8]}px` }}><CircularProgress size={24} /></Stack> : candidates.length ? (
               <List sx={{ p: 0, maxHeight: { md: "62vh" }, overflowY: "auto", border: 1, borderColor: "divider", borderRadius: `${tokens.radius.lg}px` }}>

@@ -27,6 +27,7 @@ export function applyPdfTextAnnotations(
   const normalizedText = characters.map((character) => character.value).join("");
   const occupied = new Set<number>();
   const segmentsBySpan = new Map<HTMLSpanElement, Segment[]>();
+  const notedAnnotations = new Set<string>();
 
   annotations
     .filter((annotation) => annotation.type !== "BOOKMARK" && pdfPageFromLocator(annotation.locator) === pageNumber && annotation.quote)
@@ -54,7 +55,9 @@ export function applyPdfTextAnnotations(
       });
     });
 
-  segmentsBySpan.forEach((segments, span) => {
+  for (const span of spans) {
+    const segments = segmentsBySpan.get(span);
+    if (!segments) continue;
     const text = span.textContent ?? "";
     const fragment = document.createDocumentFragment();
     let cursor = 0;
@@ -63,6 +66,13 @@ export function applyPdfTextAnnotations(
       const mark = document.createElement("mark");
       mark.dataset.annotationId = segment.annotation.id;
       mark.dataset.highlightColor = segment.annotation.color ?? "YELLOW";
+      if (segment.annotation.note?.trim()) {
+        mark.setAttribute("role", "button");
+        mark.setAttribute("aria-label", "查看笔记");
+        mark.tabIndex = notedAnnotations.has(segment.annotation.id) ? -1 : 0;
+        mark.style.cursor = "pointer";
+        notedAnnotations.add(segment.annotation.id);
+      }
       mark.textContent = text.slice(segment.start, segment.end);
       mark.style.color = "inherit";
       mark.style.borderRadius = "var(--radius-md)";
@@ -90,7 +100,7 @@ export function applyPdfTextAnnotations(
     });
     if (cursor < text.length) fragment.append(text.slice(cursor));
     span.replaceChildren(fragment);
-  });
+  }
 }
 
 function pdfPageFromLocator(locator?: string) {

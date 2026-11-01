@@ -42,7 +42,7 @@ class MetadataProviderSettingsServiceTest {
         assertThat(view.providers()).extracting(MetadataProviderSettingsService.MetadataProviderView::available)
                 .containsExactly(true, true, true);
         assertThat(view.providers().get(2).homepage()).isEqualTo("https://developers.google.com/books");
-        verify(permissions).require(OWNER, "settings.ai.view");
+        verify(permissions).require(OWNER, "settings.metadata.view");
         assertThat(service.isEnabled(MetadataSource.OPEN_LIBRARY)).isFalse();
         assertThat(service.isEnabled(MetadataSource.WIKIDATA)).isFalse();
         assertThat(service.isEnabled(MetadataSource.GOOGLE_BOOKS)).isTrue();
@@ -75,7 +75,7 @@ class MetadataProviderSettingsServiceTest {
         var view = service.update(List.of(new MetadataProviderSettingsService.ProviderSettingInput("WIKIDATA", true)), OWNER);
 
         verify(repository).save(List.of(new MetadataProviderSettingsRepository.ProviderSetting("WIKIDATA", true)), OWNER_ID);
-        verify(permissions).require(OWNER, "settings.ai.edit");
+        verify(permissions).require(OWNER, "settings.metadata.edit");
         verify(audit).record(OWNER_ID, "METADATA_PROVIDER_SETTINGS_CHANGED", "METADATA_PROVIDER_SETTINGS", "1",
                 null, null, null, null, "SUCCEEDED", "{\"providers\":[{\"id\":\"WIKIDATA\",\"enabled\":true}]}");
         assertThat(view.providers().get(1).enabled()).isTrue();

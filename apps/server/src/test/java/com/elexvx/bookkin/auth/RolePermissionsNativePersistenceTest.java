@@ -52,10 +52,23 @@ class RolePermissionsNativePersistenceTest {
         assertThat(permissions.snapshot(admin).grants()).contains("library.edit").doesNotContain("settings.recycle.purge","roles.manage");
         var input=without(UserRole.ADMIN,"knowledge.generate"); var saved=permissions.update(input,owner);
         assertThat(saved.revision()).isEqualTo(1);
+        assertThat(db.fetchOne("select grants->>'_permissionModelVersion' as version from role_permission_policy where id = 1")
+            .get("version", String.class)).isEqualTo("4");
         assertThat(new RolePermissionService(db,users,new AuditService(db)).snapshot(admin).grants()).doesNotContain("knowledge.generate");
         assertThat(assertThrows(ApiException.class,()->permissions.update(input,owner)).code()).isEqualTo("ROLE_POLICY_CONFLICT");
         assertThat(db.fetchCount(db.selectFrom("audit_events").where("event_type = 'ROLE_PERMISSIONS_UPDATED'"))).isEqualTo(1);
         assertThat(permissions.snapshot(owner).grants()).contains("roles.manage","settings.recycle.purge");
+    }
+    @Test void legacyPolicyDefaultsNewQueryAndDownloadCodesButVersionedPolicyKeepsExplicitRevocations() {
+        db.execute("update role_permission_policy set grants = ?::jsonb where id = 1",
+            "{\"ADMIN\":[\"library.view\",\"reader.read\"],\"MEMBER\":[\"library.view\",\"reader.read\"]}");
+        assertThat(permissions.snapshot(admin).grants()).contains("library.query", "library.download");
+        assertThat(permissions.snapshot(member).grants()).contains("library.query", "library.download").doesNotContain("library.files");
+
+        db.execute("update role_permission_policy set grants = ?::jsonb where id = 1",
+            "{\"_permissionModelVersion\":2,\"grants\":{\"ADMIN\":[\"library.view\",\"reader.read\"],\"MEMBER\":[\"library.view\",\"reader.read\"]}}");
+        assertThat(permissions.snapshot(admin).grants()).doesNotContain("library.query", "library.download");
+        assertThat(permissions.snapshot(member).grants()).doesNotContain("library.query", "library.download").doesNotContain("library.files");
     }
     @Test void nonOwnerCannotConfigureAndRoleCeilingsAndDependenciesAreEnforced() {
         assertThat(assertThrows(ApiException.class,()->permissions.update(without(UserRole.ADMIN,"knowledge.generate"),admin)).code()).isEqualTo("OWNER_REQUIRED");
@@ -86,6 +99,20 @@ class RolePermissionsNativePersistenceTest {
         assertThat(SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream().map(a -> a.getAuthority()).toList()).containsExactly("ROLE_MEMBER");
         users.toggleStatus(memberId);
         assertThat(request("member","/api/v1/books").getStatus()).isEqualTo(401);
+    }
+    @Test void downloadGrantDoesNotAuthorizeReaderStreamAndSignedInQueryCannotUsePublicListAsFallback() throws Exception {
+        permissions.update(without(UserRole.ADMIN, "reader.read"), owner);
+        assertThat(request("admin", "/api/v1/books/00000000-0000-0000-0000-000000000001/download").getStatus()).isEqualTo(200);
+        assertThat(request("admin", "/api/v1/books/00000000-0000-0000-0000-000000000001/content").getStatus()).isEqualTo(403);
+
+        permissions.update(without(UserRole.ADMIN, "library.query"), owner);
+        assertThat(request("admin", "/api/v1/display-books").getStatus()).isEqualTo(403);
+        SecurityContextHolder.getContext().setAuthentication(new org.springframework.security.authentication.AnonymousAuthenticationToken(
+            "anonymous-test", "anonymous", List.of(new SimpleGrantedAuthority("ROLE_ANONYMOUS"))));
+        var response = new MockHttpServletResponse();
+        new RolePermissionFilter(users, permissions).doFilter(new MockHttpServletRequest("GET", "/api/v1/display-books"), response,
+            (req, res) -> res.getWriter().write("allowed"));
+        assertThat(response.getStatus()).isEqualTo(200);
     }
     @Test void savedFilePreviewsCannotBypassRevokedActionOrMemberCeiling() {
         var operations=mock(FileOperationRepository.class);

@@ -104,8 +104,10 @@ describe('reference-library architecture integration', () => {
     };
     expect(config.sculptures).toEqual({count: 0, removed: 14, niches: 0, colliders: 0});
     const remainingStatueColliders = config.colliders.filter(collider =>
-      /scholar|statue|sculpture|niche|pedestal|plinth/i.test(collider.id));
+      !collider.id.startsWith('palace-door-plinth-')
+      && /scholar|statue|sculpture|niche|pedestal|plinth/i.test(collider.id));
     expect(remainingStatueColliders).toEqual([]);
+    expect(config.colliders.filter(c => c.id.startsWith('palace-door-plinth-'))).toHaveLength(4);
 
     for (const side of [-1, 1]) {
       for (const z of [-10, -5, 0, 5, 10, 15]) {
@@ -122,7 +124,7 @@ describe('reference-library architecture integration', () => {
     expect(config.colliders.filter(c => retiredEndScreens.test(c.id))).toEqual([]);
     const runtime = collectCameraColliders(root, 'hall');
     expect(runtime.filter(c => retiredEndScreens.test(c.id))).toEqual([]);
-    for (const id of ['hall-floor', 'end-a-wall', 'end-b-wall', 'balcony-floor']) {
+    for (const id of ['hall-floor', 'palace-end-wall--1', 'palace-end-wall-1', 'balcony-floor']) {
       expect(runtime.some(c => c.id === id)).toBe(true);
     }
   });
@@ -212,53 +214,20 @@ describe('reference-library architecture integration', () => {
     }
   });
 
-  it('uses the raised storeys and a finite vertical roof envelope', () => {
-    expect(referenceLibraryRoofY(0)).toBe(R.height);
-    expect(referenceLibraryRoofY(R.width / 2)).toBe(R.sideVaultSpring);
-    for (let x = -R.width / 2; x <= R.width / 2; x += 0.25) {
-      expect(Number.isFinite(referenceLibraryRoofY(x))).toBe(true);
-      expect(referenceLibraryRoofY(x)).toBeGreaterThan(R.galleryY + R.upperCaseHeight);
-    }
-  });
-
-  it('matches both side barrels along z without changing the central vault height', () => {
-    for (const x of [-14.6, -12, -9, 9, 12, 14.6]) {
-      for (const centerZ of [-12.5, -7.5, -2.5, 2.5, 7.5, 12.5]) {
-        expect(referenceLibraryRoofY(x, centerZ)).toBeCloseTo(17.52);
-        expect(referenceLibraryRoofY(x, centerZ - 2.45)).toBeCloseTo(14.58);
-        expect(referenceLibraryRoofY(x, centerZ + 2.45)).toBeCloseTo(14.58);
-        expect(referenceLibraryRoofY(x, centerZ + 2.3)).toBeCloseTo(15.592916581);
-        expect(referenceLibraryRoofY(0, centerZ)).toBe(R.height);
-        expect(referenceLibraryRoofY(R.galleryInnerX, centerZ)).toBe(R.vaultSpring);
+  it('keeps flight below palace beams, coffers and side ceilings', () => {
+    for (let x = -R.width / 2; x <= R.width / 2; x += 0.5) {
+      for (let z = -20; z <= 20; z += 0.5) {
+        const roof = referenceLibraryRoofY(x, z);
+        expect(Number.isFinite(roof)).toBe(true);
+        expect(roof).toBeGreaterThan(R.galleryY + R.upperCaseHeight);
+        expect(roof).toBeLessThanOrEqual(21.99);
+        if (Math.abs(x) >= 8.5) expect(roof).toBeLessThanOrEqual(17.0);
       }
     }
-    // Conservative spring-height limits also cover the seams between barrels.
-    for (const z of [-20, -15, -10, -5, 0, 5, 10, 15, 20]) {
-      expect(referenceLibraryRoofY(12, z)).toBe(R.sideVaultSpring);
+    for (const z of [-15, -10, -5, 0, 5, 10, 15]) {
+      expect(referenceLibraryRoofY(0, z)).toBeLessThanOrEqual(16.85);
     }
-  });
-
-  it('follows the curved exhibition end roofs instead of a low flat soffit', () => {
-    for (const x of [-18.1, -12, -9, 9, 12, 18.1]) {
-      for (const end of [-1, 1]) {
-        expect(referenceLibraryRoofY(x, end * 17.5)).toBeCloseTo(17.52);
-        expect(referenceLibraryRoofY(x, end * 19.5)).toBeCloseTo(16.344);
-        expect(referenceLibraryRoofY(x, end * 15.5)).toBeCloseTo(16.344);
-        expect(referenceLibraryRoofY(x, end * 20)).toBeCloseTo(14.58);
-        expect(referenceLibraryRoofY(0, end * 17.5)).toBe(R.height);
-      }
-    }
-  });
-
-  it('keeps flight inside the narrow main and side roof transition', () => {
-    for (const z of [-17.5, -15, -12.5, 0, 12.5, 15, 17.5]) {
-      for (const side of [-1, 1]) {
-        const sideRoof = referenceLibraryRoofY(side * 9, z);
-        expect(referenceLibraryRoofY(side * 8.9, z)).toBeCloseTo(
-          R.vaultSpring + (sideRoof - R.vaultSpring) * (0.11 / 0.18),
-        );
-      }
-    }
+    expect(referenceLibraryRoofY(0, 2.5)).toBe(21.9);
   });
 
   it('validates collider and route data before creating a scene', () => {

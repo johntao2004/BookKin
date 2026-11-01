@@ -11,9 +11,15 @@ import org.junit.jupiter.api.Test;
 class MetadataEditingServiceTest {
     final BookMetadataRepository metadata = mock(BookMetadataRepository.class);
     final DisplayCatalogService display = mock(DisplayCatalogService.class);
-    final MetadataEditingService service = new MetadataEditingService(metadata, display);
+    final com.elexvx.bookkin.filemanagement.BookTitleFileService filenames = mock(com.elexvx.bookkin.filemanagement.BookTitleFileService.class);
+    final MetadataEditingService service = new MetadataEditingService(metadata, display, filenames);
     final UUID id = UUID.randomUUID();
     final Principal actor = () -> "owner";
+    @org.junit.jupiter.api.BeforeEach void savedMetadata() {
+        var saved = mock(BookMetadataRepository.BookMetadata.class);
+        when(saved.title()).thenReturn("书名");
+        when(metadata.find(id)).thenReturn(java.util.Optional.of(saved));
+    }
     @Test void appliesExplicitPublicAndPrivateChoicesWithoutChangingVisibilityForOlderClients() {
         service.update(id, null, false, actor);
         verify(display).setVisibility(id, false, actor);

@@ -12,6 +12,7 @@ import { readReaderSettings, type ReaderTheme } from "../components/readers/read
 import { bookKinThemeOptions, createAntdTheme, createBookKinTheme } from "./theme";
 
 const bookKinThemeStorageKey = "bookkin-site-theme";
+const hiddenLoadingIndicator = <span aria-hidden="true" />;
 
 interface BookKinThemeContextValue {
   mode: ReaderTheme;
@@ -67,7 +68,7 @@ export function BookKinThemeProvider({ children }: PropsWithChildren) {
 
   return (
     <BookKinThemeContext.Provider value={value}>
-      <ConfigProvider locale={zhCN} theme={antdTheme} wave={{ disabled: true }}>
+      <ConfigProvider locale={zhCN} theme={antdTheme} wave={{ disabled: true }} spin={{ indicator: hiddenLoadingIndicator }}>
         <UiThemeProvider theme={uiTheme}>
           <CssBaseline />
           <FeedbackProvider><ConfirmationProvider>{children}</ConfirmationProvider></FeedbackProvider>

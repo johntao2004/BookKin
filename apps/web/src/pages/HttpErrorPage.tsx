@@ -4,6 +4,7 @@ import { PageTitle, pageWidthSx } from "../components/PageHeader";
 import { Button } from "../ui/buttons";
 import { Stack, Typography } from "../ui/primitives";
 import { tokens } from "../theme/generated-tokens";
+import './http-error-page.css';
 
 export interface PageFailure { status?: number; code: string; reason: string; traceId?: string }
 export function pageFailure(error: unknown): PageFailure {
@@ -22,12 +23,15 @@ export function HttpErrorPage({ failure, title, actions, recovery, back, fullHei
     py: `${tokens.spacing[10]}px`, alignItems: "center", textAlign: "center", bgcolor: "background.default", color: "text.primary" }}>
     {back && <Stack sx={{ width: "100%", alignItems: "flex-start" }}>{back}</Stack>}
     <Stack sx={{ flex: 1, justifyContent: "center", width: "100%", maxWidth: tokens.layout.readingMax, alignItems: "center", gap: `${tokens.spacing[5]}px`, overflowWrap: "anywhere" }}>
-      <Typography variant="overline" color="primary.main">{failure.status ? `${failure.status} · ${label}` : label}</Typography>
-      <PageTitle>{title ?? label}</PageTitle>
+      <PageTitle className={failure.status ? 'http-error-status' : undefined} color={failure.status ? 'primary.main' : undefined}>
+        {failure.status ?? title ?? label}
+      </PageTitle>
+      {failure.status && <Typography component="h2">{label}</Typography>}
+      {failure.status && title && title !== label && <Typography>{title}</Typography>}
       <Typography>原因：{failure.reason}</Typography>
       <Stack spacing={1} sx={{ color: "text.secondary" }}>
-        <Typography variant="body2">错误代码：{failure.code}</Typography>
-        {failure.traceId && <Typography variant="body2">请求标识：{failure.traceId}</Typography>}
+        <Typography>错误代码：{failure.code}</Typography>
+        {failure.traceId && <Typography>请求标识：{failure.traceId}</Typography>}
       </Stack>
       {recovery && <Typography color="text.secondary">{recovery}</Typography>}
       {actions && <Stack direction={{ xs: "column", sm: "row" }} sx={{ width: { xs: "100%", sm: "auto" }, gap: `${tokens.spacing[3]}px` }}>{actions}</Stack>}

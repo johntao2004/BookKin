@@ -145,6 +145,12 @@ public class BookRepository {
                 Boolean.TRUE.equals(record.get("digitally_signed", Boolean.class))));
     }
 
+    /** Active file snapshots for coordinated title edits; recycled/deleted copies retain their history. */
+    public List<BookFile> findActiveFiles(UUID bookId) {
+        return dsl.fetch("select id from book_files where book_id = ? and status not in ('TRASHED', 'DELETED') order by id", bookId)
+                .getValues("id", UUID.class).stream().map(id -> findFile(id).orElseThrow()).toList();
+    }
+
     public Optional<BookFile> findPreferredFile(UUID bookId) {
         return dsl.fetchOptional("""
                 select * from book_files where book_id = ? and status = 'AVAILABLE'

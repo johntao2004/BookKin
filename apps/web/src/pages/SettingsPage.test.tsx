@@ -19,6 +19,7 @@ vi.mock("./RecycleBinPage", () => ({ RecycleBinPage: () => <p>回收站面板</p
 vi.mock("./LibraryRootsPage", () => ({ LibraryRootsPage: () => <p>书库面板</p> }));
 vi.mock("./ReaderFontsPage", () => ({ ReaderFontsPage: () => <p>字体面板</p> }));
 vi.mock("./AiSettingsPage", () => ({ AiSettingsPage: () => <p>AI 面板</p> }));
+vi.mock("./MetadataProviderSettingsPage", () => ({ MetadataProviderSettingsPage: () => <p>元数据来源面板</p> }));
 vi.mock("./MailSettingsPage", () => ({ MailSettingsPage: () => <p>邮件面板</p> }));
 vi.mock("./SiteSettingsPage", () => ({ SiteSettingsPage: () => <p>网站面板</p> }));
 
@@ -66,14 +67,14 @@ it("keeps owner-only services hidden from administrators including direct legacy
   expect(await screen.findByText("邮件面板")).toBeInTheDocument(); owner.unmount();
   authState.role = "ADMIN";
   renderSettings("/settings#services/mail");
-  expect(await screen.findByText("403 · 权限受限")).toBeInTheDocument();
+  expect(await screen.findByRole("heading", {level: 1, name: "403"})).toBeInTheDocument();
   expect(screen.queryByText("邮件面板")).not.toBeInTheDocument();
   expect(screen.queryByText("字体面板")).not.toBeInTheDocument();
 });
 
 it("denies members without mounting administrative panels", async () => {
   authState.role = "MEMBER"; renderSettings("/settings#reader-fonts");
-  expect(await screen.findByText("403 · 权限受限")).toBeInTheDocument();
+  expect(await screen.findByRole("heading", {level: 1, name: "403"})).toBeInTheDocument();
   expect(screen.queryByText("字体面板")).not.toBeInTheDocument();
   expect(screen.queryByText("书库面板")).not.toBeInTheDocument();
 });
@@ -85,6 +86,7 @@ it.each([
   ["#reader-fonts", "字体面板", "#services/reader-fonts"],
   ["#personalization", "网站面板", "#services/personalization"],
   ["#ai", "AI 面板", "#services/ai"],
+  ["#services/metadata", "元数据来源面板", "#services/metadata"],
   ["#users", "用户面板", "#users"],
   ["#users/sessions", "会话面板", "#users/sessions"],
   ["#users/logins", "登录面板", "#users/logins"],
@@ -113,6 +115,6 @@ it("separates security monitoring from user administration and groups external p
   expect(within(screen.getByRole("region", { name: "登录与安全" })).getAllByRole("tab").map(tab => tab.textContent)).toEqual(["安全策略", "在线会话", "登录日志"]);
   fireEvent.click(screen.getByRole("tab", { name: "外部服务" }));
   expect(await screen.findByText("AI 面板")).toBeInTheDocument();
-  expect(within(screen.getByRole("region", { name: "外部服务" })).getAllByRole("tab").map(tab => tab.textContent)).toEqual(["AI 服务", "邮件服务"]);
+  expect(within(screen.getByRole("region", { name: "外部服务" })).getAllByRole("tab").map(tab => tab.textContent)).toEqual(["AI 服务", "元数据来源", "邮件服务"]);
   expect(screen.queryByText("网站面板")).not.toBeInTheDocument();
 });

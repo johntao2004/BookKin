@@ -19,6 +19,7 @@ import { importVaultFile, unlockObjects, type UnlockedObject } from "../features
 import { VaultReader } from "../features/vault/VaultReader";
 import { VaultAccessGate } from "../features/vault/VaultAccessGate";
 import { useAuth } from "../auth/AuthContext";
+import { usePermissions } from "../auth/permissions";
 import { deviceKeys } from "../features/vault/device-keys";
 import "../features/content/content.css";
 
@@ -28,6 +29,12 @@ export function VaultPage() {
 function VaultContent() {
   const modal = useConfirmation();
   const { user } = useAuth();
+  const { can } = usePermissions();
+  const canRead = can("vault.read");
+  const canUpload = can("vault.upload");
+  const canDelete = can("vault.delete");
+  const permissions = useRef({ read: canRead, upload: canUpload, delete: canDelete });
+  permissions.current = { read: canRead, upload: canUpload, delete: canDelete };
   const userId = user?.id;
   const [opening, setOpening] = useState(true), [openingError, setOpeningError] = useState("");
   const [loadAttempt, setLoadAttempt] = useState(0);
@@ -63,7 +70,21 @@ function VaultContent() {
     finally { if (revision === epoch.current) setBusy(false); }
   };
   useEffect(() => {
+    if (!canUpload) {
+      operation.current?.abort();
+      if (!canRead) { key.current?.fill(0); key.current = null; setMaster(null); }
+    }
+  }, [canRead, canUpload]);
+  useEffect(() => {
     const controller = new AbortController(), revision = epoch.current;
+    if (!canRead) {
+      setOpening(false); setOpeningError(""); setSelected(null); setItems([]);
+      key.current?.fill(0); key.current = null; setMaster(null);
+      return () => {
+        epoch.current++; controller.abort(); operation.current?.abort();
+        key.current?.fill(0); key.current = null;
+      };
+    }
     setOpening(true); setOpeningError("");
     void (async () => {
       if (!userId) throw new Error("请重新登录后进入秘阁。");
@@ -100,39 +121,56 @@ function VaultContent() {
       epoch.current++; controller.abort(); operation.current?.abort();
       key.current?.fill(0); key.current = null;
     };
-  }, [loadAttempt, userId]);
+  }, [canRead, loadAttempt, userId]);
   const current = items.find(item => item.id === selected);
   return <PageContainer>
     <PageHeader eyebrow="PRIVATE VAULT" title={current ? current.metadata.title : "秘阁"} action={<Button onClick={lock}>锁定</Button>} />
     <div className="bk-content-stack">
       {error && <Alert type="error" title={error} closable onClose={() => setError("")} />}
       {opening ? <Skeleton active /> : openingError ? <Alert type="error" title={openingError} action={<Button onClick={() => setLoadAttempt(value => value + 1)}>重试</Button>} />
-        : !master ? <Skeleton active /> : current ? <VaultReader key={current.id} item={current} master={master} onClose={() => setSelected(null)}
+        : current && master && canRead ? <VaultReader key={current.id} item={current} master={master} onClose={() => setSelected(null)}
           onState={(reading, revision) => { if (key.current === master) setItems(previous => previous.map(item => item.id === current.id ? { ...item, reading, revision } : item)); }} />
           : <>
             <CatalogSection title="全部藏书" tools={<CatalogFilters
-              actions={<Button variant="contained" disabled={busy} onClick={() => uploadInput.current?.click()} sx={{ whiteSpace: "nowrap" }}>上传书籍</Button>}
-              extraTools={<TextField aria-label="搜索秘阁" placeholder="搜索书名" value={query} onChange={event => setQuery(event.target.value)}
-                sx={{ width: { xs: "100%", sm: tokens.spacing[24] * 2.5 }, maxWidth: "100%" }} />}
+              actions={canUpload ? <Button variant="contained" disabled={busy} onClick={() => { if (canUpload) uploadInput.current?.click(); }} sx={{ whiteSpace: "nowrap" }}>上传书籍</Button> : undefined}
+              extraTools={canRead ? <TextField aria-label="搜索秘阁" placeholder="搜索书名" value={query} onChange={event => setQuery(event.target.value)}
+                sx={{ width: { xs: "100%", sm: tokens.spacing[24] * 2.5 }, maxWidth: "100%" }} /> : undefined}
             />}>
-              <input ref={uploadInput} hidden disabled={busy} type="file" accept=".epub,.pdf" onChange={event => {
-                const file = event.target.files?.[0]; event.target.value = ""; if (!file) return;
+              <input ref={uploadInput} hidden disabled={busy || !canUpload} type="file" accept=".epub,.pdf" onChange={event => {
+                const file = event.target.files?.[0]; event.target.value = ""; if (!file || !canUpload) return;
                 void run(async revision => {
                   const controller = new AbortController(); operation.current = controller;
-                  await importVaultFile(file, master, setProgress, controller.signal);
-                  const list = await unlockObjects(master);
-                  if (revision === epoch.current) setItems(list);
+                  let activeMaster = key.current;
+                  if (!permissions.current.upload) return;
+                  if (!activeMaster) {
+                    const access = await vaultApi.open();
+                    activeMaster = unb64(access.key);
+                    if (activeMaster.length !== 32) { activeMaster.fill(0); throw new Error("内容密钥格式无效，请联系主人检查服务器配置。"); }
+                    if (revision !== epoch.current || !permissions.current.upload) { activeMaster.fill(0); return; }
+                    key.current = activeMaster; setMaster(activeMaster);
+                  }
+                  if (!permissions.current.upload) return;
+                  await importVaultFile(file, activeMaster, setProgress, controller.signal);
+                  const list = permissions.current.read ? await unlockObjects(activeMaster) : null;
+                  if (revision === epoch.current && permissions.current.read && list) setItems(list);
                 });
               }} />
               {busy && <p role="status">正在加密导入 {Math.round(progress * 100)}%</p>}
-              {!items.length ? <BookCatalogEmptyState title="秘阁暂无书籍" />
+              {!canRead ? <BookCatalogEmptyState title={canUpload ? "当前仅可上传，阅读与浏览权限未开启" : "阅读与浏览权限未开启"} />
+                : !items.length ? <BookCatalogEmptyState title="秘阁暂无书籍" />
                 : !items.some(item => item.metadata.title.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase())) ? <BookCatalogEmptyState title="未找到匹配的书籍" />
                   : <Box sx={bookGridSx}>{items.filter(item => item.metadata.title.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase())).map(item => <BookCardPresentation key={item.id}
                     book={{ id: item.id, title: item.metadata.title, author: `${item.metadata.format} · 已读 ${Math.round(item.reading.progress * 100)}%` }}
-                    onOpen={() => setSelected(item.id)} onRead={() => setSelected(item.id)} actions={[{ label: "永久删除", danger: true, onClick: () => modal.confirm({
+                    onOpen={() => { if (permissions.current.read) setSelected(item.id); }} onRead={() => { if (permissions.current.read) setSelected(item.id); }} actions={canDelete ? [{ label: "永久删除", danger: true, onClick: () => {
+                      if (!permissions.current.delete) return;
+                      modal.confirm({
                       title: "永久删除此加密书籍及其阅读记录？", okText: "永久删除", cancelText: "取消", okButtonProps: { danger: true },
-                      onOk: () => run(async () => { await vaultApi.remove(item.id); setItems(previous => previous.filter(value => value.id !== item.id)); }),
-                    }) }]} />)}</Box>}
+                      onOk: () => {
+                        if (!permissions.current.delete) return;
+                        return run(async () => { if (!permissions.current.delete) return; await vaultApi.remove(item.id); setItems(previous => previous.filter(value => value.id !== item.id)); });
+                      },
+                    });
+                    } }] : []} />)}</Box>}
             </CatalogSection>
           </>}
     </div>

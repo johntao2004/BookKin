@@ -59,14 +59,39 @@ public class PathPolicy {
         return candidate;
     }
 
+    public void requireNoSymbolicLinks(Path root, String relative) throws IOException {
+        Path current = root.toRealPath();
+        for (Path segment : Path.of(normalizeRelative(relative))) {
+            current = current.resolve(segment);
+            if (Files.isSymbolicLink(current)) reject("文件路径不能包含软链接。");
+        }
+    }
+
     public boolean hasCaseInsensitiveConflict(Path target) throws IOException {
+        return hasCaseInsensitiveConflict(target, null);
+    }
+
+    public boolean hasCaseInsensitiveConflict(Path target, Path ignoredSource) throws IOException {
         Path parent = target.getParent();
         if (parent == null || !Files.isDirectory(parent)) return false;
         String wanted = target.getFileName().toString();
         try (var stream = Files.list(parent)) {
-            return stream.anyMatch(path -> path.getFileName().toString().equalsIgnoreCase(wanted)
+            return stream.anyMatch(path -> !path.equals(ignoredSource) && path.getFileName().toString().equalsIgnoreCase(wanted)
                     && !path.getFileName().toString().equals(wanted));
         }
+    }
+
+    public boolean isCaseOnlyRename(Path source, Path target) {
+        return source.getParent().equals(target.getParent())
+                && !source.getFileName().equals(target.getFileName())
+                && source.getFileName().toString().equalsIgnoreCase(target.getFileName().toString());
+    }
+
+    public boolean targetConflict(Path source, Path target) throws IOException {
+        boolean ownCaseRename = isCaseOnlyRename(source, target);
+        boolean occupied = Files.exists(target, LinkOption.NOFOLLOW_LINKS)
+                && !(ownCaseRename && !Files.isSymbolicLink(target) && Files.isSameFile(source, target));
+        return occupied || hasCaseInsensitiveConflict(target, ownCaseRename ? source : null);
     }
 
     private void ensureInside(Path canonicalRoot, Path candidate) {

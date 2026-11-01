@@ -1,13 +1,10 @@
 import { RequestErrorPage } from "./HttpErrorPage";
-import { usePermissions } from "../auth/permissions";
 // Article content and its private reading state use the shared reader surface.
-import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import {
   _AntAlert as Alert,
-  _AntButton as Button,
   Skeleton,
-  Tag,
 } from "../ui/antd";
 import { PageBackAction, PageContainer, PageHeader } from "../components/PageHeader";
 import type { IndependentReaderSource } from "../components/readers/independent-reader-source";
@@ -21,11 +18,12 @@ import {
 } from "../features/content/api";
 import { useIndependentReading } from "../features/content/useIndependentReading";
 import { articleReaderTarget, buildArticleEpub } from "../features/content/article-document";
+import { safeHtml } from "../features/content/import";
 import { ReaderWorkspace } from "./ReaderPage";
 import type { Annotation } from "../domain/types";
+import { upsertArticleAnnotation } from "../domain/annotation-groups";
 import { randomId } from "../utils/random-id";
 import "../features/content/content.css";
-const AddToArticleCollectionDialog = lazy(() => import("../features/article-collections/AddToArticleCollectionDialog").then(module => ({ default: module.AddToArticleCollectionDialog })));
 
 interface LoadedArticle {
   article: Article;
@@ -137,7 +135,64 @@ function mapArticleLocator(locator: string) {
   return articleReaderTarget(locator) ?? locator;
 }
 
-function toReaderAnnotation(article: Article, entry: Entry): Annotation {
+function uniqueArticleId(document: Document, preferred: string) {
+  let candidate = preferred;
+  let suffix = 2;
+  while (document.getElementById(candidate)) {
+    candidate = `${preferred}-${suffix}`;
+    suffix += 1;
+  }
+  return candidate;
+}
+
+function normalizedSelectionText(value: string) {
+  return value.replace(/\s/gu, "");
+}
+
+export function createArticleAnnotationLocatorResolver(
+  article: Pick<Article, "html">,
+) {
+  const document = new DOMParser().parseFromString(safeHtml(article.html), "text/html");
+  Array.from(document.body.querySelectorAll("p")).forEach((paragraph, index) => {
+    if (!paragraph.id) paragraph.id = uniqueArticleId(document, `p-${index + 1}`);
+  });
+  const idCounts = new Map<string, number>();
+  Array.from(document.querySelectorAll("[id]")).forEach((element) => {
+    idCounts.set(element.id, (idCounts.get(element.id) ?? 0) + 1);
+  });
+  const paragraphs = new Map(
+    Array.from(document.body.querySelectorAll("p[id]"))
+      .filter((paragraph) => idCounts.get(paragraph.id) === 1)
+      .map((paragraph) => [paragraph.id, paragraph] as const),
+  );
+
+  return (locator: string, quote: string) => {
+    const existingTarget = articleReaderTarget(locator);
+    if (existingTarget?.startsWith("article.xhtml#p-")) return existingTarget;
+    const paragraphId = /\[(p-\d+)\]/u.exec(locator)?.[1];
+    if (!paragraphId) return locator;
+    const paragraph = paragraphs.get(paragraphId);
+    const targetText = normalizedSelectionText(quote.trim());
+    if (!paragraph || !targetText) return locator;
+
+    const paragraphText = normalizedSelectionText(paragraph.textContent ?? "");
+    let occurrence = 0;
+    let offset = 0;
+    while ((offset = paragraphText.indexOf(targetText, offset)) >= 0) {
+      occurrence += 1;
+      if (occurrence > 1) return locator;
+      offset += 1;
+    }
+    if (occurrence !== 1) return locator;
+    return `article.xhtml#${paragraphId}`;
+  };
+}
+
+function toReaderAnnotation(
+  article: Article,
+  entry: Entry,
+  resolveLocator: (locator: string, quote: string) => string,
+): Annotation {
   return {
     ...entry,
     bookId: article.id,
@@ -146,7 +201,7 @@ function toReaderAnnotation(article: Article, entry: Entry): Annotation {
     type: entry.type,
     quote: entry.quote,
     note: entry.note,
-    locator: mapArticleLocator(entry.locator),
+    locator: resolveLocator(entry.locator, entry.quote),
     style: entry.style ?? "HIGHLIGHT",
     createdAt: entry.createdAt,
   };
@@ -208,19 +263,18 @@ function ArticleReading({
   warning: initialWarning,
 }: LoadedArticle) {
   const { user } = useAuth();
-  const { can } = usePermissions();
   const navigate = useNavigate();
   const location = useLocation();
   const revision = useRef(initialRevision);
+  const resolveAnnotationLocator = useMemo(
+    () => createArticleAnnotationLocatorResolver(article),
+    [article],
+  );
   const [contentUrl, setContentUrl] = useState("");
   const [epubError, setEpubError] = useState("");
   const [actionError, setActionError] = useState("");
   const [visibleSaveError, setVisibleSaveError] = useState("");
   const [readingWarning, setReadingWarning] = useState(initialWarning);
-  const [busy, setBusy] = useState(false);
-  const [collectionOpen, setCollectionOpen] = useState(false);
-  const canOrganizeCollections = can("articles.collections.edit");
-  const canAnalyze = can("articles.analyze");
   const {
     state,
     change,
@@ -287,28 +341,55 @@ function ArticleReading({
         type: draft.type,
         quote: draft.quote,
         note: draft.note,
-        locator: draft.locator,
+        locator: resolveAnnotationLocator(draft.locator, draft.quote),
         style: draft.style,
         color: draft.color,
         createdAt: new Date().toISOString(),
       };
-      change((previous) => ({
-        ...previous,
-        annotations: [...previous.annotations, entry],
-      }));
+      let rollbackGroup: Entry[] = [];
+      let rollbackIds: string[] = [];
+      let savedEntry = entry;
+      change((previous) => {
+        const originalById = new Map(previous.annotations.map((current) => [current.id, current]));
+        const normalized = previous.annotations.map((current) => ({
+          ...current,
+          locator: resolveAnnotationLocator(current.locator, current.quote),
+        }));
+        const result = upsertArticleAnnotation(normalized, entry);
+        const groupIds = new Set(result.groupIds);
+        rollbackGroup = previous.annotations.filter((current) => groupIds.has(current.id));
+        rollbackIds = result.groupIds;
+        savedEntry = result.annotation;
+        const annotations = result.annotations.map((current) =>
+          groupIds.has(current.id) ? current : originalById.get(current.id) ?? current,
+        );
+        return { ...previous, annotations };
+      });
       try {
         await flush();
-        return toReaderAnnotation(article, entry);
+        return toReaderAnnotation(article, savedEntry, resolveAnnotationLocator);
       } catch (saveFailure) {
-        change((previous) => ({
-          ...previous,
-          annotations: previous.annotations.filter((current) => current.id !== entry.id),
-        }));
+        change((previous) => {
+          const rollbackIdsSet = new Set(rollbackIds);
+          const previousById = new Map(rollbackGroup.map((current) => [current.id, current]));
+          const restoredIds = new Set<string>();
+          const annotations = previous.annotations.flatMap((current) => {
+            if (!rollbackIdsSet.has(current.id)) return [current];
+            const saved = previousById.get(current.id);
+            if (!saved) return [];
+            restoredIds.add(saved.id);
+            return [saved];
+          });
+          for (const saved of rollbackGroup) {
+            if (!restoredIds.has(saved.id)) annotations.push(saved);
+          }
+          return { ...previous, annotations };
+        });
         setActionError(errorMessage(saveFailure, "文章批注保存失败。"));
         throw saveFailure;
       }
     },
-    [article, change, flush, readingWarning, user],
+    [article, change, flush, readingWarning, resolveAnnotationLocator, user],
   );
 
   const deleteAnnotation = useCallback(
@@ -344,52 +425,6 @@ function ArticleReading({
     }
   }, [flush, navigate]);
 
-  const saveReading = useCallback(() => {
-    void flush().catch((saveFailure: unknown) =>
-      setActionError(errorMessage(saveFailure, "阅读记录保存失败。")),
-    );
-  }, [flush]);
-
-  const extraActions = useMemo(
-    () => (
-      <div className="bk-content-stack" aria-label="文章信息与操作">
-        <p>
-          {article.author} · {article.published_at}{" "}
-          <Tag>{article.visibility === "PUBLIC" ? "公开" : "私有"}</Tag>
-        </p>
-        {article.source_url.startsWith("https://") && (
-          <a href={article.source_url} target="_blank" rel="noreferrer">
-            查看原始来源
-          </a>
-        )}
-        {user && (
-          <Button disabled={Boolean(readingWarning)} onClick={saveReading}>
-            保存记录
-          </Button>
-        )}
-        {user && <Button onClick={() => navigate(`/annotations/articles?write=1&sourceId=${encodeURIComponent(article.id)}`)}>写随笔</Button>}
-        {canOrganizeCollections && <Button onClick={() => setCollectionOpen(true)}>加入选集</Button>}
-        {canAnalyze && (
-          <Button
-            loading={busy}
-            onClick={() => {
-              setBusy(true);
-              void articles
-                .generate(article.id)
-                .catch((generateError: unknown) =>
-                  setActionError(errorMessage(generateError, "提取知识点失败。")),
-                )
-                .finally(() => setBusy(false));
-            }}
-          >
-            提取知识点
-          </Button>
-        )}
-      </div>
-    ),
-    [article, busy, saveReading, user, navigate, readingWarning, canOrganizeCollections, canAnalyze],
-  );
-
   const source = useMemo<IndependentReaderSource>(
     () => ({
       id: article.id,
@@ -398,15 +433,16 @@ function ArticleReading({
       format: "EPUB",
       flow: "scrolled-doc",
       contentUrl,
+      annotationPermission: "articles.annotate",
       label: "文章",
       backLabel: "返回文钞馆",
       initialLocator,
       progress: state.progress,
       annotations: state.annotations.map((entry) =>
-        toReaderAnnotation(article, entry),
+        toReaderAnnotation(article, entry, resolveAnnotationLocator),
       ),
+      resolveAnnotationLocator,
       error: actionError || visibleSaveError || readingWarning || undefined,
-      extraActions,
       onBack: () => void handleBack(),
       onPosition,
       createAnnotation,
@@ -418,10 +454,10 @@ function ArticleReading({
       contentUrl,
       createAnnotation,
       deleteAnnotation,
-      extraActions,
       handleBack,
       onPosition,
       readingWarning,
+      resolveAnnotationLocator,
       state.annotations,
       state.progress,
     ],
@@ -447,7 +483,5 @@ function ArticleReading({
       </PageContainer>
     );
   }
-  return <><ReaderWorkspace source={source} />
-    {collectionOpen && <Suspense fallback={null}><AddToArticleCollectionDialog open articleId={article.id} articleTitle={article.title} articleVisibility={article.visibility} onClose={() => setCollectionOpen(false)} /></Suspense>}
-  </>;
+  return <ReaderWorkspace source={source} />;
 }

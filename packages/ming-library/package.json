@@ -1,0 +1,9 @@
+{
+  "name": "@bookkin/ming-library",
+  "version": "2.14.0",
+  "private": true,
+  "type": "module",
+  "scripts": { "build": "node build.mjs", "verify:interaction": "node scripts/verify-interaction-v16.mjs" },
+  "dependencies": { "three": "0.180.0" },
+  "devDependencies": { "esbuild": "0.25.10" }
+}

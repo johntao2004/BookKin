@@ -39,12 +39,45 @@ public class RolePermissionService {
     public Policy policy() {
         var row = dsl.fetchOne("select revision, grants::text as grants from role_permission_policy where id = 1");
         try {
-            var stored = json.readValue(row.get("grants", String.class), new TypeReference<Map<UserRole, Set<String>>>() {});
+            var stored = json.readTree(row.get("grants", String.class));
+            int modelVersion = stored.has("_permissionModelVersion") ? stored.get("_permissionModelVersion").asInt() : 0;
+            boolean versioned = modelVersion > 0;
+            var storedGrants = stored.has("grants") ? stored.get("grants") : stored;
             var grants = new EnumMap<UserRole, Set<String>>(UserRole.class);
             for (var role : UserRole.values()) {
                 var allowed = defaults(role);
-                var configured = stored.get(role);
-                if (role != UserRole.OWNER && configured != null) allowed.retainAll(configured);
+                var configured = storedGrants.get(role.name());
+                if (role != UserRole.OWNER && configured != null && configured.isArray()) {
+                    var configuredCodes = new LinkedHashSet<String>(); configured.forEach(value -> { if (value.isTextual()) configuredCodes.add(value.asText()); });
+                    allowed.retainAll(configuredCodes);
+                }
+                // Old policies have no model marker. Preserve their former catalog/search and download access
+                // exactly once; after the next save, omitted new codes mean intentionally disabled.
+                if (!versioned && role != UserRole.OWNER) {
+                    if (allowed.contains("library.view")) allowed.add("library.query");
+                    if (allowed.contains("reader.read")) allowed.add("library.download");
+                }
+                // New page scopes retain their former parent access when loading an unversioned or v2 policy.
+                // Once saved as v3, omissions represent intentional revocations.
+                if (modelVersion < 3 && role != UserRole.OWNER) {
+                    inherit(allowed, "library.details.view", "library.view");
+                    inherit(allowed, "library.search.view", "library.query");
+                    inherit(allowed, "booklists.details.view", "booklists.view");
+                    inherit(allowed, "articles.read", "articles.view");
+                    inherit(allowed, "articles.collections.view", "articles.view");
+                    inherit(allowed, "articles.collections.details.view", "articles.view");
+                    inherit(allowed, "notes.books.view", "notes.view");
+                    inherit(allowed, "notes.articles.view", "notes.view");
+                    inherit(allowed, "notes.posts.view", "notes.view");
+                    inherit(allowed, "settings.metadata.view", "settings.ai.view");
+                    inherit(allowed, "settings.metadata.edit", "settings.ai.edit");
+                }
+                if (modelVersion < 4 && role != UserRole.OWNER && allowed.contains("articles.read")) {
+                    allowed.add("articles.annotate");
+                }
+                if (modelVersion < 4 && role != UserRole.OWNER && allowed.contains("vault.use")) {
+                    allowed.addAll(Set.of("vault.read", "vault.upload", "vault.delete"));
+                }
                 // Never allow a stale/invalid persisted action without its prerequisites.
                 boolean changed;
                 do { changed = allowed.removeIf(code -> !allowed.containsAll(definition(code).requires())); } while (changed);
@@ -54,6 +87,9 @@ public class RolePermissionService {
         } catch (Exception e) { throw new IllegalStateException("Cannot load permission policy", e); }
     }
     private Definition definition(String code) { return definitions.stream().filter(d -> d.code().equals(code)).findFirst().orElseThrow(); }
+    private void inherit(Set<String> allowed, String child, String parent) {
+        if (allowed.contains(parent)) allowed.add(child);
+    }
     public Snapshot snapshot(Principal principal) {
         var user = actor(principal); var policy = policy();
         return new Snapshot(user.role(), policy.revision(), policy.grants().get(user.role()));
@@ -79,8 +115,11 @@ public class RolePermissionService {
                 throw new ApiException(org.springframework.http.HttpStatus.BAD_REQUEST, "PERMISSION_DEPENDENCY", "请先开启功能对应的页面访问权限。");
         }
         try {
+            var envelope = new LinkedHashMap<String, Object>();
+            envelope.put("_permissionModelVersion", 4);
+            envelope.put("grants", input.grants());
             int changed = dsl.execute("update role_permission_policy set grants = ?::jsonb, revision = revision + 1, updated_by = ?, updated_at = now() where id = 1 and revision = ?",
-                json.writeValueAsString(input.grants()), actor.id(), input.revision());
+                json.writeValueAsString(envelope), actor.id(), input.revision());
             if (changed != 1) throw ApiException.conflict("ROLE_POLICY_CONFLICT", "权限配置已更新，请重新加载后再保存。");
             audit.record(actor.id(), "ROLE_PERMISSIONS_UPDATED", "ROLE_POLICY", "1", null, null, null, null, "SUCCEEDED", json.writeValueAsString(input.grants()));
             return policy();

@@ -9,7 +9,7 @@ import type { ReactNode } from "react";
 import { tokens } from "../theme/generated-tokens";
 import { pageWidthSx, PageTitle } from "./PageHeader";
 
-export function AuthFrame({ children, title }: { children: ReactNode; title: string }) {
+export function AuthFrame({ children, title, setupLocked = false }: { children: ReactNode; title: string; setupLocked?: boolean }) {
   const site = useSiteSettings();
   const brandSx = {
     color: "inherit",
@@ -29,13 +29,13 @@ export function AuthFrame({ children, title }: { children: ReactNode; title: str
       <Box sx={{ display: { xs: "none", md: "block" }, position: "relative", overflow: "hidden", bgcolor: "secondary.dark", minHeight: "100dvh" }}>
         <Box component="img" src="/covers/mountains-autumn.jpg" alt="秋日山川湖畔书房" sx={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center" }} />
         <Box sx={{ ...pageWidthSx, position: "absolute", top: 0, height: tokens.layout.navHeight, display: "flex", alignItems: "center", color: "common.white" }}>
-          <Typography component={Link} to="/library" variant="h5" sx={brandSx}>{site.name}</Typography>
+          {setupLocked ? <Typography variant="h5" sx={brandSx}>{site.name}</Typography> : <Typography component={Link} to="/library" variant="h5" sx={brandSx}>{site.name}</Typography>}
         </Box>
       </Box>
       <Box sx={{ ...pageWidthSx, display: "flex", flexDirection: "column", minHeight: "100dvh", minWidth: 0, bgcolor: "background.default" }}>
         <Stack component="header" direction="row" sx={{ minHeight: tokens.layout.navHeight, alignItems: "center", justifyContent: "space-between", gap: `${tokens.spacing[3]}px` }}>
-          <Typography component={Link} to="/library" variant="h5" sx={{ ...brandSx, display: { xs: "block", md: "none" } }}>{site.name}</Typography>
-          <Button variant="text" component={Link} to="/library" startIcon={<ArrowBackRounded />} sx={{ px: 0 }}>返回首页</Button>
+          {setupLocked ? <Typography variant="h5" sx={{ ...brandSx, display: { xs: "block", md: "none" } }}>{site.name}</Typography> : <Typography component={Link} to="/library" variant="h5" sx={{ ...brandSx, display: { xs: "block", md: "none" } }}>{site.name}</Typography>}
+          {!setupLocked && <Button variant="text" component={Link} to="/library" startIcon={<ArrowBackRounded />} sx={{ px: 0 }}>返回首页</Button>}
         </Stack>
         <Box component="main" sx={{ flex: 1, display: "flex", alignItems: "center", minWidth: 0, py: `${tokens.spacing[8]}px` }}>
           <Box sx={{ width: "100%", minWidth: 0 }}>

@@ -19,6 +19,7 @@ import { api } from "../../api/client";
 import type { Annotation } from "../../domain/types";
 import { tokens } from "../../theme/generated-tokens";
 import { readerWidthSx } from "../PageHeader";
+import { bindAnnotationNoteActivation } from "./annotation-activation";
 import { applyPdfTextAnnotations } from "./pdf-annotations";
 import { pdfTextToReadingBlocks, splitPdfInlineFootnoteReferences, type PdfReadingBlock } from "./pdf-reading-text";
 import type { ReaderPageLayout } from "./reader-layout";
@@ -67,7 +68,7 @@ export function previousPdfLocation({
   };
 }
 
-export default function PdfDocumentReader({ bookId, annotations, theme, fontSize, fontFamily, pageTurnEnabled = true, fontSourceUrl, contentUrl, dataRange, readOnly = false, target, targetRevision, onNavigation, onSelect, onPosition }: {
+export default function PdfDocumentReader({ bookId, annotations, theme, fontSize, fontFamily, pageTurnEnabled = true, fontSourceUrl, contentUrl, dataRange, readOnly = false, target, targetRevision, onNavigation, onAnnotationActivate, onSelect, onPosition }: {
   bookId: string;
   annotations: Annotation[];
   theme: { background: string; foreground: string; muted: string };
@@ -81,9 +82,15 @@ export default function PdfDocumentReader({ bookId, annotations, theme, fontSize
   target?: string;
   targetRevision?: number;
   onNavigation?: (items: TocItem[]) => void;
+  onAnnotationActivate?: (id: string) => void;
   onSelect: (selection: ReaderSelection) => void;
   onPosition: (locator: string, progress: number) => void;
 }) {
+  const annotationActivationRootRef = useRef<HTMLDivElement | null>(null);
+  const annotationsRef = useRef(annotations);
+  const annotationCallbackRef = useRef(onAnnotationActivate);
+  annotationsRef.current = annotations;
+  annotationCallbackRef.current = onAnnotationActivate;
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const textLayerRef = useRef<HTMLDivElement | null>(null);
   const [document, setDocument] = useState<PDFDocumentProxy | null>(null);
@@ -128,6 +135,20 @@ export default function PdfDocumentReader({ bookId, annotations, theme, fontSize
     pageTurnEnabled,
     { spread: wideSpread, snapshotKey: pageSnapshotKey },
   );
+
+  useEffect(() => {
+    const root = annotationActivationRootRef.current;
+    if (!root) return;
+    return bindAnnotationNoteActivation(
+      root,
+      (id) => {
+        if (!annotationCallbackRef.current) return undefined;
+        const annotation = annotationsRef.current.find((candidate) => candidate.id === id);
+        return annotation ? { id: annotation.id, note: annotation.note } : undefined;
+      },
+      (id) => annotationCallbackRef.current?.(id),
+    );
+  }, [error]);
 
   useEffect(() => {
     if (turning) return;
@@ -419,10 +440,10 @@ export default function PdfDocumentReader({ bookId, annotations, theme, fontSize
     else goPrevious();
   };
 
-  if (error) return <Stack sx={{ height: "100%", alignItems: "center", justifyContent: "center", p: 3 }}><Alert severity="error">{error}</Alert></Stack>;
+  if (error) return <Stack ref={annotationActivationRootRef} className="reader-viewport" sx={{ height: "100%", alignItems: "center", justifyContent: "center", p: 3 }}><Alert severity="error">{error}</Alert></Stack>;
 
   return (
-    <Stack className="reader-viewport" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} sx={{ height: "100%", minHeight: 0, overflow: "hidden", bgcolor: viewMode === "ORIGINAL" ? theme.foreground : theme.background, color: viewMode === "ORIGINAL" ? theme.background : theme.foreground }}>
+    <Stack ref={annotationActivationRootRef} className="reader-viewport" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} sx={{ height: "100%", minHeight: 0, overflow: "hidden", bgcolor: viewMode === "ORIGINAL" ? theme.foreground : theme.background, color: viewMode === "ORIGINAL" ? theme.background : theme.foreground }}>
       {fontSourceUrl && <style>{`@font-face { font-family: ${fontFamily.split(",")[0]}; src: url("${fontSourceUrl}"); font-display: swap; }`}</style>}
       {viewMode === "READING" ? (
         <Box ref={readingSurfaceRef} className="reader-page-turn-surface" data-reader-spread={wideSpread} sx={{ position: "relative", ...readerWidthSx, flex: "1 1 auto", minHeight: 0, overflow: "hidden", bgcolor: theme.background, backfaceVisibility: "hidden", transformStyle: "preserve-3d", willChange: turning ? "transform, opacity, filter, clip-path" : "auto" }}>

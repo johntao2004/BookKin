@@ -1,6 +1,7 @@
 package com.elexvx.bookkin.articles;
 
 import com.elexvx.bookkin.common.ApiException;
+import com.elexvx.bookkin.auth.RolePermissionService;
 import com.elexvx.bookkin.users.*;
 import com.elexvx.bookkin.filemanagement.infrastructure.PrivateContentStore;
 import com.elexvx.bookkin.ai.AiMetadataService;
@@ -14,6 +15,7 @@ import org.jooq.DSLContext;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Element;
 import org.jsoup.safety.Safelist;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,8 +29,14 @@ public class ArticleService {
     private final java.util.concurrent.ConcurrentHashMap<UUID,Long> fetchTimes=new java.util.concurrent.ConcurrentHashMap<>();
     private final DSLContext db; private final UserRepository users; private final PublicWebFetcher web;
     private final PrivateContentStore files; private final AiMetadataService ai; private final ObjectMapper json;
+    private final RolePermissionService permissions;
+    @org.springframework.beans.factory.annotation.Autowired
+    public ArticleService(DSLContext db, UserRepository users, PublicWebFetcher web, PrivateContentStore files,
+                          AiMetadataService ai, ObjectMapper json, RolePermissionService permissions) {
+        this.db=db;this.users=users;this.web=web;this.files=files;this.ai=ai;this.json=json;this.permissions=permissions;
+    }
     public ArticleService(DSLContext db, UserRepository users, PublicWebFetcher web, PrivateContentStore files, AiMetadataService ai, ObjectMapper json) {
-        this.db=db;this.users=users;this.web=web;this.files=files;this.ai=ai;this.json=json;
+        this(db,users,web,files,ai,json,null);
     }
     public BookKinUser actor(Principal principal) {
         if(principal==null) throw ApiException.forbidden("AUTH_REQUIRED","请先登录。");
@@ -295,20 +303,30 @@ public class ArticleService {
     }
     @Transactional public void reading(UUID id,String state,long revision,Principal p) {
         get(id,p);if(state==null||state.length()>1_000_000)throw ApiException.badRequest("STATE_SIZE","阅读记录过大。");
+        if (permissions != null && articleAnnotationsChanged(id, state, p)) permissions.require(p, "articles.annotate");
         // Like ordinary book positions, the last submitted state wins for this user.
         // Keep revision as a server counter and accept older clients' revision fields.
         db.execute("insert into article_reading(article_id,user_id,state,revision) values (?,?,?::jsonb,1) on conflict(article_id,user_id) do update set state=excluded.state,revision=article_reading.revision+1",id,actor(p).id(),state);
+    }
+    private boolean articleAnnotationsChanged(UUID id, String nextState, Principal principal) {
+        var row = db.fetchOne("select state::text from article_reading where article_id=? and user_id=?", id, actor(principal).id());
+        String currentState = row == null ? "{}" : row.get("state", String.class);
+        try {
+            var current = json.readTree(currentState == null ? "{}" : currentState);
+            var next = json.readTree(nextState);
+            var currentAnnotations = current != null && current.isObject() ? current.path("annotations") : null;
+            var nextAnnotations = next != null && next.isObject() ? next.path("annotations") : null;
+            var empty = json.createArrayNode();
+            return !(currentAnnotations != null && currentAnnotations.isArray() ? currentAnnotations : empty)
+                    .equals(nextAnnotations != null && nextAnnotations.isArray() ? nextAnnotations : empty);
+        } catch (tools.jackson.core.JacksonException invalid) {
+            throw ApiException.badRequest("READING_STATE_INVALID", "文章阅读记录格式无效。");
+        }
     }
     public List<Map<String,Object>> knowledge(Principal p) {
         var user=actor(p);return db.fetch("select id,title,knowledge::text as points from articles where visibility='PUBLIC' or owner_id=? or ?",user.id(),user.canManageFiles()).intoMaps();
     }
     public void generate(UUID id,Principal p) throws Exception {
-        manager(p);var article=get(id,p);UUID operation=UUID.randomUUID();
-        db.execute("update articles set knowledge_revision=? where id=?",operation,id);
-        var passages=Jsoup.parseBodyFragment((String)article.get("html")).select("[id]").stream().filter(el->!el.text().isBlank()).limit(80)
-            .map(el->new AiMetadataService.KnowledgePassage(el.id(),el.text().substring(0,Math.min(2000,el.text().length())))).toList();
-        var result=ai.extractKnowledge(passages);
-        if(db.execute("update articles set knowledge=?::jsonb where id=? and knowledge_revision=?",json.writeValueAsString(result.points()),id,operation)==0)
-            throw ApiException.conflict("SOURCE_CHANGED","文章已变化，请重新分析。");
+        throw new ApiException(HttpStatus.GONE,"ARTICLE_AI_DISABLED","文章 AI 功能已停用。");
     }
 }

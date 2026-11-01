@@ -1,8 +1,9 @@
 // 覆盖重排页裁切、单双页布局及跨原始页回退；上一页尚未测量时应返回等待状态。
 // Covers reflow clipping, single/spread layout and cross-original-page back navigation, returning a pending state when the previous page is not measured.
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { getDocument } from "pdfjs-dist";
 import { vi } from "vitest";
+import type { Annotation } from "../../domain/types";
 import { tokens } from "../../theme/generated-tokens";
 import PdfDocumentReader, { PdfReadingClipFrame, previousPdfLocation } from "./PdfDocumentReader";
 
@@ -135,6 +136,82 @@ describe("PdfReadingClipFrame", () => {
     expect(await screen.findByText("这是一段正文。")).toBeInTheDocument();
     expect(screen.getByRole("navigation", { name: "PDF 翻页" })).toHaveTextContent("第 1 页 · 1/1 · 共 8 页");
     expect(screen.queryByText(/^第 1 页$/u)).not.toBeInTheDocument();
+  });
+});
+
+describe("PdfDocumentReader annotation activation", () => {
+  it("opens notes by click or keyboard, ignores selected text and plain highlights, and keeps the callback current", async () => {
+    vi.mocked(getDocument).mockClear();
+    const page = {
+      getTextContent: vi.fn().mockResolvedValue({
+        items: [{ str: "点击笔记打开，普通高亮不打开。", transform: [1, 0, 0, 12, 36, 720], width: 240, height: 12, hasEOL: true }],
+      }),
+    };
+    vi.mocked(getDocument).mockReturnValue({
+      promise: Promise.resolve({ numPages: 1, getPage: vi.fn().mockResolvedValue(page) }),
+      destroy: vi.fn(),
+    } as unknown as ReturnType<typeof getDocument>);
+    const note: Annotation = {
+      id: "pdf-note",
+      bookId: "book-pdf",
+      type: "NOTE",
+      style: "HIGHLIGHT",
+      color: "PINK",
+      locator: "pdf:page=1&offset=0",
+      quote: "点击笔记打开",
+      note: "这段内容要再读一次。",
+      createdAt: "2026-10-28T00:00:00Z",
+    };
+    const plainHighlight: Annotation = {
+      id: "pdf-plain-highlight",
+      bookId: "book-pdf",
+      type: "HIGHLIGHT",
+      style: "HIGHLIGHT",
+      color: "YELLOW",
+      locator: "pdf:page=1&offset=0",
+      quote: "普通高亮不打开",
+      createdAt: "2026-10-28T00:00:00Z",
+    };
+    const firstCallback = vi.fn();
+    const latestCallback = vi.fn();
+    const props = {
+      bookId: "book-pdf",
+      annotations: [note, plainHighlight],
+      theme: { background: "white", foreground: "black", muted: "gray" },
+      fontSize: 19,
+      fontFamily: "serif",
+      readOnly: true,
+      onSelect: vi.fn(),
+      onPosition: vi.fn(),
+    };
+    const view = render(<PdfDocumentReader {...props} onAnnotationActivate={firstCallback} />);
+    const noteMark = await screen.findByRole("button", { name: "查看笔记" });
+    expect(noteMark).toHaveAttribute("data-annotation-id", "pdf-note");
+    const plainMark = view.container.querySelector<HTMLElement>('[data-annotation-id="pdf-plain-highlight"]');
+    expect(plainMark).not.toBeNull();
+
+    fireEvent.click(noteMark);
+    fireEvent.keyDown(noteMark, { key: "Enter" });
+    fireEvent.keyDown(noteMark, { key: " " });
+    expect(firstCallback).toHaveBeenNthCalledWith(1, "pdf-note");
+    expect(firstCallback).toHaveBeenNthCalledWith(2, "pdf-note");
+    expect(firstCallback).toHaveBeenNthCalledWith(3, "pdf-note");
+
+    const range = document.createRange();
+    range.selectNodeContents(noteMark);
+    const selection = window.getSelection();
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+    fireEvent.click(noteMark);
+    selection?.removeAllRanges();
+    fireEvent.click(plainMark!);
+    expect(firstCallback).toHaveBeenCalledTimes(3);
+
+    view.rerender(<PdfDocumentReader {...props} onAnnotationActivate={latestCallback} />);
+    fireEvent.click(view.container.querySelector('[data-annotation-id="pdf-note"]')!);
+    expect(latestCallback).toHaveBeenCalledWith("pdf-note");
+    expect(firstCallback).toHaveBeenCalledTimes(3);
+    expect(getDocument).toHaveBeenCalledTimes(1);
   });
 });
 

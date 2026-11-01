@@ -1,4 +1,5 @@
 import { requestVirtualLibraryTexture } from "./virtual-library-texture-loader";
+import { createCatalogBookInstances } from './virtual-library-book-instances';
 import * as THREE from "three";
 import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
@@ -269,6 +270,7 @@ export interface LibraryWorld {
   syncCatalogBooks: (books: readonly Book[]) => CatalogSyncResult;
   syncCatalogBooksProgressively: (books: readonly Book[], options: { signal: AbortSignal; priorityPoint?: THREE.Vector3; onSlice?: (ms: number) => void }) => Promise<CatalogSyncResult>;
   requestBookCover: (bookId: string, full?: boolean) => void;
+  updateCatalogRendering: () => void;
   toggleShelfSection: (sectionId: number) => number | null;
   collapseShelfSections: () => void;
   setHoveredShelfSection: (sectionId: number | null) => void;
@@ -538,6 +540,7 @@ function mergeBookMeshesForMaterial(
   name: string,
   ownedGeometries: Set<THREE.BufferGeometry>,
   sharedGeometries: Set<THREE.BufferGeometry>,
+  instanceRole: string,
 ) {
   const meshes = parent.children.filter((child): child is THREE.Mesh => (
     child instanceof THREE.Mesh && child.material === meshMaterial
@@ -561,6 +564,7 @@ function mergeBookMeshesForMaterial(
   ownedGeometries.add(geometry);
   const mergedMesh = new THREE.Mesh(geometry, meshMaterial);
   mergedMesh.name = name;
+  mergedMesh.userData.catalogInstanceRole = instanceRole;
   mergedMesh.castShadow = meshes.some(mesh => mesh.castShadow);
   mergedMesh.receiveShadow = meshes.some(mesh => mesh.receiveShadow);
   parent.remove(...meshes);
@@ -1001,13 +1005,13 @@ function createBook(
   }
 
   mergeBookMeshesForMaterial(group, bookMaterials.pages, `Catalog page block detail: ${book.title}`,
-    ownedGeometries, bookMaterials.sharedGeometries);
+    ownedGeometries, bookMaterials.sharedGeometries, 'paper');
   mergeBookMeshesForMaterial(group, spineMaterial, `Catalog binding shell: ${book.title}`,
-    ownedGeometries, bookMaterials.sharedGeometries);
+    ownedGeometries, bookMaterials.sharedGeometries, 'shell');
   mergeBookMeshesForMaterial(group, spineTrimMaterial, `Catalog binding trim: ${book.title}`,
-    ownedGeometries, bookMaterials.sharedGeometries);
+    ownedGeometries, bookMaterials.sharedGeometries, 'trim');
   mergeBookMeshesForMaterial(group, bookMaterials.headband, `Catalog headbands: ${book.title}`,
-    ownedGeometries, bookMaterials.sharedGeometries);
+    ownedGeometries, bookMaterials.sharedGeometries, 'headband');
   trackBookResources(group, bookMaterials, ownedGeometries, ownedMaterials);
 
   const shelfTransform = getCatalogBookShelfTransform(slot, { width, height, depth }, book.id);
@@ -1541,6 +1545,10 @@ export function createVirtualLibraryWorld(
     cleanups: [() => bookMaterials.coverListeners.clear()],
   } satisfies DisposableCatalogResources;
   scene.add(catalogRoot);
+  const catalogInstances = createCatalogBookInstances(catalogRoot);
+  (catalogRoot.userData.disposableCatalogResources as DisposableCatalogResources).cleanups = [
+    () => bookMaterials.coverListeners.clear(), () => catalogInstances.dispose(),
+  ];
   const sceneBooks: SceneBook[] = [];
   const interactiveMeshes: THREE.Object3D[] = [];
   const shelfControllers = createShelfSectionControllers(
@@ -1684,6 +1692,7 @@ export function createVirtualLibraryWorld(
     catalogBooksById.clear();
     sceneBooks.forEach((sceneBook) => catalogBooksById.set(sceneBook.book.id, sceneBook));
     centerSceneBookClusters(sceneBooks, built.shelfSections);
+    catalogInstances.rebuild(sceneBooks);
     updateShelfSectionControllers(shelfControllers, built.shelfSections, sceneBooks);
     catalogSyncRevision += 1;
     built.root.userData.catalogSyncRevision = catalogSyncRevision;
@@ -1725,6 +1734,7 @@ export function createVirtualLibraryWorld(
     catalogTerminal: built.catalogTerminal,
     shelfHitMeshes: shelfControllers.map(({ hitArea }) => hitArea),
     portalHitMeshes,
+    updateCatalogRendering: () => catalogInstances.update(),
     syncCatalogBooks,
     syncCatalogBooksProgressively,
     requestBookCover: (id, full = false) => {

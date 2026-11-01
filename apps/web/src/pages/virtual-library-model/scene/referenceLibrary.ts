@@ -144,7 +144,32 @@ function createReferenceMaterials(): LibraryMaterials {
   };
 }
 
-export function addReferenceLighting(root: THREE.Group, config: ReferenceSceneConfig) {
+export function consolidateReferenceWindowLights(areas: NonNullable<ReferenceSceneConfig['lighting']['areas']>) {
+  const groups = new Map<string, typeof areas>();
+  for (const entry of areas) {
+    const key = JSON.stringify([entry.position[0], entry.position[1],
+      entry.target[0] - entry.position[0], entry.target[1] - entry.position[1], entry.target[2] - entry.position[2],
+      entry.width, entry.height, entry.color, entry.intensity]);
+    const group = groups.get(key) ?? [];
+    group.push(entry); groups.set(key, group);
+  }
+  // 同层同侧的静态窗光按面积保存总发光量；这是柔光近似，不是逐像素等价或烘焙。
+  // Preserve total emission by area for each static window row; this is a soft-light approximation.
+  return [...groups.values()].flatMap(group => {
+    if (group.length < 2 || group.some(entry => entry.target[2] !== entry.position[2]
+      || entry.target[1] !== entry.position[1] || entry.target[0] === entry.position[0])) return group;
+    const first = group[0];
+    const min = Math.min(...group.map(entry => entry.position[2] - entry.width / 2));
+    const max = Math.max(...group.map(entry => entry.position[2] + entry.width / 2));
+    const center = (min + max) / 2;
+    return [{...first, position: [first.position[0], first.position[1], center] as VectorTuple,
+      target: [first.target[0], first.target[1], center] as VectorTuple,
+      width: max - min, intensity: first.intensity * group.reduce((sum, entry) => sum + entry.width, 0) / (max - min)}];
+  });
+}
+
+export function addReferenceLighting(root: THREE.Group, config: ReferenceSceneConfig,
+  options: {consolidateWindows?: boolean} = {}) {
   const {hemisphere, ambient, directional, areas = [], points} = config.lighting;
   root.add(new THREE.HemisphereLight(hemisphere.sky, hemisphere.ground, hemisphere.intensity));
   root.add(new THREE.AmbientLight(ambient.color, ambient.intensity));
@@ -166,7 +191,10 @@ export function addReferenceLighting(root: THREE.Group, config: ReferenceSceneCo
   // LTC area lights do not cast shadows: this is soft daylight approximation,
   // not baked global illumination. The central chandelier retains local shadows.
   if (areas.length) RectAreaLightUniformsLib.init();
-  areas.forEach((entry, index) => {
+  const renderAreas = options.consolidateWindows === false ? areas : consolidateReferenceWindowLights(areas);
+  root.userData.windowLighting = {sourceAreas: areas.length, renderedAreas: renderAreas.length,
+    mode: options.consolidateWindows === false ? 'reference' : 'consolidated-soft-light'};
+  renderAreas.forEach((entry, index) => {
     const light = new THREE.RectAreaLight(entry.color, entry.intensity, entry.width, entry.height);
     light.name = `Window sky ${index}`;
     light.position.set(...entry.position); light.lookAt(new THREE.Vector3(...entry.target));

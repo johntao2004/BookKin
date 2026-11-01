@@ -22,15 +22,19 @@ import { useInfiniteScrollTrigger } from "../hooks/useInfiniteScrollTrigger";
 import { PageContainer } from "../components/PageHeader";
 import { LibraryPageHeader, LibraryScopeFilter } from "../components/LibraryPageHeader";
 import { useAuth } from "../auth/AuthContext";
+import { usePermissions } from "../auth/permissions";
 import type { DisplayBook } from "../domain/types";
 import { tokens } from "../theme/generated-tokens";
 
 export function PublicLibraryPage() {
   const { user } = useAuth();
+  const { can } = usePermissions();
+  const canQuery = !user || can("library.query");
   const { query, categoryId, subjectCode, format, sort, updateParam, clearFilters, activeCount } = useCatalogFilterParams();
   const deferredQuery = useDeferredValue(query);
   const displayQuery = useInfiniteQuery({
     queryKey: ["display-books", deferredQuery, categoryId, subjectCode, format, sort, user?.id ?? "anonymous"],
+    enabled: canQuery,
     initialPageParam: undefined as string | undefined,
     queryFn: ({ pageParam, signal }) => api.listDisplayBooks({ q: deferredQuery.trim() || undefined, categoryId: categoryId || undefined, subjectCode: subjectCode || undefined, format: format === "ALL" ? undefined : format as "EPUB" | "PDF", sort, cursor: pageParam, limit: 36, signal }),
     getNextPageParam: (lastPage) => lastPage.nextCursor,
@@ -56,7 +60,7 @@ export function PublicLibraryPage() {
       />}>
       <CatalogAdvancedFilters />
       {activeCount > 0 && <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>已加载 {books.length} 本匹配藏书</Typography>}
-      {displayQuery.isPending ? (
+      {!canQuery ? <Alert severity="info">当前角色没有查询书籍目录的权限。</Alert> : displayQuery.isPending ? (
         <BookGridSkeleton label="正在加载公开藏书" />
       ) : displayQuery.isError && !displayQuery.data ? (
         <Alert severity="error">公开藏书暂时无法读取，请稍后刷新。</Alert>

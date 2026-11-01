@@ -62,13 +62,17 @@ class Database:
 
 
 def conversion_sql(history, files):
-    if not history or any(not row['success'] or row['type'] != 'SQL' for row in history):
+    if not history or any(not row['success'] or (row['type'] != 'SQL' and not (i == 0 and row['type'] == 'BASELINE' and row['version'] == '1' and row['script'] == '<< Flyway Baseline >>')) for i, row in enumerate(history)):
         raise ValueError('Expected a complete successful legacy SQL migration history')
     if [int(row['version']) for row in history] != list(range(1, len(history) + 1)):
         raise ValueError('Legacy migration history is not contiguous')
     if len(history) > len(files):
         raise ValueError('Database is newer than this reviewed legacy bundle')
     for row, path in zip(history, files):
+        # A prior reviewed V1 consolidation has no SQL checksum; full restored
+        # schema comparison below remains mandatory before any live mutation.
+        if row['type'] == 'BASELINE':
+            continue
         if row['script'] != path.name or row['checksum'] != checksum(path.read_text()):
             raise ValueError(f'Legacy migration checksum mismatch at version {row["version"]}')
     parts = []
@@ -98,8 +102,8 @@ def main():
     stamp = time.strftime('%Y%m%dT%H%M%S') + '-' + uuid.uuid4().hex[:8]
     backup = args.backup_dir / f'pre-baseline-{stamp}.dump'
     files = sorted(args.legacy_dir.glob('V*__*.sql'), key=lambda path: int(path.name.split('__')[0][1:]))
-    if len(files) != 30:
-        raise ValueError('This consolidation requires the complete reviewed 30-file legacy bundle')
+    if len(files) not in {4, 30}:
+        raise ValueError('This consolidation requires a complete reviewed 4-file or 30-file legacy bundle')
     manifest = json.loads((args.legacy_dir / 'sha256.json').read_text())
     if {path.name: hashlib.sha256(path.read_bytes()).hexdigest() for path in files} != manifest:
         raise ValueError('Legacy bundle differs from its reviewed manifest')

@@ -33,7 +33,7 @@ export const rolePermissionApi = {
 export const settingsPermissions: Record<string, string> = {
   "#catalog/library-roots": "settings.roots.view", "#catalog/operations": "settings.operations.view", "#catalog/recycle-bin": "settings.recycle.view",
   "#users": "settings.users.view", "#users/roles": "roles.manage", "#users/sessions": "settings.sessions.view", "#users/logins": "settings.logs.view", "#users/security": "settings.security.view",
-  "#services/personalization": "settings.site.view", "#services/reader-fonts": "settings.fonts.view", "#services/mail": "settings.mail.view", "#services/ai": "settings.ai.view",
+  "#services/personalization": "settings.site.view", "#services/reader-fonts": "settings.fonts.view", "#services/mail": "settings.mail.view", "#services/ai": "settings.ai.view", "#services/metadata": "settings.metadata.view",
 };
 export function routePermission(path: string, hash = ""): string | undefined {
   if (path === "/settings") return settingsPermissions[hash];
@@ -43,12 +43,21 @@ export function routePermission(path: string, hash = ""): string | undefined {
   if (path.includes("recycle-bin")) return "settings.recycle.view";
   if (path === "/admin/reader-fonts") return "settings.fonts.view";
   if (path === "/library/overview") return "library.overview";
-  if (path.startsWith("/library/uploads/")) return "library.upload";
-  if (/^\/library\/books\/[^/]+\/edit$/.test(path)) return "library.edit";
-  if (path.startsWith("/library") || path.startsWith("/categories") || path === "/search") return "library.view";
+  if (path.startsWith("/library/uploads/")) return "library.view";
+  if (/^\/library\/books\/[^/]+\/edit$/.test(path)) return "library.view";
+  if (/^\/library\/books\/[^/]+\/?$/.test(path)) return "library.details.view";
+  if (path === "/search") return "library.search.view";
+  if (path.startsWith("/library") || path.startsWith("/categories")) return "library.view";
   if (path.startsWith("/reader/")) return "reader.read";
-  if (path.startsWith("/articles") || path.startsWith("/article-collections")) return "articles.view";
+  if (/^\/article-collections\/[^/]+\/?$/.test(path)) return "articles.collections.details.view";
+  if (path === "/article-collections") return "articles.collections.view";
+  if (/^\/articles\/[^/]+\/?$/.test(path)) return "articles.read";
+  if (path.startsWith("/articles")) return "articles.view";
+  if (/^\/annotations\/books\/?$/.test(path)) return "notes.books.view";
+  if (/^\/annotations\/articles\/?$/.test(path)) return "notes.articles.view";
+  if (path.startsWith("/annotations/posts/")) return "notes.posts.view";
   if (path.startsWith("/annotations")) return "notes.view";
+  if (/^\/booklists\/[^/]+\/?$/.test(path)) return "booklists.details.view";
   if (path.startsWith("/booklists")) return "booklists.view";
   if (path === "/knowledge-graph") return "knowledge.view";
   if (path === "/virtual-library") return "virtual.view";
@@ -100,7 +109,6 @@ export function PermissionBoundary({ children }: PropsWithChildren) {
     previous.current = signature;
   }, [access.ready, client, signature]);
   if (failure !== null) return <HttpErrorPage failure={failure} title="无法确认功能权限。"
-    recovery="每 5 秒自动重试，服务恢复后会自动打开页面。"
     actions={<Button disabled={access.fetching} onClick={() => void access.retry()}>{access.fetching ? "正在重试…" : "重试"}</Button>} />;
   if (!access.ready) return <CircularProgress />;
   if (!access.canVisit(location.pathname, location.hash)) return <AccessDeniedPage reason="INSUFFICIENT_ROLE" returnTo={`${location.pathname}${location.search}${location.hash}`} />;

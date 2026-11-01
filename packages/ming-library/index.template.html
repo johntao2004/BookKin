@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#f4efe3" />
+  <meta name="description" content="走进观文藏阁：两层明式木构、整齐书架与由真实书目生成的现代三维书册。" />
+  <title>观文藏阁 · 二层藏书空间</title>
+  <link rel="stylesheet" href="./design-tokens.css">
+  <link rel="stylesheet" href="./interface.css">
+</head>
+<body>
+  <div id="viewport" aria-label="可交互的两层明式藏书阁三维场景"></div>
+  <div id="app">
+    <header class="topbar">
+      <div class="top-actions">
+        <button class="top-button" id="back-button" type="button" aria-label="返回">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m10 5-7 7 7 7M3 12h18"/></svg><span>返回</span>
+        </button>
+      </div>
+      <div class="top-actions">
+        <button class="top-button" id="gate-toggle" type="button" aria-label="关闭宫门" aria-pressed="true" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21V5h18v16M7 21V8h10v13M12 8v13M9 13v2M15 13v2M2 4h20M5 1h14"/></svg><span>关闭宫门</span></button>
+        <button class="top-button" id="catalog-toggle" aria-label="打开藏书目录" aria-controls="catalog-panel" title="搜索书名与作者">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h5v16H4zM12 4h4v16h-4zM18 5l3-1 3 15-3 1M6 8h1M13 8h2M6 16h1M13 16h2"/></svg><span>藏书目录</span>
+        </button>
+        <button class="top-button" id="data-toggle" aria-label="打开书目接入" aria-controls="data-panel" title="编辑现代书与导入书目">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 3h12v18H4zM7 7h6M7 11h4M19 8v8M15 12h8"/></svg><span>书目接入</span>
+        </button>
+        <button class="icon-button" id="help-toggle" aria-label="打开使用说明" aria-controls="help" title="使用说明">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 2-2.5 2-2.5 4M12 16v.1"/></svg>
+        </button>
+        <button class="icon-button" id="fullscreen" aria-label="切换全屏" title="全屏观看">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5M16 3h5v5M3 16v5h5M21 16v5h-5"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <button class="top-button throne-action" id="throne-seat" type="button" aria-pressed="false" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20h14M7 17V5h10v12M5 15h14M5 11v9M19 11v9M9 8h6M9 12h6"/></svg><span>御座入座</span></button>
+
+    <aside id="catalog-panel" class="drawer" aria-label="藏书目录" hidden>
+      <div class="panel-top">
+        <p class="panel-kicker">THE COLLECTION</p>
+        <div class="panel-heading"><h3>循架寻书</h3><button id="catalog-close" class="close" aria-label="关闭藏书目录">×</button></div>
+        <label class="search-field" for="catalog-search"><span class="field-label">书名或作者</span><span class="search-input"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="6"/><path d="m15 15 5 5"/></svg><input id="catalog-search" type="search" placeholder="搜索藏书…" autocomplete="off" /></span></label>
+      </div>
+      <div id="catalog-list" class="catalog-list"></div>
+    </aside>
+
+    <aside id="data-panel" inert class="drawer data-drawer" aria-label="书目接入与现代书编辑" hidden>
+      <div class="panel-top">
+        <p class="panel-kicker">YOUR BOOKS, IN THREE DIMENSIONS</p>
+        <div class="panel-heading"><h3>让书目入阁</h3><button id="data-close" class="close" aria-label="关闭书目接入">×</button></div>
+        <p class="panel-intro">传入书名与封面，生成可以近观的现代书。<br>支持单册编辑、书目文件与公开数据接口。</p>
+      </div>
+      <div class="drawer-scroll">
+        <section class="data-section" aria-labelledby="edit-section-title">
+          <div class="section-heading"><h4 id="edit-section-title"><span class="step">01</span>编辑一册现代书</h4><small>封面 · 书脊 · 书页</small></div>
+          <form id="book-form">
+            <div class="form-grid">
+              <label class="form-field full" for="book-id"><span class="field-label">书目标识</span><input id="book-id" name="id" type="text" readonly placeholder="选择书目后显示" /></label>
+              <label class="form-field full" for="book-title"><span class="field-label">书名<span class="required" aria-hidden="true">*</span></span><input id="book-title" name="title" type="text" required placeholder="输入完整书名" maxlength="200" /></label>
+              <label class="form-field" for="book-author"><span class="field-label">作者</span><input id="book-author" name="author" type="text" placeholder="作者或编者" maxlength="150" /></label>
+              <label class="form-field" for="book-pages"><span class="field-label">页数</span><input id="book-pages" name="pageCount" type="number" min="24" max="2500" step="1" value="320" inputmode="numeric" /></label>
+              <label class="form-field full" for="book-cover"><span class="field-label">封面图片 URL</span><input id="book-cover" name="coverUrl" type="text" inputmode="url" placeholder="https://example.com/cover.jpg" /></label>
+              <label class="form-field full" for="book-upload"><span class="field-label">或上传本地封面</span><input id="book-upload" type="file" accept="image/*" /></label>
+            </div>
+            <button id="book-save" class="button button-primary" type="submit"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg>更新三维书籍</button>
+            <p id="book-form-note" class="form-note">页面编辑仅在本次会话生效。可先从藏书目录选择一本书。</p>
+          </form>
+        </section>
+
+        <section class="data-section" aria-labelledby="json-section-title">
+          <div class="section-heading"><h4 id="json-section-title"><span class="step">02</span>导入整份书目</h4><small>JSON 文件或文本</small></div>
+          <label class="form-field" for="json-input"><span class="field-label">书目 JSON</span><textarea id="json-input" spellcheck="false" placeholder='[{"id":"book-001","title":"我的第一本藏书","author":"作者","coverUrl":"https://example.com/cover.jpg","pageCount":320}]'></textarea></label>
+          <div class="button-row"><button class="button button-primary" id="json-import" type="button">替换藏书</button><button class="button button-subtle" id="demo-restore" type="button">恢复演示藏书</button></div>
+          <label class="form-field json-file-field" for="json-file"><span class="field-label">选择书目文件</span><input id="json-file" type="file" accept=".json,application/json" /></label>
+          <p class="field-note">生成示例后，再替换你的真实书目。导入真实书目时，每条书目生成一册；演示中的 48 种书目会循环陈列，以展示整馆藏书效果。</p>
+          <div class="download-links"><a href="./book-example.json" download>示例书目 JSON</a><a href="./integration.md" download>网站接入说明</a></div>
+        </section>
+
+        <section class="data-section" aria-labelledby="feed-section-title">
+          <div class="section-heading"><h4 id="feed-section-title"><span class="step">03</span>从书籍站点读取</h4><small>公开 JSON 数据</small></div>
+          <label for="feed-url" class="field-label">书目接口 URL</label>
+          <div class="feed-row"><input id="feed-url" type="text" inputmode="url" placeholder="https://example.com/api/books" aria-label="书目接口 URL" /><button id="feed-load" type="button" class="button">读取书目</button></div>
+          <details class="integration-details">
+            <summary>查看数据示例与接入说明</summary>
+            <pre><code>[
+  {
+    "id": "book-001",
+    "title": "建筑与阅读",
+    "author": "作者姓名",
+    "coverUrl": "https://example.com/cover.jpg",
+    "pageCount": 320
+  }
+]</code></pre>
+            <p>书名用于封面与书脊，页数参与书册厚度生成。远程封面与接口需同源或允许跨域访问（CORS）；封面无法载入时使用自动生成的封面。</p>
+            <p>此处读取你提供的数据地址。页面中的编辑与导入仅用于本次会话，不会回写原书籍站点。</p>
+          </details>
+        </section>
+
+        <section class="data-section" aria-label="接入状态">
+          <p class="integration-note">整齐陈列，逐册生成。你可以先试改一本书，再将自己的整份书单带入藏阁。</p>
+          <p id="data-status" class="data-status" role="status" aria-live="polite">尚未导入外部书目。</p>
+        </section>
+      </div>
+    </aside>
+
+    <section id="selection" class="selection" aria-label="书籍三维详情" hidden>
+      <div class="panel-top">
+        <div class="panel-heading"><h3>一册近观</h3><button id="selection-close" class="close" aria-label="关闭书籍详情">×</button></div>
+      </div>
+      <div class="selection-scroll">
+        <div id="book-stage" aria-label="可旋转的现代书三维模型"></div>
+        <p class="stage-hint">拖动旋转 · 滚轮近观</p>
+        <h3 id="selection-title">现代藏书</h3>
+        <p id="selection-author"></p>
+        <div class="book-detail-meta"><span id="selection-meta"></span><span id="selection-position"></span></div>
+        <div class="selection-actions">
+          <button id="selection-edit" class="button" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 5 5 5M4 20l5-1L21 7l-5-5L4 14z"/></svg>编辑书目</button>
+          <a id="selection-read" class="button button-primary" href="#" rel="noopener noreferrer" hidden>开始阅读<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4 10 14M10 4H4v16h16v-6"/></svg></a>
+        </div>
+      </div>
+    </section>
+
+    <div id="walk-hint" hidden><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 移动　拖动画面转向　点击书籍查看详情　<kbd>Esc</kbd> 退出漫游</div>
+    <div id="touch-move" class="touch-move" aria-label="漫游方向控制">
+      <button type="button" data-move="KeyW" aria-label="向前行走">↑</button>
+      <button type="button" data-move="KeyA" aria-label="向左移动">←</button>
+      <button type="button" data-move="KeyS" aria-label="向后行走">↓</button>
+      <button type="button" data-move="KeyD" aria-label="向右移动">→</button>
+    </div>
+
+    <nav class="bottom-panel" aria-label="书架分类与操作">
+      <div class="view-caption"><span class="view-index" id="view-index">分类</span><div><h2 id="view-name">书架分类</h2><p id="view-subtitle">按主题浏览馆藏</p></div></div>
+      <div class="view-buttons" id="shelf-category-buttons" aria-label="书架分类"></div>
+      <div class="utilities">
+        <button class="utility" id="walk" type="button" title="沿两层书架与楼梯步行漫游"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="14" cy="4" r="2"/><path d="m10 9 4-2 2 5 4 1M14 8l-3 7-1 6M11 15l5 6M10 9l-4 4"/></svg><span>步行漫游</span></button>
+        <button class="utility active lighting-toggle" id="daylight" type="button" aria-label="当前光照为日光，点击切换为暮色" title="当前光照为日光，点击切换为暮色">
+          <svg data-lighting-icon="day" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1 1M18 18l1 1M5 19l1-1M18 6l1-1"/></svg>
+          <svg data-lighting-icon="evening" viewBox="0 0 24 24" aria-hidden="true" hidden><path d="M20 15.5A8.5 8.5 0 0 1 8.5 4 8.5 8.5 0 1 0 20 15.5Z"/></svg>
+          <span>日光</span>
+        </button>
+        <button class="utility" id="cutaway" type="button" aria-pressed="false" title="切换建筑剖视"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 7 9-5 9 5-9 5zM4 12v5l8 5 8-5v-5M12 12v10M4 17l8-5 8 5"/></svg><span>建筑剖视</span></button>
+        <button class="utility" id="quality" type="button" title="切换自动、精细与流畅画质"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 18V9M9 18V5M14 18v-7M19 18V3M2 21h20"/></svg><span>自动画质</span></button>
+      </div>
+    </nav>
+
+    <div id="toast" role="status" aria-live="polite"></div>
+    <div class="help-overlay" id="help" hidden>
+      <section class="help-card" role="dialog" aria-modal="true" aria-labelledby="help-title">
+        <p class="panel-kicker">A QUIET PLACE TO EXPLORE</p>
+        <div class="panel-heading"><h3 id="help-title">入阁须知</h3><button id="help-close" class="close" aria-label="关闭使用说明">×</button></div>
+        <p>推开朱门，沿开敞中厅入阁。两翼现代书册横向成排，宽梯与休息平台连接二层回廊；点选一本，就能近看封面、书脊与书页。</p>
+        <div class="help-row"><span>环顾藏阁</span><span>拖动旋转 · 滚轮缩放 · 右键平移<br>镜头遇到建筑与书架时自动停止</span></div>
+        <div class="help-row"><span>沿阶入殿</span><span>在「宫门入阁」用滚轮或双指沿台阶进退<br>最远到初始视角；宫门关闭时先开门</span></div>
+        <div class="help-row"><span>步行漫游</span><span>WASD 移动 · 拖动转向 · Esc 退出<br>点击书籍查看详情</span></div>
+        <div class="help-row"><span>开合宫门</span><span>使用右上方「藏书目录」旁的宫门开关</span></div>
+        <div class="help-row"><span>走上二层</span><span>沿两侧宽梯经休息平台上行，或选择「二层回廊」</span></div>
+        <div class="help-row"><span>观察屋面</span><span>选择「屋顶外观」；视角切换采用短暂淡入淡出</span></div>
+        <div class="help-row"><span>寻一本书</span><span>点选书架上的书，或在「藏书目录」搜索</span></div>
+        
+        <div class="help-row"><span>画质与流畅度</span><span>默认自动调整清晰度；也可切换「精细」或「流畅」<br>静止时暂停绘制，开始操作后自动恢复</span></div>
+        <details class="performance-details"><summary>查看运行信息</summary><pre id="performance-readout"></pre><button id="performance-refresh" type="button">刷新运行信息</button></details>
+        <p class="help-foot">建筑为明式木构意匠下的原创空间，并非某座历史建筑的测绘复原。馆藏来自当前账户可访问的真实书目，每条书目对应一册。封面与元信息通过书籍详情页维护。</p>
+      </section>
+    </div>
+  </div>
+
+  <div class="loading" id="loading" role="status" aria-live="polite">
+    <div class="loading-mark" aria-hidden="true">藏</div>
+    <h2 id="loading-title">万卷入阁，静候相逢</h2>
+    <div class="loading-line" aria-hidden="true"></div>
+    <p id="loading-note">正在构建两层木作、现代书册与光影</p>
+  </div>
+  <script defer src="__APP_SCRIPT_URL__"></script>
+</body>
+</html>

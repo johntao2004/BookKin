@@ -1,15 +1,36 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, vi } from "vitest";
-import { useLocation } from "react-router-dom";
+import { Route, Routes, useLocation } from "react-router-dom";
 import { api } from "../api/client";
+import type { Book, BookUpload } from "../domain/types";
 import { TestProviders } from "../test/TestProviders";
 import { LibraryPage } from "./LibraryPage";
+import * as permissionHooks from "../auth/permissions";
 function RouteSearch() { const location = useLocation(); return <output data-testid="route-search">{location.search}</output>; }
+function UploadDestination() { const location = useLocation(); return <output data-testid="upload-destination">{JSON.stringify({ pathname: location.pathname, state: location.state })}</output>; }
+function makeUpload(overrides: Partial<BookUpload> = {}): BookUpload {
+  return {
+    id: "draft-1", libraryRootId: "root", libraryRootName: "书籍书库", originalFilename: "draft.pdf",
+    format: "PDF", declaredSizeBytes: 1024, receivedBytes: 1024, status: "READY_FOR_REVIEW", encrypted: false,
+    drmProtected: false, digitallySigned: false, metadataCandidates: [], similarBookIds: [], expiresAt: "2026-10-28T00:00:00Z",
+    createdAt: "2026-10-27T00:00:00Z", updatedAt: "2026-10-27T00:00:00Z",
+    draftMetadata: { title: "草稿书", authors: ["作者"], translators: [], tags: [], targetPath: "", sources: {} },
+    ...overrides,
+  };
+}
+function makeBook(overrides: Partial<Book> = {}): Book {
+  return {
+    id: "book-1", title: "普通藏书", author: "作者", description: "", format: "PDF", coverUrl: "", progress: 0,
+    addedAt: "2026-10-27T00:00:00Z", libraryRoot: "书籍书库", relativePath: "book.pdf", fingerprint: "sha256:test",
+    status: "AVAILABLE", tags: [], ...overrides,
+  };
+}
 
 beforeEach(() => {
   sessionStorage.setItem("bookkin-demo-session", JSON.stringify({ id: "user-owner", username: "owner", displayName: "林", role: "OWNER", mustChangePassword: false }));
+  vi.spyOn(api, "listBookUploads").mockResolvedValue([]);
 });
-afterEach(() => vi.restoreAllMocks());
+afterEach(() => { cleanup(); vi.useRealTimers(); vi.restoreAllMocks(); });
 
 it("keeps the catalog independent of overview data and removes the visibility switch", async () => {
   vi.spyOn(api, "listBooks").mockResolvedValue({ items: [] });
@@ -23,6 +44,20 @@ it("keeps the catalog independent of overview data and removes the visibility sw
   expect(screen.queryByRole("button", { name: /[显隐][示藏]概览/ })).not.toBeInTheDocument();
   expect(stats).not.toHaveBeenCalled();
   expect(annotations).not.toHaveBeenCalled();
+});
+
+it("keeps the library page available without querying books when query permission is off", async () => {
+  const listBooks = vi.spyOn(api, "listBooks");
+  const usePermissions = permissionHooks.usePermissions;
+  vi.spyOn(permissionHooks, "usePermissions").mockImplementation(() => {
+    const permissions = usePermissions();
+    return { ...permissions, can: code => code !== "library.query" && permissions.can(code) };
+  });
+  render(<TestProviders initialPath="/library"><LibraryPage /></TestProviders>);
+  expect(await screen.findByRole("heading", { name: "全部藏书" })).toBeInTheDocument();
+  expect(await screen.findByText(/当前角色没有查询书籍目录的权限/)).toBeInTheDocument();
+  expect(listBooks).not.toHaveBeenCalled();
+  expect(screen.getByRole("button", { name: "上传书籍" })).toBeInTheDocument();
 });
 
 it("switches private/public scopes while retaining catalog filters", async () => {
@@ -69,7 +104,7 @@ it("clears search and format while preserving sort and other URL parameters", as
 it("filters the gallery from URL search without mounting overview modules", async () => {
   render(<TestProviders initialPath="/library?q=夜航"><LibraryPage /></TestProviders>);
   expect(await screen.findByText("夜航记")).toBeInTheDocument();
-  expect(screen.getByText("找到 1 本相关藏书")).toBeInTheDocument();
+  expect(screen.getByText("找到 1 本已入库藏书")).toBeInTheDocument();
   expect(screen.queryByText("夏日植物学")).not.toBeInTheDocument();
   expect(screen.queryByRole("region", { name: "批注回顾" })).not.toBeInTheDocument();
 });
@@ -83,4 +118,113 @@ it("shows a working back-to-top action after scrolling", async () => {
   fireEvent.click(await screen.findByRole("button", { name: "回到顶部" }));
   expect(scrollTo).toHaveBeenCalledWith({ top: 0, behavior: "smooth" });
   Object.defineProperty(window, "scrollY", { configurable: true, value: originalScrollY });
+});
+
+it("shows only ready drafts that match keyword, format and subject, with review as the sole card action", async () => {
+  vi.spyOn(api, "listBooks").mockResolvedValue({ items: [] });
+  vi.spyOn(api, "listBookUploads").mockResolvedValue([
+    makeUpload({ id: "matching-draft", originalFilename: "river.pdf", draftMetadata: { title: "河川观察", authors: ["林"], translators: [], tags: [], subjectCodes: ["RNKH2"], targetPath: "", sources: {} } }),
+    makeUpload({ id: "wrong-format", format: "EPUB", draftMetadata: { title: "河川旧稿", authors: ["林"], translators: [], tags: [], subjectCodes: ["RNKH2"], targetPath: "", sources: {} } }),
+    makeUpload({ id: "wrong-subject", draftMetadata: { title: "河川小说", authors: ["林"], translators: [], tags: [], subjectCodes: ["FB"], targetPath: "", sources: {} } }),
+    makeUpload({ id: "still-processing", status: "INSPECTING", originalFilename: "河川待解析.pdf" }),
+  ]);
+  render(<TestProviders initialPath="/library?format=PDF&q=河川&subject=RNK"><LibraryPage /></TestProviders>);
+
+  expect(await screen.findByRole("heading", { name: "待完善资料" })).toBeInTheDocument();
+  expect(screen.getAllByText("河川观察").length).toBeGreaterThan(0);
+  expect(screen.queryByText("河川旧稿")).not.toBeInTheDocument();
+  expect(screen.queryByText("河川小说")).not.toBeInTheDocument();
+  expect(screen.queryByText("河川待解析")).not.toBeInTheDocument();
+  expect(screen.getByText("草稿", { exact: true })).toBeInTheDocument();
+  expect(screen.queryByText("文件暂不可读")).not.toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole("button", { name: "河川观察更多操作" }));
+  expect(await screen.findByRole("menuitem", { name: "完善资料" })).toBeInTheDocument();
+  expect(screen.queryByRole("menuitem", { name: "开始阅读" })).not.toBeInTheDocument();
+});
+
+it("opens a draft review route with the current catalog filters in return state", async () => {
+  vi.spyOn(api, "listBooks").mockResolvedValue({ items: [] });
+  vi.spyOn(api, "listBookUploads").mockResolvedValue([makeUpload({ id: "return-draft", originalFilename: "river.pdf", draftMetadata: { title: "river draft", authors: ["作者"], translators: [], tags: [], targetPath: "", sources: {} } })]);
+  render(<TestProviders initialPath="/library?format=PDF&q=river&sort=title"><Routes>
+    <Route path="/library" element={<LibraryPage />} />
+    <Route path="/library/uploads/:uploadId" element={<UploadDestination />} />
+  </Routes></TestProviders>);
+
+  fireEvent.click(await screen.findByRole("button", { name: "river draft更多操作" }));
+  fireEvent.click(await screen.findByRole("menuitem", { name: "完善资料" }));
+  expect(await screen.findByTestId("upload-destination")).toHaveTextContent('"pathname":"/library/uploads/return-draft"');
+  expect(screen.getByTestId("upload-destination")).toHaveTextContent('"bookReturnTo":"/library?format=PDF&q=river&sort=title"');
+});
+
+it("does not mix unclassified upload drafts into a custom category filter", async () => {
+  vi.spyOn(api, "listBooks").mockResolvedValue({ items: [] });
+  vi.spyOn(api, "listCategories").mockResolvedValue({ items: [] } as any);
+  vi.spyOn(api, "listBookUploads").mockResolvedValue([makeUpload()]);
+  render(<TestProviders initialPath="/library?category=category-literature"><LibraryPage /></TestProviders>);
+
+  expect(await screen.findByRole("heading", { name: "未找到匹配的已入库书籍" })).toBeInTheDocument();
+  expect(screen.queryByRole("heading", { name: "待完善资料" })).not.toBeInTheDocument();
+  expect(screen.queryByText("草稿书")).not.toBeInTheDocument();
+});
+
+it("keeps the ordinary empty state precise when drafts exist", async () => {
+  vi.spyOn(api, "listBooks").mockResolvedValue({ items: [] });
+  vi.spyOn(api, "listBookUploads").mockResolvedValue([makeUpload()]);
+  render(<TestProviders initialPath="/library"><LibraryPage /></TestProviders>);
+
+  expect(await screen.findByRole("heading", { name: "暂无已入库书籍" })).toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: "待完善资料" })).toBeInTheDocument();
+  expect(screen.queryByRole("heading", { name: "暂无书籍" })).not.toBeInTheDocument();
+});
+
+it("keeps ordinary books visible and exposes a retry when draft loading fails", async () => {
+  const listUploads = vi.spyOn(api, "listBookUploads").mockRejectedValueOnce(new Error("offline")).mockResolvedValue([makeUpload()]);
+  vi.spyOn(api, "listBooks").mockResolvedValue({ items: [makeBook()] });
+  render(<TestProviders initialPath="/library"><LibraryPage /></TestProviders>);
+
+  const draftFailure = await screen.findByRole("alert");
+  expect(draftFailure).toHaveTextContent(/草稿暂时无法读取/);
+  expect(draftFailure).toHaveTextContent("重试");
+  expect(screen.getAllByText("普通藏书").length).toBeGreaterThan(0);
+  fireEvent.click(screen.getByRole("button", { name: "重试" }));
+  expect(await screen.findByRole("heading", { name: "待完善资料" })).toBeInTheDocument();
+  expect(screen.getAllByText("普通藏书").length).toBeGreaterThan(0);
+  expect(listUploads).toHaveBeenCalledTimes(2);
+});
+
+it("polls uploads while processing and stops once they are ready for review", async () => {
+  vi.useFakeTimers({ toFake: ["setInterval", "clearInterval"] });
+  const listUploads = vi.spyOn(api, "listBookUploads")
+    .mockResolvedValueOnce([makeUpload({ status: "INSPECTING" })])
+    .mockResolvedValue([makeUpload()]);
+  vi.spyOn(api, "listBooks").mockResolvedValue({ items: [] });
+  render(<TestProviders initialPath="/library"><LibraryPage /></TestProviders>);
+
+  await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+  expect(listUploads).toHaveBeenCalledTimes(1);
+  await act(async () => { await vi.advanceTimersByTimeAsync(1200); });
+  expect(listUploads).toHaveBeenCalledTimes(2);
+  await act(async () => { await vi.advanceTimersByTimeAsync(1200); });
+  expect(listUploads).toHaveBeenCalledTimes(2);
+});
+
+it("does not request upload drafts for a member without upload permission", async () => {
+  sessionStorage.setItem("bookkin-demo-session", JSON.stringify({ id: "user-member", username: "member", displayName: "读者", role: "MEMBER", mustChangePassword: false }));
+  vi.spyOn(api, "listBooks").mockResolvedValue({ items: [] });
+  const listUploads = vi.spyOn(api, "listBookUploads");
+  render(<TestProviders initialPath="/library"><LibraryPage /></TestProviders>);
+
+  expect(await screen.findByRole("heading", { name: "全部藏书" })).toBeInTheDocument();
+  expect(listUploads).not.toHaveBeenCalled();
+  expect(screen.queryByRole("button", { name: "上传书籍" })).not.toBeInTheDocument();
+});
+
+it("does not request private upload drafts in public scope", async () => {
+  vi.spyOn(api, "listDisplayBooks").mockResolvedValue({ items: [], revision: 1 });
+  const listUploads = vi.spyOn(api, "listBookUploads");
+  render(<TestProviders initialPath="/library?scope=public"><LibraryPage /></TestProviders>);
+
+  expect(await screen.findByRole("heading", { name: "公开藏书" })).toBeInTheDocument();
+  expect(listUploads).not.toHaveBeenCalled();
 });

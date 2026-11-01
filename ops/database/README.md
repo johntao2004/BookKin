@@ -1,12 +1,8 @@
 # Single initialization baseline
 
-The application has one initialization baseline, `V1__initial_schema.sql`, followed by explicit incremental migrations. V1 creates the consolidated schema and seven system-setting rows. It contains no users, books, articles, notes, reading activity, library registrations or reusable credentials. Optional sample books and database fixtures are isolated under the explicit test tooling.
+The application ships exactly one initialization file, `V1__initial_schema.sql`. It includes the complete current schema, multilingual book languages, metadata provider settings and shared metadata vocabularies. It creates only seven system-setting rows and no accounts, books or reading activity. Do not add iterative migration files for this initialization release.
 
-The October 27 multi-language update adds V2 to widen `books.language` from 32 to 1024 characters. It preserves existing values and the string API, allowing comma-separated language codes without rewriting the baseline or converting business records. On an already consolidated V1 installation, take a database backup and let Flyway apply this compatible widening through the normal application startup. Legacy installations still require the controlled baseline conversion below before incremental migrations can run.
-
-The October 27 metadata-source update adds V3 with a new `metadata_provider_settings` table. It stores fixed provider IDs and enabled flags, references the acting user, and leaves existing books, uploads, keys and deployment defaults unchanged. Back up and restore-rehearse an existing V1/V2 installation before applying V3 through Flyway.
-
-The October 28 shared metadata vocabulary adds V4 with language/knowledge dictionaries and book-to-knowledge-term links. Tags and series reuse existing catalog entities. This is additive: no original files, graph evidence or existing metadata are rewritten. Back up and restore-rehearse before applying V4 through normal Flyway startup. Manual knowledge terms do not manufacture graph evidence.
+The previous V1–V4 SQL must be retained with a SHA-256 manifest in a private backup before conversion. Use `consolidate.py` with this reviewed four-file bundle and the new V1. The same backup, restore rehearsal, schema comparison, row-count checks and rollback-history requirements below apply. Stop API and Worker before `--apply`. Never restart a rebuilt application against the old history until conversion succeeds.
 
 Existing databases must **not** be pointed directly at the consolidated application. Their historical V1 checksum differs. Do not disable Flyway validation, use repair blindly, reset the database, or delete content to get past this boundary.
 

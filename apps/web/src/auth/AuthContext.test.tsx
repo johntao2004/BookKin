@@ -47,8 +47,8 @@ describe("RequireAuth", () => {
   it("intercepts a signed-out direct route with an explicit 401 page", () => {
     renderProtectedRoute("/admin/users?tab=active#staff", ["OWNER", "ADMIN"]);
 
-    expect(screen.getByRole("heading", { name: "这间书房暂未为你开门" })).toBeInTheDocument();
-    expect(screen.getByText("401 · 需要登录")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "需要登录" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", {level: 1, name: "401"})).toBeInTheDocument();
     expect(screen.queryByText("用户管理私密内容")).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("link", { name: "登录" }));
@@ -59,8 +59,8 @@ describe("RequireAuth", () => {
     sessionStorage.setItem("bookkin-demo-session", JSON.stringify(member));
     renderProtectedRoute("/admin/users", ["OWNER", "ADMIN"]);
 
-    expect(screen.getByRole("heading", { name: "这把钥匙打不开这一页" })).toBeInTheDocument();
-    expect(screen.getByText("403 · 权限受限")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "权限受限" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", {level: 1, name: "403"})).toBeInTheDocument();
     expect(screen.queryByText("用户管理私密内容")).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: "返回藏书库" })).toHaveAttribute("href", "/library/all");
   });
@@ -70,7 +70,7 @@ describe("RequireAuth", () => {
     renderProtectedRoute("/admin/users", ["OWNER", "ADMIN"]);
 
     expect(screen.getByText("用户管理私密内容")).toBeInTheDocument();
-    expect(screen.queryByText("401 · 需要登录")).not.toBeInTheDocument();
-    expect(screen.queryByText("403 · 权限受限")).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", {level: 1, name: "401"})).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", {level: 1, name: "403"})).not.toBeInTheDocument();
   });
 });

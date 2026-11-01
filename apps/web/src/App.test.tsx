@@ -10,6 +10,9 @@ import { readingPosts } from "./features/notes/posts-api";
 import { articleNotesApi } from "./features/notes/api";
 import { TestProviders } from "./test/TestProviders";
 
+// These route permission tests exercise post-initialization behavior; first-run routing has its own focused tests.
+vi.mock("./auth/SetupGate", () => ({ SetupGate: (props: { children: import("react").ReactNode }) => props.children }));
+
 const member = {
   id: "user-member",
   username: "member",
@@ -36,7 +39,7 @@ describe("App route permissions", () => {
     const list = vi.spyOn(readingPosts, "list");
     const get = vi.spyOn(readingPosts, "get");
     render(<TestProviders initialPath={path}><App /></TestProviders>);
-    expect(await screen.findByRole("heading", { name: "这间书房暂未为你开门" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "需要登录" })).toBeInTheDocument();
     expect(list).not.toHaveBeenCalled();
     expect(get).not.toHaveBeenCalled();
   });
@@ -86,7 +89,7 @@ describe("App route permissions", () => {
     const books = vi.spyOn(api, "listBooks");
     const stats = vi.spyOn(api, "getWeeklyReadingStats");
     render(<TestProviders initialPath="/library/overview"><App /></TestProviders>);
-    expect(await screen.findByRole("heading", { name: "这间书房暂未为你开门" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "需要登录" })).toBeInTheDocument();
     expect(books).not.toHaveBeenCalled();
     expect(stats).not.toHaveBeenCalled();
     expect(overview).not.toHaveBeenCalled();
@@ -110,7 +113,7 @@ describe("App route permissions", () => {
   it.each(["/recycle-bin", "/admin/recycle-bin"])("keeps members out of the regrouped recycle bin through %s", async path => {
     sessionStorage.setItem("bookkin-demo-session", JSON.stringify(member));
     render(<TestProviders initialPath={path}><App /></TestProviders>);
-    expect(await screen.findByRole("heading", { name: "这把钥匙打不开这一页" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "权限受限" })).toBeInTheDocument();
   });
 
   it.each(["/articles?tag=essay&sort=title#catalog", "/articles/article-one"])("requires login for %s without requesting article content", async (path) => {
@@ -118,7 +121,7 @@ describe("App route permissions", () => {
     const get = vi.spyOn(articles, "get");
     render(<TestProviders initialPath={path}><><App /><RouteLocationProbe /><ReturnToProbe /></></TestProviders>);
 
-    expect(await screen.findByRole("heading", { name: "这间书房暂未为你开门" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "需要登录" })).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "文钞馆" })).not.toBeInTheDocument();
     expect(list).not.toHaveBeenCalled();
     expect(get).not.toHaveBeenCalled();
@@ -140,21 +143,21 @@ describe("App route permissions", () => {
   it("blocks a signed-out direct visit before private library content mounts", async () => {
     render(<TestProviders initialPath="/library/all"><App /></TestProviders>);
 
-    expect(await screen.findByRole("heading", { name: "这间书房暂未为你开门" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "需要登录" })).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "全部藏书" })).not.toBeInTheDocument();
   });
 
   it("blocks a signed-out direct visit to a book detail before private metadata mounts", async () => {
     render(<TestProviders initialPath="/library/books/book-1"><App /></TestProviders>);
 
-    expect(await screen.findByRole("heading", { name: "这间书房暂未为你开门" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "需要登录" })).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "书籍详情" })).not.toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "山川与灯火" })).not.toBeInTheDocument();
   });
 
   it("blocks a signed-out direct visit to the optional 3D route", async () => {
     render(<TestProviders initialPath="/virtual-library"><App /></TestProviders>);
-    expect(await screen.findByRole("heading", {name:"这间书房暂未为你开门"})).toBeInTheDocument();
+    expect(await screen.findByRole("heading", {name:"需要登录"})).toBeInTheDocument();
     expect(screen.queryByRole("region", {name:"虚拟 3D 图书馆"})).not.toBeInTheDocument();
   });
 
@@ -162,7 +165,7 @@ describe("App route permissions", () => {
     render(<TestProviders initialPath="/library"><App /></TestProviders>);
 
     expect(await screen.findByRole("heading", { name: "藏书楼", level: 1 })).toBeInTheDocument();
-    expect(screen.queryByText("401 · 需要登录")).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", {level: 1, name: "401"})).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "文钞馆" })).not.toBeInTheDocument();
   });
 
@@ -224,7 +227,7 @@ describe("App route permissions", () => {
     sessionStorage.setItem("bookkin-demo-session", JSON.stringify(member));
     render(<TestProviders initialPath="/admin/users"><App /></TestProviders>);
 
-    expect(await screen.findByRole("heading", { name: "这把钥匙打不开这一页" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "权限受限" })).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "用户管理" })).not.toBeInTheDocument();
   });
 });

@@ -8,10 +8,10 @@ import { BookKinThemeProvider } from '../theme/BookKinThemeProvider';
 import { VirtualLibraryRoute } from './VirtualLibraryRoute';
 
 const scene = vi.hoisted(() => ({imported: vi.fn(), mounted: vi.fn(), stopped: vi.fn()}));
-vi.mock('./VirtualLibraryExperience', async () => {
+vi.mock('./MingLibraryExperience', async () => {
   const {useEffect} = await import('react');
   scene.imported();
-  return {VirtualLibraryExperience: function MockExperience() {
+  return {MingLibraryExperience: function MockExperience() {
     useEffect(() => {scene.mounted(); return () => {scene.stopped();};}, []);
     return <div>Active 3D scene</div>;
   }};

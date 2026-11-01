@@ -20,6 +20,7 @@ export const settingsGroups = [
   ] },
   { key: "services", label: "外部服务", sections: [
     { hash: "#services/ai", label: "AI 服务", panel: "ai", permissionGroup: "AI 服务", ownerOnly: false },
+    { hash: "#services/metadata", label: "元数据来源", panel: "metadata", permissionGroup: "AI 服务", ownerOnly: false },
     { hash: "#services/mail", label: "邮件服务", panel: "mail", permissionGroup: "邮件服务", ownerOnly: true },
   ] },
 ] as const;

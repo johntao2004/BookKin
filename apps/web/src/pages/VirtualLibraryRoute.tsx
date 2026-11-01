@@ -6,7 +6,7 @@ import { Button } from '../ui/buttons';
 import { Alert } from '../ui/feedback';
 import { Stack } from '../ui/primitives';
 
-const Experience = lazy(() => import('./VirtualLibraryExperience').then(module => ({default: module.VirtualLibraryExperience})));
+const Experience = lazy(() => import('./MingLibraryExperience').then(module => ({default: module.MingLibraryExperience})));
 
 export function VirtualLibraryRoute() {
   const query = useSiteSettingsQuery(true);

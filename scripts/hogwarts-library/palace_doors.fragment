@@ -1,0 +1,55 @@
+# Ground end walls: a complete timber door assembly set into broad plaster panels.
+MODULE='28_Palace_doors_and_wainscot'
+DOOR_RECESS=material('Paint • palace recessed door','472b22',.72)
+WALL_PANEL=material('Paint • palace warm plaster panel','bfb49b',.92)
+wire_pbr(DOOR_RECESS,'r2-walnut',.22)
+for end in (-1,1):
+ def wall(x,y,inset):return (x,y,end*(20.2-inset))
+ # Stone skirting and a low timber dado ground the wall, with broad quiet bays.
+ for side in (-1,1):
+  x=side*11.4
+  box(STONE,wall(x,.23,.38),(17.1,.46,.26),.025)
+  box(FURN_WOOD,wall(x,.90,.39),(17.1,.86,.20),.018)
+  for yy in (.48,1.34):box(FURN_EDGE,wall(x,yy,.48),(17.1,.045,.055),.012)
+  for xx in (side*6.9,side*15.45):
+   box(WALL_PANEL,wall(xx,3.76,.32),(8.15,4.52,.12),.025)
+   for dx in (-4.06,4.06):box(FURN_WOOD,wall(xx+dx,3.76,.43),(.065,4.52,.10),.015)
+   for yy in (1.52,6.0):box(FURN_WOOD,wall(xx,yy,.43),(8.16,.065,.10),.015)
+   # Matching shallow dado panels, with visible joinery rather than random rails.
+   for dx in (-3.1,-1.05,1.05,3.1):
+    box(FURN_PANEL,wall(xx+dx,.91,.505),(1.90,.59,.025),.01)
+    for yy in (.64,1.18):box(FURN_EDGE,wall(xx+dx,yy,.52),(1.78,.018,.015))
+ box(FURN_WOOD,wall(0,6.27,.36),(40,.28,.25),.025)
+ box(FURN_EDGE,wall(0,6.10,.47),(40,.045,.06),.012)
+ # Door jambs and layered straight lintel; physical projections get colliders.
+ for x in (-2.66,2.66):
+  palace_box(f'door-frame-{end}-{x}',FURN_WOOD,wall(x,2.84,.45),(.42,5.68,.58),.035)
+  box(PALACE_GOLD,wall(x,2.92,.755),(.025,5.25,.018),.005)
+  palace_box(f'door-plinth-{end}-{x}',STONE,wall(x,.25,.46),(.55,.50,.62),.035)
+ palace_box(f'door-header-{end}',FURN_WOOD,wall(0,5.64,.43),(5.75,.42,.62),.035)
+ box(PALACE_JADE,wall(0,5.65,.755),(5.25,.23,.035),.012)
+ for x in (-1.8,0,1.8):palace_cloud(lambda u,v:wall(x+u,5.65+v,.78),.92,.15)
+ palace_box(f'door-cornice-{end}',FURN_EDGE,wall(0,5.94,.43),(6.05,.18,.66),.03)
+ palace_box(f'door-threshold-{end}',STONE,wall(0,.07,.47),(5.0,.14,.48),.02)
+ for x in (-1.2,1.2):
+  # Two framed raised panels per leaf with recessed centers and layered mouldings.
+  for yy,hh in [(1.28,1.95),(3.76,2.55)]:
+   box(DOOR_RECESS,wall(x,yy,.515),(1.94,hh,.035),.012)
+   box(PALACE_RED,wall(x,yy,.548),(1.60,hh-.34,.045),.025)
+   for dx in (-.96,.96):
+    box(FURN_EDGE,wall(x+dx,yy,.56),(.065,hh,.065),.012)
+   for dy in (-hh/2,hh/2):box(FURN_EDGE,wall(x,yy+dy,.56),(1.98,.065,.065),.012)
+   for dx in (-.78,.78):box(PALACE_GOLD,wall(x+dx,yy,.575),(.012,hh-.40,.012))
+  # Central rail and brass ring pulls: a readable hand-height focal detail.
+  box(FURN_WOOD,wall(x,2.50,.54),(2.20,.19,.10),.015)
+  pull=x/abs(x)*.38
+  box(PALACE_GOLD,wall(pull,2.69,.59),(.23,.38,.06),.035)
+  sphere(PALACE_GOLD,wall(pull,2.75,.67),.065,16,8)
+  torus(PALACE_GOLD,wall(pull,2.56,.72),.15,.025,'xy',32)
+  for yy in (.35,5.03):
+   for dx in (-.85,.85):sphere(PALACE_GOLD,wall(x+dx,yy,.60),.033,12,6)
+  collider=next(c for c in COLLISIONS if c['id']==f'palace-door-{end}-{x}')
+  collider['center']['z']=end*19.76;collider['size']['z']=.72
+PALACE_DOORS={'leaves':4,'framedDoorways':2,'ringPulls':4,
+ 'groundWalls':'stone skirting, hardwood dado and broad plaster panels',
+ 'state':'closed decorative doors; no new navigation destination'}

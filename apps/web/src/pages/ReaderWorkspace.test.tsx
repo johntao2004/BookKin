@@ -9,9 +9,11 @@ import type { ReaderSelection, TocItem } from "../components/readers/types";
 import { TestProviders } from "../test/TestProviders";
 
 vi.mock("../auth/permissions", () => ({ usePermissions: () => ({ can: () => true }) }));
+const readerBindings = vi.hoisted(() => ({ onSelect: undefined as ((selection: ReaderSelection) => void) | undefined }));
 
 vi.mock("../components/readers/EpubDocumentReader", () => ({
-  default: (props: { contentUrl?: string; flow?: string; readOnly?: boolean; target?: string; onNavigation: (items: TocItem[]) => void; onSelect: (selection: ReaderSelection) => void; onPosition: (locator: string, progress: number) => void }) => <section aria-label="共享正文" data-content-url={props.contentUrl} data-flow={props.flow} data-read-only={String(props.readOnly)} data-target={props.target} data-target-revision={(props as { targetRevision?: number }).targetRevision}>
+  default: (props: { annotations?: { id: string }[]; onAnnotationActivate?: (id: string) => void; contentUrl?: string; flow?: string; readOnly?: boolean; target?: string; onNavigation: (items: TocItem[]) => void; onSelect: (selection: ReaderSelection) => void; onPosition: (locator: string, progress: number) => void }) => { readerBindings.onSelect = props.onSelect; return <section aria-label="共享正文" data-annotation-count={props.annotations?.length} data-content-url={props.contentUrl} data-flow={props.flow} data-read-only={String(props.readOnly)} data-target={props.target} data-target-revision={(props as { targetRevision?: number }).targetRevision}>
+    {props.annotations?.map(item => <button key={item.id} onClick={() => props.onAnnotationActivate?.(item.id)}>点击正文批注 {item.id}</button>)}
     <button onClick={() => props.onNavigation([
       { href: "article.xhtml#first", label: "第一点", depth: 0, locator: "epubcfi(/6/2!/4/2)" },
       { href: "article.xhtml#second", label: "第二点", depth: 0, locator: "epubcfi(/6/2!/4/8)" },
@@ -19,12 +21,13 @@ vi.mock("../components/readers/EpubDocumentReader", () => ({
     <button onClick={() => props.onPosition("epubcfi(/6/2!/4/10)", 0.9)}>翻到末页</button>
     <button onClick={() => props.onSelect({ quote: "文章中的一句话", locator: "epubcfi(/6/2!/4/2:0,/1:0,/1:8)", x: 140, y: 200, placement: "ABOVE" })}>选择文章文字</button>
     <button onClick={() => props.onPosition("epubcfi(/6/2!/4/2)", 0.5)}>翻到下一页</button>
-  </section>,
+  </section>; },
 }));
 
 function independentSource(): IndependentReaderSource {
   return {
     id: "article-shared", title: "文章阅读", author: "作者", format: "EPUB", contentUrl: "blob:article",
+    annotationPermission: "articles.annotate",
     flow: "scrolled-doc", label: "文章", backLabel: "返回文钞馆", progress: 0.1, annotations: [], onBack: vi.fn(), onPosition: vi.fn(),
     createAnnotation: vi.fn(async draft => ({ ...draft, id: "new-entry", bookId: "article-shared", createdAt: "2026-10-20T00:00:00Z" })),
     deleteAnnotation: vi.fn(async () => undefined),
@@ -38,18 +41,18 @@ describe("ReaderWorkspace independent source", () => {
   });
   afterEach(() => vi.restoreAllMocks());
 
-  it("opens short-note AI only with consent and retains the draft until normal note save", async () => {
+  it("keeps article reading and note composition free of AI while retaining normal note saves", async () => {
     const source = independentSource();
     render(<TestProviders><ReaderWorkspace source={source} /></TestProviders>);
     fireEvent.click(await screen.findByRole("button", { name: "选择文章文字" }));
     fireEvent.click(screen.getByRole("button", { name: "高亮＋笔记" }));
     const note = "沿着同一条路线观察，能给下一次散步留下可以比较的线索。";
     fireEvent.change(screen.getByRole("textbox", { name: "写下这段文字带来的想法" }), { target: { value: note } });
-    fireEvent.click(screen.getByRole("button", { name: "AI 整理笔记" }));
-    expect(screen.getByRole("checkbox", { name: "我同意本次将上述内容发送给已配置的 AI 平台" })).not.toBeChecked();
-    expect(screen.getByRole("button", { name: "生成建议" })).toBeDisabled();
+    expect(screen.queryByRole("button", { name: "AI 整理笔记" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "AI 助读" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("dialog", { name: "AI 编辑辅助" })).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("AI 生成结果")).not.toBeInTheDocument();
     expect(source.createAnnotation).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByRole("button", { name: "关闭助手" }));
     expect(screen.getByRole("textbox", { name: "写下这段文字带来的想法" })).toHaveValue(note);
     fireEvent.click(screen.getByRole("button", { name: "保存笔记" }));
     await waitFor(() => expect(source.createAnnotation).toHaveBeenCalledWith(expect.objectContaining({ note, quote: "文章中的一句话" })));
@@ -105,6 +108,101 @@ describe("ReaderWorkspace independent source", () => {
     await waitFor(() => expect(source.deleteAnnotation).toHaveBeenCalledWith("saved-note"));
     fireEvent.click(screen.getByRole("button", { name: "返回原文" }));
     await waitFor(() => expect(screen.getByRole("region", { name: "共享正文" })).toHaveAttribute("data-target", "article.xhtml#p-0"));
+  });
+
+  it("opens and targets the clicked note without saving or activating a plain highlight", async () => {
+    const source = independentSource();
+    source.annotations = [
+      { id: "plain", bookId: source.id, type: "HIGHLIGHT", style: "HIGHLIGHT", quote: "纯高亮", locator: "article.xhtml#p-1", createdAt: "2026-10-28" },
+      { id: "first", bookId: source.id, type: "NOTE", style: "HIGHLIGHT", quote: "第一处", note: "第一条笔记", locator: "article.xhtml#p-2", createdAt: "2026-10-28" },
+      { id: "target", bookId: source.id, type: "NOTE", style: "HIGHLIGHT", quote: "第二处", note: "目标笔记", locator: "article.xhtml#p-3", createdAt: "2026-10-28" },
+    ];
+    render(<TestProviders><ReaderWorkspace source={source} /></TestProviders>);
+    fireEvent.click(await screen.findByRole("button", { name: "点击正文批注 plain" }));
+    expect(screen.queryByRole("heading", { name: "阅文札记" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "点击正文批注 target" }));
+    expect(await screen.findByRole("heading", { name: "阅文札记" })).toBeInTheDocument();
+    const current = screen.getByRole("group", { name: "当前笔记" });
+    expect(current).toHaveAttribute("aria-current", "true");
+    expect(current).toHaveTextContent("目标笔记");
+    expect(current).not.toHaveTextContent("第一条笔记");
+    expect(source.createAnnotation).not.toHaveBeenCalled();
+    expect(source.deleteAnnotation).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "关闭阅文札记" }));
+    fireEvent.click(screen.getByRole("button", { name: "点击正文批注 first" }));
+    await waitFor(() => expect(screen.getByRole("group", { name: "当前笔记" })).toHaveTextContent("第一条笔记"));
+  });
+
+  it("combines a highlight and all notes at the same article range into one entry and removes its members", async () => {
+    const source = independentSource();
+    const common = { bookId: source.id, style: "HIGHLIGHT" as const, color: "YELLOW" as const, quote: "只展示一次的原文", locator: "epubcfi(/6/2!/4/2:0,/1:0,/1:8)", createdAt: "2026-10-20T00:00:00Z" };
+    source.annotations = [
+      { ...common, id: "highlight", type: "HIGHLIGHT" },
+      { ...common, id: "first-note", type: "NOTE", note: "第一条想法", locator: "epubcfi(/6/2!/4/2:0,/1:0,/1:9)" },
+      { ...common, id: "second-note", type: "NOTE", note: "第二条想法" },
+    ];
+    render(<TestProviders><ReaderWorkspace source={source} /></TestProviders>);
+    expect(await screen.findByRole("region", { name: "共享正文" })).toHaveAttribute("data-annotation-count", "1");
+    fireEvent.click(screen.getByRole("button", { name: "更多阅读操作" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "阅文札记" }));
+    expect(screen.queryByText(/仅你可见/)).not.toBeInTheDocument();
+    expect(screen.getAllByText("“只展示一次的原文”")).toHaveLength(1);
+    expect(screen.getByText("高亮笔记")).toBeInTheDocument();
+    expect(screen.getByText(/第一条想法\s+第二条想法/)).toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: "返回原文" })).toHaveLength(1);
+    fireEvent.click(screen.getByRole("button", { name: "删除批注" }));
+    await waitFor(() => expect(source.deleteAnnotation).toHaveBeenCalledTimes(3));
+    expect(vi.mocked(source.deleteAnnotation).mock.calls.map(([id]) => id)).toEqual(["highlight", "first-note", "second-note"]);
+  });
+
+  it("prefills the existing note for a normalized article selection and saves an edit", async () => {
+    const source = independentSource();
+    source.resolveAnnotationLocator = vi.fn(() => "article.xhtml#p-1");
+    source.annotations = [{ id: "existing", bookId: source.id, type: "NOTE", style: "HIGHLIGHT", color: "GREEN", quote: "文章中的一句话", locator: "article.xhtml#p-1", note: "已有笔记", createdAt: "2026-10-20T00:00:00Z" }];
+    render(<TestProviders><ReaderWorkspace source={source} /></TestProviders>);
+    fireEvent.click(await screen.findByRole("button", { name: "选择文章文字" }));
+    fireEvent.click(screen.getByRole("button", { name: "高亮＋笔记" }));
+    expect(await screen.findByRole("dialog", { name: "编辑笔记" })).toBeInTheDocument();
+    const field = screen.getByRole("textbox", { name: "写下这段文字带来的想法" });
+    expect(field).toHaveValue("已有笔记");
+    expect(screen.getByRole("button", { name: "选择绿色荧光笔" })).toHaveAttribute("aria-pressed", "true");
+    fireEvent.change(field, { target: { value: "更新后的笔记" } });
+    fireEvent.click(screen.getByRole("button", { name: "保存笔记" }));
+    await waitFor(() => expect(source.createAnnotation).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ type: "NOTE", locator: "article.xhtml#p-1", note: "更新后的笔记", color: "GREEN" })));
+  });
+
+  it("keeps reader selection callbacks stable while using the latest saved note", async () => {
+    const source = independentSource();
+    const view = render(<TestProviders><ReaderWorkspace source={source} /></TestProviders>);
+    await screen.findByRole("region", { name: "共享正文" });
+    const initialSelect = readerBindings.onSelect;
+    const updated = { ...source, progress: 0.5, annotations: [{ id: "updated", bookId: source.id, type: "NOTE" as const, style: "HIGHLIGHT" as const, quote: "文章中的一句话", locator: "epubcfi(/6/2!/4/2:0,/1:0,/1:8)", note: "最新笔记", createdAt: "2026-10-20T00:00:00Z" }] };
+    view.rerender(<TestProviders><ReaderWorkspace source={updated} /></TestProviders>);
+    expect(readerBindings.onSelect).toBe(initialSelect);
+    fireEvent.click(screen.getByRole("button", { name: "选择文章文字" }));
+    fireEvent.click(screen.getByRole("button", { name: "高亮＋笔记" }));
+    expect(screen.getByRole("textbox", { name: "写下这段文字带来的想法" })).toHaveValue("最新笔记");
+  });
+
+  it("shows only current-content notes and edits them directly from the drawer", async () => {
+    const source = independentSource();
+    source.annotations = [
+      { id: "mine", bookId: source.id, type: "NOTE", style: "HIGHLIGHT", quote: "当前文章原文", locator: "article.xhtml#p-1", note: "当前笔记", createdAt: "2026-10-20T00:00:00Z" },
+      { id: "other", bookId: "other-article", type: "NOTE", style: "HIGHLIGHT", quote: "其它文章原文", locator: "article.xhtml#p-1", note: "其它笔记", createdAt: "2026-10-20T00:00:00Z" },
+    ];
+    render(<TestProviders><ReaderWorkspace source={source} /></TestProviders>);
+    await screen.findByRole("region", { name: "共享正文" });
+    fireEvent.click(screen.getByRole("button", { name: "更多阅读操作" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "阅文札记" }));
+    expect(await screen.findByText("当前笔记")).toBeInTheDocument();
+    expect(screen.queryByText("其它笔记")).not.toBeInTheDocument();
+    for (const label of ["保存记录", "写随笔", "加入选集"]) expect(screen.queryByRole("button", { name: label })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "查看原始来源" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "编辑笔记" }));
+    expect(await screen.findByRole("dialog", { name: "编辑笔记" })).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "写下这段文字带来的想法" })).toHaveValue("当前笔记");
+    fireEvent.click(screen.getByRole("button", { name: /^取消$/ }));
+    expect(source.createAnnotation).not.toHaveBeenCalled();
   });
 
 
@@ -194,17 +292,29 @@ describe("ReaderWorkspace independent source", () => {
     } finally { api.isDemo = originalDemo; }
   });
 
-  it("keeps public source information available without exposing private actions to guests", async () => {
+  it("keeps article information and private note actions out of the guest notes drawer", async () => {
     sessionStorage.removeItem("bookkin-demo-session");
     const source = independentSource();
-    source.extraActions = <a href="https://example.com/article">查看原始来源</a>;
     render(<TestProviders><ReaderWorkspace source={source} /></TestProviders>);
     fireEvent.click(await screen.findByRole("button", { name: "选择文章文字" }));
     expect(screen.queryByRole("toolbar", { name: "批注工具" })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "更多阅读操作" }));
     expect(screen.queryByRole("menuitem", { name: "添加书签" })).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("menuitem", { name: "文章信息" }));
-    expect(await screen.findByRole("link", { name: "查看原始来源" })).toHaveAttribute("href", "https://example.com/article");
+    fireEvent.click(screen.getByRole("menuitem", { name: "阅文札记" }));
+    expect(screen.queryByRole("link", { name: "查看原始来源" })).not.toBeInTheDocument();
+    expect(source.createAnnotation).not.toHaveBeenCalled();
+  });
+
+  it("gates independent article annotations with articles.annotate rather than reader.annotate", async () => {
+    const source = independentSource();
+    source.annotationPermission = "articles.annotate";
+    const originalPermissions = await import("../auth/permissions");
+    vi.spyOn(originalPermissions, "usePermissions").mockReturnValue({ can: (code: string) => code === "reader.annotate" } as unknown as ReturnType<typeof originalPermissions.usePermissions>);
+    render(<TestProviders><ReaderWorkspace source={source} /></TestProviders>);
+    fireEvent.click(await screen.findByRole("button", { name: "选择文章文字" }));
+    expect(screen.queryByRole("toolbar", { name: "批注工具" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "更多阅读操作" }));
+    expect(screen.queryByRole("menuitem", { name: "添加书签" })).not.toBeInTheDocument();
     expect(source.createAnnotation).not.toHaveBeenCalled();
   });
 });

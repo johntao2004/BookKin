@@ -423,7 +423,7 @@ describe('canonical reference material ownership', () => {
     expect(primitiveCount).toBe(manifest.chunks.reduce((sum, chunk) => sum + chunk.primitives, 0));
     expect(variants.size).toBe(manifest.materialCapacityLimits!.length);
     expect(manifest.materialCapacityLimits!.map(material => material.name)).toEqual(
-      expect.arrayContaining(['Glass • cool window pane', 'Glass • warm window pane']),
+      expect.arrayContaining(['Paint • palace vermilion', 'Glass • palace silk lantern', 'Paint • palace mineral green']),
     );
     await pool.dispose();
   });

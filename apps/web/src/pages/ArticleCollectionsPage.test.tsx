@@ -6,8 +6,9 @@ import { articleCollections, type ArticleCollectionDetail, type ArticleCollectio
 import { ArticleCollectionsPage } from "./ArticleCollectionsPage";
 import { ArticleCollectionDetailPage } from "./ArticleCollectionDetailPage";
 
+const permissionGrants = vi.hoisted(() => new Set<string>());
 vi.mock("../auth/permissions", () => ({
-  usePermissions: () => ({ can: (permission: string) => permission === "articles.view" || permission === "articles.collections.edit" }),
+  usePermissions: () => ({ can: (permission: string) => permissionGrants.has(permission) }),
 }));
 
 const member = { id: "member-1", username: "member", displayName: "成员", role: "MEMBER", mustChangePassword: false };
@@ -26,6 +27,8 @@ describe("ArticleCollectionsPage routes and visibility", () => {
     vi.restoreAllMocks();
     sessionStorage.clear();
     sessionStorage.setItem("bookkin-demo-session", JSON.stringify(member));
+    permissionGrants.clear();
+    ["articles.collections.view", "articles.collections.details.view", "articles.collections.edit"].forEach(code => permissionGrants.add(code));
   });
 
   it("separates owned and shared collections and preserves list query parameters on return", async () => {
@@ -62,5 +65,19 @@ describe("ArticleCollectionsPage routes and visibility", () => {
     fireEvent.click(articleMenu);
     expect(await screen.findByRole("menuitem", { name: "打开文章" })).toBeInTheDocument();
     expect(screen.queryByRole("menuitem", { name: /编辑文章/ })).not.toBeInTheDocument();
+  });
+
+  it("uses collection page scopes instead of the articles list scope", async () => {
+    permissionGrants.clear();
+    permissionGrants.add("articles.view");
+    const list = vi.spyOn(articleCollections, "list").mockResolvedValue({ items: [own] });
+    const detail = vi.spyOn(articleCollections, "get").mockResolvedValue(ownDetail);
+    render(<TestProviders initialPath="/article-collections"><Routes>
+      <Route path="/article-collections" element={<ArticleCollectionsPage />} />
+      <Route path="/article-collections/:collectionId" element={<ArticleCollectionDetailPage />} />
+    </Routes></TestProviders>);
+    expect(screen.queryByRole("heading", { name: "我的选集" })).not.toBeInTheDocument();
+    expect(list).not.toHaveBeenCalled();
+    expect(detail).not.toHaveBeenCalled();
   });
 });

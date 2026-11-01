@@ -68,6 +68,8 @@ import {
 import "./virtual-library.css";
 import { VirtualLibrarySearch } from "./VirtualLibrarySearch";
 import { createDeferredSceneAction } from "./virtual-library-deferred-action";
+import { createVirtualLibraryFrameTiming, virtualLibraryCameraEase } from './virtual-library-render-quality';
+import { createVirtualLibraryGpuTiming } from './virtual-library-gpu-timing';
 
 type ViewPreset = "front" | "free";
 type PointerMode = "inspect" | "orbit" | "portal" | "select" | "shelf" | "terminal" | null;
@@ -306,6 +308,10 @@ export function VirtualLibraryExperience() {
       renderer.shadowMap.autoUpdate = false;
       renderer.shadowMap.needsUpdate = true;
       renderer.info.autoReset = false;
+      const graphics = renderer.getContext();
+      const gpuTiming = createVirtualLibraryGpuTiming(graphics);
+      const graphicsInfo = graphics.getExtension('WEBGL_debug_renderer_info');
+      canvas.dataset.gpuRenderer = graphicsInfo ? String(graphics.getParameter(graphicsInfo.UNMASKED_RENDERER_WEBGL)) : 'unavailable';
 
       const scene = new THREE.Scene();
       scene.background = new THREE.Color(tokens.color.primitive.ink900);
@@ -336,6 +342,8 @@ export function VirtualLibraryExperience() {
       let hasPositionedCamera = false;
       let previousCameraRoom = activeRoomRef.current;
       let rendererPixelRatio = 0;
+      const frameTiming = createVirtualLibraryFrameTiming();
+      let renderingIdle = false;
 
       const worldBuildStarted = performance.now();
       const textureLoader = createVirtualLibraryTextureLoader(loadingManager, construction.signal);
@@ -348,6 +356,7 @@ export function VirtualLibraryExperience() {
       let rendererReleased = false;
       let sceneReleased = false;
       const releaseGraphics = () => {
+        gpuTiming.dispose();
         loadingManager.onLoad = () => undefined;
         loadingManager.onProgress = () => undefined;
         loadingManager.onError = () => undefined;
@@ -439,6 +448,7 @@ export function VirtualLibraryExperience() {
       }
       renderer.toneMappingExposure = preparedHall.referenceConfig.lighting.exposure;
       canvas.dataset.lightingDiagnostics = JSON.stringify(preparedHall.referenceConfig.lighting);
+      canvas.dataset.windowLighting = JSON.stringify(preparedHall.root.userData.windowLighting);
       architectureRetryRef.current = () => {
         if (preparedHall.streaming.diagnostics().consolidationError) {
           setSceneAttempt(attempt => attempt + 1); return;
@@ -760,6 +770,14 @@ export function VirtualLibraryExperience() {
         canvas.dataset.hallColumnCount = String(hallColumnCount);
       };
 
+      const updateRenderResolution = () => {
+        const nativeRatio = virtualLibraryDevicePixelRatio(window.devicePixelRatio, viewportWidth, viewportHeight);
+        const nextRatio = nativeRatio;
+        if (Math.abs(nextRatio - rendererPixelRatio) <= 0.001) return;
+        renderer.setPixelRatio(nextRatio);
+        rendererPixelRatio = nextRatio;
+        canvas.dataset.renderPixelRatio = nextRatio.toFixed(2);
+      };
       const resize = () => {
         const width = Math.max(1, host.clientWidth || window.innerWidth);
         const height = Math.max(1, host.clientHeight || window.innerHeight);
@@ -774,15 +792,10 @@ export function VirtualLibraryExperience() {
         camera.aspect = width / height;
         camera.updateProjectionMatrix();
         positionCamera();
-        const nextPixelRatio = virtualLibraryDevicePixelRatio(window.devicePixelRatio, width, height);
-        if (Math.abs(nextPixelRatio - rendererPixelRatio) > 0.001) {
-          renderer.setPixelRatio(nextPixelRatio);
-          rendererPixelRatio = nextPixelRatio;
-        }
+        updateRenderResolution();
         renderer.setSize(width, height, false);
         canvas.dataset.viewportWidth = String(width);
         canvas.dataset.viewportHeight = String(height);
-        canvas.dataset.renderPixelRatio = nextPixelRatio.toFixed(2);
         invalidateScene();
       };
 
@@ -1543,12 +1556,18 @@ export function VirtualLibraryExperience() {
       };
 
       let previousRenderTime = 0;
+      let previousFrameTime = 0;
       let previousMovementTime = performance.now();
       let renderedFrameCount = 0;
       let previousRenderState = "";
       const animate = (time: number) => {
         if (disposed) return;
-        if (document.hidden || time - previousRenderTime < 1000 / 30) {
+        if (document.hidden || time - previousRenderTime < 1000 / 60 - 0.5) {
+          if (document.hidden) {
+            previousFrameTime = 0;
+            previousMovementTime = time;
+            frameTiming.resetSamples();
+          }
           frame = window.requestAnimationFrame(animate);
           return;
         }
@@ -1573,18 +1592,31 @@ export function VirtualLibraryExperience() {
           && selectedSceneBook.group.scale.distanceToSquared(bookInspectionTransform.scale) < 0.000001
           && selectedSceneBook.group.quaternion.angleTo(bookInspectionTransform.quaternion) < 0.001
         );
-        if (time > renderUntil && cameraSettled && bookSettled && activeRoomRef.current === "hall") {
+        const idle = time > renderUntil && cameraSettled && bookSettled
+          && pressedMovementKeys.size === 0 && activeRoomRef.current === "hall";
+        if (idle && renderingIdle) {
           canvas.dataset.renderState = "idle";
+          previousFrameTime = 0;
+          previousMovementTime = time;
+          frameTiming.resetSamples();
           frame = window.requestAnimationFrame(animate);
           return;
         }
-        canvas.dataset.renderState = "active";
-        previousRenderTime = time;
-        const movementActive = moveContinuously((time - previousMovementTime) * 0.001);
+        const frameMilliseconds = previousFrameTime ? time - previousFrameTime : 1000 / 60;
+        if (!idle && !renderingIdle && previousFrameTime) frameTiming.sample(frameMilliseconds);
+        renderingIdle = idle;
+        updateRenderResolution();
+        canvas.dataset.renderState = idle ? "idle" : "active";
+        canvas.dataset.renderFps = frameTiming.fps.toFixed(1);
+        canvas.dataset.frameP95Ms = frameTiming.p95Ms.toFixed(1);
+        canvas.dataset.frameP50Ms = frameTiming.p50Ms.toFixed(1);
+        previousFrameTime = time;
+        previousRenderTime = time - ((time - previousRenderTime) % (1000 / 60));
+        const movementActive = moveContinuously(Math.min(time - previousMovementTime, 50) * 0.001);
         previousMovementTime = time;
         canvas.dataset.cameraMotion = movementActive ? "continuous" : "idle";
         const elapsed = time * 0.001;
-        const cameraEase = reducedMotion ? 1 : 0.16;
+        const cameraEase = reducedMotion ? 1 : virtualLibraryCameraEase(frameMilliseconds);
         cameraYawCurrent = THREE.MathUtils.lerp(cameraYawCurrent, cameraYawTargetRef.current, cameraEase);
         cameraPitchCurrent = THREE.MathUtils.lerp(cameraPitchCurrent, cameraPitchTargetRef.current, cameraEase);
         cameraTargetYCurrent = THREE.MathUtils.lerp(
@@ -1644,6 +1676,7 @@ export function VirtualLibraryExperience() {
         if (activeRoomRef.current !== 'hall') renderer.shadowMap.needsUpdate = true;
         world.animateEnvironment(reducedMotion ? 0 : elapsed);
         updateBookInspection();
+        world.updateCatalogRendering?.();
         // Nearby bindings receive thumbnails first; inspection keeps the original image quality.
         const nearby = world.sceneBooks.map(book => ({book, distance: camera.position.distanceTo(book.shelfPosition)}))
           .filter(({book, distance}) => distance < 24 || expandedShelfSectionIdRef.current === book.shelfSectionId)
@@ -1652,6 +1685,7 @@ export function VirtualLibraryExperience() {
           world.requestBookCover(book.book.id, distance < 4 || expandedShelfSectionIdRef.current === book.shelfSectionId);
         updateFocusedShelfDiagnostics();
         const renderStarted = performance.now();
+        gpuTiming.begin();
         renderer.info.reset();
         camera.layers.set(VIRTUAL_LIBRARY_WORLD_LAYER);
         const shadowPassRequested = renderer.shadowMap.needsUpdate;
@@ -1659,7 +1693,7 @@ export function VirtualLibraryExperience() {
         if (shadowPassRequested) shadowUpdateCount++;
         canvas.dataset.shadowUpdates = String(shadowUpdateCount);
         canvas.dataset.shadowPassRequested = String(shadowPassRequested);
-        canvas.dataset.renderFpsLimit = '30';
+        canvas.dataset.renderFpsLimit = '60';
         if (selectedSceneBook) {
           const autoClear = renderer.autoClear;
           const shadowsEnabled = renderer.shadowMap.enabled;
@@ -1687,6 +1721,8 @@ export function VirtualLibraryExperience() {
           initialCatalogFrame = window.requestAnimationFrame(() => startCatalogSync(catalogBooksRef.current));
         }
         canvas.dataset.drawCalls = String(renderer.info.render.calls);
+        gpuTiming.end();
+        canvas.dataset.renderGpuMs = String(gpuTiming.milliseconds ?? 'unsupported');
         canvas.dataset.triangles = String(renderer.info.render.triangles);
         canvas.dataset.renderCpuMs = (performance.now() - renderStarted).toFixed(1);
         canvas.dataset.renderedFrames = String(++renderedFrameCount);
@@ -1782,9 +1818,15 @@ export function VirtualLibraryExperience() {
         releaseGraphics();
         delete canvas.dataset.architectureDiagnostics;
         delete canvas.dataset.lightingDiagnostics;
+        delete canvas.dataset.windowLighting;
         delete canvas.dataset.shadowUpdates;
         delete canvas.dataset.shadowPassRequested;
         delete canvas.dataset.renderFpsLimit;
+        delete canvas.dataset.renderFps;
+        delete canvas.dataset.frameP95Ms;
+        delete canvas.dataset.frameP50Ms;
+        delete canvas.dataset.renderGpuMs;
+        delete canvas.dataset.gpuRenderer;
         delete canvas.dataset.viewportWidth;
         delete canvas.dataset.viewportHeight;
         delete canvas.dataset.renderPixelRatio;

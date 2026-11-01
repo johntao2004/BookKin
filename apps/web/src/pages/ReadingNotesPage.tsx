@@ -17,7 +17,9 @@ export function ReadingNotesPage({ kind }: { kind: PostFilter }) {
   const [params, setParams] = useSearchParams();
   const navigate = useNavigate();
   const [writing, setWriting] = useState(params.get("write") === "1");
-  const tab = params.get("view") === "posts" ? "posts" : "notes";
+  const canViewPosts = can("notes.posts.view");
+  const canWritePosts = can("notes.edit") && canViewPosts;
+  const tab = params.get("view") === "posts" && canViewPosts ? "posts" : "notes";
   const bookId = params.get("bookId");
   const articleId = params.get("articleId");
   const showSelectedNotes = kind === "ALL" || tab === "notes";
@@ -41,11 +43,11 @@ export function ReadingNotesPage({ kind }: { kind: PostFilter }) {
   return <PageContainer>
     {selectedBookId && <PageBackAction onClick={clearBookSelection}>返回笔记</PageBackAction>}
     {selectedArticleId && <PageBackAction onClick={() => openArticle()}>返回阅文札记</PageBackAction>}
-    <PageHeader eyebrow="READING NOTES" title="读书录" action={can("notes.edit") ? <Button variant="contained" onClick={() => setWriting(true)}>写随笔</Button> : undefined} />
+    <PageHeader eyebrow="READING NOTES" title="读书录" action={canWritePosts ? <Button variant="contained" onClick={() => setWriting(true)}>写随笔</Button> : undefined} />
     {kind === "ALL" ? selectedNotes : <Tabs activeKey={tab} onChange={changeTab} items={[
       { key: "notes", label: "札记", children: tab === "notes" ? selectedNotes : null },
-      { key: "posts", label: "随笔", children: tab === "posts" ? <ReadingPosts kind={kind} /> : null },
+      ...(canViewPosts ? [{ key: "posts", label: "随笔", children: tab === "posts" ? <ReadingPosts kind={kind} /> : null }] : []),
     ]} />}
-    {writing && <PostEditor initialKind={kind === "ALL" ? articleId ? "ARTICLE" : "BOOK" : kind} allowKindChange={kind === "ALL" && !bookId && !articleId} initialSourceId={params.get("sourceId") || bookId || articleId || undefined} onClose={closeEditor} onSaved={post => { closeEditor(); navigate(postHref(post)); }} />}
+    {writing && canWritePosts && <PostEditor initialKind={kind === "ALL" ? articleId ? "ARTICLE" : "BOOK" : kind} allowKindChange={kind === "ALL" && !bookId && !articleId} initialSourceId={params.get("sourceId") || bookId || articleId || undefined} onClose={closeEditor} onSaved={post => { closeEditor(); navigate(postHref(post)); }} />}
   </PageContainer>;
 }

@@ -28,32 +28,56 @@ afterAll(() => {
 
 describe('live reference-library body clearance', () => {
   it('blocks the closed B-end double door at its visible front face', () => {
-    const door = config.colliders.find(c => c.id === 'end-b-central-door');
+    const door = config.colliders.find(c => c.id === 'palace-door-1-1.2');
     expect(door?.shape).toBe('box');
-    const safe = resolveCameraCollision({x: 0, y: WALKING_EYE_HEIGHT, z: 18},
-      {x: 0, y: WALKING_EYE_HEIGHT, z: 20.5}, colliders, WALKING_CAMERA_CLEARANCE);
-    expect(safe.blockedBy).toBe('end-b-central-door');
-    expect(safe.z).toBeLessThan(19.2);
-    expect(config.colliders.filter(c => c.id.startsWith('end-b-lower-panel-'))).toHaveLength(2);
+    const safe = resolveCameraCollision({x: 1.2, y: WALKING_EYE_HEIGHT, z: 18},
+      {x: 1.2, y: WALKING_EYE_HEIGHT, z: 20.5}, colliders, WALKING_CAMERA_CLEARANCE);
+    expect(safe.blocked).toBe(true);
+    expect(safe.z).toBeLessThan(19.4);
+    expect(config.colliders.filter(c => c.id.startsWith('palace-door-1-'))).toHaveLength(2);
   });
 
-  it('keeps former end-arcade columns and heads clear while protecting rear pictures', () => {
+  it('keeps former end-arcade columns and heads clear while protecting the palace end wall', () => {
     for (const x of [-8, -6.4, -4.8, -3.2, -1.6, 0, 1.6, 3.2, 4.8, 6.4, 8]) {
       const ground = resolveCameraCollision({x, y: WALKING_EYE_HEIGHT, z: -16},
         {x, y: WALKING_EYE_HEIGHT, z: -18.5}, colliders, WALKING_CAMERA_CLEARANCE);
       expect(ground.blockedBy, `ground bay ${x}`).toBeNull();
       expect(ground.z).toBeCloseTo(-18.5);
-      const head = resolveCameraCollision({x, y: 6.5, z: -16},
-        {x, y: 6.5, z: -18.5}, colliders, WALKING_CAMERA_CLEARANCE);
+      const head = resolveCameraCollision({x, y: 6.0, z: -16},
+        {x, y: 6.0, z: -18.5}, colliders, WALKING_CAMERA_CLEARANCE);
       expect(head.blockedBy, `former head ${x}`).toBeNull();
       expect(head.z).toBeCloseTo(-18.5);
     }
     for (const x of [-6.4, -3.2, 0, 3.2, 6.4]) {
       const picture = resolveCameraCollision({x, y: 2.76, z: -18.4},
         {x, y: 2.76, z: -19.8}, colliders, WALKING_CAMERA_CLEARANCE);
-      expect(picture.blockedBy).toBe(`end-a-lower-picture-${x}`);
-      expect(picture.z).toBeGreaterThan(-19.2);
+      expect(picture.blocked).toBe(true);
+      expect(picture.z).toBeGreaterThan(-19.4);
     }
+  });
+
+  it('blocks flight through the new tabletop lanterns', () => {
+    const safe = resolveCameraCollision({x: 0, y: 2.5, z: -7.95},
+      {x: 0, y: 1.8, z: -7.95}, colliders, WALKING_CAMERA_CLEARANCE);
+    expect(safe.blocked).toBe(true);
+    expect(safe.y).toBeGreaterThan(2);
+    expect(config.colliders.filter(c => c.id.startsWith('palace-table-lantern-'))).toHaveLength(4);
+  });
+
+  it('clears the removed central column rows without invisible obstacles', () => {
+    for (const x of [-8.8, 8.8]) for (const z of [-10, 0, 10]) {
+      const safe = resolveCameraCollision({x, y: WALKING_EYE_HEIGHT, z: z - 0.8},
+        {x, y: WALKING_EYE_HEIGHT, z: z + 0.8}, colliders, WALKING_CAMERA_CLEARANCE);
+      expect(safe.blockedBy).toBeNull();
+      expect(safe.z).toBeCloseTo(z + 0.8);
+    }
+  });
+
+  it('blocks flight at the new dougong brackets above ground circulation', () => {
+    const safe = resolveCameraCollision({x: -8, y: 6.0, z: -15},
+      {x: -8, y: 7.0, z: -15}, colliders, WALKING_CAMERA_CLEARANCE);
+    expect(safe.blocked).toBe(true);
+    expect(safe.y).toBeLessThan(6.5);
   });
 
   it('clears retired balcony supports at body and head height while protecting wall panels', () => {
@@ -75,8 +99,8 @@ describe('live reference-library body clearance', () => {
     for (const x of [-5.5, 5.5]) {
       const panel = resolveCameraCollision({x, y: 3, z: 18.5},
         {x, y: 3, z: 20}, colliders, WALKING_CAMERA_CLEARANCE);
-      expect(panel.blockedBy).toBe(`end-b-lower-panel-${x}`);
-      expect(panel.z).toBeLessThan(19.3);
+      expect(panel.blockedBy).toBe('palace-end-wall-1');
+      expect(panel.z).toBeLessThan(19.4);
     }
   });
 
@@ -138,10 +162,10 @@ describe('live reference-library body clearance', () => {
     expect(failures).toEqual([]);
   });
 
-  it('stops visitors before the visible portrait and blind-panel faces at both ends', () => {
+  it('stops visitors before the palace screen walls at both ends', () => {
     for (const [id, direction, y, limit] of [
-      ['end-a-portrait-wall', -1, eyeY, 19.1],
-      ['end-b-picture-wall', 1, R.sideVaultSpring + R.sideVaultRise, 19.475],
+      ['palace-end-wall--1', -1, eyeY, 19.66],
+      ['palace-end-wall-1', 1, 17.52, 19.66],
     ] as const) {
       expect(config.colliders.some(c => c.id === id)).toBe(true);
       for (const x of [-1.5, 0, 1.5]) {

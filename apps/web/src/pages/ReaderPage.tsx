@@ -1,4 +1,7 @@
 import { HttpErrorPage, pageFailure } from "./HttpErrorPage";
+import { groupAnnotations, sameAnnotationSelection } from "../domain/annotation-groups";
+import { bindAnnotationNoteActivation } from "../components/readers/annotation-activation";
+import { readMingLibraryReaderState } from './ming-library-view';
 import { usePermissions } from "../auth/permissions";
 import { AiAssistantButton } from "../features/ai/AiAssistant";
 import { EmptyState } from "../ui/empty-state";
@@ -20,6 +23,7 @@ import { Alert } from "@/ui/feedback";
 import { Box } from "@/ui/primitives";
 import { Button } from "@/ui/buttons";
 import { ButtonBase } from "@/ui/buttons";
+import { Card } from "@/ui/cards";
 import { Chip } from "@/ui/feedback";
 import { CircularProgress } from "@/ui/feedback";
 import { Dialog } from "@/ui/overlays";
@@ -83,12 +87,12 @@ export function ReaderWorkspace({ source }: { source?: IndependentReaderSource }
   const bookId = source?.id ?? routeBookId;
   const { user } = useAuth();
   const { can } = usePermissions();
-  const canAnnotate = Boolean(source) || can("reader.annotate");
+  const canAnnotate = can(source?.annotationPermission ?? "reader.annotate");
   const { mode: readerTheme, setMode: setBookKinTheme } = useBookKinTheme();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const readerLocation = useLocation();
-  const libraryReturnState = user ? readReferenceReaderState(readerLocation.state) : null;
+  const libraryReturnState = user ? readMingLibraryReaderState(readerLocation.state) ?? readReferenceReaderState(readerLocation.state) : null;
   const returnToLibrary = () => source ? source.onBack() : libraryReturnState
     ? navigate('/virtual-library', {state: libraryReturnState})
     : navigate(user ? "/library/all" : "/library");
@@ -106,6 +110,8 @@ export function ReaderWorkspace({ source }: { source?: IndependentReaderSource }
   const [readerSettings, setReaderSettings] = useState<ReaderSettings>(() => readReaderSettings(readerSettingsKey));
   const [settingsAnchor, setSettingsAnchor] = useState<HTMLElement | null>(null);
   const [notesOpen, setNotesOpen] = useState(false);
+  const [focusedNoteId, setFocusedNoteId] = useState<string | null>(null);
+  const focusedNoteRef = useRef<HTMLDivElement | null>(null);
   const [tocOpen, setTocOpen] = useState(false);
   const [tocItems, setTocItems] = useState<TocItem[]>([]);
   const [targetRevision, setTargetRevision] = useState(0);
@@ -139,14 +145,18 @@ export function ReaderWorkspace({ source }: { source?: IndependentReaderSource }
   const fontSize = readerSettings.fontSize;
   const fontFamily = readerFontFamily(currentFont);
   const bookAnnotations = useMemo(() => user ? (source?.annotations ?? annotationsQuery.data ?? []).filter((item) => item.bookId === bookId) : [], [source?.annotations, annotationsQuery.data, bookId, user]);
-  const annotations = useMemo(() => bookAnnotations.filter((item) => item.type !== "BOOKMARK"), [bookAnnotations]);
+  const annotationGroups = useMemo(() => groupAnnotations(bookAnnotations.filter(item => item.type !== "BOOKMARK")), [bookAnnotations]);
+  const annotationGroupsRef = useRef(annotationGroups);
+  useEffect(() => { annotationGroupsRef.current = annotationGroups; }, [annotationGroups]);
+  const annotations = useMemo(() => annotationGroups.map(group => ({ ...group.annotation, note: group.notes.join("\n\n") })), [annotationGroups]);
   const bookmarks = useMemo(() => bookAnnotations.filter((item): item is Annotation & { locator: string } => item.type === "BOOKMARK" && Boolean(item.locator)), [bookAnnotations]);
   const bookmark = bookmarks.find(item => bookmarkIsVisible(item.locator, currentLocator, visibleEndLocator));
   const bookmarkSections = bookmarks.map(item => bookmarkTocIndex(item.locator, tocItems));
   useReadingTimeTracking(bookId, !source && bookQuery.isSuccess && Boolean(user));
   const readerDocument = source ?? bookQuery.data;
   const demo = !source && api.isDemo;
-  const notesTitle = source ? guest ? "文章信息" : "阅文札记" : "本书笔记";
+  const notesTitle = source ? "阅文札记" : "本书笔记";
+  const selectedAnnotationGroup = useMemo(() => selection ? annotationGroups.find(group => sameAnnotationSelection(group.annotation, { ...selection, bookId })) : undefined, [annotationGroups, bookId, selection]);
   const noteDraftKey = user && bookId ? `bookkin-${source ? "article-note-draft" : "note-draft"}:${user.id}:${bookId}` : undefined;
 
   useEffect(() => {
@@ -169,10 +179,13 @@ export function ReaderWorkspace({ source }: { source?: IndependentReaderSource }
   },[noteDraftKey,noteComposerOpen,note,selection]);
   const handleReaderSelection = useCallback((nextSelection: ReaderSelection) => {
     if (!user) return;
-    setSelection(nextSelection);
+    const normalized = { ...nextSelection, locator: source?.resolveAnnotationLocator?.(nextSelection.locator, nextSelection.quote) ?? nextSelection.locator };
+    const existing = annotationGroupsRef.current.find(group => sameAnnotationSelection(group.annotation, { ...normalized, bookId }));
+    setSelection(normalized);
     setNoteComposerOpen(false);
-    setNote("");
-  }, [user]);
+    setNote(existing?.notes.join("\n\n") ?? "");
+    if (existing) setHighlightColor(highlightColorPresets.find(preset => preset.hex === annotationColorHex(existing.annotation.color))?.value ?? "YELLOW");
+  }, [bookId, source?.resolveAnnotationLocator, user]);
   const handleNavigation = useCallback((items: TocItem[]) => setTocItems(items), []);
   const independentPosition = source?.onPosition;
   const handlePosition = useCallback((locator: string, progress: number, endLocator?: string) => {
@@ -190,19 +203,29 @@ export function ReaderWorkspace({ source }: { source?: IndependentReaderSource }
     const range = nativeSelection?.rangeCount ? nativeSelection.getRangeAt(0) : null;
     const rect = range?.getBoundingClientRect();
     if (rect) {
-      setSelection(readerSelectionFromRect({ quote, locator: currentLocator, rect }));
-      setNoteComposerOpen(false);
-      setNote("");
+      handleReaderSelection(readerSelectionFromRect({ quote, locator: currentLocator, rect }));
     }
   };
 
-  const closeSelection = () => {
+  const closeSelection = useCallback(() => {
     if(noteDraftKey) localStorage.removeItem(noteDraftKey);
     setSelection(null);
     setNoteComposerOpen(false);
     setNote("");
     window.getSelection()?.removeAllRanges();
-  };
+  }, [noteDraftKey]);
+
+  const openAnnotationNotes = useCallback((id: string) => {
+    const group = annotationGroupsRef.current.find(item => item.ids.includes(id));
+    if (!group?.notes.length) return;
+    closeSelection();
+    setFocusedNoteId(group.annotation.id);
+    setNotesOpen(true);
+  }, [closeSelection]);
+  const focusCurrentNote = useCallback(() => {
+    focusedNoteRef.current?.scrollIntoView?.({ block: "nearest" });
+    focusedNoteRef.current?.focus({ preventScroll: true });
+  }, []);
 
   const saveAnnotation = async (style: AnnotationStyle, withNote = false, color = highlightColor) => {
     if (!canAnnotate || !user || !selection || !readerDocument || annotationBusy) return;
@@ -220,7 +243,7 @@ export function ReaderWorkspace({ source }: { source?: IndependentReaderSource }
         color,
       };
       const saved = source ? await source.createAnnotation(draft) : await api.createAnnotation(draft);
-      if (!source) queryClient.setQueryData(annotationQueryKey, (current: unknown) => [saved, ...(Array.isArray(current) ? current : [])]);
+      if (!source) queryClient.setQueryData<Annotation[]>(annotationQueryKey, current => [saved, ...(current ?? []).filter(item => item.id !== saved.id && !sameAnnotationSelection(item, saved))]);
       closeSelection();
     } catch (error) {
       setNotice(error instanceof Error ? error.message : "批注同步失败");
@@ -239,8 +262,8 @@ export function ReaderWorkspace({ source }: { source?: IndependentReaderSource }
         : []);
     }
   };
-  const removeFromNotes = async (id: string) => {
-    try { await removeAnnotation(id); setNotice("批注已删除"); }
+  const removeFromNotes = async (ids: readonly string[]) => {
+    try { for (const id of ids) await removeAnnotation(id); setNotice("批注已删除"); }
     catch (error) { setNotice(error instanceof Error ? error.message : "批注删除失败"); }
   };
 
@@ -301,8 +324,8 @@ export function ReaderWorkspace({ source }: { source?: IndependentReaderSource }
         onOpenTableOfContents={() => setTocOpen(true)}
         onToggleBookmark={() => void toggleBookmark()}
         onOpenSettings={(event: any) => setSettingsAnchor(event.currentTarget)}
-        onOpenNotes={() => setNotesOpen(true)}
-        assistant={!guest && can(source ? "articles.view" : "reader.read") ? <AiAssistantButton source={source ? "ARTICLE" : "BOOK"} id={bookId} /> : undefined}
+        onOpenNotes={() => { setFocusedNoteId(null); setNotesOpen(true); }}
+        assistant={!source && !guest && can("reader.read") ? <AiAssistantButton source="BOOK" id={bookId} /> : undefined}
       />
 
       {source?.error && <Alert severity="error">{source.error}</Alert>}
@@ -310,10 +333,10 @@ export function ReaderWorkspace({ source }: { source?: IndependentReaderSource }
         {!demo ? (
           <Suspense fallback={<Stack sx={{ height: "100%", alignItems: "center", justifyContent: "center" }}><CircularProgress /></Stack>}>
             {book.format === "PDF"
-              ? <PdfDocumentReader bookId={bookId} annotations={annotations} theme={currentTheme} fontSize={fontSize} fontFamily={fontFamily} pageTurnEnabled={readerSettings.pageTurnEnabled} fontSourceUrl={!guest && currentFont.source === "CUSTOM" ? `/api/v1/reader-fonts/${currentFont.id}/content` : undefined} contentUrl={source?.contentUrl ?? (guest ? `/api/v1/display-books/${bookId}/content` : undefined)} readOnly={Boolean(source) || guest} target={readerTarget} targetRevision={targetRevision} onNavigation={handleNavigation} onSelect={handleReaderSelection} onPosition={handlePosition} />
-              : <EpubDocumentReader flow={source?.flow} contentLabel={source?.label} bookId={bookId} annotations={annotations} theme={currentTheme} fontSize={fontSize} fontFamily={fontFamily} pageTurnEnabled={readerSettings.pageTurnEnabled} fontSourceUrl={!guest && currentFont.source === "CUSTOM" ? `/api/v1/reader-fonts/${currentFont.id}/content` : undefined} contentUrl={source?.contentUrl ?? (guest ? `/api/v1/display-books/${bookId}/content` : undefined)} readOnly={Boolean(source) || guest} target={readerTarget} targetRevision={targetRevision} onNavigation={handleNavigation} onSelect={handleReaderSelection} onPosition={handlePosition} />}
+              ? <PdfDocumentReader bookId={bookId} annotations={annotations} onAnnotationActivate={openAnnotationNotes} theme={currentTheme} fontSize={fontSize} fontFamily={fontFamily} pageTurnEnabled={readerSettings.pageTurnEnabled} fontSourceUrl={!guest && currentFont.source === "CUSTOM" ? `/api/v1/reader-fonts/${currentFont.id}/content` : undefined} contentUrl={source?.contentUrl ?? (guest ? `/api/v1/display-books/${bookId}/content` : undefined)} readOnly={Boolean(source) || guest} target={readerTarget} targetRevision={targetRevision} onNavigation={handleNavigation} onSelect={handleReaderSelection} onPosition={handlePosition} />
+              : <EpubDocumentReader flow={source?.flow} contentLabel={source?.label} bookId={bookId} annotations={annotations} onAnnotationActivate={openAnnotationNotes} theme={currentTheme} fontSize={fontSize} fontFamily={fontFamily} pageTurnEnabled={readerSettings.pageTurnEnabled} fontSourceUrl={!guest && currentFont.source === "CUSTOM" ? `/api/v1/reader-fonts/${currentFont.id}/content` : undefined} contentUrl={source?.contentUrl ?? (guest ? `/api/v1/display-books/${bookId}/content` : undefined)} readOnly={Boolean(source) || guest} target={readerTarget} targetRevision={targetRevision} onNavigation={handleNavigation} onSelect={handleReaderSelection} onPosition={handlePosition} />}
           </Suspense>
-        ) : <DemoPagedSurface bookTitle={book.title} format={book.format} theme={currentTheme} night={readerTheme === "NIGHT"} fontFamily={fontFamily} fontSize={fontSize} pageTurnEnabled={readerSettings.pageTurnEnabled} paragraphs={demoChapter} annotations={annotations} onMouseUp={captureSelection} />}
+        ) : <DemoPagedSurface bookTitle={book.title} format={book.format} theme={currentTheme} night={readerTheme === "NIGHT"} fontFamily={fontFamily} fontSize={fontSize} pageTurnEnabled={readerSettings.pageTurnEnabled} paragraphs={demoChapter} annotations={annotations} onAnnotationActivate={openAnnotationNotes} onMouseUp={captureSelection} />}
       </Box>
 
       <Popover
@@ -351,15 +374,15 @@ export function ReaderWorkspace({ source }: { source?: IndependentReaderSource }
         maxWidth="xs"
         slotProps={{ paper: { sx: { bgcolor: currentTheme.background, color: currentTheme.foreground } } }}
       >
-        <DialogTitle sx={{ pb: 1 }}>高亮并写笔记</DialogTitle>
+        <DialogTitle sx={{ pb: 1 }}>{selectedAnnotationGroup?.notes.length ? "编辑笔记" : "高亮并写笔记"}</DialogTitle>
         <DialogContent>
           <Typography component="div" variant="body2" sx={{ mb: 2, color: currentTheme.foreground, fontFamily: tokens.typography.fontFamily.display, maxHeight: 86, overflow: "auto" }}><Box component="span" sx={{ ...readerHighlightStyle(highlightColor, currentTheme), borderRadius: "var(--radius-md)", boxDecorationBreak: "clone" }}>“{selection?.quote}”</Box></Typography>
           <Typography variant="caption" color="text.secondary">高亮颜色</Typography>
           <AnnotationColorSwatches value={highlightColor} onChange={setHighlightColor} disabled={annotationBusy} compact />
           <TextField label="写下这段文字带来的想法" multiline minRows={3} fullWidth value={note} onChange={(event: any) => setNote(event.target.value)} autoFocus />
-          {noteComposerOpen && can("notes.edit") && <AiAssistantButton source="NOTE_DRAFT" label="AI 整理笔记" draft={note} disabled={annotationBusy} onApply={setNote} />}
+          {!source && noteComposerOpen && can("notes.edit") && <AiAssistantButton source="NOTE_DRAFT" label="AI 整理笔记" draft={note} disabled={annotationBusy} onApply={setNote} />}
         </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2.5, justifyContent: "space-between" }}><Button color="inherit" disabled={annotationBusy} onClick={() => { setNoteComposerOpen(false); setNote(""); }}>返回</Button><Button variant="contained" disabled={!note.trim() || annotationBusy} onClick={() => void saveAnnotation("HIGHLIGHT", true)}>保存笔记</Button></DialogActions>
+        <DialogActions sx={{ px: 3, pb: 2.5, justifyContent: "space-between" }}><Button color="inherit" disabled={annotationBusy} onClick={closeSelection}>取消</Button><Button variant="contained" disabled={!note.trim() || annotationBusy} onClick={() => void saveAnnotation(selectedAnnotationGroup?.annotation.style ?? "HIGHLIGHT", true)}>保存笔记</Button></DialogActions>
       </Dialog>
 
       <Menu anchorEl={settingsAnchor} open={Boolean(settingsAnchor)} onClose={() => setSettingsAnchor(null)} slotProps={{ paper: { sx: { width: { xs: `calc(100vw - ${tokens.spacing[6]}px)`, sm: 360 }, maxWidth: `calc(100vw - ${tokens.spacing[6]}px)`, maxHeight: `calc(100dvh - ${tokens.spacing[8]}px)`, overflowY: "auto", overscrollBehavior: "contain", p: 1 } } }}>
@@ -395,20 +418,24 @@ export function ReaderWorkspace({ source }: { source?: IndependentReaderSource }
         {(Object.keys(bookKinThemeOptions) as ReaderTheme[]).map((key) => <MenuItem key={key} selected={readerTheme === key} onClick={() => setBookKinTheme(key)}><Box sx={{ width: 24, height: 24, borderRadius: "50%", bgcolor: bookKinThemeOptions[key].reader.background, border: 1, borderColor: "divider", mr: 1.5 }} />{bookKinThemeOptions[key].label}{readerTheme === key && <CheckRounded sx={{ ml: "auto" }} />}</MenuItem>)}
       </Menu>
 
-      <Drawer anchor="right" title={notesTitle} closeLabel={`关闭${notesTitle}`} open={notesOpen} onClose={() => setNotesOpen(false)} slotProps={{ paper: { sx: { width: { xs: `calc(100vw - ${tokens.spacing[6]}px)`, sm: 390 }, maxWidth: "100vw" } } }}>
+      <Drawer anchor="right" title={notesTitle} closeLabel={`关闭${notesTitle}`} open={notesOpen} onClose={() => setNotesOpen(false)} afterOpenChange={(opened: boolean) => { if (opened) focusCurrentNote(); }} slotProps={{ paper: { sx: { width: { xs: `calc(100vw - ${tokens.spacing[6]}px)`, sm: 390 }, maxWidth: "100vw" } } }}>
         <Box role="complementary" sx={{ width: "100%", maxWidth: "100%", height: "100%", overflowY: "auto", overscrollBehavior: "contain", p: { xs: 2, sm: 3 } }}>
-          {source?.extraActions && <Stack sx={{ mb: 3, gap: 1.5 }}>{source.extraActions}</Stack>}
-          {!guest && <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>仅你可见 · {annotations.length} 条</Typography>}
-          {guest ? null : annotations.length === 0 ? <EmptyState compact title="暂无批注" /> : <Stack divider={<Divider flexItem />} spacing={2}>
-            {annotations.map((item) => <Box key={item.id} sx={{ pb: 2 }}>
-              <Chip size="small" label={annotationLabel(item)} sx={{ mb: 1.25 }} />
+          {guest ? null : annotations.length === 0 ? <EmptyState compact title="暂无批注" /> : <Stack spacing={2}>
+            {annotationGroups.map(({ annotation: item, ids, notes }) => <Card key={item.id} variant="outlined" sx={{ minWidth: 0, overflow: "hidden" }}>
+              <Box role="group" aria-label={focusedNoteId === item.id ? "当前笔记" : "笔记"} aria-current={focusedNoteId === item.id ? "true" : undefined} tabIndex={-1} ref={focusedNoteId === item.id ? focusedNoteRef : undefined} sx={{ p: `${tokens.spacing[3]}px`, minWidth: 0 }}>
+              <Chip size="small" label={annotationLabel(item)} sx={{ mb: `${tokens.spacing[3]}px` }} />
+              <Box role="region" aria-label={`${annotationLabel(item)}内容`} tabIndex={0} sx={{ maxHeight: `min(40dvh, ${tokens.spacing[24] * 2}px)`, overflowY: "auto", overscrollBehavior: "contain", overflowWrap: "anywhere", minWidth: 0 }}>
               {item.quote && <Typography sx={{ fontFamily: tokens.typography.fontFamily.display }}><Box component="span" sx={{ ...(item.style === "HIGHLIGHT" ? readerHighlightStyle(item.color, currentTheme) : {}), borderRadius: "var(--radius-md)", boxDecorationBreak: "clone" }}>“{item.quote}”</Box></Typography>}
-              {item.note && <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>{item.note}</Typography>}
-              <Stack direction="row" sx={{ mt: 1, gap: 1 }}>
+              {notes.length > 0 && <Typography variant="body2" color="text.secondary" sx={{ mt: 1, whiteSpace: "pre-wrap" }}>{notes.join("\n\n")}</Typography>}
+              </Box>
+              <Divider sx={{ mt: `${tokens.spacing[2]}px` }} />
+              <Stack direction="row" sx={{ mt: `${tokens.spacing[2]}px`, gap: `${tokens.spacing[2]}px`, flexWrap: "wrap" }}>
                 <Button size="small" disabled={!item.locator} onClick={() => { jumpTo(item.locator); setNotesOpen(false); }}>返回原文</Button>
-                {canAnnotate && <Button size="small" color="error" onClick={() => void removeFromNotes(item.id)}>删除批注</Button>}
+                {canAnnotate && item.locator && item.quote && <Button size="small" onClick={() => { setSelection({ quote: item.quote!, locator: item.locator!, x: 0, y: 0, placement: "BELOW" }); setNote(notes.join("\n\n")); setHighlightColor(highlightColorPresets.find(preset => preset.hex === annotationColorHex(item.color))?.value ?? "YELLOW"); setNoteComposerOpen(true); setNotesOpen(false); }}>编辑笔记</Button>}
+                {canAnnotate && <Button size="small" color="error" onClick={() => void removeFromNotes(ids)}>删除批注</Button>}
               </Stack>
-            </Box>)}
+              </Box>
+            </Card>)}
           </Stack>}
         </Box>
       </Drawer>
@@ -533,6 +560,10 @@ function renderAnnotatedText(paragraph: string, annotations: Annotation[], theme
       <Box
         component="mark"
         key={annotation.id}
+        data-annotation-id={annotation.id}
+        role={annotation.note?.trim() ? "button" : undefined}
+        aria-label={annotation.note?.trim() ? "查看笔记" : undefined}
+        tabIndex={annotation.note?.trim() ? 0 : undefined}
         data-highlight-color={annotation.color ?? "YELLOW"}
         sx={{
           ...(style === "HIGHLIGHT" ? readerHighlightStyle(annotation.color, theme) : { color: "inherit", background: "transparent" }),
@@ -544,6 +575,7 @@ function renderAnnotatedText(paragraph: string, annotations: Annotation[], theme
           textUnderlineOffset: style === "UNDERLINE" ? "4px" : undefined,
           textDecorationSkipInk: style === "UNDERLINE" ? "none" : undefined,
           boxDecorationBreak: "clone",
+          cursor: annotation.note?.trim() ? "pointer" : undefined,
         }}
       >
         {paragraph.slice(start, end)}
@@ -555,8 +587,12 @@ function renderAnnotatedText(paragraph: string, annotations: Annotation[], theme
   return pieces;
 }
 
-function DemoPagedSurface({ bookTitle, format, theme, night, fontFamily, fontSize, pageTurnEnabled, paragraphs, annotations, onMouseUp }: { bookTitle: string; format: "EPUB" | "PDF"; theme: { background: string; foreground: string; muted: string }; night: boolean; fontFamily: string; fontSize: number; pageTurnEnabled: boolean; paragraphs: string[]; annotations: Annotation[]; onMouseUp: () => void }) {
+function DemoPagedSurface({ bookTitle, format, theme, night, fontFamily, fontSize, pageTurnEnabled, paragraphs, annotations, onMouseUp, onAnnotationActivate }: { bookTitle: string; format: "EPUB" | "PDF"; theme: { background: string; foreground: string; muted: string }; night: boolean; fontFamily: string; fontSize: number; pageTurnEnabled: boolean; paragraphs: string[]; annotations: Annotation[]; onMouseUp: () => void; onAnnotationActivate: (id: string) => void }) {
   const frameRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!frameRef.current) return;
+    return bindAnnotationNoteActivation(frameRef.current, id => annotations.find(item => item.id === id), onAnnotationActivate);
+  }, [annotations, onAnnotationActivate]);
   const [pageIndex, setPageIndex] = useState(0);
   const [pageCount, setPageCount] = useState(1);
   const touchStartXRef = useRef<number | null>(null);

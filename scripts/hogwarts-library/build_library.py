@@ -15,7 +15,8 @@ args=P.parse_args(sys.argv[sys.argv.index('--')+1:] if '--' in sys.argv else [])
 ROOT=Path(__file__).resolve().parents[2];OUT=ROOT/'apps/web/public/assets/hogwarts-library';OUT.mkdir(parents=True,exist_ok=True)
 SRC=Path(__file__).resolve().parent;DELIVER=SRC/'deliverables';DELIVER.mkdir(exist_ok=True);TEX=OUT/'textures';TEX.mkdir(exist_ok=True)
 MATERIAL_MANIFEST=OUT/'materials.gltf'
-TEXTURE_URIS={image['name']:image['uri'] for image in json.loads(MATERIAL_MANIFEST.read_text())['images']} if MATERIAL_MANIFEST.exists() else {}
+TEXTURE_URIS=json.loads((SRC/'source-textures.json').read_text())
+if MATERIAL_MANIFEST.exists():TEXTURE_URIS.update({image['name']:image['uri'] for image in json.loads(MATERIAL_MANIFEST.read_text())['images']})
 def texture_path(filename):
  # Runtime texture names are content hashes. Resolve the stable material-map
  # names through materials.gltf so rebuilding never needs to regenerate or
@@ -459,7 +460,7 @@ rail_side=anchored_feature(rail_side,lambda a,k:k.get('y',a[3] if len(a)>3 else 
 rail_end=anchored_feature(rail_end,lambda a,k:k.get('y',a[3] if len(a)>3 else 6.2))
 turned_guard=anchored_feature(turned_guard,lambda a,k:k.get('y',a[2] if len(a)>2 else 6.2))
 BAYS=[-12.5,-7.5,-2.5,2.5,7.5,12.5];BOUNDS=[-15,-10,-5,0,5,10,15]
-HALL_LENGTH=40;END_Z=20;END_EXTENSION=2;CROSSWALK_INNER_Z=15.6;CROSSWALK_DEPTH=4.4;CROSSWALK_CENTERS=(-17.8,17.8);REVISION='20261020-terminal-arches-r42'
+HALL_LENGTH=40;END_Z=20;END_EXTENSION=2;CROSSWALK_INNER_Z=15.6;CROSSWALK_DEPTH=4.4;CROSSWALK_CENTERS=(-17.8,17.8);REVISION='20261023-palace-furniture-r46'
 OUTER_AISLE_EXTENSION=5.0;CASE_WIDTH_EXTENSION=1.6;HALL_WIDTH=30+2*OUTER_AISLE_EXTENSION;OUTER_WALL_X=HALL_WIDTH/2
 assert HALL_LENGTH==2*END_Z and CROSSWALK_DEPTH==END_Z-CROSSWALK_INNER_Z
 # Ground slab and actual inset stone tiles.
@@ -1296,6 +1297,7 @@ def create_mesh(name,data,mat,collection):
  MESH_INTEGRITY[-1]['zeroAreaTriangulationFacesRemoved']=removed_triangles
  bpy.data.meshes.remove(mesh);mesh=clean
  mesh.materials.append(MATS[mat]);ob=bpy.data.objects.new(name,mesh);collection.objects.link(ob);return ob
+exec(compile((SRC/'palace_architecture.fragment').read_text(),str(SRC/'palace_architecture.fragment'),'exec'))
 objects=[]
 for (module,mat),data in BUILD.items():
  if module not in COLLECTIONS:
@@ -1385,7 +1387,21 @@ config['cameras']=[{'id':name,'position':list(c['position'].values()),'target':l
 # The browser uses the same independently reproducible window-light contract.
 sys.path.insert(0,str(SRC))
 from browser_lighting import browser_lighting
+config['windows'].update({'width':3.2,'glassX':20.1,'bottomY':8.7,'springY':14.9,'crownY':14.9})
+config['windows']['storeys']=[{'id':name,'sides':[-1,1],'bottomY':lo,'springY':hi,'crownY':hi} for name,lo,hi in [('lower',1.35,5.8),('upper',8.7,14.9)]]
 config['lighting']=browser_lighting(config['windows'],HEIGHT_SCALE)
+config['palace']=PALACE_CONTRACT
+for obsolete in ('endBCentralDoor','endBSupport','endAGroundArcade','endAArcade','guardJoinery','balconyJoinery'):
+ config.pop(obsolete,None)
+config['verticalLayout']['rigidFeatures']=['catalog books','reading furniture','globe','palace lanterns']
+config['source']=PALACE_CONTRACT['source']
+config['windows']['style']='rectangular-timber-lattice'
+config['artGallery']={'paintingCount':0,'replacedBy':'palace-lattice-screens'}
+config['arcadeSoffits']={'count':0,'replacedBy':'painted-timber-lintels-and-dougong'}
+config['estimates']=['Original palace-inspired interpretation at project scale; not a historical reconstruction.']
+for light in config['lighting']['points']:
+ if abs(light['position'][0])<1:light['position'][1]=14.4
+
 (OUT/'scene-config.json').write_text(json.dumps(config,ensure_ascii=False,indent=2))
 (OUT/'reference-cameras.json').write_text(json.dumps(CAMERAS,indent=2))
 bpy.context.preferences.filepaths.save_version=0

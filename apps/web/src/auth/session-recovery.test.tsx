@@ -36,6 +36,6 @@ it('ignores demo identity in storage during a real session check', async () => {
   sessionStorage.setItem('bookkin-demo-session', JSON.stringify(user));
   vi.mocked(api.getSession).mockResolvedValue(null);
   mount();
-  await screen.findByText('401 · 需要登录');
+  await screen.findByRole("heading", {level: 1, name: "401"});
   expect(screen.queryByText('私有书库')).not.toBeInTheDocument();
 });

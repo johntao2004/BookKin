@@ -9,6 +9,7 @@ public final class PermissionTestFixtures {
     private PermissionTestFixtures() {}
     public static UserRepository users() {
         var users = mock(UserRepository.class);
+        when(users.count()).thenReturn(1L);
         when(users.findByUsername(org.mockito.ArgumentMatchers.anyString())).thenAnswer(invocation -> {
             String name = invocation.getArgument(0);
             UserRole role;

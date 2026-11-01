@@ -136,6 +136,14 @@ public class FileOperationRepository {
         return Optional.of(mapExecution(record));
     }
 
+    @Transactional
+    public Optional<ExecutionRecord> claim(UUID id) {
+        var record = dsl.fetchOptional("select * from file_operations where id = ? and status = 'PLANNED' for update", id);
+        if (record.isEmpty()) return Optional.empty();
+        dsl.execute("update file_operations set status = 'RUNNING', stage = 'VALIDATING', started_at = now(), updated_at = now() where id = ?", id);
+        return record.map(this::mapExecution);
+    }
+
     public void updateStage(UUID id, String stage) {
         dsl.execute("update file_operations set stage = ?, updated_at = now() where id = ?", stage, id);
     }

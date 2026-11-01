@@ -29,6 +29,19 @@ class ConsolidationTest(unittest.TestCase):
             with self.assertRaises(ValueError):
                 conversion_sql([row], [first, second])
 
+    def test_accepts_previous_v1_baseline_but_rejects_later_baseline(self):
+        with tempfile.TemporaryDirectory() as folder:
+            first = Path(folder) / 'V1__initial_schema.sql'
+            first.write_text('CREATE TABLE original(id integer);')
+            row = {'version': '1', 'script': '<< Flyway Baseline >>',
+                   'checksum': None, 'success': True, 'type': 'BASELINE'}
+            upgrade, marker = conversion_sql([row], [first])
+            self.assertEqual(upgrade, '')
+            self.assertIn("'BASELINE'", marker)
+            row['version'] = '2'
+            with self.assertRaises(ValueError):
+                conversion_sql([row], [first])
+
     def test_dump_comparison_ignores_only_dump_comments_and_client_restrictions(self):
         self.assertEqual(normalized_schema(b'-- dump\n\\restrict abc\nCREATE TABLE x(id int);\n'), 'CREATE TABLE x(id int);')
         self.assertNotEqual(normalized_schema(b'CREATE TABLE x(id int);'), normalized_schema(b'CREATE TABLE x(id text);'))

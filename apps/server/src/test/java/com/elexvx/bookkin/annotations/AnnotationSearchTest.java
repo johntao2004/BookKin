@@ -27,7 +27,8 @@ class AnnotationSearchTest {
         when(users.findByUsername("administrator")).thenReturn(Optional.of(user));
         var repository = mock(AnnotationRepository.class);
         when(repository.search(owner, null, "needle")).thenReturn(List.of());
-        var controller = new AnnotationController(repository, users, mock(BookRepository.class), mock(AnnotationExportService.class));
+        var controller = new AnnotationController(repository, mock(AnnotationApplicationService.class), users,
+                mock(BookRepository.class), mock(AnnotationExportService.class));
 
         controller.list(null, "  needle  ", () -> "administrator");
 

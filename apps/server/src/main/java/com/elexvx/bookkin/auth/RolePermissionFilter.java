@@ -30,7 +30,7 @@ public class RolePermissionFilter extends OncePerRequestFilter {
             List.of(new SimpleGrantedAuthority("ROLE_" + user.role().name())));
         current.setDetails(authentication.getDetails());
         var context = SecurityContextHolder.createEmptyContext(); context.setAuthentication(current); SecurityContextHolder.setContext(context);
-        var required = ApiPermissionPolicy.required(request.getMethod(), request.getRequestURI());
+        var required = ApiPermissionPolicy.required(request.getMethod(), request.getRequestURI(), request.getQueryString());
         if (!required.isEmpty() && java.util.Collections.disjoint(required, permissions.snapshot(current).grants())) {
             response.setStatus(403); response.setContentType("application/problem+json;charset=UTF-8");
             response.getWriter().write("{\"code\":\"PERMISSION_DENIED\",\"detail\":\"当前角色没有此功能的权限。\"}"); return;

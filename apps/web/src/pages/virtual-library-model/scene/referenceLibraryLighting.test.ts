@@ -2,7 +2,7 @@
 // Checks 24 window lights and local chandelier shadows while retaining compatibility with older lighting configuration.
 import * as THREE from 'three';
 import { readFileSync } from 'node:fs';
-import { addReferenceLighting, validateReferenceConfig } from './referenceLibrary';
+import { addReferenceLighting, consolidateReferenceWindowLights, validateReferenceConfig } from './referenceLibrary';
 
 const value: unknown = JSON.parse(readFileSync('public/assets/hogwarts-library/scene-config.json', 'utf8'));
 validateReferenceConfig(value);
@@ -14,12 +14,37 @@ const windows = (config as typeof config & {windows: {
 
 function illuminatedRoot() {
   const root = new THREE.Group();
-  addReferenceLighting(root, config);
+  addReferenceLighting(root, config, {consolidateWindows: false});
   root.updateMatrixWorld(true);
   return root;
 }
 
 describe('reference-library bilateral window daylight', () => {
+  it('consolidates matching static rows while preserving all window geometry and total emission', () => {
+    const original = JSON.stringify(config);
+    const root = new THREE.Group();
+    addReferenceLighting(root, config);
+    const areas = root.children.filter((light): light is THREE.RectAreaLight => light instanceof THREE.RectAreaLight);
+    expect(areas).toHaveLength(4);
+    expect(root.userData.windowLighting).toMatchObject({sourceAreas: 24, renderedAreas: 4});
+    const emission = config.lighting.areas!.reduce((sum, light) => sum + light.width * light.height * light.intensity, 0);
+    expect(areas.reduce((sum, light) => sum + light.width * light.height * light.intensity, 0)).toBeCloseTo(emission);
+    for (const light of areas) {
+      expect(light.width).toBe(28);
+      expect(light.position.z).toBe(0);
+      expect(light.intensity).toBeCloseTo(4 * 18 / 28);
+    }
+    expect(JSON.stringify(config)).toBe(original);
+  });
+
+  it('does not combine different colors, strengths, storeys or unaligned emitters', () => {
+    const first = config.lighting.areas![0];
+    const lights = [first, {...first, color: '#ffffff'}, {...first, intensity: 7},
+      {...first, position: [first.position[0], 8, 3] as [number, number, number]},
+      {...first, target: [0, 9, 3] as [number, number, number]}];
+    expect(consolidateReferenceWindowLights(lights)).toHaveLength(lights.length);
+    expect(consolidateReferenceWindowLights([])).toEqual([]);
+  });
   it('mounts equal inward-facing diffuse sources inside all twenty-four real windows across both storeys and sides', () => {
     const root = illuminatedRoot();
     const areas = root.children.filter((light): light is THREE.RectAreaLight => light instanceof THREE.RectAreaLight);

@@ -6,6 +6,7 @@ import { useEffect } from "react";
 import { afterEach, beforeEach, vi } from "vitest";
 import { Route, Routes, useLocation } from "react-router-dom";
 import { api } from "../api/client";
+import { defaultGrants } from "../auth/permissions";
 import { demoBooks } from "../data/demo";
 import type { Annotation } from "../domain/types";
 import { TestProviders } from "../test/TestProviders";
@@ -162,6 +163,19 @@ describe("AnnotationsPage", () => {
     vi.mocked(articleNotesApi.list).mockRejectedValueOnce(new Error("offline"));
     render(<TestProviders initialPath="/annotations?type=articles"><NotesRoutes /></TestProviders>);
     expect(await screen.findByText("无法加载阅读札记")).toBeInTheDocument();
+  });
+
+  it("hides the posts tab when its independent page permission is disabled", () => {
+    const memberGrants = defaultGrants("MEMBER").filter(code => code !== "notes.posts.view");
+    expect(memberGrants).toContain("notes.edit");
+    sessionStorage.setItem("bookkin-demo-session", JSON.stringify({ id: "member", username: "member", displayName: "成员", role: "MEMBER", mustChangePassword: false }));
+    sessionStorage.setItem("bookkin-demo-role-permissions", JSON.stringify({ revision: 1, grants: {
+      OWNER: defaultGrants("OWNER"), ADMIN: defaultGrants("ADMIN"), MEMBER: memberGrants,
+    } }));
+    render(<TestProviders initialPath="/annotations/books?view=posts"><NotesRoutes /></TestProviders>);
+    expect(screen.getByRole("tab", { name: "札记" })).toBeInTheDocument();
+    expect(screen.queryByRole("tab", { name: "随笔" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "写随笔" })).not.toBeInTheDocument();
   });
 });
 

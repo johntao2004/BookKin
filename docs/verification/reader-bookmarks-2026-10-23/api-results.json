@@ -1,8 +1,0 @@
-{
-  "bookMultipleBookmarksSurviveNewSession": true,
-  "bookBookmarksRemainPrivateFromAdmin": true,
-  "removingOneBookBookmarkRetainsOther": true,
-  "articleMultipleBookmarksSurviveNewSession": true,
-  "articleStateSeparateFromBookAnnotations": true,
-  "temporaryFixturesCleanedUp": true
-}

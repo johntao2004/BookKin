@@ -73,6 +73,7 @@ public class SecurityConfig {
                 .httpBasic(basic -> basic.disable())
                 .logout(logout -> logout.disable())
                 .addFilterBefore(sessionLifetimeFilter, org.springframework.security.web.access.intercept.AuthorizationFilter.class)
+                .addFilterBefore(new InitializationRequiredFilter(users), org.springframework.security.web.access.intercept.AuthorizationFilter.class)
                 .addFilterBefore(new RolePermissionFilter(users, permissions), org.springframework.security.web.access.intercept.AuthorizationFilter.class)
                 .addFilterAfter(mustChangePasswordFilter, org.springframework.security.web.context.SecurityContextHolderFilter.class)
                 .build();

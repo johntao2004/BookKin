@@ -16,7 +16,9 @@ vi.mock('three', async original => {
     render = lifecycle.render;
     setPixelRatio() {return undefined;}
     setSize() {return undefined;}
+    clear() {return undefined;}
     extensions = {has: () => false};
+    getContext() { return {getExtension: () => null}; }
     canvas: HTMLCanvasElement;
     constructor({canvas}: {canvas: HTMLCanvasElement}) {
       if (lifecycle.lostCanvases.has(canvas)) throw new Error('Cannot reuse a lost WebGL context');

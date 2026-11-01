@@ -1,4 +1,5 @@
 import type { Annotation } from "../../domain/types";
+import { groupAnnotations } from "../../domain/annotation-groups";
 import type { ArticleNoteGroup } from "./api";
 import type { PostKind } from "./posts-api";
 
@@ -9,17 +10,55 @@ export interface NoteRecord {
 }
 export function collectNotes(books: Annotation[], articles: ArticleNoteGroup[]): NoteRecord[] {
   return [
-    ...books.filter(item => item.type !== "BOOKMARK" && (item.quote?.trim() || item.note?.trim())).map(item => ({
-      id: item.id, kind: "BOOK" as const, sourceId: item.bookId, sourceTitle: item.bookTitle || "书籍", author: item.bookAuthor || "",
-      quote: item.quote || "", note: item.note || "", locator: item.locator || "", style: item.style, color: item.color,
-      createdAt: item.createdAt, updatedAt: item.updatedAt || item.createdAt,
+    ...groupBookAnnotations(books).flatMap(({ annotations, groups }) => groups.flatMap(group => {
+      const annotation = group.annotation;
+      if (annotation.type === "BOOKMARK" || !(annotation.quote?.trim() || group.notes.some(note => note.trim()))) return [];
+      const dates = groupDates(group.ids, annotations, annotation.createdAt);
+      return [{
+        id: annotation.id, kind: "BOOK" as const, sourceId: annotation.bookId, sourceTitle: annotation.bookTitle || "书籍", author: annotation.bookAuthor || "",
+        quote: annotation.quote || "", note: group.notes.join("\n\n"), locator: annotation.locator || "", style: annotation.style, color: annotation.color,
+        ...dates,
+      }];
     })),
-    ...articles.flatMap(article => article.annotations.filter(item => item.type !== "BOOKMARK" && (item.quote?.trim() || item.note?.trim())).map(item => ({
-      id: item.id, kind: "ARTICLE" as const, sourceId: article.articleId, sourceTitle: article.title, author: article.author,
-      quote: item.quote, note: item.note, locator: item.locator, style: item.style, color: item.color,
-      createdAt: item.createdAt, updatedAt: item.createdAt,
-    }))),
+    ...articles.flatMap(article => {
+      const annotations = article.annotations.filter(item => item.type !== "BOOKMARK");
+      const byId = new Map(annotations.map(item => [item.id, item]));
+      return groupAnnotations(annotations).flatMap(group => {
+        const annotation = group.annotation;
+        if (!(annotation.quote?.trim() || group.notes.some(note => note.trim()))) return [];
+        const dates = groupDates(group.ids, byId, annotation.createdAt);
+        return [{
+          id: annotation.id, kind: "ARTICLE" as const, sourceId: article.articleId, sourceTitle: article.title, author: article.author,
+          quote: annotation.quote || "", note: group.notes.join("\n\n"), locator: annotation.locator || "", style: annotation.style, color: annotation.color,
+          ...dates,
+        }];
+      });
+    }),
   ];
+}
+
+function groupBookAnnotations(books: Annotation[]) {
+  const byBook = new Map<string, Annotation[]>();
+  for (const annotation of books) {
+    const items = byBook.get(annotation.bookId) ?? [];
+    items.push(annotation);
+    byBook.set(annotation.bookId, items);
+  }
+  return [...byBook.values()].map(annotations => ({
+    annotations: new Map(annotations.map(annotation => [annotation.id, annotation])),
+    groups: groupAnnotations(annotations.filter(annotation => annotation.type !== "BOOKMARK")),
+  }));
+}
+
+function groupDates<T extends { id: string; createdAt: string; updatedAt?: string }>(ids: string[], annotations: Map<string, T>, fallback: string) {
+  const members = ids.map(id => annotations.get(id)).filter((item): item is T => Boolean(item));
+  return {
+    createdAt: members.reduce((earliest, item) => item.createdAt < earliest ? item.createdAt : earliest, fallback),
+    updatedAt: members.reduce((latest, item) => {
+      const updatedAt = item.updatedAt || item.createdAt;
+      return updatedAt > latest ? updatedAt : latest;
+    }, fallback),
+  };
 }
 export const noteSourceHref = (note: NoteRecord) => `${note.kind === "BOOK" ? "/reader" : "/articles"}/${encodeURIComponent(note.sourceId)}${note.locator ? `?locator=${encodeURIComponent(note.locator)}` : ""}`;
 const csvCell = (value: string) => `"${(/^[\s]*[=+@-]/u.test(value) ? `'${value}` : value).replaceAll('"', '""')}"`;

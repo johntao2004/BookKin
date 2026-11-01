@@ -17,18 +17,20 @@ import type { Book, DisplayBook } from "../domain/types";
 export function SearchPage() {
   const { user, ready } = useAuth();
   const { can } = usePermissions();
+  const canSearch = !user || can("library.search.view");
+  const canQueryPrivateLibrary = !user || can("library.query");
   const showNotes = Boolean(user) && can("notes.view");
   const showBooklists = !user || can("booklists.view");
   const [params] = useSearchParams();
   const query = (params.get("q") ?? "").trim();
   const audience = user?.id ?? "anonymous";
-  const enabled = ready && Boolean(query);
+  const enabled = ready && canSearch && Boolean(query);
   const matches = (values: (string | undefined)[]) => values.join(" ").toLocaleLowerCase().includes(query.toLocaleLowerCase());
   // 各搜索源保留服务端可见性规则；匿名用户不请求私人目录或批注，且缓存键不得跨身份共用。
   // Every source keeps its server-side visibility rules. Never query the private
   // catalog or annotations for anonymous visitors, or share their cache keys.
   const books = useInfiniteQuery({
-    queryKey: ["global-search-books", audience, query], enabled,
+    queryKey: ["global-search-books", audience, query], enabled: enabled && canQueryPrivateLibrary,
     initialPageParam: undefined as string | undefined,
     queryFn: async ({ pageParam, signal }): Promise<BookPage | DisplayBookPage> => {
       const input = { q: query, cursor: pageParam, limit: 24, signal };
@@ -42,7 +44,7 @@ export function SearchPage() {
   });
   const notes = useQuery({ queryKey: ["global-search-notes", audience, query], queryFn: () => api.listAnnotations(undefined, query), enabled: enabled && showNotes });
   const lists = useQuery({ queryKey: ["global-search-booklists", audience, query], queryFn: ({ signal }) => api.listBooklists({ q: query, signal }), enabled: enabled && showBooklists });
-  const categories = useQuery({ queryKey: ["global-search-categories", audience], queryFn: ({ signal }) => api.listCategories({ signal }), enabled });
+  const categories = useQuery({ queryKey: ["global-search-categories", audience], queryFn: ({ signal }) => api.listCategories({ signal }), enabled: enabled && canQueryPrivateLibrary });
   const bookItems = books.data?.pages.flatMap<Book | DisplayBook>(page => page.items) ?? [];
   const noteItems = showNotes ? (notes.data ?? []).filter(note => matches([note.bookTitle, note.bookAuthor, note.quote, note.note])) : [];
   const categoryItems = (categories.data?.items ?? []).filter(category => matches([category.name, category.description]));
@@ -51,7 +53,7 @@ export function SearchPage() {
     const params = new URLSearchParams({ category: categoryId, advanced: "1" });
     return `${categoryLibraryPath}?${params.toString()}`;
   };
-  const queries = [books, categories, ...(showNotes ? [notes] : []), ...(showBooklists ? [lists] : [])];
+  const queries = [...(canQueryPrivateLibrary ? [books, categories] : []), ...(showNotes ? [notes] : []), ...(showBooklists ? [lists] : [])];
   const listItems = showBooklists ? lists.data?.items ?? [] : [];
   const loading = enabled && queries.some(result => result.isPending);
   const failed = enabled && queries.some(result => result.isError);
@@ -61,6 +63,7 @@ export function SearchPage() {
     <PageHeader eyebrow="SEARCH" title="搜索" />
     {!query ? <Typography color="text.secondary">在顶部输入关键词，按回车搜索。</Typography> : <>
       <Typography color="text.secondary">“{query}”的搜索结果</Typography>
+      {user && !canQueryPrivateLibrary && <Alert severity="info">当前角色没有查询书籍目录的权限。</Alert>}
       {loading && <Typography role="status" sx={{ mt: `${tokens.spacing[4]}px` }}>正在搜索…</Typography>}
       {failed && <Alert severity="warning" action={<Button onClick={() => { queries.forEach(result => { if (result.isError) void result.refetch(); }); }}>重试</Button>}>部分内容暂时无法搜索，已显示可用结果。</Alert>}
       {!loading && !failed && empty && <EmptyState title="未找到相关内容" />}

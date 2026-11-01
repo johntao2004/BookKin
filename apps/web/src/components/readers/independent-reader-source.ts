@@ -1,4 +1,3 @@
-import type { ReactNode } from "react";
 import type { Annotation, AnnotationStyle, BookFormat, AnnotationColor } from "../../domain/types";
 
 export interface ReaderAnnotationDraft {
@@ -12,6 +11,8 @@ export interface ReaderAnnotationDraft {
 
 /** Inject independent persistence into the existing book reader workspace. */
 export interface IndependentReaderSource {
+  /** Role grant controlling private annotations for this independent source. */
+  annotationPermission?: string;
   id: string;
   title: string;
   author: string;
@@ -23,8 +24,8 @@ export interface IndependentReaderSource {
   initialLocator?: string;
   progress: number;
   annotations: Annotation[];
+  resolveAnnotationLocator?: (locator: string, quote: string) => string;
   error?: string;
-  extraActions?: ReactNode;
   onBack: () => void;
   onPosition: (locator: string, progress: number) => void;
   createAnnotation: (draft: ReaderAnnotationDraft) => Promise<Annotation>;

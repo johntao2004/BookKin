@@ -57,7 +57,16 @@ public class FileOperationService {
         this.recycleBin = recycleBin;
     }
 
+    public Preview previewTitleRename(BookFile file, String titleStem, Principal principal) {
+        return preview(new PreviewRequest(file.id(), FileOperationType.RENAME, null, titleStem,
+                file.fingerprint(), null, null), principal, true);
+    }
+
     public Preview preview(PreviewRequest input, Principal principal) {
+        return preview(input, principal, false);
+    }
+
+    private Preview preview(PreviewRequest input, Principal principal, boolean literalTitle) {
         var actor = users.findByUsername(principal.getName()).orElseThrow();
         requirePermission(principal, input.type());
         if (input.type() == FileOperationType.PURGE && actor.role() != UserRole.OWNER) {
@@ -92,6 +101,7 @@ public class FileOperationService {
         String targetDisplay = null;
         long requiredBytes = 0;
         try {
+            if (literalTitle) pathPolicy.requireNoSymbolicLinks(rootPath(sourceRoot), file.relativePath());
             Path source = pathPolicy.resolveExisting(rootPath(sourceRoot), file.relativePath());
             String actualFingerprint = fingerprints.sha256(source);
             if (!actualFingerprint.equals(input.expectedFingerprint()) || !actualFingerprint.equals(file.fingerprint())) {
@@ -105,13 +115,14 @@ public class FileOperationService {
                     throw new ApiException(HttpStatus.BAD_REQUEST, "TARGET_REQUIRED", "重命名或移动必须指定目标路径。");
                 }
                 targetRelative = input.type() == FileOperationType.RENAME
-                        ? RenameTargetPath.resolve(file, targetRelative, pathPolicy)
+                        ? (literalTitle ? BookTitleFilename.inDirectory(file.relativePath(), targetRelative, file.format(), pathPolicy)
+                                : RenameTargetPath.resolve(file, targetRelative, pathPolicy))
                         : pathPolicy.normalizeRelative(targetRelative);
                 if (input.type() == FileOperationType.MOVE) ensureExtension(file, targetRelative);
                 Path target = pathPolicy.resolveTarget(rootPath(targetRoot), targetRelative);
                 targetDisplay = targetRoot.name() + "/" + targetRelative;
                 if (!targetRoot.canWrite()) conflicts.add(new FileConflict("ROOT_READ_ONLY", "目标书库当前为只读。", targetRoot.name()));
-                if (Files.exists(target) || pathPolicy.hasCaseInsensitiveConflict(target)) {
+                if (pathPolicy.targetConflict(source, target)) {
                     conflicts.add(new FileConflict("TARGET_EXISTS", "目标路径已有文件，BookKin不会覆盖它。", targetDisplay));
                 }
                 if (!targetRoot.id().equals(sourceRoot.id())) {

@@ -11,9 +11,8 @@ import { Alert, Chip, CircularProgress } from "@/ui/feedback";
 import { Box, Stack, Typography } from "@/ui/primitives";
 import { Button } from "@/ui/buttons";
 import { LockOutlined, PeopleAltOutlined } from "@/ui/icons";
-import { TextField } from "@/ui/forms";
-import { useDeferredValue, useMemo, useState } from "react";
-import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { useMemo, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArticleCollectionFormDialog } from "../features/article-collections/ArticleCollectionFormDialog";
 import { articleCollections, type ArticleCollectionSummary } from "../features/article-collections/api";
@@ -25,34 +24,23 @@ export function ArticleCollectionsPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [params, setParams] = useSearchParams();
   const [createOpen, setCreateOpen] = useState(false);
-  const query = params.get("q") ?? "";
-  const deferredQuery = useDeferredValue(query);
-  const queryKey = ["article-collections", user?.id, deferredQuery];
+  const queryKey = ["article-collections", user?.id];
   const collectionsQuery = useQuery({
     queryKey,
-    queryFn: ({ signal }) => articleCollections.list({ q: deferredQuery, signal }),
-    enabled: ready && Boolean(user) && can("articles.view"),
+    queryFn: ({ signal }) => articleCollections.list({ signal }),
+    enabled: ready && Boolean(user) && can("articles.collections.view"),
   });
   const all = collectionsQuery.data?.items ?? [];
   const mine = useMemo(() => all.filter((collection) => collection.ownedByViewer), [all]);
   const shared = useMemo(() => all.filter((collection) => !collection.ownedByViewer && collection.visibility === "MEMBERS"), [all]);
   const returnTo = `${location.pathname}${location.search}`;
 
-  const updateQuery = (value: string) => {
-    const next = new URLSearchParams(params);
-    if (value) next.set("q", value);
-    else next.delete("q");
-    setParams(next, { replace: true });
-  };
-
-  if (!user || !can("articles.view")) return null;
+  if (!user || !can("articles.collections.view")) return null;
 
   if (collectionsQuery.isError && !collectionsQuery.data) return <RequestErrorPage error={collectionsQuery.error} retrying={collectionsQuery.isFetching} onRetry={() => void collectionsQuery.refetch()} />;
   return <PageContainer>
     <PageHeader eyebrow="ARTICLE COLLECTIONS" title="选集" action={can("articles.collections.edit") ? <Button variant="contained" onClick={() => setCreateOpen(true)}>新建私人选集</Button> : undefined} />
-    <CatalogSection title="查找选集" tools={<TextField aria-label="搜索选集" placeholder="搜索选集名称或说明" value={query} onChange={(event: any) => updateQuery(event.target.value)} fullWidth />}>{null}</CatalogSection>
     {collectionsQuery.isPending ? (
       <Stack role="status" aria-label="正在加载选集" sx={{ alignItems: "center", py: `${tokens.spacing[20]}px` }}><CircularProgress /></Stack>
     ) : collectionsQuery.isError ? (
@@ -61,11 +49,11 @@ export function ArticleCollectionsPage() {
       <Stack sx={{ gap: `${tokens.spacing[10]}px` }}>
         <CatalogSection title="我的选集">
           {mine.length ? <CollectionGrid items={mine} returnTo={returnTo} /> : <BookCatalogEmptyState
-            title={query ? "没有找到匹配的私人选集" : "你还没有创建选集"}
+            title="你还没有创建选集"
           />}
         </CatalogSection>
         <CatalogSection title="书库共享">
-          {shared.length ? <CollectionGrid items={shared} returnTo={returnTo} /> : <BookCatalogEmptyState title={query ? "没有找到匹配的共享选集" : "暂无书库共享选集"} />}
+          {shared.length ? <CollectionGrid items={shared} returnTo={returnTo} /> : <BookCatalogEmptyState title="暂无书库共享选集" />}
         </CatalogSection>
       </Stack>
     )}

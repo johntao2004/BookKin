@@ -1,3 +1,3 @@
-// 保留稳定页面导出名称，实际场景生命周期由 VirtualLibraryExperience 负责，避免重复实现。
-// Keeps a stable page export while VirtualLibraryExperience owns scene lifecycle, avoiding duplicate implementations.
-export { VirtualLibraryExperience as VirtualLibraryPage } from "./VirtualLibraryExperience";
+// 保留稳定页面导出名称，新明式场景由本地宿主接入真实馆藏。
+// Keep the stable page export while the local Ming scene consumes the authenticated catalog.
+export { MingLibraryExperience as VirtualLibraryPage } from "./MingLibraryExperience";

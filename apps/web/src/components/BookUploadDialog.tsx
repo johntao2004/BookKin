@@ -30,6 +30,7 @@ import { api } from "../api/client";
 import { useAuth } from "../auth/AuthContext";
 import type { BookMetadataDraft, BookUpload, LibraryRoot, MetadataCandidate } from "../domain/types";
 import { tokens } from "../theme/generated-tokens";
+import { usePermissions } from "../auth/permissions";
 import { useBookUploadMetadataAutosave } from "./useBookUploadMetadataAutosave";
 
 interface LocalUpload {
@@ -141,6 +142,8 @@ function LocalQueue({ items, onRemove }: { items: LocalUpload[]; onRemove: (id: 
 }
 
 export function UploadReview({ upload, onChanged, onCommitted, onCancel, cancelling = false }: { upload: BookUpload; publishToDisplay?: boolean; onChanged: () => Promise<void>; onCommitted: (commitResult: BookUpload) => Promise<void>; onCancel?: () => Promise<void>; cancelling?: boolean }) {
+  const { can } = usePermissions();
+  const canUpload = can("library.upload");
   const { requestCrop, cropDialog } = useCoverCrop();
   const coverInput = useRef<HTMLInputElement>(null);
   const initialDraft = upload.draftMetadata ?? null;
@@ -161,7 +164,7 @@ export function UploadReview({ upload, onChanged, onCommitted, onCancel, cancell
   const resultActionId = useRef(0);
   const matchInFlightRef = useRef(false);
   const mountedRef = useRef(true);
-  const autosave = useBookUploadMetadataAutosave(upload.id, upload.status === "READY_FOR_REVIEW" && !completed);
+  const autosave = useBookUploadMetadataAutosave(upload.id, canUpload && upload.status === "READY_FOR_REVIEW" && !completed);
 
   useEffect(() => {
     // A late initial query may fill a not-yet-ready draft, but same-upload refetches never replace edits.
@@ -182,7 +185,7 @@ export function UploadReview({ upload, onChanged, onCommitted, onCancel, cancell
 
   if (!draft) return <Alert severity="info">正在准备书籍信息…</Alert>;
 
-  const editable = upload.status === "READY_FOR_REVIEW" && !completed;
+  const editable = canUpload && upload.status === "READY_FOR_REVIEW" && !completed;
   const changeDraft = (change: BookMetadataDraft | null | ((current: BookMetadataDraft | null) => BookMetadataDraft | null)) => {
     const next = typeof change === "function" ? change(draftRef.current) : change;
     draftRef.current = next;
@@ -366,6 +369,7 @@ export function UploadReview({ upload, onChanged, onCommitted, onCancel, cancell
   return <>
   <Stack spacing={2}>
     {cropDialog}
+    {!canUpload && <Alert severity="info">当前角色没有上传权限，仅可查看已保存的草稿。</Alert>}
     {upload.similarBookIds.length > 0 && <Alert severity="warning" icon={<WarningAmberRounded />}>发现标题和作者相似的藏书。它不是完全重复文件，确认后仍可作为独立版本入库。</Alert>}
     {(upload.encrypted || upload.drmProtected || upload.digitallySigned) && <Alert severity="warning">该文件包含{upload.encrypted ? "加密" : ""}{upload.drmProtected ? " DRM" : ""}{upload.digitallySigned ? "数字签名" : ""}标记；可以入库，但默认禁止元数据写回原文件。</Alert>}
     <MetadataEditorForm actions={<>

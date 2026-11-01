@@ -1,5 +1,4 @@
 import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
-import { isValidElement, type ReactElement, type ReactNode } from "react";
 import { Route, Routes, useNavigate } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { api } from "../api/client";
@@ -7,7 +6,7 @@ import type { IndependentReaderSource } from "../components/readers/independent-
 import { articles, type Article } from "../features/content/api";
 import { buildArticleEpub } from "../features/content/article-document";
 import { TestProviders } from "../test/TestProviders";
-import { ArticleReaderPage } from "./ArticleReaderPage";
+import { ArticleReaderPage, createArticleAnnotationLocatorResolver } from "./ArticleReaderPage";
 
 const readerMock = vi.hoisted(() => ({ source: null as unknown }));
 vi.mock("./ReaderPage", () => ({
@@ -62,12 +61,27 @@ function currentSource() {
   return readerMock.source as IndependentReaderSource;
 }
 
-function nodeText(node: ReactNode): string {
-  if (typeof node === "string" || typeof node === "number") return String(node);
-  if (Array.isArray(node)) return node.map(nodeText).join("");
-  if (isValidElement<{ children?: ReactNode }>(node)) return nodeText(node.props.children);
-  return "";
-}
+
+describe("article selection locator normalization", () => {
+  it("maps a paragraph CFI only when its quote occurs once in the generated paragraph", () => {
+    const locator = "epubcfi(/6/2!/4/2/6[p-2],/2/2/2/1:0,/38/2/2/1:1)";
+    const unique = createArticleAnnotationLocatorResolver({
+      html: "<p>前文</p><p id=\"p-2\">你好，唯一原文。</p>",
+    });
+    const repeated = createArticleAnnotationLocatorResolver({
+      html: "<p id=\"p-2\">nihao 和 nihao</p>",
+    });
+    const generatedId = createArticleAnnotationLocatorResolver({
+      html: "<p>前文</p><p>生成段落 ID</p>",
+    });
+
+    expect(unique(locator, "唯一原文")).toBe("article.xhtml#p-2");
+    expect(repeated(locator, "nihao")).toBe(locator);
+    expect(generatedId(locator, "生成段落 ID")).toBe("article.xhtml#p-2");
+    expect(unique("epubcfi(/6/2!/4/2/6[p-9],/2/2/2/1:0,/38/2/2/1:1)", "唯一原文"))
+      .toBe("epubcfi(/6/2!/4/2/6[p-9],/2/2/2/1:0,/38/2/2/1:1)");
+  });
+});
 
 describe("ArticleReaderPage shared reader integration", () => {
   let reading: ReturnType<typeof vi.spyOn>;
@@ -250,6 +264,245 @@ describe("ArticleReaderPage shared reader integration", () => {
     expect(saveReading).toHaveBeenCalledTimes(2);
   });
 
+  it("upgrades a matching article highlight to a note without adding a duplicate record", async () => {
+    reading.mockResolvedValueOnce({
+      state: JSON.stringify({
+        locator: "",
+        progress: 0,
+        seconds: 0,
+        annotations: [{
+          id: "existing-highlight",
+          type: "HIGHLIGHT",
+          quote: "同一原文",
+          note: "",
+          locator: "epubcfi(/6/8!/4/2)",
+          style: "UNDERLINE",
+          color: "CORAL",
+          createdAt: "2026-10-20T00:00:00.000Z",
+        }],
+      }),
+      revision: 12,
+    });
+    renderReader();
+    await waitFor(() => expect(readerMock.source).not.toBeNull());
+
+    let saved: Awaited<ReturnType<IndependentReaderSource["createAnnotation"]>> | undefined;
+    await act(async () => {
+      saved = await currentSource().createAnnotation({
+        type: "NOTE",
+        quote: " 同一原文 ",
+        note: "补充思考",
+        locator: "epubcfi(/6/8!/4/2)",
+        style: "BOLD",
+        color: "TEAL",
+      });
+    });
+
+    expect(saved).toMatchObject({ id: "existing-highlight", type: "NOTE", note: "补充思考" });
+    expect(currentSource().annotations).toHaveLength(1);
+    expect(saveReading.mock.calls.at(-1)?.[1].annotations).toEqual([
+      expect.objectContaining({ id: "existing-highlight", type: "NOTE", note: "补充思考", style: "BOLD", color: "TEAL" }),
+    ]);
+  });
+
+  it("keeps existing note content and type when highlighting its passage", async () => {
+    reading.mockResolvedValueOnce({
+      state: JSON.stringify({
+        annotations: [{
+          id: "existing-note",
+          type: "NOTE",
+          quote: "同一原文",
+          note: "不可覆盖的笔记",
+          locator: "epubcfi(/6/8!/4/2)",
+          style: "HIGHLIGHT",
+          color: "YELLOW",
+          createdAt: "2026-10-20T00:00:00.000Z",
+        }],
+      }),
+      revision: 12,
+    });
+    renderReader();
+    await waitFor(() => expect(readerMock.source).not.toBeNull());
+
+    let saved: Awaited<ReturnType<IndependentReaderSource["createAnnotation"]>> | undefined;
+    await act(async () => {
+      saved = await currentSource().createAnnotation({
+        type: "HIGHLIGHT",
+        quote: "同一原文",
+        note: "",
+        locator: "epubcfi(/6/8!/4/2)",
+        style: "UNDERLINE",
+        color: "TEAL",
+      });
+    });
+
+    expect(saved).toMatchObject({ id: "existing-note", type: "NOTE", note: "不可覆盖的笔记", style: "UNDERLINE", color: "TEAL" });
+    expect(currentSource().annotations).toHaveLength(1);
+    expect(saveReading.mock.calls.at(-1)?.[1].annotations).toEqual([
+      expect.objectContaining({ id: "existing-note", type: "NOTE", note: "不可覆盖的笔记" }),
+    ]);
+  });
+
+  it("normalizes legacy paragraph CFIs and saves an edited history as one note", async () => {
+    vi.mocked(articles.get).mockResolvedValueOnce({
+      ...article,
+      html: '<p id="p-2">这是一段独一无二的原文</p>',
+    });
+    reading.mockResolvedValueOnce({
+      state: JSON.stringify({
+        locator: "",
+        progress: 0.1,
+        seconds: 9,
+        annotations: [
+          {
+            id: "legacy-highlight",
+            type: "HIGHLIGHT",
+            quote: "这是一段独一无二的原文",
+            note: "",
+            locator: "epubcfi(/6/2!/4/2/6[p-2],/2/2/1:0,/38/2/1:1)",
+            style: "HIGHLIGHT",
+            createdAt: "2026-10-20T00:00:00.000Z",
+          },
+          {
+            id: "legacy-note-one",
+            type: "NOTE",
+            quote: "这是一段独一无二的原文",
+            note: "nihao",
+            locator: "epubcfi(/6/2!/4/2/6[p-2],/2/2/1:0,/38/2/1:2)",
+            style: "HIGHLIGHT",
+            createdAt: "2026-10-21T00:00:00.000Z",
+          },
+          {
+            id: "legacy-note-two",
+            type: "NOTE",
+            quote: "这是一段独一无二的原文",
+            note: "666666",
+            locator: "epubcfi(/6/2!/4/2/6[p-2],/2/2/2/1:0,/38/2/2/1:1)",
+            style: "BOLD",
+            createdAt: "2026-10-22T00:00:00.000Z",
+          },
+        ],
+      }),
+      revision: 14,
+    });
+    renderReader();
+    await waitFor(() => expect(readerMock.source).not.toBeNull());
+
+    expect(currentSource().annotations.map((item) => item.locator)).toEqual([
+      "article.xhtml#p-2",
+      "article.xhtml#p-2",
+      "article.xhtml#p-2",
+    ]);
+    const editedNote = "nihao\n\n666666\n\n已合并编辑";
+    let saved: Awaited<ReturnType<IndependentReaderSource["createAnnotation"]>> | undefined;
+    await act(async () => {
+      saved = await currentSource().createAnnotation({
+        type: "NOTE",
+        quote: "这是一段独一无二的原文",
+        note: editedNote,
+        locator: "epubcfi(/6/2!/4/2/6[p-2],/2/2/2/1:0,/38/2/2/1:1)",
+        style: "BOLD",
+        color: "TEAL",
+      });
+    });
+
+    expect(saved).toMatchObject({ id: "legacy-note-two", type: "NOTE", note: editedNote, locator: "article.xhtml#p-2" });
+    expect(currentSource().annotations).toHaveLength(1);
+    expect(saveReading.mock.calls.at(-1)?.[1].annotations).toEqual([
+      expect.objectContaining({
+        id: "legacy-note-two",
+        type: "NOTE",
+        note: editedNote,
+        locator: "article.xhtml#p-2",
+      }),
+    ]);
+  });
+
+  it("restores only the affected annotation group after failure and keeps newer position", async () => {
+    let rejectSave: ((error: Error) => void) | undefined;
+    saveReading.mockImplementationOnce(() => new Promise<void>((_resolve, reject) => {
+      rejectSave = reject;
+    }));
+    vi.mocked(articles.get).mockResolvedValueOnce({
+      ...article,
+      html: '<p id="p-2">原文</p><p id="p-3">别处</p>',
+    });
+    reading.mockResolvedValueOnce({
+      state: JSON.stringify({
+        locator: "p-3",
+        progress: 0.2,
+        seconds: 15,
+        annotations: [
+          {
+            id: "existing-highlight",
+            type: "HIGHLIGHT",
+            quote: "原文",
+            note: "",
+            locator: "epubcfi(/6/2!/4/2/6[p-2],/2/2/1:0,/38/2/1:1)",
+            style: "UNDERLINE",
+            createdAt: "2026-10-20T00:00:00.000Z",
+          },
+          {
+            id: "existing-note-one",
+            type: "NOTE",
+            quote: "原文",
+            note: "旧笔记一",
+            locator: "epubcfi(/6/2!/4/2/6[p-2],/2/2/1:0,/38/2/1:2)",
+            style: "HIGHLIGHT",
+            createdAt: "2026-10-20T00:00:00.000Z",
+          },
+          {
+            id: "existing-note-two",
+            type: "NOTE",
+            quote: "原文",
+            note: "旧笔记二",
+            locator: "epubcfi(/6/2!/4/2/6[p-2],/2/2/2/1:0,/38/2/2/1:1)",
+            style: "BOLD",
+            createdAt: "2026-10-21T00:00:00.000Z",
+          },
+          {
+            id: "other-note",
+            type: "NOTE",
+            quote: "别处",
+            note: "其它记录",
+            locator: "article.xhtml#p-3",
+            style: "HIGHLIGHT",
+            createdAt: "2026-10-20T00:00:00.000Z",
+          },
+        ],
+      }),
+      revision: 12,
+    });
+    renderReader();
+    await waitFor(() => expect(readerMock.source).not.toBeNull());
+
+    let createPromise: ReturnType<IndependentReaderSource["createAnnotation"]> | undefined;
+    act(() => {
+      createPromise = currentSource().createAnnotation({
+        type: "NOTE",
+        quote: "原文",
+        note: "旧笔记一\n\n旧笔记二\n\n保存失败的新笔记",
+        locator: "epubcfi(/6/2!/4/2/6[p-2],/2/2/2/1:0,/38/2/2/1:1)",
+        style: "BOLD",
+        color: "TEAL",
+      });
+    });
+    act(() => currentSource().onPosition("epubcfi(/6/8!/4/8)", 0.85));
+    await act(async () => {
+      rejectSave?.(new Error("保存失败"));
+      await expect(createPromise).rejects.toThrow("保存失败");
+    });
+
+    expect(currentSource().progress).toBe(0.85);
+    expect(currentSource().annotations).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: "existing-highlight", type: "HIGHLIGHT", note: "" }),
+      expect.objectContaining({ id: "existing-note-one", type: "NOTE", note: "旧笔记一" }),
+      expect.objectContaining({ id: "existing-note-two", type: "NOTE", note: "旧笔记二" }),
+      expect.objectContaining({ id: "other-note", note: "其它记录" }),
+    ]));
+    expect(currentSource().annotations).toHaveLength(4);
+  });
+
   it("keeps article state isolated and flushes annotation changes immediately", async () => {
     const getBook = vi.spyOn(api, "getBook");
     const getDisplayBook = vi.spyOn(api, "getDisplayBook");
@@ -342,9 +595,7 @@ describe("ArticleReaderPage shared reader integration", () => {
     expect(reading).not.toHaveBeenCalled();
     expect(saveReading).not.toHaveBeenCalled();
     const source = currentSource();
-    const extraActions = source.extraActions as ReactElement<{ children?: ReactNode }>;
-    expect(isValidElement(extraActions)).toBe(true);
-    expect(nodeText(extraActions.props.children)).not.toContain("保存阅读记录");
+    expect(source).not.toHaveProperty("extraActions");
     await expect(
       source.createAnnotation({
         type: "NOTE",

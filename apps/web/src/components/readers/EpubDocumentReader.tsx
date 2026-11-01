@@ -17,6 +17,7 @@ import type { Annotation } from "../../domain/types";
 import { tokens } from "../../theme/generated-tokens";
 import { readerWidthSx } from "../PageHeader";
 import { applyEpubInlineAnnotation, clearEpubInlineAnnotations, EPUB_INLINE_ANNOTATION_CLASS, findEpubArticleParagraphRange, findEpubTextRange, isEpubArticleParagraphLocator } from "./epub-annotations";
+import { bindAnnotationNoteActivation } from "./annotation-activation";
 import { isEditableReaderTarget, isReaderSwipe } from "./reader-navigation";
 import { PageTurnShade } from "./PageTurnShade";
 import { readerSelectionFromRect, type ReaderSelection, type TocItem } from "./types";
@@ -26,6 +27,7 @@ import { usePageTurnTransition } from "./use-page-turn-transition";
 interface Props {
   bookId: string;
   annotations: Annotation[];
+  onAnnotationActivate?: (id: string) => void;
   theme: { background: string; foreground: string; muted: string };
   fontSize: number;
   fontFamily: string;
@@ -48,11 +50,14 @@ function renderedContents(rendition: Rendition) {
   return rendition.getContents() as unknown as Contents[];
 }
 
-export default function EpubDocumentReader({ bookId, annotations, theme, fontSize, fontFamily, pageTurnEnabled = true, fontSourceUrl, contentUrl, contentLabel = "EPUB", flow = "paginated", readOnly = false, target, targetRevision, onNavigation, onSelect, onPosition }: Props) {
+export default function EpubDocumentReader({ bookId, annotations, onAnnotationActivate, theme, fontSize, fontFamily, pageTurnEnabled = true, fontSourceUrl, contentUrl, contentLabel = "EPUB", flow = "paginated", readOnly = false, target, targetRevision, onNavigation, onSelect, onPosition }: Props) {
   const scrolled = flow === "scrolled-doc";
   const { mode: siteTheme } = useBookKinTheme();
   const hostRef = useRef<HTMLDivElement | null>(null);
   const renditionRef = useRef<Rendition | null>(null);
+  const annotationBindingsRef = useRef({ annotations, onAnnotationActivate });
+  const annotationActivationCleanupsRef = useRef(new Map<Document, () => void>());
+  useEffect(() => { annotationBindingsRef.current = { annotations, onAnnotationActivate }; }, [annotations, onAnnotationActivate]);
   const saveTimer = useRef<number | undefined>(undefined);
   const [loading, setLoading] = useState(true);
   const [renditionReady, setRenditionReady] = useState(false);
@@ -87,6 +92,11 @@ export default function EpubDocumentReader({ bookId, annotations, theme, fontSiz
 
   const installReaderFont = useEffectEvent((contents: Contents) => {
     const document = contents.document;
+    if (!annotationActivationCleanupsRef.current.has(document)) {
+      annotationActivationCleanupsRef.current.set(document, bindAnnotationNoteActivation(document,
+        id => annotationBindingsRef.current.onAnnotationActivate ? annotationBindingsRef.current.annotations.find(item => item.id === id) : undefined,
+        id => annotationBindingsRef.current.onAnnotationActivate?.(id)));
+    }
     const existing = document.querySelector("style[data-page-reader-font]");
     existing?.remove();
     const style = document.createElement("style");
@@ -220,10 +230,17 @@ export default function EpubDocumentReader({ bookId, annotations, theme, fontSiz
         const nativeSelection = contents.window.getSelection();
         const quote = nativeSelection?.toString().trim() ?? "";
         if (!quote || quote.length > 600 || !nativeSelection?.rangeCount) return;
-        const rect = nativeSelection.getRangeAt(0).getBoundingClientRect();
+        const nativeRange = nativeSelection.getRangeAt(0);
+        let selectedLocator = cfiRange;
+        try {
+          selectedLocator = contents.cfiFromRange(nativeRange, EPUB_INLINE_ANNOTATION_CLASS) || cfiRange;
+        } catch {
+          // Retain epub.js's selection event locator if a rendition cannot recalculate its range.
+        }
+        const rect = nativeRange.getBoundingClientRect();
         const frameRect = contents.window.frameElement?.getBoundingClientRect()
           ?? hostRef.current?.querySelector("iframe")?.getBoundingClientRect();
-        onSelect(readerSelectionFromRect({ quote, locator: cfiRange, rect, frameRect }));
+        onSelect(readerSelectionFromRect({ quote, locator: selectedLocator, rect, frameRect }));
       });
       rendition.on("rendered", () => setRenderedViewRevision((revision) => revision + 1));
       rendition.on("relocated", (location: { start: { cfi: string; percentage?: number }; end?: { cfi: string } }) => {
@@ -320,6 +337,8 @@ export default function EpubDocumentReader({ bookId, annotations, theme, fontSiz
       window.clearTimeout(saveTimer.current);
       gestureCleanupsRef.current.forEach((cleanup) => cleanup());
       gestureCleanupsRef.current.clear();
+      annotationActivationCleanupsRef.current.forEach(cleanup => cleanup());
+      annotationActivationCleanupsRef.current.clear();
       renditionRef.current = null;
       rendition?.destroy();
       book?.destroy();

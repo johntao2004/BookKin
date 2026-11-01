@@ -371,7 +371,7 @@ export function ArticlesPage() {
               })}
               onRemove={() => setDraft(previous => previous ? { ...previous, coverUrl: "" } : previous)}
             />
-            <ArticleBodyEditor aiEnabled={manager}
+            <ArticleBodyEditor
               markdown={markdown}
               onChange={value => { setMarkdown(value); setBodyDirty(true); }}
               html={draft.html}

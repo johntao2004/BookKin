@@ -1,0 +1,234 @@
+# Original Chinese palace library interior, authored in final Three.js coordinates.
+# Retain catalog cabinetry, circulation decks and stair routes; replace architectural
+# shells and their colliders together after the legacy height transform.
+HEIGHT_ANCHOR=None
+removed_prefixes=('02_','03_','04_','06_','08_','09_','16_')
+for key in list(BUILD):
+ if key[0].startswith(removed_prefixes) or key[0] in ('10_End_A','11_End_B'):
+  del BUILD[key]
+removed_colliders=('outer-wall-','lower-pier-','upper-pier-','screen-','door-','lower-arcade-',
+ 'arcade-','chandelier-','end-a-','end-b-')
+COLLISIONS[:]=[c for c in COLLISIONS if not c['id'].startswith(removed_colliders)]
+PALACE_RED=material('Paint • palace vermilion','71382c',.56)
+PALACE_JADE=material('Paint • palace mineral green','35534b',.72)
+PALACE_IVORY=material('Paint • palace lime plaster','b9ac93',.88)
+PALACE_GOLD=material('Brass • palace gilt','a98d52',.55,.65)
+PALACE_PAPER=material('Glass • palace silk lantern','d9bf89',.78,emission=.38)
+PALACE_ROOF_Y=22.44
+for name in (PALACE_RED,PALACE_JADE):wire_pbr(name,'r2-walnut',.22)
+wire_pbr(PALACE_GOLD,'r2-aged-metal',.28)
+for name,color in [('Stone • dark slate','585449'),('Stone • pale slate','847d6d'),('Stone • moss slate','686454'),('Stone • grout','39372f')]:
+ MATS[name].node_tree.nodes.get('Principled BSDF').inputs['Base Color'].default_value=(*rgb(color),1)
+ MATS[name].diffuse_color=(*rgb(color),1)
+exec(compile((SRC/'palace_detail_helpers.fragment').read_text(),str(SRC/'palace_detail_helpers.fragment'),'exec'))
+# Replace the old carved gallery balustrades above the deck, retaining the
+# joined floor/fascia triangles below it. Reuse their exact collision paths.
+for (module,mat),data in list(BUILD.items()):
+ if module not in ('07_Gallery_railings','11_End_B_Balcony'):continue
+ kept=Mesh();offset=0
+ for face_ids,smooth in zip(data.f,data.s):
+  count=len(face_ids)
+  if max(data.v[i][2] for i in face_ids)<=7.46:
+   vertices=[(data.v[i][0],data.v[i][2],-data.v[i][1]) for i in face_ids]
+   kept.face(vertices,data.uv[offset:offset+count],smooth)
+  offset+=count
+ if kept.f:BUILD[(module,mat)]=kept
+ else:del BUILD[(module,mat)]
+MODULE='25_Palace_balustrades'
+for c in COLLISIONS:
+ if not c['id'].startswith(('rail-','guard-aperture','balcony-rail')):continue
+ cx,cy,cz=(c['center'][k] for k in 'xyz');size=c['size']
+ angle=c.get('rotationY',0)
+ length=size['z']
+ if size['x']>size['z']:length=size['x'];angle=math.pi/2
+ def rail_point(t,y):return (cx+t*math.sin(angle),y,cz+t*math.cos(angle))
+ for y in (7.65,8.55):
+  box(DARK,rail_point(0,y),(.20,.16,length),.035,angle)
+  box(PALACE_GOLD,rail_point(0,y+.09),(.035,.012,length),.004,angle)
+ segments=max(1,math.ceil(length/.75))
+ for k in range(segments+1):
+  t=-length/2+length*k/segments
+  box(PALACE_RED,rail_point(t,8.07),(.13,1.26,.13),.025,angle)
+  cylinder(PALACE_GOLD,rail_point(t,8.69),.075,.06,12)
+ for k in range(segments):
+  t=-length/2+length*(k+.5)/segments;half=length/segments*.32
+  # Open square fret panels between straight posts.
+  for dt in (-half,half):box(PALACE_JADE,rail_point(t+dt,8.1),(.07,.48,.055),.012,angle)
+  for yy in (7.86,8.34):box(PALACE_JADE,rail_point(t,yy),(.07,.055,2*half),.012,angle)
+
+def palace_box(name,mat,c,s,bevel=.025,solid=True):
+ box(mat,c,s,bevel)
+ if solid:collision_box('palace-'+name,c,s)
+
+def bracket(x,y,z):
+ # Interlocked dou/gong courses. All arms stay above the walking headroom.
+ for k in range(3):
+  yy=y+k*.25;span=.72+k*.43
+  box(PALACE_RED,(x,yy,z),(.44,.22,.44),.035)
+  palace_arm(x,yy+.1,z,span,'x')
+  palace_arm(x,yy+.1,z,span,'z')
+  for sign in (-1,1):
+   box(PALACE_GOLD,(x+sign*(span/2-.12),yy+.22,z),(.24,.14,.32),.025)
+   box(PALACE_GOLD,(x,yy+.22,z+sign*(span/2-.12)),(.32,.14,.24),.025)
+ collision_box(f'palace-bracket-{x}-{y}-{z}',(x,y+.4,z),(1.58,1.05,1.58))
+
+# Four structural frames open the central sightline; shelf bays remain independent.
+PALACE_COLUMN_ROWS=(-15,-5,5,15)
+MODULE='20_Palace_columns'
+for side in (-1,1):
+ for z in PALACE_COLUMN_ROWS:
+  x=side*8.8
+  for base,top in [(0,6.60),(7.44,16.0)]:
+   lathe(STONE,(x,base,z),[(0,.47),(.045,.49),(.08,.49),(.12,.43),(.19,.40),(.23,.44),(.28,.44),(.32,.35)],48)
+   for i in range(24):
+    a=TAU*i/24
+    tube(PALACE_GOLD,[(x+.405*math.cos(a),base+.13,z+.405*math.sin(a)),(x+.425*math.cos(a),base+.2,z+.425*math.sin(a))],.007,5)
+   cylinder(PALACE_RED,(x,(base+.32+top)/2,z),.34,top-base-.32,32,r2=.30)
+   for yy in (base+.36,top-.12):cylinder(PALACE_GOLD,(x,yy,z),.35,.09,32)
+   collision_box(f'palace-column-{side}-{base}-{z}',(x,(base+top)/2,z),(.98,top-base,.98))
+   bracket(x,top,z)
+ # Painted longitudinal lintels replace semicircular arches.
+ for y in (6.95,16.42):
+  palace_box(f'long-beam-{side}-{y}',PALACE_RED,(x,y,0),(.64,.58,40))
+  box(PALACE_JADE,(x-side*.34,y,0),(.035,.32,39.9))
+  for yy in (y-.24,y+.24):box(PALACE_GOLD,(x-side*.365,yy,0),(.045,.055,39.9))
+  for z in BAYS+[-17.5,17.5]:
+   # Inset painted panels have thin double frames and carved ruyi-cloud centers.
+   for dy in (-.19,.19):box(PALACE_GOLD,(x-side*.368,y+dy,z),(.025,.016,3.8))
+   for dz in (-1.9,1.9):box(PALACE_GOLD,(x-side*.368,y,z+dz),(.025,.38,.018))
+   for zz in (z-1.1,z,z+1.1):
+    palace_cloud(lambda u,v:(x-side*.385,y+v,zz+u),.7,.27)
+
+MODULE='21_Palace_roof'
+# A sealed flat caisson ceiling; lower side ceilings align with the upper shelves.
+palace_box('central-ceiling',DARK,(0,22.61,0),(17.6,.34,40.4))
+for side in (-1,1):
+ palace_box(f'side-ceiling-{side}',DARK,(side*14.4,17.75,0),(11.2,.30,40.4))
+ for z in BAYS:
+  palace_box(f'side-roof-beam-{side}-{z}',PALACE_RED,(side*14.4,17.30,z),(11.2,.60,.38))
+for side in (-1,1):
+ palace_box(f'clerestory-{side}',PALACE_JADE,(side*8.8,20.02,0),(.22,4.84,40.4))
+ for z in range(-19,20):
+  box(PALACE_GOLD,(side*8.67,20.02,z),(.06,4.6,.06))
+for z in BOUNDS:
+ # Layered transverse beams and short king posts make the timber framing legible.
+ palace_box(f'transverse-{z}',PALACE_RED,(0,17.2,z),(17.6,.7,.52))
+ box(PALACE_JADE,(0,17.2,z+.275),(16.7,.38,.035))
+ for x in (0,):
+  palace_box(f'roof-post-{x}-{z}',PALACE_RED,(x,19.65,z),(.32,4.2,.32))
+ palace_box(f'upper-beam-{z}',PALACE_RED,(0,21.75,z),(17.6,.38,.40))
+for x in (-8,-4,0,4,8):
+ box(PALACE_GOLD,(x,22.23,0),(.12,.12,40))
+for z in range(-20,21,4):box(PALACE_GOLD,(0,22.23,z),(17.6,.12,.12))
+for x in (-6,-2,2,6):
+ for z in range(-18,19,4):
+  box(PALACE_JADE,(x,22.37,z),(3.8,.09,3.8))
+  for inset,y in [(1.5,22.27),(1.1,22.15),(.7,22.03)]:
+   for sign in (-1,1):
+    box(PALACE_GOLD,(x+sign*inset,y,z),(.06,.08,2*inset))
+    box(PALACE_GOLD,(x,y,z+sign*inset),(2*inset,.08,.06))
+
+MODULE='22_Palace_windows'
+for side in (-1,1):
+ x=side*20.1
+ # Continuous wall piers around 24 rectangular lattice windows, with real openings.
+ for z in (-17.5,*BOUNDS,17.5):
+  width=5 if abs(z)==17.5 else 1.8
+  palace_box(f'wall-pier-{side}-{z}',PALACE_IVORY,(x,8.8,z),(.4,17.6,width))
+ for bottom,top in [(0,1.35),(5.8,8.7),(14.9,17.6)]:
+  palace_box(f'wall-spandrel-{side}-{bottom}',PALACE_IVORY,(x,(bottom+top)/2,0),(.4,top-bottom,40.4))
+ for base,top in [(1.35,5.8),(8.7,14.9)]:
+  for z in BAYS:
+   yc=(base+top)/2;h=top-base
+   box('Glass • pale window',(x,yc,z),(.06,h,3.2))
+   for dz in (-1.6,1.6):box(PALACE_RED,(x-side*.24,yc,z+dz),(.22,h,.16),.02)
+   for yy in (base,top):box(PALACE_RED,(x-side*.24,yy,z),(.22,.16,3.2),.02)
+   for k in range(1,8):box(DARK,(x-side*.31,yc,z-1.6+k*.4),(.10,h,.045))
+   for k in range(1,round(h/.45)):
+    yy=base+k*h/round(h/.45)
+    box(DARK,(x-side*.31,yy,z),(.10,.045,3.2))
+ # Window glass itself is a continuous physical boundary.
+ collision_box(f'palace-outer-wall-{side}',(x,8.8,0),(.4,17.6,40.4))
+
+MODULE='23_Palace_end_screens'
+for end in (-1,1):
+ z=end*20.2
+ palace_box(f'end-wall-{end}',PALACE_IVORY,(0,11.25,z),(40.4,22.5,.4))
+ COLLISIONS[-1]['size']['z']=1.1
+ # Symmetric red and gold paneled wall, framing a central six-leaf lattice screen.
+ for x in (-14,-10,-6,-2,2,6,10,14):
+  box(PALACE_RED,(x,10.62,z-end*.28),(.3,6.36,.24),.035)
+  for yy in (7.6,14):box(PALACE_RED,(x,yy,z-end*.28),(4.0,.24,.24),.03)
+ for x in (-5,-3,-1,1,3,5):
+  box(DARK,(x,10.6,z-end*.31),(1.8,5.4,.18),.025)
+  for dx in (-.8,.8):box(PALACE_GOLD,(x+dx,10.6,z-end*.42),(.05,5.2,.06))
+  for yy in (8.05,13.15):box(PALACE_GOLD,(x,yy,z-end*.42),(1.6,.05,.06))
+  for yy in (8.5,9.2,9.9,10.6,11.3,12,12.7):
+   for dx in (-.5,0,.5):
+    tube(PALACE_JADE,[(x+dx,yy+.3,z-end*.43),(x+dx+.25,yy,z-end*.43),(x+dx,yy-.3,z-end*.43),(x+dx-.25,yy,z-end*.43),(x+dx,yy+.3,z-end*.43)],.035,6)
+ # Closed paneled doors, safely against the sealed end wall.
+ for x in (-1.2,1.2):
+  palace_box(f'door-{end}-{x}',PALACE_RED,(x,2.7,z-end*.36),(2.35,5.4,.28))
+
+
+# A carved gilt name tablet provides the focal point above the end screens.
+MODULE='26_Palace_name_tablet'
+box(PALACE_RED,(0,16.4,-19.72),(7.6,2.15,.28),.07)
+box(DARK,(0,16.4,-19.54),(7.15,1.8,.12),.035)
+for yy in (15.42,17.38):box(PALACE_GOLD,(0,yy,-19.50),(7.35,.08,.07))
+for x in (-3.64,3.64):box(PALACE_GOLD,(x,16.4,-19.50),(.08,1.96,.07))
+font_candidates=[os.environ.get('BOOKKIN_CJK_FONT',''),'/System/Library/Fonts/STHeiti Medium.ttc',
+ '/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc']
+font_path=next((p for p in font_candidates if p and Path(p).exists()),None)
+if not font_path:raise FileNotFoundError('Set BOOKKIN_CJK_FONT to a font containing 藏书楼')
+curve=bpy.data.curves.new('Palace tablet lettering','FONT');curve.body='藏书楼'
+curve.font=bpy.data.fonts.load(font_path);curve.align_x='CENTER';curve.align_y='CENTER'
+curve.size=1.35;curve.space_character=1.25;curve.extrude=.012;curve.resolution_u=8
+label=bpy.data.objects.new('藏书楼',curve);bpy.context.scene.collection.objects.link(label)
+label.location=(0,19.44,16.4);label.rotation_euler=(math.pi/2,0,0)
+bpy.context.view_layer.update();evaluated=label.evaluated_get(bpy.context.evaluated_depsgraph_get());mesh=evaluated.to_mesh()
+for poly in mesh.polygons:
+ points=[label.matrix_world @ mesh.vertices[i].co for i in poly.vertices]
+ face(PALACE_GOLD,[(p.x,p.z,-p.y) for p in points])
+evaluated.to_mesh_clear();bpy.data.objects.remove(label,do_unlink=True)
+collision_box('palace-name-tablet',(0,16.4,-19.65),(7.6,2.15,.5))
+
+MODULE='24_Palace_lanterns'
+for z in (-8,1,10):
+ x=0;y=14.8
+ # Eight-sided palace lantern with profiled caps and modeled silk ribs.
+ cylinder(PALACE_PAPER,(x,y,z),.68,1.35,8)
+ lathe(PALACE_RED,(x,y+.66,z),[(0,.73),(.06,.79),(.12,.79),(.18,.68),(.28,.52),(.34,.30)],8)
+ lathe(PALACE_RED,(x,y-.91,z),[(0,.28),(.08,.48),(.15,.68),(.20,.79),(.25,.79)],8)
+ for yy,r in [(y-.7,.76),(y+.73,.77)]:torus(PALACE_GOLD,(0,yy,z),r,.022,'xz',48)
+ for i in range(8):
+  a=i*TAU/8;xx=x+.69*math.cos(a);zz=z+.69*math.sin(a)
+  tube(PALACE_RED,[(xx,y-.66,zz),(xx,y+.66,zz)],.025,8)
+  for yy in (y-.45,y+.45):
+   sphere(PALACE_GOLD,(xx,yy,zz),.035,10,5)
+  # Several fine strands give the hanging tassels a soft outline.
+  for j in range(5):
+   u=(j-2)*.012
+   tube(PALACE_RED,[(xx+u,y-.82,zz),(xx+u*1.4,y-1.32,zz+.012*math.sin(j))],.006,5)
+  # Each silk panel carries a small openwork lozenge.
+  mid=a+math.pi/8
+  def lamp_point(u,v):return (.63*math.cos(mid)-u*math.sin(mid),y+v,z+.63*math.sin(mid)+u*math.cos(mid))
+  tube(PALACE_GOLD,[lamp_point(0,.23),lamp_point(.14,0),lamp_point(0,-.23),lamp_point(-.14,0),lamp_point(0,.23)],.012,6)
+ tube(GOLD,[(0,y+1,z),(0,22.4,z)],.035,8)
+ collision_box(f'palace-lantern-{z}',(0,y-.15,z),(1.7,2.5,1.7))
+ collision_box(f'palace-lantern-cord-{z}',(0,(y+1+22.4)/2,z),(.08,22.4-y-1,.08))
+
+exec(compile((SRC/'palace_ornament.fragment').read_text(),str(SRC/'palace_ornament.fragment'),'exec'))
+
+exec(compile((SRC/'palace_furniture.fragment').read_text(),str(SRC/'palace_furniture.fragment'),'exec'))
+
+exec(compile((SRC/'palace_doors.fragment').read_text(),str(SRC/'palace_doors.fragment'),'exec'))
+
+PALACE_CONTRACT={'style':'original-chinese-palace-library','ceilingY':22.44,'sideCeilingY':17.6,
+ 'doors':PALACE_DOORS,'furniture':PALACE_FURNITURE,'columns':16,'columnRows':list(PALACE_COLUMN_ROWS),'latticeWindows':24,'lanterns':3,'catalogAddressesPreserved':6720,
+ 'retainedCirculation':'existing two stairs, galleries and shelf aisles',
+ 'source':'Original modeled timber palace interior; no external architectural assets'}
+assert not any(key[0].startswith(removed_prefixes) for key in BUILD)
+assert not any(c['id'].startswith(removed_colliders) for c in COLLISIONS)
+
+FIXTURE_CHECKS={'palaceLanternCount':3,'bodyCenterY':14.8,'suspensionTopY':22.4,'evidence':'Authoring dimensions; exported triangles and browser validated separately'}

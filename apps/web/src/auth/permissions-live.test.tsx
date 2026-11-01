@@ -19,6 +19,7 @@ it("does not mount private content while permission grants are pending", () => {
   vi.mocked(request).mockReturnValue(new Promise(() => undefined));
   const mounted = vi.fn(); function Private() { mounted(); return <p>私有内容</p>; }
   setup(<Private />); expect(mounted).not.toHaveBeenCalled(); expect(screen.getByRole("progressbar")).toBeInTheDocument();
+  expect(document.querySelector('.ant-spin-dot-item')).not.toBeInTheDocument();
 });
 it("fails closed when the permission service fails", async () => {
   vi.mocked(request).mockRejectedValue(new Error("offline"));
@@ -35,7 +36,8 @@ it("keeps the reason visible beyond notification expiry and during automatic rec
   setup(<Private />);
   expect(await screen.findByRole("alert")).toHaveTextContent("原因：权限服务暂时不可用");
   await act(async () => { vi.advanceTimersByTime(4_000); });
-  expect(screen.getByRole("alert")).toHaveTextContent("每 5 秒自动重试");
+  expect(screen.getByRole("alert")).not.toHaveTextContent("每 5 秒自动重试");
+  expect(screen.getByRole("alert")).not.toHaveTextContent("服务恢复后会自动打开页面");
   expect(request).toHaveBeenCalledTimes(1);
   await act(async () => { vi.advanceTimersByTime(1_000); });
   await waitFor(() => expect(request).toHaveBeenCalledTimes(2));
@@ -53,7 +55,7 @@ it("retains manual retry and enforces the fresh grants instead of bypassing acce
   setup(<Private />);
   expect(await screen.findByRole("alert")).toHaveTextContent("连接超时");
   fireEvent.click(screen.getByRole("button", { name: "重试" }));
-  expect(await screen.findByText("403 · 权限受限")).toBeInTheDocument();
+  expect(await screen.findByRole("heading", {level: 1, name: "403"})).toBeInTheDocument();
   expect(mounted).not.toHaveBeenCalled();
 });
 it("unmounts revoked content and clears its cache when current grants change", async () => {
@@ -63,7 +65,7 @@ it("unmounts revoked content and clears its cache when current grants change", a
   client.setQueryData(["private-article"], { content: "private" });
   vi.mocked(request).mockResolvedValue({ role: "ADMIN", revision: 1, grants: [] });
   await act(async () => { await client.invalidateQueries({ queryKey: ["role-permissions-current"] }); });
-  expect(await screen.findByText("403 · 权限受限")).toBeInTheDocument();
+  expect(await screen.findByRole("heading", {level: 1, name: "403"})).toBeInTheDocument();
   await waitFor(() => expect(client.getQueryData(["private-article"])).toBeUndefined()); expect(unmounted).toHaveBeenCalledOnce();
 });
 it("deduplicates effective permission requests across controls and the route guard", async () => {

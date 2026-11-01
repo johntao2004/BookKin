@@ -128,17 +128,31 @@ describe("BookDetailPage", () => {
     expect(screen.getByTestId("route-location")).toHaveTextContent(`/reader/${book.id}`);
   });
 
-  it("lets a reader download the original through the authenticated streaming endpoint", async () => {
+  it("lets a user with download permission fetch the original through its attachment endpoint", async () => {
     const book = demoBooks[0];
     vi.spyOn(api, "getBook").mockResolvedValue(book);
     renderDetail(`/library/books/${book.id}`, member);
 
     const download = await screen.findByRole("link", { name: "下载原书" });
-    expect(download).toHaveAttribute("href", `/api/v1/books/${book.id}/content`);
+    expect(download).toHaveAttribute("href", `/api/v1/books/${book.id}/download`);
     expect(download).toHaveAttribute("download", `${book.title}.${book.format.toLowerCase()}`);
   });
 
-  it("does not offer an original download without reading permission", async () => {
+  it("does not offer an original download without download permission", async () => {
+    const book = demoBooks[0];
+    vi.spyOn(api, "getBook").mockResolvedValue(book);
+    const usePermissions = permissionHooks.usePermissions;
+    vi.spyOn(permissionHooks, "usePermissions").mockImplementation(() => {
+      const permissions = usePermissions();
+      return { ...permissions, can: code => code !== "library.download" && permissions.can(code) };
+    });
+    renderDetail(`/library/books/${book.id}`, member);
+
+    expect(await screen.findByRole("heading", { level: 2, name: book.title })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "下载原书" })).not.toBeInTheDocument();
+  });
+
+  it("keeps download independent from reader streaming permission", async () => {
     const book = demoBooks[0];
     vi.spyOn(api, "getBook").mockResolvedValue(book);
     const usePermissions = permissionHooks.usePermissions;
@@ -148,8 +162,8 @@ describe("BookDetailPage", () => {
     });
     renderDetail(`/library/books/${book.id}`, member);
 
-    expect(await screen.findByRole("heading", { level: 2, name: book.title })).toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "下载原书" })).not.toBeInTheDocument();
+    expect(await screen.findByRole("link", { name: "下载原书" })).toHaveAttribute("href", `/api/v1/books/${book.id}/download`);
+    expect(screen.queryByRole("button", { name: "开始阅读" })).not.toBeInTheDocument();
   });
 
   it("does not offer an original download for an unavailable file", async () => {

@@ -1,0 +1,5 @@
+.http-error-status.bk-typography {
+  font-size: var(--typography-font-size-display-lg);
+  line-height: var(--typography-line-height-display-lg);
+  font-variant-numeric: lining-nums tabular-nums;
+}

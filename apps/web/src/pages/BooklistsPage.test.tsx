@@ -1,6 +1,6 @@
 // 区分匿名公开书目与登录后的个人/家庭分组，不因旧官方类型暴露额外选择。
 // Distinguishes anonymous public lists from signed-in personal/family groups without reviving legacy official-type choices.
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { api } from "../api/client";
 import { TestProviders } from "../test/TestProviders";
@@ -75,6 +75,26 @@ describe("BooklistsPage", () => {
     expect(screen.getByText(emptyGroup === "家庭共享" ? "暂无家庭共享书目" : "暂无书目")).toBeInTheDocument();
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     expect(screen.queryByText("由主人和管理员整理的馆内阅读路径。")).not.toBeInTheDocument();
+  });
+
+  it("按可见性分组，自己创建的家庭和公开书目也只出现在家庭共享", async () => {
+    sessionStorage.setItem("bookkin-demo-session", JSON.stringify(owner));
+    const mine = createBooklist("仅自己可见", "PERSONAL", true);
+    const family = { ...createBooklist("我的家庭书目", "PERSONAL", true), visibility: "MEMBERS" as const };
+    const publicList = { ...createBooklist("我的公开书目", "PERSONAL", true), visibility: "PUBLIC" as const };
+    const otherFamily = { ...createBooklist("他人的家庭书目", "PERSONAL", false), visibility: "MEMBERS" as const };
+    const otherPublic = createBooklist("他人的公开书目", "PERSONAL", false);
+    vi.spyOn(api, "listBooklists").mockResolvedValue({ items: [mine, family, publicList, otherFamily, otherPublic] });
+    render(<TestProviders initialPath="/booklists"><BooklistsPage /></TestProviders>);
+
+    const personalSection = within(await screen.findByRole("region", { name: "我的书目" }));
+    const sharedSection = within(screen.getByRole("region", { name: "家庭共享" }));
+    expect(personalSection.getByRole("heading", { name: mine.title })).toBeInTheDocument();
+    expect(sharedSection.queryByRole("heading", { name: mine.title })).not.toBeInTheDocument();
+    for (const shared of [family, publicList, otherFamily, otherPublic]) {
+      expect(sharedSection.getByRole("heading", { name: shared.title })).toBeInTheDocument();
+      expect(personalSection.queryByRole("heading", { name: shared.title })).not.toBeInTheDocument();
+    }
   });
 
   it("登录后分开我的书目与家庭发现，且不再提供官方类型", async () => {

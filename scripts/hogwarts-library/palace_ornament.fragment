@@ -1,0 +1,34 @@
+# Shallow carved details remain above circulation or within the wall envelope.
+MODULE='21_Palace_roof'
+for x in (-6,-2,2,6):
+ for z in range(-18,19,4):
+  palace_lotus(lambda u,v:(x+u,22.13,z+v),.48,8)
+for z in BOUNDS:
+ for side in (-1,1):
+  for x in (-6,-3,0,3,6):
+   palace_cloud(lambda u,v:(x+u,17.2+v,z+side*.30),1.5,.30)
+  for yy in (16.96,17.44):box(PALACE_GOLD,(0,yy,z+side*.285),(17.0,.025,.025))
+MODULE='23_Palace_end_screens'
+for end in (-1,1):
+ depth=end*19.70
+ # A restrained central lotus roundel and carved frieze fill the tall gable.
+ palace_lotus(lambda u,v:(u,19.75+v,depth),1.15)
+ for yy in (18.15,21.35):
+  box(PALACE_JADE,(0,yy,depth+end*.06),(17.0,.24,.08),.025)
+  for x in (-7,-5,-3,3,5,7):
+   palace_cloud(lambda u,v:(x+u,yy+v,depth),1.25,.18)
+ for x in (-12,-8,8,12):
+  box(PALACE_JADE,(x,10.6,depth+end*.09),(3.55,5.3,.08),.035)
+  for dx in (-1.64,1.64):box(PALACE_GOLD,(x+dx,10.6,depth),(.025,5.05,.025))
+  for yy in (8.08,13.12):box(PALACE_GOLD,(x,yy,depth),(3.3,.025,.025))
+  palace_lotus(lambda u,v:(x+u,10.6+v,depth),.75,8)
+  for yy in (8.8,12.4):palace_cloud(lambda u,v:(x+u,yy+v,depth),2.5,.42)
+MODULE='22_Palace_windows'
+for side in (-1,1):
+ x=side*19.73
+ for base,top in [(1.35,5.8),(8.7,14.9)]:
+  for z in BAYS:
+   for zz in (z-1.48,z+1.48):box(PALACE_GOLD,(x,(base+top)/2,zz),(.018,top-base-.18,.018))
+   for yy in (base+.12,top-.12):box(PALACE_GOLD,(x,yy,z),(.018,.018,2.96))
+   for yy in (base+.65,top-.65):
+    palace_cloud(lambda u,v:(x,yy+v,z+u),1.35,.32,PALACE_JADE)

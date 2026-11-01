@@ -1,0 +1,14 @@
+{
+  "r2-slate-normal": "textures/67ed28d943a71a1b6f1af38402117cec22df9f4067711713e0f8b1b79adfe0d1.png",
+  "r2-slate-roughness": "textures/8adbd24ca9ad4cb43b3963a0f491a85e028d9cfddcd3a91dd810e5e819a86e89.png",
+  "r2-oak-normal": "textures/e7cd7ee90efdea1cb5c7d61c6d08d91e7677058733908cb53ecedbd58ba6a1f4.png",
+  "r2-oak-albedo": "textures/f498fc33e2efe9339dc53a7da787e82c0c59a7f268f920da47661320b5e0c49c.png",
+  "r2-oak-roughness": "textures/81c80beba240e5534189a81097226d3c54508a9e931729b693f086a9c03341ca.png",
+  "r2-walnut-normal": "textures/c94f806ce0ca35090df1a189eb76101c6a77ff142a162add2eb17947e8845cf6.png",
+  "r2-walnut-albedo": "textures/f8087c5e70f36d92ef383792947072f5e2f1697815e5932d223f55f7bd760c3b.png",
+  "r2-walnut-roughness": "textures/f15c507fb00b7c8c166f6d47652b6f6fb6a695c93569ef3db76bcd169e5551a0.png",
+  "r2-aged-metal-normal": "textures/553ae191491a44bf09e3b998a4f4607f4dc3fd2092dcb26f0f912a236cc8d220.png",
+  "r2-aged-metal-roughness": "textures/611ae3d9ed1da7df42ac45d6c5d7df874f328095cfdcc97ba25002d7b9f89351.png",
+  "gallery-paintings-original-r7": "textures/7a4e9dbd3354887ca5b232789b198e9c0840077b08d3e93908cf8a5fafcfb2ac.png",
+  "portrait-scholar-generated-r2": "textures/df0f8ee9d62a4d735c097bbc1f6bf1b3e500e01f35e17fa0703f8a6cc5d8fedd.png"
+}

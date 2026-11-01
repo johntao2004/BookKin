@@ -50,6 +50,8 @@ public class AiAssistanceService {
     }
 
     public Result assist(AiAssistanceController.Input input, Principal principal) throws Exception {
+        if (input.source() == SourceType.ARTICLE || input.source() == SourceType.COLLECTION || input.source() == SourceType.ARTICLE_DRAFT)
+            throw new ApiException(HttpStatus.GONE, "ARTICLE_AI_DISABLED", "文章 AI 功能已停用。");
         authorize(input.source(), principal);
         validate(input);
         if (!input.consent()) throw ApiException.badRequest("AI_CONSENT_REQUIRED", "请确认将所示原文或当前草稿发送给配置的 AI 平台。");

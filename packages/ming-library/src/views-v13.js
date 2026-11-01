@@ -1,0 +1,28 @@
+/** Explicit user-facing viewpoints, shared by the app and physical acceptance tests. */
+import {upperWorldYV15} from './height-v15.js';
+export const poses={
+  gate:{position:[111,23,0],target:[0,9,0],fov:48,title:'宫门入阁',subtitle:'文華殿 · 三重石台',index:'01'},
+  door:{position:[36,3.8,0],target:[26.4,3.8,0],title:'隔扇细部',subtitle:'同色对开 · 镂空棂格',index:'02'},
+  connection:{position:[22.44,3.5,-4.92],target:[22.92,7.3,5.04],title:'内外衔接',subtitle:'一套柱网 · 内外共窗',index:'03'},
+  hall:{position:[16.3,7.0,0],target:[-1.5,9.9,0],fov:80,title:'御座中厅',subtitle:'御座居中 · 四柱承梁',index:'04'},
+  throne:{position:[7.5,4.5,0],target:[0,4.6,0],title:'御座近观',subtitle:'透雕金龙 · 可登台入座',index:'05'},
+  objects:{position:[6.7,3.9,-6.8],target:[1.2,3.2,-4.8],title:'礼器近观',subtitle:'细羽仙鹤 · 掐丝香炉',index:'06'},
+  dragon:{position:[8.88,12.05,2.88],target:[5.88,12.3,5.64],title:'龙纹细节',subtitle:'贴金纹饰 · 连续柱身',index:'07'},
+  upper:{position:[18.96,10.3,0],target:[0,7.5,0],title:'二层回廊',subtitle:'柱栏相接 · 通透窗棂',index:'08'},
+  shelf:{position:[-14.62,2.15,13.02],target:[-16.32,1.8,13.02],title:'近观书架',subtitle:'现代书册 · 动态封面',index:'09'},
+  stairs:{position:[19.32,4.1,25.8],target:[5.76,5.6,25.8],title:'双梯登阁',subtitle:'硬木雕栏 · 宽梯缓台',index:'10'},
+  ceiling:{position:[3.2,9.8,0],target:[0,upperWorldYV15(20.4),0],title:'盘龙藻井',subtitle:'四柱托井 · 依梁收分',index:'11'},
+  roof:{position:[83,48,65],target:[0,12,0],title:'屋顶外观',subtitle:'双顶叠落 · 瓦脊瑞兽',index:'12'},
+  plaque:{position:[29.3,upperWorldYV15(17.4),0],target:[22.84,upperWorldYV15(16.9),0],fov:46,title:'外匾近观',subtitle:'文華殿原字 · 如意云框',index:'13'},
+  beasts:{position:[7.4,upperWorldYV15(27.4),46.5],target:[21.6,upperWorldYV15(23.3),31.3],fov:30,title:'脊兽近观',subtitle:'仙人领七兽 · 朝向檐角',index:'14'},
+  overview:{position:[58,46,61],target:[0,7.2,0],title:'全馆剖览',subtitle:'贯通柱网 · 两层藏书',index:'16'},
+  courtyard:{position:[152,109,144],target:[0,-18,0],fov:62,title:'红墙院落',subtitle:'殿居中轴 · 红墙围合',index:'17'},
+  dais:{position:[16.3,6.4,10.1],target:[1.9,2.4,0],fov:60,title:'御台踏步',subtitle:'逐级铺毯 · 雕栏承托',index:'18'},
+  chiwen:{position:[12.5,upperWorldYV15(31.0),19.8],target:[0,upperWorldYV15(29.2),13.2],fov:43,title:'正吻细部',subtitle:'衔脊龙首 · 卷尾琉璃',index:'19'},
+  terrace:{position:[83,13.5,54],target:[33,0,10],title:'三重台基',subtitle:'宽台缓步 · 三重石阶',index:'15'},
+  carpet:{position:[14,1.72,0],target:[4.9,1.35,0],fov:42,title:'画像正观',subtitle:'正面成画 · 逐级实踏',index:'20'},
+  windows:{position:[19.3,10.12,13.1],target:[45,9.5,13.1],fov:65,title:'临窗观景',subtitle:'内外同窗 · 望见宫院',index:'21'},
+  passages:{position:[-15.8,10.12,10.32],target:[16.3,10.12,10.32],fov:68,title:'回廊通行',subtitle:'柱归边线 · 环廊畅通',index:'22'},
+  terracepassage:{position:[50,.52,0],target:[50,.52,22],fov:68,title:'台基环道',subtitle:'同台连通 · 横向可行',index:'23'},
+  entrycolumns:{position:[45,5.8,0],target:[26.6,4.7,0],fov:70,title:'门前柱网',subtitle:'左右减柱 · 中轴入殿',index:'24'},
+};

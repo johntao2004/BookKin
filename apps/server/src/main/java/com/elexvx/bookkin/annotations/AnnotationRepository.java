@@ -88,6 +88,40 @@ public class AnnotationRepository {
 
     public Annotation create(UUID userId, UUID bookId, AnnotationType type, String locator, String quote, String note,
                              AnnotationStyle style, String color) {
+        // Serialize mutations for one reader/book pair so simultaneous creates cannot both miss the same selection.
+        // The lock key includes ownership and book scope; a hash collision only causes extra serialization.
+        dsl.execute("select pg_advisory_xact_lock(hashtextextended(?::text || ':' || ?::text, 0))", userId, bookId);
+        if (type != AnnotationType.BOOKMARK) {
+            List<SelectionCandidate> matching = matchingSelection(userId, bookId, locator, quote);
+            if (type == AnnotationType.NOTE && !matching.isEmpty()) {
+                SelectionCandidate survivor = matching.stream().filter(item -> item.type() == AnnotationType.NOTE)
+                        .findFirst().orElse(matching.getFirst());
+                dsl.execute("""
+                        update annotations
+                           set annotation_type = 'NOTE', locator = ?, quote = ?, note = ?, annotation_style = ?, color = ?, updated_at = now()
+                         where user_id = ? and book_id = ? and id = ?
+                        """, locator, quote, note, style.name(), color, userId, bookId, survivor.id());
+                deleteSelectionDuplicates(userId, bookId, matching, survivor.id());
+                return find(userId, survivor.id()).orElseThrow();
+            }
+
+            if (!matching.isEmpty()) {
+                // Applying a highlight to a saved note changes its presentation only; its NOTE type and text survive.
+                SelectionCandidate survivor = matching.stream().filter(item -> item.type() == AnnotationType.NOTE)
+                        .findFirst().orElse(matching.getFirst());
+                dsl.execute("""
+                        update annotations set annotation_style = ?, color = ?, updated_at = now()
+                         where user_id = ? and book_id = ? and id = ?
+                        """, style.name(), color, userId, bookId, survivor.id());
+                return find(userId, survivor.id()).orElseThrow();
+            }
+        }
+
+        return insert(userId, bookId, type, locator, quote, note, style, color);
+    }
+
+    private Annotation insert(UUID userId, UUID bookId, AnnotationType type, String locator, String quote, String note,
+                              AnnotationStyle style, String color) {
         UUID id = UUID.randomUUID();
         dsl.execute("""
                 insert into annotations(id, user_id, book_id, annotation_type, locator, quote, note, annotation_style, color)
@@ -95,6 +129,86 @@ public class AnnotationRepository {
                 """, id, userId, bookId, type.name(), locator, quote, note, style.name(), color);
         return find(userId, id).orElseThrow();
     }
+
+    private List<SelectionCandidate> matchingSelection(UUID userId, UUID bookId, String locator, String quote) {
+        String selectedQuote = normalizedQuote(quote);
+        if (selectedQuote == null || selectedQuote.isEmpty() || locator == null || locator.isBlank()) return List.of();
+        SelectionLocatorKey selectedLocator = selectionLocatorKey(locator);
+        return dsl.fetch("""
+                select id, annotation_type, locator, quote
+                  from annotations
+                 where user_id = ? and book_id = ? and annotation_type <> 'BOOKMARK'
+                   and quote is not null and locator is not null
+                 order by (annotation_type = 'NOTE') desc, updated_at desc, id desc
+                 for update
+                """, userId, bookId).stream()
+                .filter(record -> selectedQuote.equals(normalizedQuote(record.get("quote", String.class)))
+                        && selectedLocator.equals(selectionLocatorKey(record.get("locator", String.class))))
+                .map(record -> new SelectionCandidate(record.get("id", UUID.class),
+                        AnnotationType.valueOf(record.get("annotation_type", String.class))))
+                .toList();
+    }
+
+    private void deleteSelectionDuplicates(UUID userId, UUID bookId, List<SelectionCandidate> matching, UUID survivorId) {
+        UUID[] redundantIds = matching.stream().map(SelectionCandidate::id).filter(id -> !id.equals(survivorId))
+                .toArray(UUID[]::new);
+        if (redundantIds.length > 0) {
+            dsl.execute("delete from annotations where user_id = ? and book_id = ? and id = any(?::uuid[])",
+                    userId, bookId, redundantIds);
+        }
+    }
+
+    private SelectionLocatorKey selectionLocatorKey(String locator) {
+        if (locator == null || !locator.startsWith("epubcfi(") || !locator.endsWith(")")) {
+            return new SelectionLocatorKey(locator, null, null);
+        }
+        String body = locator.substring("epubcfi(".length(), locator.length() - 1);
+        int firstDelimiter = -1;
+        int secondDelimiter = -1;
+        int assertionDepth = 0;
+        boolean escaped = false;
+        for (int index = 0; index < body.length(); index++) {
+            char character = body.charAt(index);
+            if (escaped) {
+                escaped = false;
+                continue;
+            }
+            if (character == '^') {
+                escaped = true;
+                continue;
+            }
+            if (character == '[') {
+                assertionDepth++;
+                continue;
+            }
+            if (character == ']') {
+                if (--assertionDepth < 0) return exactLocatorKey(locator);
+                continue;
+            }
+            if (character == ',' && assertionDepth == 0) {
+                if (firstDelimiter < 0) firstDelimiter = index;
+                else if (secondDelimiter < 0) secondDelimiter = index;
+                else return exactLocatorKey(locator);
+            }
+        }
+        if (escaped || assertionDepth != 0 || firstDelimiter <= 0 || secondDelimiter <= firstDelimiter + 1
+                || secondDelimiter == body.length() - 1) return exactLocatorKey(locator);
+        // EPUB range locators differ as the reader's end offset drifts; common path and start offset identify the selection.
+        String common = body.substring(0, firstDelimiter);
+        String start = body.substring(firstDelimiter + 1, secondDelimiter);
+        return new SelectionLocatorKey(null, common, start);
+    }
+
+    private SelectionLocatorKey exactLocatorKey(String locator) {
+        return new SelectionLocatorKey(locator, null, null);
+    }
+
+    private String normalizedQuote(String quote) {
+        return quote == null ? null : quote.strip();
+    }
+
+    private record SelectionCandidate(UUID id, AnnotationType type) {}
+    private record SelectionLocatorKey(String exactLocator, String commonPath, String startPath) {}
 
     public Optional<Annotation> find(UUID userId, UUID id) {
         return dsl.fetchOptional("""

@@ -1,0 +1,43 @@
+# 精细木作截面、卷草与莲瓣；尺寸沿用主构件的碰撞包络。
+# Carved joinery profiles and reliefs stay inside the parent collision envelopes.
+def palace_arm(x,y,z,span,axis):
+ # Curved cloud-head gong: sampled lower ogee instead of a rectangular bar.
+ h=.20;half=span/2;depth=.24
+ outline=[(-half,.12),(half,.12)]
+ for i in range(25):
+  t=i/24;u=half-span*t
+  v=-.10+.10*(abs(u)/half)**2-.055*math.sin(math.pi*abs(u)/half)**2
+  outline.append((u,v))
+ def point(u,v,d):return (x+u,y+v,z+d) if axis=='x' else (x+d,y+v,z+u)
+ for sign in (-1,1):
+  vs=[point(u,v,sign*depth/2) for u,v in outline]
+  face(PALACE_JADE,vs if (sign>0)==(axis=='z') else list(reversed(vs)))
+ for (u,v),(uu,vv) in zip(outline,outline[1:]+outline[:1]):
+  verts=[point(u,v,-depth/2),point(uu,vv,-depth/2),point(uu,vv,depth/2),point(u,v,depth/2)]
+  face(PALACE_JADE,verts if axis=='z' else list(reversed(verts)))
+ for sign in (-1,1):
+  tube(PALACE_GOLD,[point(u,v+.035,sign*(depth/2+.004)) for u,v in outline[2:]],.009,5)
+
+def palace_cloud(project,width,height,material= None):
+ # Mirrored curled tendrils with a central ruyi lobe, not flat painted rectangles.
+ mat=material or PALACE_GOLD
+ for side in (-1,1):
+  points=[]
+  for i in range(33):
+   t=i/32;a=t*math.pi*2.25;r=(1-t)*height*.46+.018
+   u=side*(width*.24+r*math.cos(a));v=r*math.sin(a)
+   points.append(project(u,v))
+  tube(mat,points,.012,6)
+ tube(mat,[project(-width*.43,0),project(-width*.12,height*.22),project(0,height*.4),project(width*.12,height*.22),project(width*.43,0)],.012,6)
+
+def palace_lotus(project,radius,petals=12):
+ for k in range(petals):
+  angle=TAU*k/petals;points=[]
+  for i in range(33):
+   t=TAU*i/32
+   rr=radius*(.22+.77*(.5-.5*math.cos(t)))
+   a=angle+.19*math.sin(t)
+   points.append(project(rr*math.cos(a),rr*math.sin(a)))
+  tube(PALACE_GOLD,points,.012,6)
+ for rr in (radius*.16,radius*1.06):
+  tube(PALACE_GOLD,[project(rr*math.cos(TAU*i/64),rr*math.sin(TAU*i/64)) for i in range(65)],.018,8)

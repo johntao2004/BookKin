@@ -40,14 +40,14 @@ public class MetadataProviderSettingsService {
     }
 
     public MetadataProviderSettingsView view(Principal principal) {
-        authorize(principal, "settings.ai.view");
+        authorize(principal, "settings.metadata.view");
         Map<String, Boolean> stored = repository.findEnabled();
         return view(stored);
     }
 
     @Transactional
     public MetadataProviderSettingsView update(List<ProviderSettingInput> requested, Principal principal) {
-        BookKinUser actor = authorize(principal, "settings.ai.edit");
+        BookKinUser actor = authorize(principal, "settings.metadata.edit");
         if (requested == null || requested.isEmpty() || requested.size() > PROVIDERS.size()) {
             throw ApiException.badRequest("METADATA_PROVIDER_SETTINGS_INVALID", "至少选择一个有效的元数据来源。");
         }

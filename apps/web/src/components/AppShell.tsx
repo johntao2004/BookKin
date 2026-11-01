@@ -37,6 +37,7 @@ import { tokens } from "../theme/generated-tokens";
 import { useBookKinTheme } from "../theme/BookKinThemeProvider";
 import { bookKinThemeOptions } from "../theme/theme";
 import { useOrdinaryPageScale } from "../theme/useOrdinaryPageScale";
+import { articlesNavigationSections, libraryNavigationSections, notesNavigationSections } from "./app-navigation-sections";
 
 const navigation = [
   { label: "藏书楼", path: "/library", icon: <LibraryBooksOutlined /> },
@@ -84,21 +85,14 @@ export function AppShell({ children }: PropsWithChildren) {
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const [themeMenuOpen, setThemeMenuOpen] = useState(false);
   const themeMenuSelectionRef = useRef(false);
-  const libraryNavigation = (user ? navigation : navigation.filter(item => item.path === "/library")).filter(item => canVisit(item.path));
-  const librarySections = [
-    ...(user ? [{ label: "楼中一览", path: "/library/overview" }] : []),
-    { label: "书目", path: "/booklists" },
-    ...(user ? [{ label: "学脉图", path: "/knowledge-graph" }] : []),
-    ...(user && siteQuery.isSuccess && site.virtualLibraryEnabled ? [{ label: "书楼漫游", path: "/virtual-library" }] : []),
-  ].filter(item => canVisit(item.path));
-  const notesSections = [
-    { label: "读书札记", path: "/annotations/books" },
-    { label: "阅文札记", path: "/annotations/articles" },
-  ].filter(item => canVisit(item.path));
-  const articlesSections = [
-    { label: "全部文章", path: "/articles" },
-    { label: "选集", path: "/article-collections" },
-  ].filter(item => canVisit(item.path));
+  const librarySections = libraryNavigationSections.filter(item => (!item.requiresUser || user)
+    && (item.path !== "/virtual-library" || (user && siteQuery.isSuccess && site.virtualLibraryEnabled)))
+    .filter(item => canVisit(item.path));
+  const notesSections = notesNavigationSections.filter(item => canVisit(item.path));
+  const articlesSections = articlesNavigationSections.filter(item => canVisit(item.path));
+  const libraryNavigation = (user ? navigation : navigation.filter(item => item.path === "/library")).filter(item =>
+    canVisit(item.path) || (item.path === "/articles" && articlesSections.length > 0)
+      || (item.path === "/annotations" && notesSections.length > 0));
   const searchLabel = "搜索书籍、笔记、书目";
   const searchableLibrary = canVisit("/search");
   const readerRoute = location.pathname.startsWith("/reader/") || /^\/articles\/[^/]+\/?$/.test(location.pathname);
@@ -129,10 +123,11 @@ export function AppShell({ children }: PropsWithChildren) {
     const setMenuOpen = library ? setLibraryMenuOpen : articleGroup ? setArticlesMenuOpen : setNotesMenuOpen;
     const sections = library ? librarySections : articleGroup ? articlesSections : notesSections;
     const selectedPath = library ? selectedLibraryPath : articleGroup ? selectedArticlesPath : selectedNotesPath;
+    const destination = canVisit(item.path) ? item.path : sections[0]?.path ?? item.path;
     const button = <Box
       key={item.path}
       component={grouped ? Link : NavLink}
-      to={item.path}
+      to={destination}
       aria-haspopup={grouped ? "menu" : undefined}
       aria-expanded={grouped ? menuOpen : undefined}
       aria-current={grouped && isActivePath(item.path) ? "page" : undefined}
@@ -368,10 +363,11 @@ export function AppShell({ children }: PropsWithChildren) {
                 const setGroupOpen = group === "library" ? setLibraryGroupOpen : group === "articles" ? setArticlesGroupOpen : setNotesGroupOpen;
                 const sections = group === "library" ? librarySections : group === "articles" ? articlesSections : notesSections;
                 const selectedPath = group === "library" ? selectedLibraryPath : group === "articles" ? selectedArticlesPath : selectedNotesPath;
+                const destination = canVisit(item.path) ? item.path : sections[0]?.path ?? item.path;
                 return group ? <Box key={item.path}>
                 <Stack direction="row" className={`bk-navigation-row${isActivePath(item.path) ? " bk-navigation-row-active" : ""}`} sx={{ alignItems: "center" }}>
                 <ListItemButton selected={isActivePath(item.path)}
-                  onClick={() => { setDrawerOpen(false); navigate(item.path); }}
+                  onClick={() => { setDrawerOpen(false); navigate(destination); }}
                   sx={{ flex: 1, minWidth: 0 }}>
                   <ListItemIcon>{item.icon}</ListItemIcon>
                   <ListItemText primary={item.label} />

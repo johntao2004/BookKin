@@ -17,8 +17,8 @@ export function passwordRequirements(policy: PasswordPolicy, value: string) {
 export function usePasswordPolicy() {
  return useQuery({queryKey:["password-policy"],queryFn:api.passwordPolicy,staleTime:0,refetchOnWindowFocus:true});
 }
-export function PasswordRequirements({policy,value}:{policy:ReturnType<typeof usePasswordPolicy>;value:string}) {
+export function PasswordRequirements({policy,value,inline=false}:{policy:ReturnType<typeof usePasswordPolicy>;value:string;inline?:boolean}) {
  if(policy.isPending) return <Typography role="status" variant="body2">正在加载密码规则…</Typography>;
  if(policy.isError) return <Stack spacing={1}><Typography color="error.main">无法读取密码规则，请重试。</Typography><Button onClick={()=>policy.refetch()}>重试</Button></Stack>;
- return <Stack spacing={1} role="status" aria-label="密码要求">{passwordRequirements(policy.data,value).map(rule=><Typography key={rule.label} variant="body2" color={value ? rule.met?"success.main":"error.main":"text.secondary"}>{value ? rule.met?"✓ ":"未满足：":""}{rule.label}</Typography>)}</Stack>;
+ return <Stack direction={inline ? "row" : "column"} spacing={1} sx={inline ? { flexWrap: "wrap" } : undefined} role="status" aria-label="密码要求">{passwordRequirements(policy.data,value).map(rule=><Typography key={rule.label} variant="body2" color={value ? rule.met?"success.main":"error.main":"text.secondary"}>{value ? rule.met?"✓ ":"未满足：":""}{rule.label}</Typography>)}</Stack>;
 }

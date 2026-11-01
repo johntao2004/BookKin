@@ -46,6 +46,7 @@ class AuthenticationBoundaryTest {
         @Bean LoginRateLimiter limiter() { return new LoginRateLimiter(); }
         @Bean UserRepository users() {
             var users = mock(UserRepository.class);
+            org.mockito.Mockito.when(users.count()).thenReturn(1L);
             org.mockito.Mockito.when(users.findByUsername(org.mockito.ArgumentMatchers.anyString())).thenAnswer(invocation -> {
                 String name = invocation.getArgument(0);
                 var role = switch (name) { case "owner" -> com.elexvx.bookkin.users.UserRole.OWNER; case "admin" -> com.elexvx.bookkin.users.UserRole.ADMIN; default -> com.elexvx.bookkin.users.UserRole.MEMBER; };

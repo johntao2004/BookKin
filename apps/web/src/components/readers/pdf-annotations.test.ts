@@ -45,8 +45,12 @@ describe("applyPdfTextAnnotations", () => {
     const marks = Array.from(layer.querySelectorAll("mark"));
     expect(marks).toHaveLength(2);
     expect(marks.map((mark) => mark.textContent).join("")).toBe("河面先暗了一层");
+    expect(marks.map((mark) => mark.getAttribute("tabindex"))).toEqual(["0", "-1"]);
     marks.forEach((mark) => {
       expect(mark).toHaveAttribute("data-highlight-color", "PINK");
+      expect(mark).toHaveAttribute("role", "button");
+      expect(mark).toHaveAttribute("aria-label", "查看笔记");
+      expect(mark.style.cursor).toBe("pointer");
       expect(mark.style.background).toContain("rgba(255, 179, 209");
       expect(mark.style.background).toContain("0.34");
       expect(mark.style.mixBlendMode).toBe("multiply");
@@ -75,6 +79,29 @@ describe("applyPdfTextAnnotations", () => {
     expect(underline?.style.textDecoration).toBe("underline");
     expect(underline?.style.textDecorationThickness).toBe("3px");
     expect(bold?.style.fontWeight).toBe("700");
+  });
+
+  it("keeps an annotation without a note out of the keyboard and button semantics", () => {
+    const layer = document.createElement("div");
+    layer.innerHTML = "<span>纯高亮仍只是视觉标记。</span>";
+    const annotation: Annotation = {
+      id: "plain-highlight",
+      bookId: "book-pdf",
+      type: "HIGHLIGHT",
+      locator: "pdf:page=1",
+      quote: "纯高亮",
+      style: "HIGHLIGHT",
+      color: "YELLOW",
+      createdAt: "2026-08-21T00:00:00Z",
+    };
+
+    applyPdfTextAnnotations(layer, 1, [annotation]);
+
+    const mark = layer.querySelector("mark")!;
+    expect(mark).not.toHaveAttribute("role");
+    expect(mark).not.toHaveAttribute("aria-label");
+    expect(mark).not.toHaveAttribute("tabindex");
+    expect(mark.style.cursor).toBe("");
   });
 
   it("renders a newly appended virtual-page annotation on the existing PDF text layer", () => {

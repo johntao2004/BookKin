@@ -7,8 +7,9 @@
     "node": ">=22.0.0"
   },
   "scripts": {
-    "dev": "pnpm --filter @bookkin/web dev",
-    "build": "pnpm generate:tokens && pnpm --filter @bookkin/web build",
+    "dev": "pnpm build:ming-library && pnpm --filter @bookkin/web dev",
+    "build": "pnpm generate:tokens && pnpm build:ming-library && pnpm --filter @bookkin/web build",
+    "build:ming-library": "pnpm --filter @bookkin/ming-library build",
     "test": "pnpm --filter @bookkin/web test",
     "lint": "pnpm --filter @bookkin/web lint",
     "typecheck": "pnpm --filter @bookkin/web typecheck",

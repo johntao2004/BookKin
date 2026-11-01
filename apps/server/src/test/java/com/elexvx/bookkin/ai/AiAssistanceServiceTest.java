@@ -63,6 +63,16 @@ class AiAssistanceServiceTest {
         assertThatThrownBy(() -> service.assist(input(AiAssistanceService.SourceType.ARTICLE, AiAssistanceService.Action.ASK, true), principal)).isInstanceOf(ApiException.class);
         verify(ai, never()).generateStructured(anyString(), anyMap());
     }
+    @Test void allArticleAiSourcesAreDisabledBeforeAuthorizationReadsOrProviderCalls() {
+        for (var source : List.of(AiAssistanceService.SourceType.ARTICLE, AiAssistanceService.SourceType.COLLECTION,
+                AiAssistanceService.SourceType.ARTICLE_DRAFT)) {
+            var error = catchThrowableOfType(() -> service.assist(input(source, AiAssistanceService.Action.ASK, true), principal), ApiException.class);
+            assertThat(error).isNotNull();
+            assertThat(error.code()).isEqualTo("ARTICLE_AI_DISABLED");
+            assertThat(error.status().value()).isEqualTo(410);
+        }
+        verifyNoInteractions(permissions, books, texts, articles, collections, ai);
+    }
     @Test void unsupportedSourceActionCannotTurnReadingIntoEditing() {
         assertThatThrownBy(() -> service.assist(input(AiAssistanceService.SourceType.BOOK, AiAssistanceService.Action.POLISH, true), principal)).isInstanceOf(ApiException.class);
         verifyNoInteractions(ai, books, texts);

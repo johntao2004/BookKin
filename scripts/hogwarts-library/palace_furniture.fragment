@@ -1,0 +1,96 @@
+# Original Chinese-inspired hardwood furniture, replacing the entire old table set.
+# Same occupied footprints and seats; no decorative books or catalog changes.
+for key in list(BUILD):
+ if key[0]=='13_Reading_furniture':del BUILD[key]
+MODULE='27_Palace_reading_furniture'
+FURN_WOOD=material('Wood • palace hardwood','40271b',.60)
+FURN_PANEL=material('Wood • palace inset grain','583b27',.67)
+FURN_EDGE=material('Wood • palace polished edge','714b2c',.52)
+for mat in (FURN_WOOD,FURN_PANEL,FURN_EDGE):wire_pbr(mat,'r2-walnut',.28)
+
+def hardwood_leg(x,z,h,width,sx,sz):
+ # Square tapered leg with a gently projecting horse-hoof foot, not turned bulbs.
+ rings=[]
+ for yy,w,offset in [(0,width*1.15,.045),(.07,width*1.15,.045),(.15,width,.015),(h*.68,width*.88,0),(h,width,0)]:
+  cx=x+sx*offset;cz=z+sz*offset
+  rings.append([(cx-w/2,yy,cz-w/2),(cx-w/2,yy,cz+w/2),(cx+w/2,yy,cz+w/2),(cx+w/2,yy,cz-w/2)])
+ face(FURN_WOOD,list(reversed(rings[0])))
+ face(FURN_WOOD,rings[-1])
+ for lo,hi in zip(rings,rings[1:]):
+  for i in range(4):j=(i+1)%4;quad(FURN_WOOD,lo[i],lo[j],hi[j],hi[i])
+
+def hardwood_apron(project,half,top,drop,thickness):
+ # Continuous cusped apron cut from one board, with rounded shoulder transitions.
+ outline=[(-half,top),(half,top)]
+ for i in range(49):
+  u=half-2*half*i/48;t=abs(u)/half
+  y=top-drop*(.48+.52*t**5)-.035*(1-t)*math.cos(u*math.pi/half*3)**2
+  outline.append((u,y))
+ # Projected faces have orientation-independent outward normals.
+ front=[project(u,v,thickness/2) for u,v in outline]
+ back=[project(u,v,-thickness/2) for u,v in outline]
+ center=sum((Vector(p) for p in front+back),Vector())/len(front+back)
+ def outward(vertices):
+  normal=(Vector(vertices[1])-Vector(vertices[0])).cross(Vector(vertices[2])-Vector(vertices[0]))
+  midpoint=sum((Vector(p) for p in vertices),Vector())/len(vertices)
+  face(FURN_WOOD,vertices if normal.dot(midpoint-center)>0 else list(reversed(vertices)))
+ outward(front);outward(back)
+ for i in range(len(outline)):
+  j=(i+1)%len(outline);outward([front[i],front[j],back[j],back[i]])
+ for sign in (-1,1):tube(FURN_EDGE,[project(u,v+.018,sign*(thickness/2+.003)) for u,v in outline[2:]],.009,5)
+
+for z in (-6.2,2.0):
+ # Framed solid timber top with inset floating panel and fine shadow seams.
+ box(FURN_WOOD,(0,1.13,z),(2.8,.22,6.25),.035)
+ box(FURN_PANEL,(0,1.246,z),(2.28,.018,5.71),.012)
+ for x in (-1.27,1.27):box(FURN_EDGE,(x,1.247,z),(.23,.02,6.15),.012)
+ for dz in (-2.985,2.985):box(FURN_EDGE,(0,1.247,z+dz),(2.3,.02,.20),.012)
+ # Restrained paired bead mouldings and narrow recessed waist.
+ box(FURN_WOOD,(0,1.005,z),(2.51,.10,5.96),.012)
+ for yy in (.96,1.06):
+  for x in (-1.27,1.27):box(FURN_EDGE,(x,yy,z),(.045,.025,5.98),.009)
+ for sx in (-1,1):
+  x=sx*1.08
+  hardwood_apron(lambda u,v,d:(x+d,v,z+u),2.68,.97,.30,.12)
+  box(FURN_WOOD,(x,.28,z),(.10,.12,5.12),.018)
+  for sz in (-1,1):
+   hardwood_leg(x,z+sz*2.58,1.04,.20,sx,sz)
+   # End-grain tenon pins, slightly inset into the front-facing joint.
+   for yy in (.86,.92):box(FURN_EDGE,(x+sx*.102,yy,z+sz*2.58),(.008,.026,.05),.004)
+ for sz in (-1,1):
+  zz=z+sz*2.58
+  hardwood_apron(lambda u,v,d:(u,v,zz+d),1.08,.97,.30,.12)
+  box(FURN_WOOD,(0,.28,zz),(2.16,.12,.10),.018)
+ # Matching long stools: framed seats, shaped aprons, four splayed square legs.
+ for x in (-2.0,2.0):
+  box(FURN_WOOD,(x,.61,z),(.65,.14,6.1),.025)
+  box(FURN_PANEL,(x,.686,z),(.45,.012,5.88),.008)
+  for side in (-1,1):
+   xx=x+side*.22
+   hardwood_apron(lambda u,v,d:(xx+d,v,z+u),2.50,.55,.18,.07)
+   box(FURN_WOOD,(xx,.18,z),(.055,.07,4.9),.012)
+   for end in (-1,1):hardwood_leg(xx,z+end*2.45,.56,.105,side,end)
+  for end in (-1,1):
+   hardwood_apron(lambda u,v,d:(x+u,v,z+end*2.45+d),.22,.55,.18,.07)
+   box(FURN_WOOD,(x,.18,z+end*2.45),(.48,.07,.055),.012)
+ # Warm, square wood-frame silk lanterns replace green banker lamps.
+ for dz in (-1.75,1.75):
+  zz=z+dz;bottom=1.26
+  box(FURN_WOOD,(0,bottom+.045,zz),(.49,.09,.49),.025)
+  box(PALACE_GOLD,(0,bottom+.095,zz),(.42,.018,.42),.008)
+  box(PALACE_PAPER,(0,bottom+.38,zz),(.35,.53,.35),.01)
+  for sx in (-1,1):
+   for sz in (-1,1):
+    box(FURN_WOOD,(sx*.20,bottom+.39,zz+sz*.20),(.043,.61,.043),.009)
+  for yy in (bottom+.13,bottom+.64):
+   for side in (-1,1):
+    box(FURN_WOOD,(side*.20,yy,zz),(.045,.045,.44),.008)
+    box(FURN_WOOD,(0,yy,zz+side*.20),(.44,.045,.045),.008)
+  for side in (-1,1):
+   tube(PALACE_GOLD,[(side*.204,bottom+.39,zz-.09),(side*.204,bottom+.51,zz),(side*.204,bottom+.39,zz+.09),(side*.204,bottom+.27,zz),(side*.204,bottom+.39,zz-.09)],.008,5)
+  box(FURN_WOOD,(0,bottom+.71,zz),(.49,.10,.49),.035)
+  box(FURN_EDGE,(0,bottom+.77,zz),(.32,.035,.32),.012)
+  collision_box(f'palace-table-lantern-{z}-{dz}',(0,bottom+.4,zz),(.52,.8,.52))
+PALACE_FURNITURE={'style':'original hardwood framed writing tables and long stools',
+ 'tables':2,'benches':4,'tableLanterns':4,'footprintsPreserved':True,
+ 'removed':['turned table legs','green leather inserts','green banker lamps']}

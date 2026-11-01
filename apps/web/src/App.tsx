@@ -13,6 +13,7 @@ import { PageContainer } from "./components/PageHeader";
 import { lazy, Suspense } from "react";
 import { Navigate, Outlet, Route, Routes, useLocation, useParams } from "react-router-dom";
 import { RequireAuth, useAuth } from "./auth/AuthContext";
+import { SetupGate } from "./auth/SetupGate";
 import { AppShell } from "./components/AppShell";
 import { VirtualLibraryRoute } from "./pages/VirtualLibraryRoute";
 
@@ -79,6 +80,7 @@ function LegacyNotesOverviewRedirect() {
 export default function App() {
   return (
     <Suspense fallback={<PageContainer><div role="status" aria-label="正在加载页面"><Skeleton active paragraph={{ rows: 8 }} /></div></PageContainer>}>
+      <SetupGate>
       <Routes>
         <Route path="/recover" element={<RecoveryPage />} />
         <Route path="/forgot-password" element={<RecoveryPage />} />
@@ -127,6 +129,7 @@ export default function App() {
         </Route>
         <Route path="/" element={<Navigate to="/library" replace />} />
       </Routes>
+      </SetupGate>
     </Suspense>
   );
 }

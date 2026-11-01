@@ -91,6 +91,22 @@ public class FileTransactionExecutor {
             audit.record(operation.requestedBy(), operation.type().name(), "BOOK_FILE",
                     file == null ? null : file.id().toString(), operation.sourcePath(), operation.targetPath(),
                     operation.expectedFingerprint(), null, rolledBack ? "ROLLED_BACK" : "FAILED", "{\"code\":\"" + code + "\"}");
+            if (org.springframework.transaction.support.TransactionSynchronizationManager.isActualTransactionActive()) {
+                org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(
+                        new org.springframework.transaction.support.TransactionSynchronization() {
+                            @Override public void afterCompletion(int status) {
+                                if (status == STATUS_COMMITTED) return;
+                                try {
+                                    audit.recordIndependent(operation.requestedBy(), operation.type().name(), "BOOK_FILE",
+                                            operation.bookFileId().toString(), operation.sourcePath(), operation.targetPath(),
+                                            operation.expectedFingerprint(), null, rolledBack ? "ROLLED_BACK" : "FAILED",
+                                            "{\"code\":\"" + code + "\"}");
+                                } catch (Exception auditFailure) {
+                                    log.error("Unable to persist rolled-back operation failure operationId={}", operation.id(), auditFailure);
+                                }
+                            }
+                        });
+            }
             log.warn("File operation ended unsuccessfully operationId={} type={} status={} code={}",
                     operation.id(), operation.type(), rolledBack ? "ROLLED_BACK" : "FAILED", code, exception);
         } finally {
@@ -101,11 +117,12 @@ public class FileTransactionExecutor {
     private String move(ExecutionRecord operation, BookFile file) throws IOException {
         LibraryRoot sourceRoot = root(operation.sourceRootId());
         LibraryRoot targetRoot = root(operation.targetRootId());
+        pathPolicy.requireNoSymbolicLinks(rootPath(sourceRoot), file.relativePath());
         Path source = pathPolicy.resolveExisting(rootPath(sourceRoot), file.relativePath());
         verifyFingerprint(source, operation.expectedFingerprint());
         String targetRelative = relativeDisplay(operation.targetPath(), targetRoot.name());
         Path target = pathPolicy.resolveTarget(rootPath(targetRoot), targetRelative);
-        if (Files.exists(target) || pathPolicy.hasCaseInsensitiveConflict(target)) {
+        if (pathPolicy.targetConflict(source, target)) {
             throw new OperationFailure("TARGET_EXISTS", "目标路径已存在");
         }
         Files.createDirectories(target.getParent());
@@ -118,6 +135,7 @@ public class FileTransactionExecutor {
                 BasicFileAttributes attributes = Files.readAttributes(target, BasicFileAttributes.class);
                 books.updateFileLocation(file.id(), targetRoot.id(), targetRelative, normalized(targetRelative), fingerprint,
                         attributes.size(), attributes.lastModifiedTime().toInstant().atOffset(ZoneOffset.UTC));
+                restoreRenameOnTransactionRollback(operation, sourceRoot, file.relativePath(), targetRelative, fingerprint);
                 return fingerprint;
             } catch (Exception exception) {
                 moveWithoutOverwrite(target, source);
@@ -126,6 +144,39 @@ public class FileTransactionExecutor {
         } else {
             return crossRootMove(operation, file, sourceRoot, targetRoot, source, target, targetRelative);
         }
+    }
+
+    /** Metadata saves may execute a rename inside a larger DB transaction. Restore the file if that transaction fails. */
+    private void restoreRenameOnTransactionRollback(ExecutionRecord operation, LibraryRoot root, String original,
+                                                     String renamed, String fingerprint) {
+        if (operation.type() != FileOperationType.RENAME
+                || !org.springframework.transaction.support.TransactionSynchronizationManager.isActualTransactionActive()) return;
+        org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(
+                new org.springframework.transaction.support.TransactionSynchronization() {
+                    @Override public void afterCompletion(int status) {
+                        if (status == STATUS_COMMITTED) return;
+                        String outcome = "ROLLED_BACK";
+                        try {
+                            Path from = pathPolicy.resolveExisting(rootPath(root), renamed);
+                            Path to = pathPolicy.resolveTarget(rootPath(root), original);
+                            verifyFingerprint(from, fingerprint);
+                            if (pathPolicy.targetConflict(from, to)) {
+                                throw new IOException("原路径已被其他文件占用，无法恢复文件名");
+                            }
+                            moveWithoutOverwrite(from, to);
+                        } catch (Exception exception) {
+                            outcome = "FAILED";
+                            log.error("Could not restore title rename after transaction rollback operationId={}", operation.id(), exception);
+                        }
+                        try {
+                            audit.recordIndependent(operation.requestedBy(), "TITLE_SYNC_ROLLBACK", "BOOK_FILE",
+                                    operation.bookFileId().toString(), operation.targetPath(), operation.sourcePath(),
+                                    fingerprint, fingerprint, outcome, "{}");
+                        } catch (Exception exception) {
+                            log.error("Could not audit title rename rollback operationId={}", operation.id(), exception);
+                        }
+                    }
+                });
     }
 
     // 先复制刷盘并校验内容与可解析性，再落位目标并回收源文件。
@@ -348,7 +399,19 @@ public class FileTransactionExecutor {
     // 这里使用普通 Files.move；不要仅凭阶段名 ATOMIC_MOVE 宣称原子移动保证。
     // This uses plain Files.move; an ATOMIC_MOVE stage label alone does not guarantee an atomic move.
     private void moveWithoutOverwrite(Path source, Path target) throws IOException {
-        Files.move(source, target);
+        if (!pathPolicy.isCaseOnlyRename(source, target)) {
+            Files.move(source, target);
+            return;
+        }
+        // macOS may treat a direct case-only move as a no-op; use a unique intermediate name.
+        Path temporary = source.resolveSibling(".bookkin-rename-" + UUID.randomUUID() + ".tmp");
+        Files.move(source, temporary);
+        try {
+            Files.move(temporary, target);
+        } catch (IOException failure) {
+            Files.move(temporary, source);
+            throw failure;
+        }
     }
 
     private LibraryRoot root(UUID id) {

@@ -448,14 +448,14 @@ describe('reference-library manual walking on the real stair geometry', () => {
   });
 
   it('sweeps the 1.5-unit button step against the real end wall', () => {
-    const wall = boxCollider('end-a-wall');
+    const wall = boxCollider('palace-end-wall--1');
     const x = 6.5;
     const previous = {
       x,
       y: wall.y + wall.halfY - WALKING_EYE_HEIGHT,
       z: wall.z + wall.halfZ + 0.55,
     };
-    const desired = {x, y: previous.y, z: wall.z - wall.halfZ - 0.55};
+    const desired = {x, y: previous.y, z: previous.z - 1.5};
     expect(Math.hypot(desired.x - previous.x, desired.z - previous.z)).toBeCloseTo(1.5, 6);
     const actual = resolveReferenceWalkingCollision(
       previous,

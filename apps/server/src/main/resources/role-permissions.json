@@ -12,6 +12,34 @@
     "requires": []
   },
   {
+    "code": "library.query",
+    "group": "藏书楼",
+    "label": "查询书籍目录",
+    "kind": "action",
+    "roles": [
+      "OWNER",
+      "ADMIN",
+      "MEMBER"
+    ],
+    "requires": [
+      "library.view"
+    ]
+  },
+  {
+    "code": "library.download",
+    "group": "藏书楼",
+    "label": "下载原书文件",
+    "kind": "action",
+    "roles": [
+      "OWNER",
+      "ADMIN",
+      "MEMBER"
+    ],
+    "requires": [
+      "library.view"
+    ]
+  },
+  {
     "code": "library.overview",
     "group": "藏书楼",
     "label": "阅读概览",
@@ -185,25 +213,18 @@
     ]
   },
   {
-    "code": "articles.analyze",
-    "group": "文章收藏",
-    "label": "分析文章正文",
-    "kind": "action",
-    "roles": [
-      "OWNER",
-      "ADMIN"
-    ],
-    "requires": [
-      "articles.view"
-    ]
-  },
-  {
     "code": "articles.collections.edit",
     "group": "文章收藏",
     "label": "管理自己的选集与文章归类",
     "kind": "action",
-    "roles": ["OWNER", "ADMIN", "MEMBER"],
-    "requires": ["articles.view"]
+    "roles": [
+      "OWNER",
+      "ADMIN",
+      "MEMBER"
+    ],
+    "requires": [
+      "articles.collections.view"
+    ]
   },
   {
     "code": "booklists.view",
@@ -256,7 +277,7 @@
       "MEMBER"
     ],
     "requires": [
-      "notes.view"
+      "notes.posts.view"
     ]
   },
   {
@@ -270,6 +291,48 @@
       "MEMBER"
     ],
     "requires": []
+  },
+  {
+    "code": "vault.read",
+    "group": "禁书库",
+    "label": "读取个人禁书库密文",
+    "kind": "action",
+    "roles": [
+      "OWNER",
+      "ADMIN",
+      "MEMBER"
+    ],
+    "requires": [
+      "vault.use"
+    ]
+  },
+  {
+    "code": "vault.upload",
+    "group": "禁书库",
+    "label": "导入与上传个人密文",
+    "kind": "action",
+    "roles": [
+      "OWNER",
+      "ADMIN",
+      "MEMBER"
+    ],
+    "requires": [
+      "vault.use"
+    ]
+  },
+  {
+    "code": "vault.delete",
+    "group": "禁书库",
+    "label": "删除自己的禁书密文",
+    "kind": "action",
+    "roles": [
+      "OWNER",
+      "ADMIN",
+      "MEMBER"
+    ],
+    "requires": [
+      "vault.use"
+    ]
   },
   {
     "code": "settings.roots.view",
@@ -538,5 +601,151 @@
       "OWNER"
     ],
     "requires": []
+  },
+  {
+    "code": "library.details.view",
+    "group": "藏书楼",
+    "label": "访问书籍详情",
+    "kind": "page",
+    "roles": [
+      "OWNER",
+      "ADMIN",
+      "MEMBER"
+    ],
+    "requires": []
+  },
+  {
+    "code": "library.search.view",
+    "group": "藏书楼",
+    "label": "搜索书籍目录",
+    "kind": "page",
+    "roles": [
+      "OWNER",
+      "ADMIN",
+      "MEMBER"
+    ],
+    "requires": []
+  },
+  {
+    "code": "booklists.details.view",
+    "group": "书单",
+    "label": "访问书目详情",
+    "kind": "page",
+    "roles": [
+      "OWNER",
+      "ADMIN",
+      "MEMBER"
+    ],
+    "requires": []
+  },
+  {
+    "code": "articles.read",
+    "group": "文章收藏",
+    "label": "阅读文章",
+    "kind": "page",
+    "roles": [
+      "OWNER",
+      "ADMIN",
+      "MEMBER"
+    ],
+    "requires": []
+  },
+  {
+    "code": "articles.annotate",
+    "group": "文章收藏",
+    "label": "创建和删除个人文章批注与书签",
+    "kind": "action",
+    "roles": [
+      "OWNER",
+      "ADMIN",
+      "MEMBER"
+    ],
+    "requires": [
+      "articles.read"
+    ]
+  },
+  {
+    "code": "articles.collections.view",
+    "group": "文章收藏",
+    "label": "查看选集",
+    "kind": "page",
+    "roles": [
+      "OWNER",
+      "ADMIN",
+      "MEMBER"
+    ],
+    "requires": []
+  },
+  {
+    "code": "articles.collections.details.view",
+    "group": "文章收藏",
+    "label": "查看选集详情",
+    "kind": "page",
+    "roles": [
+      "OWNER",
+      "ADMIN",
+      "MEMBER"
+    ],
+    "requires": []
+  },
+  {
+    "code": "notes.books.view",
+    "group": "阅读笔记",
+    "label": "查看读书札记",
+    "kind": "page",
+    "roles": [
+      "OWNER",
+      "ADMIN",
+      "MEMBER"
+    ],
+    "requires": []
+  },
+  {
+    "code": "notes.articles.view",
+    "group": "阅读笔记",
+    "label": "查看阅文札记",
+    "kind": "page",
+    "roles": [
+      "OWNER",
+      "ADMIN",
+      "MEMBER"
+    ],
+    "requires": []
+  },
+  {
+    "code": "notes.posts.view",
+    "group": "阅读笔记",
+    "label": "查看读书帖子",
+    "kind": "page",
+    "roles": [
+      "OWNER",
+      "ADMIN",
+      "MEMBER"
+    ],
+    "requires": []
+  },
+  {
+    "code": "settings.metadata.view",
+    "group": "AI 服务",
+    "label": "访问元数据来源设置",
+    "kind": "page",
+    "roles": [
+      "OWNER",
+      "ADMIN"
+    ],
+    "requires": []
+  },
+  {
+    "code": "settings.metadata.edit",
+    "group": "AI 服务",
+    "label": "修改元数据来源设置",
+    "kind": "action",
+    "roles": [
+      "OWNER",
+      "ADMIN"
+    ],
+    "requires": [
+      "settings.metadata.view"
+    ]
   }
 ]

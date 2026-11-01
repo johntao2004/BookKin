@@ -90,7 +90,7 @@ export function applyEpubInlineAnnotation(range: Range, annotation: Annotation, 
     current = walker.nextNode();
   }
 
-  selected.reverse().forEach(({ node, start, end }) => {
+  selected.reverse().forEach(({ node, start, end }, index) => {
     const selectedText = node.splitText(start);
     selectedText.splitText(end - start);
     const wrapper = document.createElement("span");
@@ -98,6 +98,12 @@ export function applyEpubInlineAnnotation(range: Range, annotation: Annotation, 
     wrapper.dataset.annotationId = annotation.id;
     wrapper.dataset.annotationStyle = annotation.style;
     wrapper.dataset.highlightColor = annotation.color ?? "YELLOW";
+    if (annotation.note?.trim()) {
+      wrapper.setAttribute("role", "button");
+      wrapper.setAttribute("aria-label", "查看笔记");
+      wrapper.tabIndex = index === selected.length - 1 ? 0 : -1;
+      wrapper.style.cursor = "pointer";
+    }
     wrapper.style.setProperty("color", "inherit", "important");
     wrapper.style.setProperty("box-decoration-break", "clone");
     wrapper.style.setProperty("-webkit-box-decoration-break", "clone");

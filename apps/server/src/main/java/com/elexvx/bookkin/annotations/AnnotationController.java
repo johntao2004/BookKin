@@ -37,13 +37,16 @@ import org.springframework.web.bind.annotation.RestController;
 // Derives annotation ownership from authentication across listing, creation, deletion and export.
 public class AnnotationController {
     private final AnnotationRepository annotations;
+    private final AnnotationApplicationService annotationService;
     private final UserRepository users;
     private final BookRepository books;
     private final AnnotationExportService exportService;
 
-    public AnnotationController(AnnotationRepository annotations, UserRepository users, BookRepository books,
+    public AnnotationController(AnnotationRepository annotations, AnnotationApplicationService annotationService,
+                                UserRepository users, BookRepository books,
                                 AnnotationExportService exportService) {
         this.annotations = annotations;
+        this.annotationService = annotationService;
         this.users = users;
         this.books = books;
         this.exportService = exportService;
@@ -82,7 +85,7 @@ public class AnnotationController {
     @PostMapping
     Annotation create(@Valid @RequestBody CreateAnnotation input, Principal principal) {
         books.findPreferredFile(input.bookId()).orElseThrow(() -> ApiException.notFound("BOOK_NOT_FOUND", "未找到这本书。"));
-        return annotations.create(userId(principal), input.bookId(), input.type(), input.locator(), input.quote(),
+        return annotationService.create(userId(principal), input.bookId(), input.type(), input.locator(), input.quote(),
                 input.note(), input.style(), input.color());
     }
 
