@@ -74,6 +74,14 @@ class AuthenticationBoundaryTest {
     @Autowired WebApplicationContext context;
     MockMvc mvc;
     @BeforeEach void setup() { mvc = MockMvcBuilders.webAppContextSetup(context).apply(springSecurity()).build(); }
+    @Test void contentPolicyAllowsLocallyGeneratedArticleEpubWithoutRemoteConnections() throws Exception {
+        String policy = mvc.perform(get("/api/v1/auth/csrf")).andExpect(status().isOk())
+            .andReturn().getResponse().getHeader("Content-Security-Policy");
+        org.assertj.core.api.Assertions.assertThat(policy).isNotNull();
+        org.assertj.core.api.Assertions.assertThat(policy.split(";"))
+            .anySatisfy(directive -> org.assertj.core.api.Assertions.assertThat(directive.trim()).isEqualTo("connect-src 'self' blob:"));
+        org.assertj.core.api.Assertions.assertThat(policy).contains("script-src 'self' 'wasm-unsafe-eval'", "object-src 'none'");
+    }
     @Test void anonymousSessionIs401NotAnAuthorizationFailure() throws Exception {
         mvc.perform(get("/api/v1/auth/session")).andExpect(status().isUnauthorized())
             .andExpect(content().contentType("application/problem+json;charset=UTF-8"));
