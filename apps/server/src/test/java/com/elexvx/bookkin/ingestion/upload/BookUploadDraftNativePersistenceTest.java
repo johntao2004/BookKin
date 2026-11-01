@@ -61,6 +61,26 @@ class BookUploadDraftNativePersistenceTest {
                             rootId, "upload-draft-root", rootPath.toRealPath().toString());
 
                     var uploads = new BookUploadRepository(db, new ObjectMapper());
+                    String sameHash = "sha256:" + "a".repeat(64);
+                    UUID firstUpload = UUID.randomUUID();
+                    UUID repeatedUpload = UUID.randomUUID();
+                    UUID otherOwnerUpload = UUID.randomUUID();
+                    for (UUID uploadId : List.of(firstUpload, repeatedUpload, otherOwnerUpload)) {
+                        uploads.create(uploadId, uploadId.equals(otherOwnerUpload) ? stranger : owner,
+                                rootId, "duplicate.pdf", uploadId + "/book.part", BookFormat.PDF, 4,
+                                OffsetDateTime.now().plusDays(1));
+                        uploads.received(uploadId, 4, sameHash);
+                    }
+                    assertThat(uploads.find(firstUpload).orElseThrow().status()).isEqualTo(BookUploadModels.BookUploadStatus.INSPECTING);
+                    assertThat(uploads.find(repeatedUpload).orElseThrow().status()).isEqualTo(BookUploadModels.BookUploadStatus.DUPLICATE);
+                    assertThat(uploads.find(repeatedUpload).orElseThrow().errorCode()).isEqualTo("DUPLICATE_UPLOAD");
+                    assertThat(uploads.find(otherOwnerUpload).orElseThrow().status()).isEqualTo(BookUploadModels.BookUploadStatus.INSPECTING);
+                    db.execute("update book_uploads set status = 'CANCELLED' where id = ?", firstUpload);
+                    UUID retry = UUID.randomUUID();
+                    uploads.create(retry, owner, rootId, "retry.pdf", retry + "/book.part", BookFormat.PDF, 4, OffsetDateTime.now().plusDays(1));
+                    uploads.received(retry, 4, sameHash);
+                    assertThat(uploads.find(retry).orElseThrow().status()).isEqualTo(BookUploadModels.BookUploadStatus.INSPECTING);
+
                     var roots = mock(LibraryRootRepository.class);
                     when(roots.findById(rootId)).thenReturn(java.util.Optional.of(onlineRoot(rootId, rootPath)));
                     var users = mock(UserRepository.class);

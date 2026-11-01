@@ -77,7 +77,11 @@ export function BookUploadDialog({ open, initialRootId, onClose }: {
         setLocal(current => patchLocal(current, item.id, { state: "UPLOADING", error: undefined }));
         try {
           const session = await api.createBookUpload({ libraryRootId: rootId, filename: item.file.name, sizeBytes: item.file.size });
-          await api.uploadBookContent(session.id, item.file, progress => setLocal(current => patchLocal(current, item.id, { progress })));
+          const received = await api.uploadBookContent(session.id, item.file, progress => setLocal(current => patchLocal(current, item.id, { progress })));
+          if (received.status === "DUPLICATE") {
+            throw new Error(received.errorDetail || "相同文件已存在于书库中，请勿重复上传。");
+          }
+          if (received.status === "FAILED") throw new Error(received.errorDetail || "文件处理失败。");
           setFreshUploadIds(current => [...current, session.id]);
           setLocal(current => patchLocal(current, item.id, { uploadId: session.id, state: "UPLOADED", progress: 100 }));
         } catch (reason) {

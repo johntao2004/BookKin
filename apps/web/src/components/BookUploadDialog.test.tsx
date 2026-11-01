@@ -63,3 +63,15 @@ it('does not keep the first-upload exemption after closing and reopening the upl
   expect(screen.getByText('/library/uploads/later-review')).toBeInTheDocument();
   expect(screen.getByTestId('upload-state')).toHaveTextContent('"freshUploadIds":[]');
 });
+
+it("does not offer editing for a duplicate upload response", async () => {
+  vi.spyOn(api, "listLibraryRoots").mockResolvedValue([{ id: "root", name: "主书库", status: "ONLINE", canWrite: true, canStage: true } as any]);
+  vi.spyOn(api, "listBookUploads").mockResolvedValue([]);
+  vi.spyOn(api, "createBookUpload").mockResolvedValue({ id: "duplicate" } as any);
+  vi.spyOn(api, "uploadBookContent").mockResolvedValue({ id: "duplicate", status: "DUPLICATE", errorDetail: "相同文件已在待校对列表中" } as any);
+  render(<TestProviders><BookUploadDialog open onClose={vi.fn()} onCompleted={vi.fn()} /></TestProviders>);
+  await waitFor(() => expect(screen.getByRole("button", { name: "开始上传" })).toBeEnabled());
+  fireEvent.change(document.querySelector('input[type="file"]')!, { target: { files: [new File(["same"], "same.pdf", { type: "application/pdf" })] } });
+  expect(await screen.findByText("相同文件已在待校对列表中")).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "编辑信息" })).not.toBeInTheDocument();
+});

@@ -161,6 +161,13 @@ public class BookUploadService {
             if (written != upload.declaredSizeBytes()) throw new IllegalArgumentException("上传文件不完整");
             String fingerprint = "sha256:" + HexFormat.of().formatHex(digest.digest());
             uploads.received(id, written, fingerprint);
+            UUID existingBook = catalog.duplicateBookId(fingerprint);
+            if (existingBook != null) uploads.duplicate(id, existingBook);
+            var received = uploads.findOwned(id, actor).orElseThrow();
+            if (received.status() == BookUploadStatus.DUPLICATE) {
+                deleteQuietly(target);
+                return received.view();
+            }
             processor.process(id);
             audit.record(actor, "BOOK_UPLOAD_RECEIVED", "BOOK_UPLOAD", id.toString(), upload.originalFilename(), upload.stagingPath(),
                     null, fingerprint, "SUCCEEDED", "{\"sizeBytes\":" + written + "}");
