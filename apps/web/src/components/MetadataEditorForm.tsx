@@ -89,7 +89,7 @@ export function MetadataEditorForm({ value, onChange, coverUrl, coverAlt, coverA
   return <BookMetadataLayout coverUrl={coverUrl} coverAlt={coverAlt} coverActions={coverActions}>
       {coverDetails && <Stack direction="row" sx={{ flexWrap: "wrap", gap: `${tokens.spacing[2]}px` }}>{coverDetails}</Stack>}
       <Stack sx={{ minWidth: 0, gap: `${tokens.spacing[2]}px` }}>
-        {renderField(fields[0], { hero: true, multiline: true, resizable: false, sx: { "& .ant-input": { ...bookMetadataTitleSx, overflow: "hidden" } } })}
+        {renderField(fields[0], { hero: true, multiline: true, resizable: false, sx: { "& .ant-input": { ...bookMetadataTitleSx, fontFamily: tokens.typography.fontFamily.body, overflow: "hidden" } } })}
         {renderField(fields[1], { hero: true })}
         {renderField(fields[2], { hero: true, sx: { "& .ant-input": { color: "text.secondary" } } })}
       </Stack>
