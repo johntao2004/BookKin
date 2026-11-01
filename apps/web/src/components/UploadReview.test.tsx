@@ -5,6 +5,11 @@ import { api } from '../api/client';
 import type { BookKnowledgeDraft, BookUpload } from '../domain/types';
 import { TestProviders } from '../test/TestProviders';
 import { UploadReview } from './BookUploadDialog';
+const uploadPermissions = vi.hoisted(() => ({ canUpload: true }));
+// UploadReview's editable controls are permission-gated; these workflow tests exercise an owner.
+vi.mock('../auth/permissions', () => ({
+  usePermissions: () => ({ can: (permission: string) => permission === 'library.upload' && uploadPermissions.canUpload }),
+}));
 const upload: BookUpload = {
   id: 'upload-review', libraryRootId: 'root', libraryRootName: '主书库', originalFilename: 'hidden-original.pdf',
   format: 'PDF', declaredSizeBytes: 1600000, receivedBytes: 1600000, fingerprint: 'sha256:private-fingerprint', status: 'READY_FOR_REVIEW',
@@ -12,7 +17,7 @@ const upload: BookUpload = {
   expiresAt: '', createdAt: '', updatedAt: '', coverUrl: '/cover.jpg',
   draftMetadata: { title: '测试书籍', authors: ['作者'], translators: [], tags: [], targetPath: '作者/测试书籍.pdf', pageCount: 63, sources: {title: 'FILE'} },
 };
-afterEach(() => vi.restoreAllMocks());
+afterEach(() => { uploadPermissions.canUpload = true; vi.restoreAllMocks(); });
 it.each([true, false])('defaults to public, respects the per-book switch (%s), and keeps technical metadata out of the form', async visible => {
   const update = vi.spyOn(api, 'updateBookUploadMetadata').mockResolvedValue(upload);
   const commit = vi.spyOn(api, 'commitBookUpload').mockResolvedValue({...upload,status: 'SUCCEEDED'});
@@ -51,6 +56,19 @@ it.each([true, false])('defaults to public, respects the per-book switch (%s), a
 it('restores the public choice from a saved upload draft', () => {
   render(<TestProviders><UploadReview upload={{...upload, draftMetadata: {...upload.draftMetadata!, publiclyVisible: false}}} onChanged={vi.fn()} onCommitted={vi.fn()} /></TestProviders>);
   expect(screen.getByRole('switch', {name: '公开展示'})).toHaveAttribute('aria-checked', 'false');
+});
+
+it('keeps upload review read-only without upload permission', () => {
+  uploadPermissions.canUpload = false;
+  const commit = vi.spyOn(api, 'commitBookUpload');
+  render(<TestProviders><UploadReview upload={upload} onChanged={vi.fn()} onCommitted={vi.fn()} /></TestProviders>);
+
+  expect(screen.getByLabelText('书名')).toBeDisabled();
+  expect(screen.getByRole('switch', {name: '公开展示'})).toBeDisabled();
+  expect(screen.getByRole('button', {name: '确认入库'})).toBeDisabled();
+  expect(screen.getByRole('button', {name: '在线匹配'})).toBeDisabled();
+  fireEvent.click(screen.getByRole('button', {name: '确认入库'}));
+  expect(commit).not.toHaveBeenCalled();
 });
 
 it('automatically saves edits and has no save-draft button', async () => {
