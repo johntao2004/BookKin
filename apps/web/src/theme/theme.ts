@@ -115,6 +115,7 @@ export function createAntdTheme(mode: ReaderTheme) {
         lineHeightLG: tokens.typography.lineHeight.body,
       },
       Button: {
+        contentFontSize: tokens.typography.fontSize.button,
         controlHeight: tokens.layout.controlHeight,
         controlHeightSM: 32,
         controlHeightLG: 48,
@@ -184,12 +185,16 @@ export function createAntdTheme(mode: ReaderTheme) {
         paddingInline: tokens.layout.inputPaddingInline,
       },
       Modal: {
+        fontSize: tokens.typography.fontSize.bodySm,
+        fontSizeLG: tokens.typography.fontSize.titleSm,
+        titleFontSize: tokens.typography.fontSize.titleSm,
         borderRadiusLG: tokens.radius.lg,
         contentBg: colors.surfaceCard,
         headerBg: colors.surfaceCard,
         boxShadow: "none",
       },
       Drawer: {
+        fontSize: tokens.typography.fontSize.bodySm,
         colorBgElevated: colors.surfaceCard,
         paddingLG: tokens.spacing.lg,
       },
