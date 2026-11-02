@@ -12,8 +12,9 @@ vi.mock("../auth/permissions", () => ({ usePermissions: () => ({ can: () => true
 const readerBindings = vi.hoisted(() => ({ onSelect: undefined as ((selection: ReaderSelection) => void) | undefined }));
 
 vi.mock("../components/readers/EpubDocumentReader", () => ({
-  default: (props: { annotations?: { id: string }[]; onAnnotationActivate?: (id: string) => void; contentUrl?: string; flow?: string; readOnly?: boolean; target?: string; onNavigation: (items: TocItem[]) => void; onSelect: (selection: ReaderSelection) => void; onPosition: (locator: string, progress: number) => void }) => { readerBindings.onSelect = props.onSelect; return <section aria-label="共享正文" data-annotation-count={props.annotations?.length} data-content-url={props.contentUrl} data-flow={props.flow} data-read-only={String(props.readOnly)} data-target={props.target} data-target-revision={(props as { targetRevision?: number }).targetRevision}>
+  default: (props: { annotations?: { id: string }[]; onAnnotationActivate?: (id: string) => void; onAnnotationDismiss?: () => void; contentUrl?: string; flow?: string; readOnly?: boolean; target?: string; onNavigation: (items: TocItem[]) => void; onSelect: (selection: ReaderSelection) => void; onPosition: (locator: string, progress: number) => void }) => { readerBindings.onSelect = props.onSelect; return <section aria-label="共享正文" data-annotation-count={props.annotations?.length} data-content-url={props.contentUrl} data-flow={props.flow} data-read-only={String(props.readOnly)} data-target={props.target} data-target-revision={(props as { targetRevision?: number }).targetRevision}>
     {props.annotations?.map(item => <button key={item.id} onClick={() => props.onAnnotationActivate?.(item.id)}>点击正文批注 {item.id}</button>)}
+    <button onClick={() => props.onAnnotationDismiss?.()}>点击正文空白</button>
     <button onClick={() => props.onNavigation([
       { href: "article.xhtml#first", label: "第一点", depth: 0, locator: "epubcfi(/6/2!/4/2)" },
       { href: "article.xhtml#second", label: "第二点", depth: 0, locator: "epubcfi(/6/2!/4/8)" },
@@ -110,7 +111,7 @@ describe("ReaderWorkspace independent source", () => {
     await waitFor(() => expect(screen.getByRole("region", { name: "共享正文" })).toHaveAttribute("data-target", "article.xhtml#p-0"));
   });
 
-  it("opens and targets the clicked note without saving or activating a plain highlight", async () => {
+  it("toggles plain highlight tools and targets notes without saving", async () => {
     const source = independentSource();
     source.annotations = [
       { id: "plain", bookId: source.id, type: "HIGHLIGHT", style: "HIGHLIGHT", quote: "纯高亮", locator: "article.xhtml#p-1", createdAt: "2026-10-28" },
@@ -120,6 +121,12 @@ describe("ReaderWorkspace independent source", () => {
     render(<TestProviders><ReaderWorkspace source={source} /></TestProviders>);
     fireEvent.click(await screen.findByRole("button", { name: "点击正文批注 plain" }));
     expect(screen.queryByRole("heading", { name: "阅文札记" })).not.toBeInTheDocument();
+    expect(screen.getByRole("toolbar", { name: "批注工具" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "点击正文批注 plain" }));
+    await waitFor(() => expect(screen.queryByRole("toolbar", { name: "批注工具" })).not.toBeInTheDocument());
+    fireEvent.click(screen.getByRole("button", { name: "点击正文批注 plain" }));
+    fireEvent.click(screen.getByRole("button", { name: "点击正文空白" }));
+    await waitFor(() => expect(screen.queryByRole("toolbar", { name: "批注工具" })).not.toBeInTheDocument());
     fireEvent.click(screen.getByRole("button", { name: "点击正文批注 target" }));
     expect(await screen.findByRole("heading", { name: "阅文札记" })).toBeInTheDocument();
     const current = screen.getByRole("group", { name: "当前笔记" });
@@ -128,7 +135,8 @@ describe("ReaderWorkspace independent source", () => {
     expect(current).not.toHaveTextContent("第一条笔记");
     expect(source.createAnnotation).not.toHaveBeenCalled();
     expect(source.deleteAnnotation).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByRole("button", { name: "关闭阅文札记" }));
+    fireEvent.click(screen.getByRole("button", { name: "点击正文批注 target" }));
+    await waitFor(() => expect(screen.queryByRole("heading", { name: "阅文札记" })).not.toBeInTheDocument());
     fireEvent.click(screen.getByRole("button", { name: "点击正文批注 first" }));
     await waitFor(() => expect(screen.getByRole("group", { name: "当前笔记" })).toHaveTextContent("第一条笔记"));
   });

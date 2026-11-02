@@ -5,6 +5,7 @@ export function bindAnnotationNoteActivation(
   root: HTMLElement | Document,
   getAnnotation: (id: string) => Pick<Annotation, "id" | "note"> | undefined,
   onActivate: (id: string, rect?: DOMRect) => void,
+  onDismiss?: () => void,
 ): () => void {
   const document = root.nodeType === 9 ? root as Document : (root as HTMLElement).ownerDocument;
   const annotationId = (target: EventTarget | null) => {
@@ -20,7 +21,7 @@ export function bindAnnotationNoteActivation(
     const selection = document.defaultView?.getSelection();
     if (selection?.isCollapsed === false && selection.toString().trim()) return;
     const id = annotationId(event.target);
-    if (!id) return;
+    if (!id) { onDismiss?.(); return; }
     event.preventDefault();
     event.stopPropagation();
     const marker = (event.target as Element)?.closest<HTMLElement>("[data-annotation-id]");
@@ -30,6 +31,7 @@ export function bindAnnotationNoteActivation(
   };
   const keydown = (event: Event) => {
     const key = event as KeyboardEvent;
+    if (key.key === "Escape") { onDismiss?.(); return; }
     if (key.defaultPrevented || key.repeat || (key.key !== "Enter" && key.key !== " ")) return;
     const id = annotationId(event.target);
     if (!id) return;

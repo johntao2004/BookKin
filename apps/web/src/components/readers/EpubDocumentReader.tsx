@@ -27,6 +27,7 @@ import { usePageTurnTransition } from "./use-page-turn-transition";
 interface Props {
   bookId: string;
   annotations: Annotation[];
+  onAnnotationDismiss?: () => void;
   onAnnotationActivate?: (id: string, rect?: DOMRect) => void;
   theme: { background: string; foreground: string; muted: string };
   fontSize: number;
@@ -50,14 +51,14 @@ function renderedContents(rendition: Rendition) {
   return rendition.getContents() as unknown as Contents[];
 }
 
-export default function EpubDocumentReader({ bookId, annotations, onAnnotationActivate, theme, fontSize, fontFamily, pageTurnEnabled = true, fontSourceUrl, contentUrl, contentLabel = "EPUB", flow = "paginated", readOnly = false, target, targetRevision, onNavigation, onSelect, onPosition }: Props) {
+export default function EpubDocumentReader({ bookId, annotations, onAnnotationActivate, onAnnotationDismiss, theme, fontSize, fontFamily, pageTurnEnabled = true, fontSourceUrl, contentUrl, contentLabel = "EPUB", flow = "paginated", readOnly = false, target, targetRevision, onNavigation, onSelect, onPosition }: Props) {
   const scrolled = flow === "scrolled-doc";
   const { mode: siteTheme } = useBookKinTheme();
   const hostRef = useRef<HTMLDivElement | null>(null);
   const renditionRef = useRef<Rendition | null>(null);
-  const annotationBindingsRef = useRef({ annotations, onAnnotationActivate });
+  const annotationBindingsRef = useRef({ annotations, onAnnotationActivate, onAnnotationDismiss });
   const annotationActivationCleanupsRef = useRef(new Map<Document, () => void>());
-  useEffect(() => { annotationBindingsRef.current = { annotations, onAnnotationActivate }; }, [annotations, onAnnotationActivate]);
+  useEffect(() => { annotationBindingsRef.current = { annotations, onAnnotationActivate, onAnnotationDismiss }; }, [annotations, onAnnotationActivate, onAnnotationDismiss]);
   const saveTimer = useRef<number | undefined>(undefined);
   const [loading, setLoading] = useState(true);
   const [renditionReady, setRenditionReady] = useState(false);
@@ -95,7 +96,8 @@ export default function EpubDocumentReader({ bookId, annotations, onAnnotationAc
     if (!annotationActivationCleanupsRef.current.has(document)) {
       annotationActivationCleanupsRef.current.set(document, bindAnnotationNoteActivation(document,
         id => annotationBindingsRef.current.onAnnotationActivate ? annotationBindingsRef.current.annotations.find(item => item.id === id) : undefined,
-        (id, rect) => annotationBindingsRef.current.onAnnotationActivate?.(id, rect)));
+        (id, rect) => annotationBindingsRef.current.onAnnotationActivate?.(id, rect),
+        () => annotationBindingsRef.current.onAnnotationDismiss?.()));
     }
     const existing = document.querySelector("style[data-page-reader-font]");
     existing?.remove();

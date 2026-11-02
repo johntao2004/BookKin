@@ -37,6 +37,22 @@ describe("annotation note activation", () => {
     cleanup();
   });
 
+  it("dismisses on blank content clicks and Escape, including iframe documents", () => {
+    const { root, marker, cleanup } = setup();
+    cleanup();
+    const activate = vi.fn();
+    const dismiss = vi.fn();
+    const unbind = bindAnnotationNoteActivation(root, id => ({ id, note: "" }), activate, dismiss);
+    fireEvent.click(marker);
+    expect(dismiss).not.toHaveBeenCalled();
+    fireEvent.click(root);
+    fireEvent.keyDown(marker, { key: "Escape" });
+    expect(dismiss).toHaveBeenCalledTimes(2);
+    unbind();
+    fireEvent.click(root);
+    expect(dismiss).toHaveBeenCalledTimes(2);
+  });
+
   it("supports Enter and Space without repeated activation on a held key", () => {
     const { marker, activate, cleanup } = setup();
     fireEvent.keyDown(marker, { key: "Enter" });

@@ -218,13 +218,19 @@ export function ReaderWorkspace({ source }: { source?: IndependentReaderSource }
   const openAnnotationNotes = useCallback((id: string, rect?: DOMRect) => {
     const group = annotationGroupsRef.current.find(item => item.ids.includes(id));
     if (!group || !user) return;
-    if (source) {
-      if (!group.notes.length) return;
-      closeSelection(); setFocusedNoteId(group.annotation.id); setNotesOpen(true); return;
+    if (source && group.notes.length) {
+      closeSelection();
+      setNotesOpen(!(notesOpen && focusedNoteId === group.annotation.id));
+      setFocusedNoteId(group.annotation.id);
+      return;
+    }
+    if (selection && group.ids.includes(selectedAnnotationGroup?.annotation.id ?? "")) {
+      closeSelection();
+      return;
     }
     const annotation = group.annotation;
     handleReaderSelection(readerSelectionFromRect({ quote: annotation.quote ?? "", locator: annotation.locator ?? currentLocator, rect: rect ?? new DOMRect(0, 0, 1, 1) }));
-  }, [handleReaderSelection, user, currentLocator, source, closeSelection]);
+  }, [handleReaderSelection, user, currentLocator, source, closeSelection, notesOpen, focusedNoteId, selection, selectedAnnotationGroup]);
   const focusCurrentNote = useCallback(() => {
     focusedNoteRef.current?.scrollIntoView?.({ block: "nearest" });
     focusedNoteRef.current?.focus({ preventScroll: true });
@@ -337,7 +343,7 @@ export function ReaderWorkspace({ source }: { source?: IndependentReaderSource }
           <Suspense fallback={<Stack sx={{ height: "100%", alignItems: "center", justifyContent: "center" }}><CircularProgress /></Stack>}>
             {book.format === "PDF"
               ? <PdfDocumentReader bookId={bookId} annotations={annotations} onAnnotationActivate={openAnnotationNotes} theme={currentTheme} fontSize={fontSize} fontFamily={fontFamily} pageTurnEnabled={readerSettings.pageTurnEnabled} fontSourceUrl={!guest && currentFont.source === "CUSTOM" ? `/api/v1/reader-fonts/${currentFont.id}/content` : undefined} contentUrl={source?.contentUrl ?? (guest ? `/api/v1/display-books/${bookId}/content` : undefined)} readOnly={Boolean(source) || guest} target={readerTarget} targetRevision={targetRevision} onNavigation={handleNavigation} onSelect={handleReaderSelection} onPosition={handlePosition} />
-              : <EpubDocumentReader flow={source?.flow} contentLabel={source?.label} bookId={bookId} annotations={annotations} onAnnotationActivate={openAnnotationNotes} theme={currentTheme} fontSize={fontSize} fontFamily={fontFamily} pageTurnEnabled={readerSettings.pageTurnEnabled} fontSourceUrl={!guest && currentFont.source === "CUSTOM" ? `/api/v1/reader-fonts/${currentFont.id}/content` : undefined} contentUrl={source?.contentUrl ?? (guest ? `/api/v1/display-books/${bookId}/content` : undefined)} readOnly={Boolean(source) || guest} target={readerTarget} targetRevision={targetRevision} onNavigation={handleNavigation} onSelect={handleReaderSelection} onPosition={handlePosition} />}
+              : <EpubDocumentReader onAnnotationDismiss={closeSelection} flow={source?.flow} contentLabel={source?.label} bookId={bookId} annotations={annotations} onAnnotationActivate={openAnnotationNotes} theme={currentTheme} fontSize={fontSize} fontFamily={fontFamily} pageTurnEnabled={readerSettings.pageTurnEnabled} fontSourceUrl={!guest && currentFont.source === "CUSTOM" ? `/api/v1/reader-fonts/${currentFont.id}/content` : undefined} contentUrl={source?.contentUrl ?? (guest ? `/api/v1/display-books/${bookId}/content` : undefined)} readOnly={Boolean(source) || guest} target={readerTarget} targetRevision={targetRevision} onNavigation={handleNavigation} onSelect={handleReaderSelection} onPosition={handlePosition} />}
           </Suspense>
         ) : <DemoPagedSurface bookTitle={book.title} format={book.format} theme={currentTheme} night={readerTheme === "NIGHT"} fontFamily={fontFamily} fontSize={fontSize} pageTurnEnabled={readerSettings.pageTurnEnabled} paragraphs={demoChapter} annotations={annotations} onAnnotationActivate={openAnnotationNotes} onMouseUp={captureSelection} />}
       </Box>
