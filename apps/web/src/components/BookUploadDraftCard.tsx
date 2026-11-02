@@ -2,7 +2,7 @@ import { BookCardPresentation } from "./BookCardPresentation";
 import type { BookUpload } from "../domain/types";
 
 /** A review-only upload card; staged content never becomes a readable catalog book. */
-export function BookUploadDraftCard({ upload, onOpen }: { upload: BookUpload; onOpen: () => void }) {
+export function BookUploadDraftCard({ upload, onOpen, onDelete }: { upload: BookUpload; onOpen: () => void; onDelete: () => void }) {
   const metadata = upload.draftMetadata ?? upload.detectedMetadata;
   const title = metadata?.title.trim() || upload.originalFilename.replace(/\.[^.]+$/, "") || upload.originalFilename;
   const author = metadata?.authors.filter(Boolean).join(" / ") || "作者待完善";
@@ -12,6 +12,6 @@ export function BookUploadDraftCard({ upload, onOpen }: { upload: BookUpload; on
     status="草稿"
     onOpen={onOpen}
     showReadAction={false}
-    actions={[{ label: "完善资料", onClick: onOpen }]}
+    actions={[{ label: "完善资料", onClick: onOpen }, { label: "删除草稿", danger: true, onClick: onDelete }]}
   />;
 }

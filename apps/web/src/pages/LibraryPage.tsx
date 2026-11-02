@@ -24,6 +24,7 @@ import { BookCard } from "../components/BookCard";
 import { bookGridSx } from "../components/bookGrid";
 import { AddToBooklistDialog } from "../components/AddToBooklistDialog";
 import { BookUploadDialog } from "../components/BookUploadDialog";
+import { useConfirmation } from "../ui/confirmations";
 import { BookUploadDraftCard } from "../components/BookUploadDraftCard";
 import { BookCatalogEmptyState } from "../components/BookCatalogEmptyState";
 import { FileOperationDialog } from "../components/FileOperationDialog";
@@ -31,7 +32,7 @@ import { flattenUniquePaginatedItems, PaginatedItemReveal } from "../components/
 import { PageContainer } from "../components/PageHeader";
 import { LibraryPageHeader, LibraryScopeFilter } from "../components/LibraryPageHeader";
 import { PublicLibraryPage } from "./PublicLibraryPage";
-import type { Book, FileOperationType } from "../domain/types";
+import type { Book, BookUpload, FileOperationType } from "../domain/types";
 import { matchesThema } from "../domain/thema";
 import { useInfiniteScrollTrigger } from "../hooks/useInfiniteScrollTrigger";
 import { tokens } from "../theme/generated-tokens";
@@ -56,6 +57,24 @@ function MemberLibraryPage() {
   const [uploadOpen, setUploadOpen] = useState(false);
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [notice, setNotice] = useState("");
+  const confirmation = useConfirmation();
+  const deleteDraft = (id: string) => confirmation.confirm({
+    title: "删除这份待完善书籍？",
+    content: "上传文件和已填写的草稿资料将被删除。",
+    okText: "删除", cancelText: "取消", okButtonProps: { danger: true },
+    onOk: async () => {
+      try {
+        await api.cancelBookUpload(id);
+        queryClient.setQueryData<BookUpload[]>(["book-uploads", user?.id],
+          current => current?.filter(upload => upload.id !== id));
+        await queryClient.invalidateQueries({ queryKey: ["book-uploads"] });
+        setNotice("草稿已删除");
+      } catch (error) {
+        setNotice(error instanceof Error ? error.message : "草稿删除失败，请重试。");
+        throw error;
+      }
+    },
+  });
   const query = rawQuery.trim().toLocaleLowerCase("zh-CN");
   const deferredQuery = useDeferredValue(query);
   const { can } = usePermissions();
@@ -148,7 +167,7 @@ function MemberLibraryPage() {
         {canUpload && uploadsQuery.isPending && <Stack role="status" aria-label="正在读取书籍草稿" sx={{ minHeight: `${tokens.spacing[16]}px`, alignItems: "center", justifyContent: "center", mb: `${tokens.spacing[4]}px` }}><CircularProgress aria-label="正在读取书籍草稿" /></Stack>}
         {filteredUploadDrafts.length > 0 && <Stack component="section" aria-label="待完善资料" spacing={2} sx={{ mb: `${tokens.spacing[6]}px` }}>
           <Typography variant="h5" component="h2">待完善资料</Typography>
-          <Box sx={bookGridSx}>{filteredUploadDrafts.map(upload => <BookUploadDraftCard key={upload.id} upload={upload} onOpen={() => navigate(`/library/uploads/${upload.id}`, { state: { bookReturnTo: `${location.pathname}${location.search}` } })} />)}</Box>
+          <Box sx={bookGridSx}>{filteredUploadDrafts.map(upload => <BookUploadDraftCard key={upload.id} upload={upload} onDelete={() => deleteDraft(upload.id)} onOpen={() => navigate(`/library/uploads/${upload.id}`, { state: { bookReturnTo: `${location.pathname}${location.search}` } })} />)}</Box>
         </Stack>}
 
         <CatalogSection title="全部藏书" tools={

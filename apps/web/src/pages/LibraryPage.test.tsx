@@ -228,3 +228,18 @@ it("does not request private upload drafts in public scope", async () => {
   expect(await screen.findByRole("heading", { name: "公开藏书" })).toBeInTheDocument();
   expect(listUploads).not.toHaveBeenCalled();
 });
+
+it("deletes a pending draft through its card menu and refreshes the list", async () => {
+  vi.spyOn(api, "listBooks").mockResolvedValue({ items: [] });
+  vi.mocked(api.listBookUploads).mockResolvedValue([makeUpload()]);
+  const remove = vi.spyOn(api, "cancelBookUpload").mockImplementation(async () => {
+    vi.mocked(api.listBookUploads).mockResolvedValue([]);
+  });
+  render(<TestProviders initialPath="/library"><LibraryPage /></TestProviders>);
+  fireEvent.click(await screen.findByRole("button", { name: "草稿书更多操作" }));
+  fireEvent.click(await screen.findByRole("menuitem", { name: "删除草稿" }));
+  expect(remove).not.toHaveBeenCalled();
+  fireEvent.click(await screen.findByRole("button", { name: /^删\s*除$/ }));
+  await waitFor(() => expect(remove).toHaveBeenCalledWith("draft-1"));
+  await waitFor(() => expect(screen.queryByRole("heading", { name: "待完善资料" })).not.toBeInTheDocument());
+});
