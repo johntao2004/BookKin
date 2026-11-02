@@ -65,6 +65,14 @@ public class AiSettingsService {
                         current.enabled() && provider.enabled() && configured(provider), !provider.apiKey().isBlank(), updatedAt)).toList(), updatedAt);
     }
 
+    /** Exposes only readiness flags to signed-in users so AI actions can explain missing configuration. */
+    public AiAvailabilityView availability() {
+        BookKinProperties.Ai current = effective();
+        boolean configuredProvider = current.providers().stream().anyMatch(this::configured);
+        boolean enabledProvider = current.providers().stream().anyMatch(provider -> provider.enabled() && configured(provider));
+        return new AiAvailabilityView(current.enabled(), configuredProvider, enabledProvider);
+    }
+
     @Transactional
     public AiSettingsView update(AiSettingsInput input, String username) {
         BookKinUser actor = users.findByUsername(username)
@@ -151,4 +159,6 @@ public class AiSettingsService {
 
     public record AiProviderView(String id, String label, String type, boolean enabled, String baseUrl, String model,
                                  boolean configured, boolean available, boolean apiKeyConfigured, OffsetDateTime updatedAt) {}
+
+    public record AiAvailabilityView(boolean enabled, boolean hasConfiguredProvider, boolean hasEnabledProvider) {}
 }

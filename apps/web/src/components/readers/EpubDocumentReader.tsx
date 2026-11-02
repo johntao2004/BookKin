@@ -27,7 +27,7 @@ import { usePageTurnTransition } from "./use-page-turn-transition";
 interface Props {
   bookId: string;
   annotations: Annotation[];
-  onAnnotationActivate?: (id: string) => void;
+  onAnnotationActivate?: (id: string, rect?: DOMRect) => void;
   theme: { background: string; foreground: string; muted: string };
   fontSize: number;
   fontFamily: string;
@@ -95,7 +95,7 @@ export default function EpubDocumentReader({ bookId, annotations, onAnnotationAc
     if (!annotationActivationCleanupsRef.current.has(document)) {
       annotationActivationCleanupsRef.current.set(document, bindAnnotationNoteActivation(document,
         id => annotationBindingsRef.current.onAnnotationActivate ? annotationBindingsRef.current.annotations.find(item => item.id === id) : undefined,
-        id => annotationBindingsRef.current.onAnnotationActivate?.(id)));
+        (id, rect) => annotationBindingsRef.current.onAnnotationActivate?.(id, rect)));
     }
     const existing = document.querySelector("style[data-page-reader-font]");
     existing?.remove();

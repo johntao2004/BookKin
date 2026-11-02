@@ -4,7 +4,7 @@ import type { Annotation } from "../../domain/types";
 export function bindAnnotationNoteActivation(
   root: HTMLElement | Document,
   getAnnotation: (id: string) => Pick<Annotation, "id" | "note"> | undefined,
-  onActivate: (id: string) => void,
+  onActivate: (id: string, rect?: DOMRect) => void,
 ): () => void {
   const document = root.nodeType === 9 ? root as Document : (root as HTMLElement).ownerDocument;
   const annotationId = (target: EventTarget | null) => {
@@ -13,7 +13,7 @@ export function bindAnnotationNoteActivation(
     const marker = element?.closest<HTMLElement>("[data-annotation-id]");
     if (!marker || !root.contains(marker)) return undefined;
     const id = marker.dataset.annotationId;
-    return id && getAnnotation(id)?.note?.trim() ? id : undefined;
+    return id && getAnnotation(id) ? id : undefined;
   };
   const click = (event: Event) => {
     if (event.defaultPrevented || (event as MouseEvent).button !== 0) return;
@@ -23,7 +23,10 @@ export function bindAnnotationNoteActivation(
     if (!id) return;
     event.preventDefault();
     event.stopPropagation();
-    onActivate(id);
+    const marker = (event.target as Element)?.closest<HTMLElement>("[data-annotation-id]");
+    const rect = marker?.getBoundingClientRect();
+    const frame = document.defaultView?.frameElement?.getBoundingClientRect();
+    onActivate(id, rect && new DOMRect(rect.x + (frame?.x ?? 0), rect.y + (frame?.y ?? 0), rect.width, rect.height));
   };
   const keydown = (event: Event) => {
     const key = event as KeyboardEvent;
@@ -32,7 +35,10 @@ export function bindAnnotationNoteActivation(
     if (!id) return;
     key.preventDefault();
     key.stopPropagation();
-    onActivate(id);
+    const marker = (event.target as Element)?.closest<HTMLElement>("[data-annotation-id]");
+    const rect = marker?.getBoundingClientRect();
+    const frame = document.defaultView?.frameElement?.getBoundingClientRect();
+    onActivate(id, rect && new DOMRect(rect.x + (frame?.x ?? 0), rect.y + (frame?.y ?? 0), rect.width, rect.height));
   };
   root.addEventListener("click", click, true);
   root.addEventListener("keydown", keydown, true);

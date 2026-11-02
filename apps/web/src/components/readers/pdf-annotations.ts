@@ -66,9 +66,9 @@ export function applyPdfTextAnnotations(
       const mark = document.createElement("mark");
       mark.dataset.annotationId = segment.annotation.id;
       mark.dataset.highlightColor = segment.annotation.color ?? "YELLOW";
-      if (segment.annotation.note?.trim()) {
+      if (segment.annotation.id) {
         mark.setAttribute("role", "button");
-        mark.setAttribute("aria-label", "查看笔记");
+        mark.setAttribute("aria-label", "编辑划线或笔记");
         mark.tabIndex = notedAnnotations.has(segment.annotation.id) ? -1 : 0;
         mark.style.cursor = "pointer";
         notedAnnotations.add(segment.annotation.id);

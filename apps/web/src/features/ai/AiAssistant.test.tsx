@@ -1,22 +1,27 @@
-import { StrictMode } from "react";
+import { act, StrictMode } from "react";
+import { MemoryRouter } from "react-router-dom";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, expect, it, vi } from "vitest";
 import { BookKinThemeProvider } from "../../theme/BookKinThemeProvider";
-import { request } from "../../api/client";
+import { api, request } from "../../api/client";
 import { AiAssistantButton, type AiResult, type AiSource } from "./AiAssistant";
 import { InputActionGroup, TextField } from "../../ui/forms";
 
 const identity = vi.hoisted(() => ({ user: { id: "reader-one" } as { id: string } | null }));
+const access = vi.hoisted(() => ({ canConfigure: true }));
 vi.mock("../../auth/AuthContext", () => ({ useAuth: () => ({ user: identity.user }) }));
-vi.mock("../../api/client", () => ({ request: vi.fn() }));
+vi.mock("../../auth/permissions", () => ({ usePermissions: () => ({ can: (code: string) => code === "settings.ai.edit" && access.canConfigure, canVisit: () => access.canConfigure }) }));
+vi.mock("../../api/client", () => ({ request: vi.fn(), api: { getAiServiceAvailability: vi.fn() } }));
 const value: AiResult = { text: "润色后的原文", evidence: [{ locator: "page:1", quote: "这是一段真实的原文依据。" }], provider: "DeepSeek", model: "model", sourceTitle: "当前草稿", included: 1, total: 3, coverage: "仅采样 1/3 页，不代表全文分析。" };
-const view = (draft = "原来的私人草稿", onApply = vi.fn()) => <BookKinThemeProvider><AiAssistantButton source="NOTE_DRAFT" draft={draft} onApply={onApply} /></BookKinThemeProvider>;
-const open = () => fireEvent.click(screen.getByRole("button", { name: "AI 助读" }));
-beforeEach(() => { identity.user = { id: "reader-one" }; vi.mocked(request).mockReset().mockResolvedValue(value); });
+const ready = { enabled: true, hasConfiguredProvider: true, hasEnabledProvider: true };
+const unconfigured = { enabled: true, hasConfiguredProvider: false, hasEnabledProvider: false };
+const view = (draft = "原来的私人草稿", onApply = vi.fn()) => <MemoryRouter><BookKinThemeProvider><AiAssistantButton source="NOTE_DRAFT" draft={draft} onApply={onApply} /></BookKinThemeProvider></MemoryRouter>;
+const open = async () => { await act(async () => { fireEvent.click(screen.getByRole("button", { name: "AI 助读" })); }); };
+beforeEach(() => { identity.user = { id: "reader-one" }; access.canConfigure = true; vi.mocked(api.getAiServiceAvailability).mockReset().mockResolvedValue(ready); vi.mocked(request).mockReset().mockResolvedValue(value); });
 
 it.each<AiSource>(["BOOK", "NOTE_DRAFT", "METADATA_DRAFT"])("keeps %s results inside the dialog and removes them when closed", async source => {
   const { container } = render(<BookKinThemeProvider><AiAssistantButton source={source} id="source-id" draft="待整理草稿" /></BookKinThemeProvider>);
-  open();
+  await open();
   fireEvent.click(screen.getByRole("button", { name: "生成建议" }));
   const result = await screen.findByLabelText("AI 生成结果");
   expect(screen.getByRole("dialog", { name: source.endsWith("_DRAFT") ? "AI 编辑辅助" : "AI 助读" })).toContainElement(result);
@@ -33,7 +38,7 @@ it.each<AiSource>(["ARTICLE", "COLLECTION", "ARTICLE_DRAFT"])("has no AI entry o
 });
 
 it("opening sends nothing and an explicit generate click starts the request without a checkbox", async () => {
-  render(view()); open();
+  render(view()); await open();
   expect(request).not.toHaveBeenCalled();
   expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
   expect(screen.getByRole("button", { name: "生成建议" })).toBeEnabled();
@@ -46,7 +51,7 @@ it("opening sends nothing and an explicit generate click starts the request with
   expect(JSON.parse(vi.mocked(request).mock.calls[0][1]!.body as string)).toEqual({ source: "NOTE_DRAFT", action: "POLISH", draft: "原来的私人草稿", consent: true });
 });
 it("suggestions do not overwrite the draft until explicitly adopted", async () => {
-  const apply = vi.fn(); render(view("原稿", apply)); open();
+  const apply = vi.fn(); render(view("原稿", apply)); await open();
   fireEvent.click(screen.getByRole("button", { name: "生成建议" }));
   await screen.findByLabelText("AI 生成结果"); expect(apply).not.toHaveBeenCalled();
   fireEvent.click(screen.getByRole("button", { name: "采用建议" }));
@@ -55,7 +60,7 @@ it("suggestions do not overwrite the draft until explicitly adopted", async () =
 it("a draft edited while the request is running cannot be overwritten", async () => {
   let resolve!: (value: AiResult) => void;
   vi.mocked(request).mockReturnValue(new Promise<AiResult>(done => { resolve = done; }));
-  const apply = vi.fn(); const rendered = render(view("原稿", apply)); open();
+  const apply = vi.fn(); const rendered = render(view("原稿", apply)); await open();
   fireEvent.click(screen.getByRole("button", { name: "生成建议" }));
   rendered.rerender(view("用户新写的内容", apply)); resolve(value);
   await screen.findByLabelText("AI 生成结果");
@@ -63,14 +68,14 @@ it("a draft edited while the request is running cannot be overwritten", async ()
   expect(screen.getByRole("button", { name: "采用建议" })).toBeDisabled(); expect(apply).not.toHaveBeenCalled();
 });
 it("reopening clears the result and waits for another generate click", async () => {
-  render(view()); open(); fireEvent.click(screen.getByRole("button", { name: "生成建议" }));
+  render(view()); await open(); fireEvent.click(screen.getByRole("button", { name: "生成建议" }));
   await screen.findByLabelText("AI 生成结果"); fireEvent.click(screen.getByRole("button", { name: /^关闭$/ }));
-  open(); expect(screen.queryByLabelText("AI 生成结果")).not.toBeInTheDocument();
+  await open(); expect(screen.queryByLabelText("AI 生成结果")).not.toBeInTheDocument();
   expect(screen.getByRole("button", { name: "生成建议" })).toBeEnabled();
   expect(request).toHaveBeenCalledTimes(1);
 });
 it("changing users never exposes the prior result", async () => {
-  const rendered = render(view()); open(); fireEvent.click(screen.getByRole("button", { name: "生成建议" }));
+  const rendered = render(view()); await open(); fireEvent.click(screen.getByRole("button", { name: "生成建议" }));
   await screen.findByLabelText("AI 生成结果"); identity.user = { id: "reader-two" }; rendered.rerender(view());
   expect(screen.queryByLabelText("AI 生成结果")).not.toBeInTheDocument();
   expect(screen.getByRole("button", { name: "生成建议" })).toBeEnabled();
@@ -78,21 +83,63 @@ it("changing users never exposes the prior result", async () => {
 });
 it("a failed provider leaves a retry path and preserves the draft", async () => {
   vi.mocked(request).mockRejectedValueOnce(new Error("AI 平台暂不可用"));
-  const apply = vi.fn(); render(view("原稿", apply)); open(); fireEvent.click(screen.getByRole("button", { name: "生成建议" }));
+  const apply = vi.fn(); render(view("原稿", apply)); await open(); fireEvent.click(screen.getByRole("button", { name: "生成建议" }));
   expect(await screen.findByText("AI 平台暂不可用")).toBeInTheDocument();
   fireEvent.click(screen.getByRole("button", { name: "生成建议" }));
   await screen.findByLabelText("AI 生成结果"); expect(apply).not.toHaveBeenCalled();
 });
-it("oversized drafts are blocked without silently truncating them", () => {
-  render(view("字".repeat(20001))); open();
+it("oversized drafts are blocked without silently truncating them", async () => {
+  render(view("字".repeat(20001))); await open();
   expect(screen.getByText(/单次最多发送 20000 字/)).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "生成建议" })).toBeDisabled(); expect(request).not.toHaveBeenCalled();
 });
-it("logged out users have no AI entry", () => {
+it("logged out users have no AI entry", async () => {
   identity.user = null; render(view()); expect(screen.queryByRole("button", { name: "AI 助读" })).not.toBeInTheDocument();
 });
+it("explains that AI is unconfigured before opening an assistant and links authorized users to its settings panel", async () => {
+  vi.mocked(api.getAiServiceAvailability).mockResolvedValue(unconfigured);
+  render(view()); await open();
+  expect(await screen.findByRole("dialog", { name: "AI 服务尚未配置" })).toBeInTheDocument();
+  expect(screen.getByRole("link", { name: "前往 AI 服务配置" })).toHaveAttribute("href", "/settings#services/ai");
+  expect(screen.queryByRole("dialog", { name: "AI 编辑辅助" })).not.toBeInTheDocument();
+  expect(request).not.toHaveBeenCalled();
+});
+it("directs members to the owner or administrator without exposing an inaccessible settings route", async () => {
+  access.canConfigure = false;
+  vi.mocked(api.getAiServiceAvailability).mockResolvedValue(unconfigured);
+  render(view()); await open();
+  expect(await screen.findByRole("dialog", { name: "AI 服务尚未配置" })).toBeInTheDocument();
+  expect(screen.getByText("请联系主人或管理员配置 AI 服务。")).toBeInTheDocument();
+  expect(screen.queryByRole("link", { name: "前往 AI 服务配置" })).not.toBeInTheDocument();
+  expect(request).not.toHaveBeenCalled();
+});
+it("distinguishes disabled AI from an unconfigured provider", async () => {
+  vi.mocked(api.getAiServiceAvailability).mockResolvedValue({ enabled: false, hasConfiguredProvider: true, hasEnabledProvider: true });
+  render(view()); await open();
+  expect(await screen.findByRole("dialog", { name: "AI 服务已关闭" })).toBeInTheDocument();
+  expect(screen.queryByText("尚未配置可用的 AI 平台。")).not.toBeInTheDocument();
+  expect(request).not.toHaveBeenCalled();
+});
+it("does not call an unavailable AI configuration a setup failure when status cannot be read", async () => {
+  vi.mocked(api.getAiServiceAvailability).mockRejectedValueOnce(new Error("连接超时"));
+  render(view()); await open();
+  expect(await screen.findByRole("dialog", { name: "无法检查 AI 服务状态" })).toBeInTheDocument();
+  expect(screen.getByText(/检查网络后重试/)).toBeInTheDocument();
+  expect(screen.queryByRole("link", { name: "前往 AI 服务配置" })).not.toBeInTheDocument();
+  expect(request).not.toHaveBeenCalled();
+  vi.mocked(api.getAiServiceAvailability).mockResolvedValueOnce(ready);
+  fireEvent.click(screen.getByRole("button", { name: "重试检查" }));
+  expect(await screen.findByRole("dialog", { name: "AI 编辑辅助" })).toBeInTheDocument();
+});
+it("uses the shared configuration prompt if service readiness changes before generation", async () => {
+  vi.mocked(request).mockRejectedValueOnce(Object.assign(new Error("AI 配置已变化"), { code: "AI_UNAVAILABLE" }));
+  render(view()); await open();
+  fireEvent.click(screen.getByRole("button", { name: "生成建议" }));
+  expect(await screen.findByRole("dialog", { name: "AI 服务当前不可用" })).toBeInTheDocument();
+  expect(screen.getByRole("link", { name: "前往 AI 服务配置" })).toBeInTheDocument();
+});
 it("BOOK results omit sampling, source details, and evidence while retaining the answer", async () => {
-  render(<BookKinThemeProvider><AiAssistantButton source="BOOK" id="book-id" /></BookKinThemeProvider>); open();
+  render(<BookKinThemeProvider><AiAssistantButton source="BOOK" id="book-id" /></BookKinThemeProvider>); await open();
   expect(screen.queryByText(/采样/)).not.toBeInTheDocument();
   expect(screen.queryByText(/将发送/)).not.toBeInTheDocument();
   fireEvent.click(screen.getByRole("button", { name: "生成建议" }));
@@ -110,7 +157,7 @@ it("BOOK results omit sampling, source details, and evidence while retaining the
 
 it("renders readable Markdown without executing HTML or loading model-selected images", async () => {
   vi.mocked(request).mockResolvedValue({ ...value, text: "## 摘要\n\n**要点**\n\n![图片](https://example.invalid/private.png)\n\n<script>alert(1)</script>" });
-  render(view()); open(); fireEvent.click(screen.getByRole("button", { name: "生成建议" }));
+  render(view()); await open(); fireEvent.click(screen.getByRole("button", { name: "生成建议" }));
   await screen.findByRole("heading", { name: "摘要" });
   const result = screen.getByLabelText("AI 生成结果");
   expect(result.querySelector("strong")).toHaveTextContent("要点");
@@ -118,7 +165,7 @@ it("renders readable Markdown without executing HTML or loading model-selected i
 });
 
 it("names the action selector and requires a question before sending a Q&A request", async () => {
-  render(<BookKinThemeProvider><AiAssistantButton source="BOOK" id="book-id" /></BookKinThemeProvider>); open();
+  render(<BookKinThemeProvider><AiAssistantButton source="BOOK" id="book-id" /></BookKinThemeProvider>); await open();
   fireEvent.mouseDown(screen.getByRole("combobox", { name: "AI 操作" }));
   fireEvent.click(await screen.findByText("原文问答"));
   expect(screen.getByRole("button", { name: "生成建议" })).toBeDisabled();

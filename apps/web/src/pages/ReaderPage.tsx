@@ -215,13 +215,16 @@ export function ReaderWorkspace({ source }: { source?: IndependentReaderSource }
     window.getSelection()?.removeAllRanges();
   }, [noteDraftKey]);
 
-  const openAnnotationNotes = useCallback((id: string) => {
+  const openAnnotationNotes = useCallback((id: string, rect?: DOMRect) => {
     const group = annotationGroupsRef.current.find(item => item.ids.includes(id));
-    if (!group?.notes.length) return;
-    closeSelection();
-    setFocusedNoteId(group.annotation.id);
-    setNotesOpen(true);
-  }, [closeSelection]);
+    if (!group || !user) return;
+    if (source) {
+      if (!group.notes.length) return;
+      closeSelection(); setFocusedNoteId(group.annotation.id); setNotesOpen(true); return;
+    }
+    const annotation = group.annotation;
+    handleReaderSelection(readerSelectionFromRect({ quote: annotation.quote ?? "", locator: annotation.locator ?? currentLocator, rect: rect ?? new DOMRect(0, 0, 1, 1) }));
+  }, [handleReaderSelection, user, currentLocator, source, closeSelection]);
   const focusCurrentNote = useCallback(() => {
     focusedNoteRef.current?.scrollIntoView?.({ block: "nearest" });
     focusedNoteRef.current?.focus({ preventScroll: true });
@@ -587,7 +590,7 @@ function renderAnnotatedText(paragraph: string, annotations: Annotation[], theme
   return pieces;
 }
 
-function DemoPagedSurface({ bookTitle, format, theme, night, fontFamily, fontSize, pageTurnEnabled, paragraphs, annotations, onMouseUp, onAnnotationActivate }: { bookTitle: string; format: "EPUB" | "PDF"; theme: { background: string; foreground: string; muted: string }; night: boolean; fontFamily: string; fontSize: number; pageTurnEnabled: boolean; paragraphs: string[]; annotations: Annotation[]; onMouseUp: () => void; onAnnotationActivate: (id: string) => void }) {
+function DemoPagedSurface({ bookTitle, format, theme, night, fontFamily, fontSize, pageTurnEnabled, paragraphs, annotations, onMouseUp, onAnnotationActivate }: { bookTitle: string; format: "EPUB" | "PDF"; theme: { background: string; foreground: string; muted: string }; night: boolean; fontFamily: string; fontSize: number; pageTurnEnabled: boolean; paragraphs: string[]; annotations: Annotation[]; onMouseUp: () => void; onAnnotationActivate: (id: string, rect?: DOMRect) => void }) {
   const frameRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     if (!frameRef.current) return;

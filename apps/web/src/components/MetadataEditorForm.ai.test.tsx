@@ -1,11 +1,12 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { request } from "../api/client";
+import { api, request } from "../api/client";
 import { BookKinThemeProvider } from "../theme/BookKinThemeProvider";
 import { MetadataEditorForm, type MetadataEditorValues } from "./MetadataEditorForm";
 
 vi.mock("../auth/AuthContext", () => ({ useAuth: () => ({ user: { id: "metadata-editor" } }) }));
-vi.mock("../api/client", () => ({ request: vi.fn(), api: { listMetadataTerms: vi.fn().mockResolvedValue({ items: [] }) } }));
+vi.mock("../auth/permissions", () => ({ usePermissions: () => ({ can: () => false, canVisit: () => false }) }));
+vi.mock("../api/client", () => ({ request: vi.fn(), api: { listMetadataTerms: vi.fn().mockResolvedValue({ items: [] }), getAiServiceAvailability: vi.fn() } }));
 
 it("adopts author biography only into its own field", async () => {
   const onChange = vi.fn();
@@ -14,6 +15,7 @@ it("adopts author biography only into its own field", async () => {
     publisher: "", publishedDate: "", isbn: "", series: "", seriesIndex: "", tags: "现有标签",
     description: "现有简介", authorBiography: "已有作者资料", tableOfContents: "第一章", publiclyVisible: true,
   };
+  vi.mocked(api.getAiServiceAvailability).mockResolvedValue({ enabled: true, hasConfiguredProvider: true, hasEnabledProvider: true });
   vi.mocked(request).mockReset().mockResolvedValue({ text: "整理后的作者介绍", evidence: [], provider: "provider", model: "model", sourceTitle: "草稿", included: 1, total: 1, coverage: "草稿" });
   render(<QueryClientProvider client={new QueryClient()}><BookKinThemeProvider><MetadataEditorForm value={value} onChange={onChange} coverAlt="封面" coverActions={null} aiEnabled /></BookKinThemeProvider></QueryClientProvider>);
 

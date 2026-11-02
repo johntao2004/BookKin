@@ -49,7 +49,7 @@ describe("applyPdfTextAnnotations", () => {
     marks.forEach((mark) => {
       expect(mark).toHaveAttribute("data-highlight-color", "PINK");
       expect(mark).toHaveAttribute("role", "button");
-      expect(mark).toHaveAttribute("aria-label", "查看笔记");
+      expect(mark).toHaveAttribute("aria-label", "编辑划线或笔记");
       expect(mark.style.cursor).toBe("pointer");
       expect(mark.style.background).toContain("rgba(255, 179, 209");
       expect(mark.style.background).toContain("0.34");
@@ -98,10 +98,10 @@ describe("applyPdfTextAnnotations", () => {
     applyPdfTextAnnotations(layer, 1, [annotation]);
 
     const mark = layer.querySelector("mark")!;
-    expect(mark).not.toHaveAttribute("role");
-    expect(mark).not.toHaveAttribute("aria-label");
-    expect(mark).not.toHaveAttribute("tabindex");
-    expect(mark.style.cursor).toBe("");
+    expect(mark).toHaveAttribute("role", "button");
+    expect(mark).toHaveAttribute("aria-label", "编辑划线或笔记");
+    expect(mark).toHaveAttribute("tabindex", "0");
+    expect(mark.style.cursor).toBe("pointer");
   });
 
   it("renders a newly appended virtual-page annotation on the existing PDF text layer", () => {

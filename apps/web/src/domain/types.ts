@@ -260,6 +260,12 @@ export interface AiSettings {
   updatedAt?: string;
 }
 
+export interface AiServiceAvailability {
+  enabled: boolean;
+  hasConfiguredProvider: boolean;
+  hasEnabledProvider: boolean;
+}
+
 export interface AiSettingsInput {
   enabled: boolean;
   autoMatch: boolean;

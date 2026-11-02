@@ -134,7 +134,7 @@ describe("PdfReadingClipFrame", () => {
     );
 
     expect(await screen.findByText("这是一段正文。")).toBeInTheDocument();
-    expect(screen.getByRole("navigation", { name: "PDF 翻页" })).toHaveTextContent("第 1 页 · 1/1 · 共 8 页");
+    expect(screen.getByRole("navigation", { name: "PDF 翻页" })).toHaveTextContent("第 1 页 · 共 8 页");
     expect(screen.queryByText(/^第 1 页$/u)).not.toBeInTheDocument();
   });
 });
@@ -185,7 +185,7 @@ describe("PdfDocumentReader annotation activation", () => {
       onPosition: vi.fn(),
     };
     const view = render(<PdfDocumentReader {...props} onAnnotationActivate={firstCallback} />);
-    const noteMark = await screen.findByRole("button", { name: "查看笔记" });
+    const noteMark = (await screen.findAllByRole("button", { name: "编辑划线或笔记" })).find(mark => mark.dataset.annotationId === "pdf-note")!;
     expect(noteMark).toHaveAttribute("data-annotation-id", "pdf-note");
     const plainMark = view.container.querySelector<HTMLElement>('[data-annotation-id="pdf-plain-highlight"]');
     expect(plainMark).not.toBeNull();
@@ -193,9 +193,9 @@ describe("PdfDocumentReader annotation activation", () => {
     fireEvent.click(noteMark);
     fireEvent.keyDown(noteMark, { key: "Enter" });
     fireEvent.keyDown(noteMark, { key: " " });
-    expect(firstCallback).toHaveBeenNthCalledWith(1, "pdf-note");
-    expect(firstCallback).toHaveBeenNthCalledWith(2, "pdf-note");
-    expect(firstCallback).toHaveBeenNthCalledWith(3, "pdf-note");
+    expect(firstCallback).toHaveBeenNthCalledWith(1, "pdf-note", expect.any(DOMRect));
+    expect(firstCallback).toHaveBeenNthCalledWith(2, "pdf-note", expect.any(DOMRect));
+    expect(firstCallback).toHaveBeenNthCalledWith(3, "pdf-note", expect.any(DOMRect));
 
     const range = document.createRange();
     range.selectNodeContents(noteMark);
@@ -205,12 +205,12 @@ describe("PdfDocumentReader annotation activation", () => {
     fireEvent.click(noteMark);
     selection?.removeAllRanges();
     fireEvent.click(plainMark!);
-    expect(firstCallback).toHaveBeenCalledTimes(3);
+    expect(firstCallback).toHaveBeenCalledTimes(4);
 
     view.rerender(<PdfDocumentReader {...props} onAnnotationActivate={latestCallback} />);
     fireEvent.click(view.container.querySelector('[data-annotation-id="pdf-note"]')!);
-    expect(latestCallback).toHaveBeenCalledWith("pdf-note");
-    expect(firstCallback).toHaveBeenCalledTimes(3);
+    expect(latestCallback).toHaveBeenCalledWith("pdf-note", expect.any(DOMRect));
+    expect(firstCallback).toHaveBeenCalledTimes(4);
     expect(getDocument).toHaveBeenCalledTimes(1);
   });
 });
@@ -230,4 +230,23 @@ describe("previousPdfLocation", () => {
     expect(previousPdfLocation({ pageNumber: 3, virtualPageIndex: 0 }))
       .toEqual({ pageNumber: 2, virtualPageIndex: 0, waitForPageCount: true });
   });
+});
+
+it("shows two scanned pages on wide screens and advances without skipping pages", async () => {
+  const descriptor = Object.getOwnPropertyDescriptor(HTMLElement.prototype, "clientWidth");
+  Object.defineProperty(HTMLElement.prototype, "clientWidth", { configurable: true, get: () => tokens.layout.breakpointTablet });
+  const context = vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue({} as CanvasRenderingContext2D);
+  const page = { getTextContent: async () => ({ items: [], styles: {} }), getViewport: ({ scale }: { scale: number }) => ({ width: 600 * scale, height: 800 * scale }), render: () => ({ promise: Promise.resolve(), cancel: vi.fn() }) };
+  vi.mocked(getDocument).mockReturnValue({ promise: Promise.resolve({ numPages: 5, getPage: async () => page }), destroy: vi.fn() } as unknown as ReturnType<typeof getDocument>);
+  try {
+    render(<PdfDocumentReader bookId="scan" annotations={[]} theme={{ background: "white", foreground: "black", muted: "gray" }} fontSize={19} fontFamily="sans-serif" pageTurnEnabled={false} readOnly onSelect={vi.fn()} onPosition={vi.fn()} />);
+    expect(await screen.findByRole("img", { name: "PDF 第 1 页图片" })).toBeInTheDocument();
+    expect(await screen.findByRole("img", { name: "PDF 第 2 页图片" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "PDF 下一页" }));
+    expect(await screen.findByRole("img", { name: "PDF 第 3 页图片" })).toBeInTheDocument();
+    expect(await screen.findByRole("img", { name: "PDF 第 4 页图片" })).toBeInTheDocument();
+  } finally {
+    context.mockRestore();
+    if (descriptor) Object.defineProperty(HTMLElement.prototype, "clientWidth", descriptor);
+  }
 });

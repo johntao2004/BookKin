@@ -24,6 +24,7 @@ import type {
   BookMetadataDraft,
   BookUpload,
   AiProviderInfo,
+  AiServiceAvailability,
   AiSettings,
   AiSettingsInput,
   MetadataProviderSettings,
@@ -1292,6 +1293,16 @@ export const api = {
     if (!demoMode) return request("/ai/settings");
     await pause(80);
     return structuredClone(demoAiSettings);
+  },
+
+  async getAiServiceAvailability(): Promise<AiServiceAvailability> {
+    if (!demoMode) return request("/ai/status");
+    const providers = demoAiSettings.providers;
+    return {
+      enabled: demoAiSettings.enabled,
+      hasConfiguredProvider: providers.some(provider => provider.configured),
+      hasEnabledProvider: providers.some(provider => provider.enabled && provider.configured),
+    };
   },
 
   async getMetadataProviderSettings(): Promise<MetadataProviderSettings> {

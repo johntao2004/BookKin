@@ -13,15 +13,15 @@ function setup(note = "已有笔记") {
 }
 
 describe("annotation note activation", () => {
-  it("activates a nested note fragment but leaves plain highlights alone", () => {
+  it("activates note fragments and plain highlights for editing", () => {
     const { root, marker, activate, cleanup } = setup();
     fireEvent.click(marker.querySelector("em")!);
-    expect(activate).toHaveBeenCalledExactlyOnceWith("note");
+    expect(activate).toHaveBeenCalledWith("note", expect.any(DOMRect));
     fireEvent.click(root.querySelector("[data-annotation-id='plain']")!);
-    expect(activate).toHaveBeenCalledTimes(1);
+    expect(activate).toHaveBeenCalledTimes(2);
     cleanup();
     fireEvent.click(marker);
-    expect(activate).toHaveBeenCalledTimes(1);
+    expect(activate).toHaveBeenCalledTimes(2);
   });
 
   it("does not open a note while dragging a text selection", () => {
@@ -33,7 +33,7 @@ describe("annotation note activation", () => {
     expect(activate).not.toHaveBeenCalled();
     window.getSelection()!.removeAllRanges();
     fireEvent.click(marker);
-    expect(activate).toHaveBeenCalledExactlyOnceWith("note");
+    expect(activate).toHaveBeenCalledWith("note", expect.any(DOMRect));
     cleanup();
   });
 

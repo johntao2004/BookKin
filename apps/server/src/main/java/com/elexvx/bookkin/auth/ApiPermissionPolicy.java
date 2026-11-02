@@ -28,6 +28,7 @@ public final class ApiPermissionPolicy {
         if (p.equals("/ai/metadata-terms")) return Set.of("reader.read", "library.edit", "library.upload");
         if (p.equals("/ai/book-classification")) return Set.of("reader.read", "library.edit", "library.upload");
         if (p.equals("/ai/book-knowledge")) return Set.of("reader.read", "library.edit", "library.upload");
+        if (p.equals("/ai/status")) return Set.of(); // Authenticated users may learn whether AI actions are configured; no settings are exposed.
         if (read && p.matches("/knowledge/books/[^/]+")) return Set.of("knowledge.view", "reader.read");
         // The assistance service additionally requires the exact source/action grant and object access.
         if (p.equals("/ai/assistance")) return Set.of("reader.read", "articles.view", "notes.edit", "articles.edit", "library.edit", "library.upload");

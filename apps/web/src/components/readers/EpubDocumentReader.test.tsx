@@ -108,13 +108,13 @@ describe("EpubDocumentReader flow", () => {
     expect(note()).toHaveAttribute("role", "button");
     expect(note()).toHaveAttribute("tabindex", "0");
     fireEvent.click(note());
-    expect(activate).toHaveBeenCalledExactlyOnceWith("note-one");
+    expect(activate).toHaveBeenCalledExactlyOnceWith("note-one", expect.any(DOMRect));
     fireEvent.click(mocks.contentsDocument.querySelector("[data-annotation-id='plain']")!);
-    expect(activate).toHaveBeenCalledTimes(1);
+    expect(activate).toHaveBeenCalledTimes(2);
     const updated = vi.fn();
     view.rerender(<TestProviders><EpubDocumentReader {...props} onAnnotationActivate={updated} /></TestProviders>);
     fireEvent.keyDown(note(), { key: "Enter" });
-    expect(updated).toHaveBeenCalledExactlyOnceWith("note-one");
+    expect(updated).toHaveBeenCalledExactlyOnceWith("note-one", expect.any(DOMRect));
     expect(mocks.book.renderTo).toHaveBeenCalledTimes(1);
     const remove = vi.spyOn(mocks.contentsDocument, "removeEventListener");
     view.unmount();

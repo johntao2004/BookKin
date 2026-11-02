@@ -13,6 +13,7 @@ import { TextField } from '@/ui/forms';
 import { SearchRounded } from '@/ui/icons';
 import { api } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
+import { useAiAvailability } from '../features/ai/useAiAvailability';
 import { PageContainer, PageHeader } from '../components/PageHeader';
 import type { BookKnowledge } from '../domain/types';
 import { tokens } from '../theme/generated-tokens';
@@ -44,8 +45,10 @@ export function KnowledgeGraphPage() {
   const [generationError, setGenerationError] = useState('');
   const [generationMessage, setGenerationMessage] = useState('');
   const graphRef = useRef<GraphInstance | null>(null);
-  const { can } = usePermissions();
+  const { can, canVisit } = usePermissions();
   const canGenerate = can("knowledge.generate");
+  const mayConfigure = can("settings.ai.edit") && Boolean(canVisit?.("/settings", "#services/ai"));
+  const { requireAiAvailable, presentAiUnavailableError, dialog: aiAvailabilityDialog } = useAiAvailability(mayConfigure);
   const knowledgeQueryKey = ['book-knowledge', user?.id];
   const catalog = useQuery({ queryKey: ['books', 'knowledge-graph', user?.id], queryFn: ({ signal }) => fetchVirtualLibraryBooks(signal), enabled: Boolean(user) });
   const knowledgeQuery = useQuery({ queryKey: knowledgeQueryKey, queryFn: ({ signal }) => api.listBookKnowledge(signal), enabled: Boolean(user), refetchInterval: generating ? false : 30000 });
@@ -91,17 +94,30 @@ export function KnowledgeGraphPage() {
 
   async function analyzeSelection() {
     if (batchBusy || !selectedBooks.length) return;
+    void requireAiAvailable(() => { void runAnalysis(); });
+  }
+
+  async function runAnalysis() {
+    if (batchBusy || !selectedBooks.length) return;
+    const requestedBooks = [...selectedBooks];
     setBatchBusy(true); setGenerationError(''); setGenerationMessage('');
     let completedCount = 0;
     const failures: string[] = [];
     const failedIds = new Set<string>();
-    for (const bookId of selectedBooks) {
+    for (let index = 0; index < requestedBooks.length; index++) {
+      const bookId = requestedBooks[index];
       setGenerating(bookId);
       try {
         const items = await api.generateBookKnowledge(bookId);
         queryClient.setQueryData(knowledgeQueryKey, items);
         completedCount++;
-      } catch (error) { failedIds.add(bookId); failures.push(error instanceof Error ? error.message : '知识点提取失败，请重试。'); }
+      } catch (error) {
+        if (presentAiUnavailableError(error)) {
+          requestedBooks.slice(index).forEach(id => failedIds.add(id));
+          break;
+        }
+        failedIds.add(bookId); failures.push(error instanceof Error ? error.message : '知识点提取失败，请重试。');
+      }
     }
     if (completedCount) setGenerationMessage(`已完成 ${completedCount} 本书的正文分析。`);
     if (failures.length) setGenerationError(`${failures.length} 本分析失败：${failures[0]}`);
@@ -160,5 +176,6 @@ export function KnowledgeGraphPage() {
         <Button type="primary" block loading={batchBusy} disabled={!selectedBooks.length || batchBusy} onClick={() => void analyzeSelection()}>开始分析</Button>
       </div>
     </Drawer>}
+    {aiAvailabilityDialog}
   </PageContainer>;
 }

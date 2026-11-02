@@ -3,6 +3,7 @@ import { selectableKnowledgePoints } from "../domain/knowledge";
 import type { BookKnowledgeDraft } from "../domain/types";
 import { api, request } from "../api/client";
 import { useAuth } from "../auth/AuthContext";
+import { usePermissions } from "../auth/permissions";
 import { languageOption } from "../domain/languages";
 import { themaLabel } from "../domain/thema";
 import { Button } from "../ui/buttons";
@@ -10,6 +11,7 @@ import { Alert } from "../ui/feedback";
 import { Checkbox } from "../ui/forms";
 import { Dialog, DialogContent, DialogTitle } from "../ui/overlays";
 import { AiResultActions } from "../features/ai/AiResultActions";
+import { useAiAvailability } from "../features/ai/useAiAvailability";
 import { Stack, Typography } from "../ui/primitives";
 
 export interface ContentMetadataSource { type: "BOOK" | "UPLOAD"; id: string }
@@ -37,18 +39,22 @@ interface Props {
 const modeLabels = { subjects: "生成分类建议", tags: "AI 生成标签", knowledge: "AI 识别知识点", languages: "AI 识别语言", series: "AI 识别系列" };
 export function BookContentSuggestionButton(props: Props) {
   const { user } = useAuth();
+  const { can, canVisit } = usePermissions();
+  const mayConfigure = can("settings.ai.edit") && Boolean(canVisit?.("/settings", "#services/ai"));
+  const { requireAiAvailable, presentAiUnavailableError, dialog } = useAiAvailability(mayConfigure);
   const [openedSource, setOpenedSource] = useState<string | null>(null);
   const key = user && props.source ? `${user.id}:${props.source.type}:${props.source.id}:${props.mode}` : "";
   useEffect(() => { setOpenedSource(null); }, [key]);
   return <>
     <Button type="button" aria-label={props.actionLabel ?? modeLabels[props.mode]}
       title={props.source ? (props.actionLabel ?? modeLabels[props.mode]) : "请先上传或选择可读取的书籍"}
-      disabled={props.disabled || !props.source?.id || !user} onClick={() => setOpenedSource(key)}>AI</Button>
-    {key && openedSource === key && props.source && <ContentSuggestionSession key={key} {...props} source={props.source} onClose={() => setOpenedSource(null)} />}
+      disabled={props.disabled || !props.source?.id || !user} onClick={() => void requireAiAvailable(() => setOpenedSource(key))}>AI</Button>
+    {key && openedSource === key && props.source && <ContentSuggestionSession key={key} {...props} source={props.source} onClose={() => setOpenedSource(null)} onConfigurationError={presentAiUnavailableError} />}
+    {dialog}
   </>;
 }
 
-function ContentSuggestionSession({ source, mode, value, onApply, knowledgeDraft, onApplyKnowledge, disabled, onClose }: Props & { source: ContentMetadataSource; onClose: () => void }) {
+function ContentSuggestionSession({ source, mode, value, onApply, knowledgeDraft, onApplyKnowledge, disabled, onClose, onConfigurationError }: Props & { source: ContentMetadataSource; onClose: () => void; onConfigurationError: (error: unknown) => boolean }) {
   const [busy, setBusy] = useState(false);
   const [adopting, setAdopting] = useState(false);
   const live = useRef(true);
@@ -96,7 +102,7 @@ function ContentSuggestionSession({ source, mode, value, onApply, knowledgeDraft
         setSelected(candidates.filter(item => mode === "series" || !value.includes(item)).slice(0, available));
       }
     } catch (failure) {
-      if (!controller.signal.aborted) setError(failure instanceof Error ? failure.message : "无法分析原文件，请重试。");
+      if (!controller.signal.aborted && !onConfigurationError(failure)) setError(failure instanceof Error ? failure.message : "无法分析原文件，请重试。");
     } finally {
       if (pending.current === controller) pending.current = null;
       if (!controller.signal.aborted) setBusy(false);

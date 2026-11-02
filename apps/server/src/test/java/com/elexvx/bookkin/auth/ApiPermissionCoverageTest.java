@@ -19,6 +19,7 @@ class ApiPermissionCoverageTest {
         assertThat(ApiPermissionPolicy.required("POST", "/api/v1/book-uploads/example/match")).contains("library.upload");
         assertThat(ApiPermissionPolicy.required("GET", "/api/v1/ai/providers")).isEqualTo(Set.of("settings.ai.view"));
         assertThat(ApiPermissionPolicy.required("GET", "/api/v1/ai/settings")).isEqualTo(Set.of("settings.ai.view"));
+        assertThat(ApiPermissionPolicy.required("GET", "/api/v1/ai/status")).isEmpty();
         assertThat(ApiPermissionPolicy.required("POST", "/api/v1/ai/test")).isEqualTo(Set.of("settings.ai.edit"));
     }
     @Test void bookClassificationDefersExactSourceGrantToItsService() {

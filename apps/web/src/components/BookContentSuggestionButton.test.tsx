@@ -1,13 +1,16 @@
 import { StrictMode } from "react";
+import { MemoryRouter } from "react-router-dom";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { api, request } from "../api/client";
 import { BookKinThemeProvider } from "../theme/BookKinThemeProvider";
 import type { BookKnowledgeDraft } from "../domain/types";
 import { BookContentSuggestionButton, type ContentMetadataSource } from "./BookContentSuggestionButton";
 
-vi.mock("../api/client", () => ({ request: vi.fn(), api: { ensureMetadataTerms: vi.fn().mockResolvedValue({ items: [] }) } }));
+vi.mock("../api/client", () => ({ request: vi.fn(), api: { ensureMetadataTerms: vi.fn().mockResolvedValue({ items: [] }), getAiServiceAvailability: vi.fn() } }));
 const identity = vi.hoisted(() => ({ user: { id: "metadata-reader" } }));
+const access = vi.hoisted(() => ({ canConfigure: true }));
 vi.mock("../auth/AuthContext", () => ({ useAuth: () => ({ user: identity.user }) }));
+vi.mock("../auth/permissions", () => ({ usePermissions: () => ({ can: (code: string) => code === "settings.ai.edit" && access.canConfigure, canVisit: () => access.canConfigure }) }));
 const source: ContentMetadataSource = { type: "UPLOAD", id: "upload-id" };
 const result = { subjects: [
   { code: "GL", reason: "原文讨论文献保护", evidence: [{ locator: "page:3", quote: "古籍保护与图书馆文献整理" }] },
@@ -24,10 +27,11 @@ const knowledge: BookKnowledgeDraft = {
   totalSections: 9,
   providerId: "provider-test",
 };
-beforeEach(() => { vi.mocked(api.ensureMetadataTerms).mockReset().mockResolvedValue({ items: [] }); identity.user = { id: "metadata-reader" }; vi.mocked(request).mockReset().mockResolvedValue(result); });
-const view = (props: Partial<React.ComponentProps<typeof BookContentSuggestionButton>> = {}) => <BookKinThemeProvider>
+const ready = { enabled: true, hasConfiguredProvider: true, hasEnabledProvider: true };
+const view = (props: Partial<React.ComponentProps<typeof BookContentSuggestionButton>> = {}) => <MemoryRouter><BookKinThemeProvider>
   <BookContentSuggestionButton mode="subjects" source={source} value={["PS"]} onApply={vi.fn()} {...props} />
-</BookKinThemeProvider>;
+</BookKinThemeProvider></MemoryRouter>;
+beforeEach(() => { vi.mocked(api.ensureMetadataTerms).mockReset().mockResolvedValue({ items: [] }); vi.mocked(api.getAiServiceAvailability).mockReset().mockResolvedValue(ready); access.canConfigure = true; identity.user = { id: "metadata-reader" }; vi.mocked(request).mockReset().mockResolvedValue(result); });
 
 it.each(["BOOK", "UPLOAD"] as const)("sends only the %s file identity and shows suggestions without reference material", async type => {
   const apply = vi.fn();
@@ -52,6 +56,14 @@ it.each(["BOOK", "UPLOAD"] as const)("sends only the %s file identity and shows 
   expect(screen.queryByRole("button", { name: "取消" })).not.toBeInTheDocument();
   fireEvent.click(screen.getByRole("button", { name: "确认选择" }));
   await waitFor(() => expect(apply).toHaveBeenCalledExactlyOnceWith(["PS", "GL", "AKH"]));
+});
+
+it("checks AI availability before language, series, tag, classification or knowledge generation", async () => {
+  vi.mocked(api.getAiServiceAvailability).mockResolvedValue({ enabled: true, hasConfiguredProvider: false, hasEnabledProvider: false });
+  render(view({ mode: "languages" }));
+  fireEvent.click(screen.getByRole("button", { name: "AI 识别语言" }));
+  expect(await screen.findByRole("dialog", { name: "AI 服务尚未配置" })).toBeInTheDocument();
+  expect(request).not.toHaveBeenCalled();
 });
 
 it("keeps manual subjects in order and respects the four-subject limit", async () => {

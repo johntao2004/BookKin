@@ -10,7 +10,7 @@ import { TestProviders } from "../test/TestProviders";
 import { MetadataEditPage } from "./MetadataEditPage";
 
 // These page-flow tests exercise the OWNER path; permission-denied behavior is covered by UploadReview tests.
-vi.mock("../auth/permissions", () => ({ usePermissions: () => ({ can: () => true }) }));
+vi.mock("../auth/permissions", () => ({ usePermissions: () => ({ canVisit: () => true, can: () => true }) }));
 afterEach(() => vi.restoreAllMocks());
 
 describe("unified metadata page", () => {

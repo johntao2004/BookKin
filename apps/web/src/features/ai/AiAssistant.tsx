@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { request } from "../../api/client";
 import { useAuth } from "../../auth/AuthContext";
+import { usePermissions } from "../../auth/permissions";
 import { Button } from "../../ui/buttons";
 import { _AntAlert } from "../../ui/antd";
 import { Select, TextField } from "../../ui/forms";
 import { Dialog, DialogContent, DialogTitle } from "../../ui/overlays";
 import { AiResultActions } from "./AiResultActions";
+import { useAiAvailability } from "./useAiAvailability";
 import { Box, MenuItem, Stack, Typography } from "../../ui/primitives";
 import { reviewMarkdownToHtml } from "../reviews/markdown";
 import "../content/content.css";
@@ -34,15 +36,19 @@ const actions = (source: AiSource): AiAction[] => source === "METADATA_DRAFT" ? 
 /** Generation starts only on an explicit click; results require adoption and are never automatically saved. */
 export function AiAssistantButton(props: Props) {
   const { user } = useAuth();
+  const { can, canVisit } = usePermissions();
+  const mayConfigure = can("settings.ai.edit") && Boolean(canVisit?.("/settings", "#services/ai"));
+  const { requireAiAvailable, presentAiUnavailableError, dialog } = useAiAvailability(mayConfigure);
   const [open, setOpen] = useState(false);
   if (!user || props.source === "ARTICLE" || props.source === "COLLECTION" || props.source === "ARTICLE_DRAFT") return null;
   return <>
-    <Button type="button" aria-label={props.actionLabel} title={props.actionLabel} disabled={props.disabled} onClick={() => setOpen(true)}>{props.label ?? "AI 助读"}</Button>
-    {open && <AiAssistantSession key={`${user.id}:${props.source}:${props.id ?? "draft"}`} {...props} onClose={() => setOpen(false)} />}
+    <Button type="button" aria-label={props.actionLabel} title={props.actionLabel} disabled={props.disabled} onClick={() => void requireAiAvailable(() => setOpen(true))}>{props.label ?? "AI 助读"}</Button>
+    {open && <AiAssistantSession key={`${user.id}:${props.source}:${props.id ?? "draft"}`} {...props} onClose={() => setOpen(false)} onConfigurationError={presentAiUnavailableError} />}
+    {dialog}
   </>;
 }
 
-function AiAssistantSession({ source, id, draft, disabled, directAction, onApply, applyActions = ["POLISH"], onClose }: Props & { onClose: () => void }) {
+function AiAssistantSession({ source, id, draft, disabled, directAction, onApply, applyActions = ["POLISH"], onClose, onConfigurationError }: Props & { onClose: () => void; onConfigurationError: (error: unknown) => boolean }) {
   const directMode = source === "METADATA_DRAFT" && directAction !== undefined;
   const [action, setAction] = useState<AiAction>(actions(source)[0]);
   const [question, setQuestion] = useState("");
@@ -64,7 +70,9 @@ function AiAssistantSession({ source, id, draft, disabled, directAction, onApply
       const value = await request<AiResult>("/ai/assistance", { method: "POST", signal: controller.signal,
         body: JSON.stringify({ source, id, action: requestedAction, question: requestedAction === "ASK" ? question : undefined, draft: isDraft ? draft : undefined, consent: true }) }, { timeoutMs: 150000 });
       if (!controller.signal.aborted) { setResult({ value, draft, action: requestedAction }); setHasGenerated(true); }
-    } catch (failure) { if (!controller.signal.aborted) setError(failure instanceof Error ? failure.message : "AI 请求失败，请重试。"); }
+    } catch (failure) {
+      if (!controller.signal.aborted && !onConfigurationError(failure)) setError(failure instanceof Error ? failure.message : "AI 请求失败，请重试。");
+    }
     finally {
       if (pending.current === controller) pending.current = null;
       if (!controller.signal.aborted) setBusy(false);

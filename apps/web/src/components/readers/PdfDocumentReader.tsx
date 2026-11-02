@@ -82,7 +82,7 @@ export default function PdfDocumentReader({ bookId, annotations, theme, fontSize
   target?: string;
   targetRevision?: number;
   onNavigation?: (items: TocItem[]) => void;
-  onAnnotationActivate?: (id: string) => void;
+  onAnnotationActivate?: (id: string, rect?: DOMRect) => void;
   onSelect: (selection: ReaderSelection) => void;
   onPosition: (locator: string, progress: number) => void;
 }) {
@@ -122,6 +122,7 @@ export default function PdfDocumentReader({ bookId, annotations, theme, fontSize
   const readingSurfaceRef = useRef<HTMLDivElement | null>(null);
   const pageLayout = useReaderPageLayout(readingSurfaceRef);
   const wideSpread = pageLayout?.spread ?? false;
+  const imageSpread = wideSpread && !textLoading && readingBlocks.length === 0;
   const virtualPageCountsRef = useRef(new Map<number, number>());
   const pendingPreviousPageNumberRef = useRef<number | null>(null);
   const previousPageReadyResolverRef = useRef<(() => void) | null>(null);
@@ -146,7 +147,7 @@ export default function PdfDocumentReader({ bookId, annotations, theme, fontSize
         const annotation = annotationsRef.current.find((candidate) => candidate.id === id);
         return annotation ? { id: annotation.id, note: annotation.note } : undefined;
       },
-      (id) => annotationCallbackRef.current?.(id),
+      (id, rect) => annotationCallbackRef.current?.(id, rect),
     );
   }, [error]);
 
@@ -369,9 +370,10 @@ export default function PdfDocumentReader({ bookId, annotations, theme, fontSize
   }, [pageNumber]);
 
   const canPrevious = virtualPageIndex > 0 || pageNumber > 1;
-  const canNext = Boolean(document) && (virtualPageIndex < virtualPageCount - 1 || pageNumber < (document?.numPages ?? pageNumber));
+  const canNext = Boolean(document) && (virtualPageIndex < virtualPageCount - 1 || pageNumber + (imageSpread ? 1 : 0) < (document?.numPages ?? pageNumber));
   const changeToPreviousPage = useCallback(() => {
-    const previousPageNumber = pageNumber - 1;
+    const previousPageNumber = Math.max(1, pageNumber - (imageSpread ? 2 : 1));
+    if (imageSpread) { setPageNumber(previousPageNumber); setVirtualPageIndex(0); return; }
     const destination = previousPdfLocation({
       pageNumber,
       virtualPageIndex,
@@ -396,16 +398,16 @@ export default function PdfDocumentReader({ bookId, annotations, theme, fontSize
     return new Promise<void>((resolve) => {
       previousPageReadyResolverRef.current = resolve;
     });
-  }, [pageNumber, virtualPageIndex]);
+  }, [pageNumber, virtualPageIndex, imageSpread]);
   const changeToNextPage = useCallback(() => {
     if (virtualPageIndex < virtualPageCount - 1) setVirtualPageIndex((value) => value + 1);
     else if (document && pageNumber < document.numPages) {
-      const nextPageNumber = Math.min(document.numPages, pageNumber + 1);
+      const nextPageNumber = Math.min(document.numPages, pageNumber + (imageSpread ? 2 : 1));
       setPageNumber(nextPageNumber);
       setVirtualPageIndex(0);
       setVirtualPageCount(virtualPageCountsRef.current.get(nextPageNumber) ?? 1);
     }
-  }, [document, pageNumber, virtualPageCount, virtualPageIndex]);
+  }, [document, pageNumber, virtualPageCount, virtualPageIndex, imageSpread]);
   const goPrevious = useCallback(() => {
     if (canPrevious) void turnPage("PREVIOUS", changeToPreviousPage);
   }, [canPrevious, changeToPreviousPage, turnPage]);
@@ -451,7 +453,7 @@ export default function PdfDocumentReader({ bookId, annotations, theme, fontSize
             {textLoading
               ? <Stack spacing={1.5} sx={{ height: "100%", alignItems: "center", justifyContent: "center" }}><CircularProgress size={30} /><Typography sx={{ color: theme.muted }}>正在解析第 {pageNumber} 页文字…</Typography></Stack>
               : readingBlocks.length === 0 && document
-                ? <PdfImagePage document={document} pageNumber={pageNumber} muted={theme.muted} />
+                ? <Box sx={{ display: "flex", height: "100%", gap: tokens.spacing[3] }}>{[pageNumber, ...(imageSpread && pageNumber < document.numPages ? [pageNumber + 1] : [])].map(page => <Box key={page} sx={{ flex: "1 1 0", minWidth: 0, height: "100%" }}><PdfImagePage document={document} pageNumber={page} muted={theme.muted} /></Box>)}</Box>
                 : <PdfPagedText textRef={readingTextRef} blocks={readingBlocks} pageNumber={pageNumber} theme={theme} fontFamily={fontFamily} fontSize={fontSize} layout={pageLayout} pageIndex={virtualPageIndex} onPageCountChange={handleVirtualPageCountChange} onOpenFootnote={openFootnote} onReturnToReference={returnToFootnoteReference} onCaptureSelection={() => captureSelection(pageNumber)} />}
           </PdfReadingClipFrame>
           <PageTurnShade />
@@ -465,7 +467,7 @@ export default function PdfDocumentReader({ bookId, annotations, theme, fontSize
       )}
       <Stack component="nav" aria-label="PDF 翻页" className="pdf-reader-pagination" direction="row" spacing={1} sx={{ ...readerWidthSx, flex: `0 0 ${tokens.layout.readerControlHeight}px`, minHeight: tokens.layout.readerControlHeight, alignItems: "center", justifyContent: "center", overflowX: "auto", py: 0.75, bgcolor: theme.background, color: theme.foreground, borderTop: "1px solid", borderColor: "divider" }}>
         <IconButton color="inherit" aria-label="PDF 上一页" disabled={turning || !canPrevious} onClick={goPrevious} sx={{ width: tokens.layout.touchTarget, height: tokens.layout.touchTarget }}><NavigateBeforeRounded /></IconButton>
-        <Typography variant="body2" sx={{ minWidth: 0, flex: "1 1 auto", textAlign: "center", whiteSpace: "nowrap", color: theme.muted }}>{document ? `第 ${displayedPosition.pageNumber} 页 · ${displayedPosition.virtualPageIndex + 1}/${displayedPosition.virtualPageCount} · 共 ${document.numPages} 页` : "正在打开 PDF…"}</Typography>
+        <Typography variant="body2" sx={{ minWidth: 0, flex: "1 1 auto", textAlign: "center", whiteSpace: "nowrap", color: theme.muted }}>{document ? `第 ${displayedPosition.pageNumber}${imageSpread && displayedPosition.pageNumber < document.numPages ? `–${displayedPosition.pageNumber + 1}` : ""} 页 · 共 ${document.numPages} 页` : "正在打开 PDF…"}</Typography>
         <IconButton color="inherit" aria-label="PDF 下一页" disabled={turning || !canNext} onClick={goNext} sx={{ width: tokens.layout.touchTarget, height: tokens.layout.touchTarget }}><NavigateNextRounded /></IconButton>
         {viewMode === "ORIGINAL" && <>
           <Box sx={{ width: { xs: 0, sm: 8 } }} />

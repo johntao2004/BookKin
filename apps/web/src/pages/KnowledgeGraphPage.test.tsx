@@ -19,6 +19,7 @@ beforeEach(() => {
   sessionStorage.setItem('bookkin-demo-session', JSON.stringify({id: 'owner', username: 'owner', displayName: '主人', role: 'OWNER'}));
   vi.spyOn(api, 'listBooks').mockResolvedValue({items: [book('a'), book('b')]});
   vi.spyOn(api, 'listBookKnowledge').mockResolvedValue(points);
+  vi.spyOn(api, 'getAiServiceAvailability').mockResolvedValue({enabled: true, hasConfiguredProvider: true, hasEnabledProvider: true});
   vi.spyOn(articles, 'knowledge').mockResolvedValue([]);
 });
 afterEach(() => { vi.restoreAllMocks(); sessionStorage.clear(); });
@@ -121,6 +122,18 @@ it('opens a compact analysis drawer without sending body text until explicit sel
   fireEvent.click(screen.getByRole('button', {name: '开始分析'}));
   await waitFor(() => expect(generate).toHaveBeenCalledTimes(2));
   expect(generate.mock.calls.map(call => call[0])).toEqual(['a', 'b']);
+});
+
+it('explains missing AI configuration before generating book knowledge', async () => {
+  vi.mocked(api.getAiServiceAvailability).mockResolvedValue({enabled: true, hasConfiguredProvider: false, hasEnabledProvider: false});
+  const generate = vi.spyOn(api, 'generateBookKnowledge').mockResolvedValue(points);
+  render(<TestProviders><KnowledgeGraphPage /></TestProviders>);
+  fireEvent.click(await screen.findByRole('button', {name: '分析书籍'}));
+  fireEvent.click(await screen.findByRole('checkbox', {name: '选择 书籍a'}));
+  fireEvent.click(screen.getByRole('button', {name: '开始分析'}));
+  expect(await screen.findByRole('dialog', {name: 'AI 服务尚未配置'})).toBeInTheDocument();
+  expect(screen.getByRole('link', {name: '前往 AI 服务配置'})).toHaveAttribute('href', '/settings#services/ai');
+  expect(generate).not.toHaveBeenCalled();
 });
 
 it('appends books on reaching the bottom and resets the loaded batch on search', async () => {

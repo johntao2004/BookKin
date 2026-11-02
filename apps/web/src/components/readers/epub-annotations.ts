@@ -98,9 +98,9 @@ export function applyEpubInlineAnnotation(range: Range, annotation: Annotation, 
     wrapper.dataset.annotationId = annotation.id;
     wrapper.dataset.annotationStyle = annotation.style;
     wrapper.dataset.highlightColor = annotation.color ?? "YELLOW";
-    if (annotation.note?.trim()) {
+    if (annotation.id) {
       wrapper.setAttribute("role", "button");
-      wrapper.setAttribute("aria-label", "查看笔记");
+      wrapper.setAttribute("aria-label", "编辑划线或笔记");
       wrapper.tabIndex = index === selected.length - 1 ? 0 : -1;
       wrapper.style.cursor = "pointer";
     }

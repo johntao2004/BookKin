@@ -8,7 +8,7 @@ import { UploadReview } from './BookUploadDialog';
 const uploadPermissions = vi.hoisted(() => ({ canUpload: true }));
 // UploadReview's editable controls are permission-gated; these workflow tests exercise an owner.
 vi.mock('../auth/permissions', () => ({
-  usePermissions: () => ({ can: (permission: string) => permission === 'library.upload' && uploadPermissions.canUpload }),
+  usePermissions: () => ({ canVisit: () => true, can: (permission: string) => permission === 'library.upload' && uploadPermissions.canUpload }),
 }));
 const upload: BookUpload = {
   id: 'upload-review', libraryRootId: 'root', libraryRootName: '主书库', originalFilename: 'hidden-original.pdf',
