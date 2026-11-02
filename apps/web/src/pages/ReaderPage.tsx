@@ -215,6 +215,10 @@ export function ReaderWorkspace({ source }: { source?: IndependentReaderSource }
     window.getSelection()?.removeAllRanges();
   }, [noteDraftKey]);
 
+  const dismissAnnotationTools = useCallback(() => {
+    if (selection && !noteComposerOpen) closeSelection();
+  }, [selection, noteComposerOpen, closeSelection]);
+
   const openAnnotationNotes = useCallback((id: string, rect?: DOMRect) => {
     const group = annotationGroupsRef.current.find(item => item.ids.includes(id));
     if (!group || !user) return;
@@ -343,7 +347,7 @@ export function ReaderWorkspace({ source }: { source?: IndependentReaderSource }
           <Suspense fallback={<Stack sx={{ height: "100%", alignItems: "center", justifyContent: "center" }}><CircularProgress /></Stack>}>
             {book.format === "PDF"
               ? <PdfDocumentReader bookId={bookId} annotations={annotations} onAnnotationActivate={openAnnotationNotes} theme={currentTheme} fontSize={fontSize} fontFamily={fontFamily} pageTurnEnabled={readerSettings.pageTurnEnabled} fontSourceUrl={!guest && currentFont.source === "CUSTOM" ? `/api/v1/reader-fonts/${currentFont.id}/content` : undefined} contentUrl={source?.contentUrl ?? (guest ? `/api/v1/display-books/${bookId}/content` : undefined)} readOnly={Boolean(source) || guest} target={readerTarget} targetRevision={targetRevision} onNavigation={handleNavigation} onSelect={handleReaderSelection} onPosition={handlePosition} />
-              : <EpubDocumentReader onAnnotationDismiss={closeSelection} flow={source?.flow} contentLabel={source?.label} bookId={bookId} annotations={annotations} onAnnotationActivate={openAnnotationNotes} theme={currentTheme} fontSize={fontSize} fontFamily={fontFamily} pageTurnEnabled={readerSettings.pageTurnEnabled} fontSourceUrl={!guest && currentFont.source === "CUSTOM" ? `/api/v1/reader-fonts/${currentFont.id}/content` : undefined} contentUrl={source?.contentUrl ?? (guest ? `/api/v1/display-books/${bookId}/content` : undefined)} readOnly={Boolean(source) || guest} target={readerTarget} targetRevision={targetRevision} onNavigation={handleNavigation} onSelect={handleReaderSelection} onPosition={handlePosition} />}
+              : <EpubDocumentReader onAnnotationDismiss={dismissAnnotationTools} flow={source?.flow} contentLabel={source?.label} bookId={bookId} annotations={annotations} onAnnotationActivate={openAnnotationNotes} theme={currentTheme} fontSize={fontSize} fontFamily={fontFamily} pageTurnEnabled={readerSettings.pageTurnEnabled} fontSourceUrl={!guest && currentFont.source === "CUSTOM" ? `/api/v1/reader-fonts/${currentFont.id}/content` : undefined} contentUrl={source?.contentUrl ?? (guest ? `/api/v1/display-books/${bookId}/content` : undefined)} readOnly={Boolean(source) || guest} target={readerTarget} targetRevision={targetRevision} onNavigation={handleNavigation} onSelect={handleReaderSelection} onPosition={handlePosition} />}
           </Suspense>
         ) : <DemoPagedSurface bookTitle={book.title} format={book.format} theme={currentTheme} night={readerTheme === "NIGHT"} fontFamily={fontFamily} fontSize={fontSize} pageTurnEnabled={readerSettings.pageTurnEnabled} paragraphs={demoChapter} annotations={annotations} onAnnotationActivate={openAnnotationNotes} onMouseUp={captureSelection} />}
       </Box>

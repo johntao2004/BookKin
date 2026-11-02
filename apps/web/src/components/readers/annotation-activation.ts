@@ -42,9 +42,12 @@ export function bindAnnotationNoteActivation(
     const frame = document.defaultView?.frameElement?.getBoundingClientRect();
     onActivate(id, rect && new DOMRect(rect.x + (frame?.x ?? 0), rect.y + (frame?.y ?? 0), rect.width, rect.height));
   };
+  const scroll = () => onDismiss?.();
+  root.addEventListener("scroll", scroll, true);
   root.addEventListener("click", click, true);
   root.addEventListener("keydown", keydown, true);
   return () => {
+    root.removeEventListener("scroll", scroll, true);
     root.removeEventListener("click", click, true);
     root.removeEventListener("keydown", keydown, true);
   };

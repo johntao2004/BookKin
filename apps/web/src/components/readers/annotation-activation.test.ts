@@ -53,6 +53,21 @@ describe("annotation note activation", () => {
     expect(dismiss).toHaveBeenCalledTimes(2);
   });
 
+  it("dismisses on non-bubbling document and nested content scrolls, and removes listeners", () => {
+    const { root, marker, cleanup } = setup();
+    cleanup();
+    const dismiss = vi.fn();
+    const unbind = bindAnnotationNoteActivation(document, id => ({ id, note: "" }), vi.fn(), dismiss);
+    fireEvent.scroll(document);
+    fireEvent.scroll(root);
+    fireEvent.scroll(marker);
+    expect(dismiss).toHaveBeenCalledTimes(3);
+    unbind();
+    fireEvent.scroll(document);
+    fireEvent.scroll(root);
+    expect(dismiss).toHaveBeenCalledTimes(3);
+  });
+
   it("supports Enter and Space without repeated activation on a held key", () => {
     const { marker, activate, cleanup } = setup();
     fireEvent.keyDown(marker, { key: "Enter" });
