@@ -40,7 +40,7 @@ export function ArticleCollectionsPage() {
 
   if (collectionsQuery.isError && !collectionsQuery.data) return <RequestErrorPage error={collectionsQuery.error} retrying={collectionsQuery.isFetching} onRetry={() => void collectionsQuery.refetch()} />;
   return <PageContainer>
-    <PageHeader eyebrow="ARTICLE COLLECTIONS" title="选集" action={can("articles.collections.edit") ? <Button variant="contained" onClick={() => setCreateOpen(true)}>新建私人选集</Button> : undefined} />
+    <PageHeader eyebrow="ARTICLE COLLECTIONS" title="选集" action={can("articles.collections.edit") ? <Button variant="contained" onClick={() => setCreateOpen(true)}>新建选集</Button> : undefined} />
     {collectionsQuery.isPending ? (
       <Stack role="status" aria-label="正在加载选集" sx={{ alignItems: "center", py: `${tokens.spacing[20]}px` }}><CircularProgress /></Stack>
     ) : collectionsQuery.isError ? (
