@@ -40,7 +40,7 @@ export function AiAssistantButton(props: Props) {
   const mayConfigure = can("settings.ai.edit") && Boolean(canVisit?.("/settings", "#services/ai"));
   const { requireAiAvailable, presentAiUnavailableError, dialog } = useAiAvailability(mayConfigure);
   const [open, setOpen] = useState(false);
-  if (!user || props.source === "ARTICLE" || props.source === "COLLECTION" || props.source === "ARTICLE_DRAFT") return null;
+  if (!user || props.source === "BOOK" || props.source === "ARTICLE" || props.source === "COLLECTION" || props.source === "ARTICLE_DRAFT") return null;
   return <>
     <Button type="button" aria-label={props.actionLabel} title={props.actionLabel} disabled={props.disabled} onClick={() => void requireAiAvailable(() => setOpen(true))}>{props.label ?? "AI 助读"}</Button>
     {open && <AiAssistantSession key={`${user.id}:${props.source}:${props.id ?? "draft"}`} {...props} onClose={() => setOpen(false)} onConfigurationError={presentAiUnavailableError} />}

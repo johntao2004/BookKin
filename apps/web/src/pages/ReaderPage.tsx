@@ -338,7 +338,6 @@ export function ReaderWorkspace({ source }: { source?: IndependentReaderSource }
         onToggleBookmark={() => void toggleBookmark()}
         onOpenSettings={(event: any) => setSettingsAnchor(event.currentTarget)}
         onOpenNotes={() => { setFocusedNoteId(null); setNotesOpen(true); }}
-        assistant={!source && !guest && can("reader.read") ? <AiAssistantButton source="BOOK" id={bookId} /> : undefined}
       />
 
       {source?.error && <Alert severity="error">{source.error}</Alert>}

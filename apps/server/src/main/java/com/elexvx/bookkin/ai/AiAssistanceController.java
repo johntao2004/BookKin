@@ -16,6 +16,8 @@ public class AiAssistanceController {
     public AiAssistanceController(AiAssistanceService service) { this.service = service; }
     @PostMapping
     AiAssistanceService.Result assist(@Valid @RequestBody Input input, Principal principal) throws Exception {
+        if (input.source() == AiAssistanceService.SourceType.BOOK)
+            throw new com.elexvx.bookkin.common.ApiException(org.springframework.http.HttpStatus.GONE, "BOOK_AI_DISABLED", "书籍 AI 助读功能已停用。");
         return service.assist(input, principal);
     }
     public record Input(@NotNull AiAssistanceService.SourceType source, @Size(max = 36) String id,

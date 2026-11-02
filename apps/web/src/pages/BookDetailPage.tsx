@@ -1,6 +1,5 @@
 import { RequestErrorPage } from "./HttpErrorPage";
 import { usePermissions } from "../auth/permissions";
-import { AiAssistantButton } from "../features/ai/AiAssistant";
 import { BookReviewsPanel } from "../features/reviews/BookReviewsPanel";
 import { BookMetadataLayout, bookMetadataFieldsSx, bookMetadataTitleSx } from "../components/BookMetadataLayout";
 import { BookMetadataEditor } from "../components/BookMetadataEditor";
@@ -89,7 +88,6 @@ export function BookDetailPage() {
               <Button variant="contained" disabled={!can("reader.read") || book.status !== "AVAILABLE"} onClick={() => navigate(`/reader/${book.id}`)}>{book.progress > 0 ? "继续阅读" : "开始阅读"}</Button>
               {can("library.download") && book.status === "AVAILABLE" && <Button component="a" variant="outlined" href={`/api/v1/books/${encodeURIComponent(book.id)}/download`} download={`${title}.${book.format.toLowerCase()}`}>下载原书</Button>}
               <Button variant="outlined" disabled={!can("booklists.edit") || book.status !== "AVAILABLE"} onClick={() => setAdding(true)}>加入书目</Button>
-              {can("reader.read") && book.status === "AVAILABLE" && <AiAssistantButton source="BOOK" id={book.id} />}
                 {can("library.edit") && <Button variant="outlined" disabled={metadataQuery.isPending || metadataQuery.isError} onClick={() => setEditingBookId(book.id)}>编辑元信息</Button>}
                 {!can("library.edit") && can("library.files") && <Button variant="outlined" onClick={() => setFileOperation("RENAME")}>重命名原文件</Button>}
                 {can("library.trash") && <Button variant="outlined" color="error" disabled={book.status === "TRASHED"} onClick={() => setFileOperation("TRASH")}>删除书籍</Button>}
