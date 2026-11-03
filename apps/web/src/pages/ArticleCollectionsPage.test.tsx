@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Route, Routes, useLocation } from "react-router-dom";
 import { TestProviders } from "../test/TestProviders";
@@ -50,6 +50,17 @@ describe("ArticleCollectionsPage routes and visibility", () => {
     await waitFor(() => expect(screen.getByTestId("location")).toHaveTextContent("/article-collections/own-collection?from=%2Farticle-collections%3Fq%3Driver%26sort%3Dupdated"));
     fireEvent.click(screen.getByRole("link", { name: "返回选集列表" }));
     await waitFor(() => expect(screen.getByTestId("location")).toHaveTextContent("/article-collections?q=river&sort=updated"));
+  });
+
+  it("groups the viewer's shared collection only under library sharing", async () => {
+    const ownShared = { ...shared, id: "own-shared", title: "我分享的选集", ownedByViewer: true, editable: true };
+    vi.spyOn(articleCollections, "list").mockResolvedValue({ items: [own, ownShared, shared] });
+    render(<TestProviders initialPath="/article-collections"><ArticleCollectionsPage /></TestProviders>);
+    const mineHeading = await screen.findByRole("heading", { name: "我的选集" });
+    const sharedHeading = screen.getByRole("heading", { name: "书库共享" });
+    expect(within(mineHeading.parentElement!.parentElement!).queryByText("我分享的选集")).not.toBeInTheDocument();
+    expect(within(sharedHeading.parentElement!.parentElement!).getByText("我分享的选集")).toBeInTheDocument();
+    expect(screen.getAllByText("我分享的选集")).toHaveLength(1);
   });
 
   it("shows collection management for an editable member collection without source article edit actions", async () => {

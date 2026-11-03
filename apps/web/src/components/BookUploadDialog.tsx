@@ -1,3 +1,4 @@
+import { fileFingerprint } from "../features/uploads/file-fingerprint";
 import { ThemaSubjectField } from "./ThemaSubjectField";
 import { formatLanguages } from "../domain/languages";
 import { formatPublicationDate } from "../domain/publication-date";
@@ -37,7 +38,7 @@ interface LocalUpload {
   id: string;
   file: File;
   progress: number;
-  state: "QUEUED" | "UPLOADING" | "UPLOADED" | "FAILED";
+  state: "QUEUED" | "CHECKING" | "UPLOADING" | "UPLOADED" | "FAILED";
   uploadId?: string;
   error?: string;
 }
@@ -51,6 +52,12 @@ export function BookUploadDialog({ open, initialRootId, onClose }: {
   const { user } = useAuth();
   const fileInput = useRef<HTMLInputElement>(null);
   const uploading = useRef(false);
+  const hashAbort = useRef(new AbortController());
+  useEffect(() => {
+    const controller = new AbortController();
+    hashAbort.current = controller;
+    return () => controller.abort();
+  }, []);
   const [local, setLocal] = useState<LocalUpload[]>([]);
   const [freshUploadIds, setFreshUploadIds] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
@@ -71,22 +78,43 @@ export function BookUploadDialog({ open, initialRootId, onClose }: {
     uploading.current = true;
     setBusy(true);
     let cursor = 0;
+    const signal = hashAbort.current.signal;
+    // Serialize equal content within this batch, even when filenames differ.
+    const checkedTransfers = new Map<string, Promise<"CATALOG" | "DRAFT" | null>>();
     const worker = async () => {
-      while (cursor < queue.length) {
+      while (cursor < queue.length && !signal.aborted) {
         const item = queue[cursor++];
-        setLocal(current => patchLocal(current, item.id, { state: "UPLOADING", error: undefined }));
+        setLocal(current => patchLocal(current, item.id, { state: "CHECKING", progress: 0, error: undefined }));
+        let settle: ((result: "CATALOG" | "DRAFT" | null) => void) | undefined;
         try {
+          const fingerprint = await fileFingerprint(item.file, progress => setLocal(current => patchLocal(current, item.id, { progress })), signal);
+          signal.throwIfAborted();
+          const previous = checkedTransfers.get(fingerprint);
+          const existingMatch = previous ? await previous : null;
+          signal.throwIfAborted();
+          if (existingMatch) throw new Error(existingMatch === "DRAFT"
+            ? "相同文件已在待校对列表中，请继续处理已有草稿" : "相同文件已存在于书库中，请勿重复上传");
+          checkedTransfers.set(fingerprint, new Promise(resolve => { settle = resolve; }));
+          const precheck = await api.precheckBookUpload({ fingerprint, sizeBytes: item.file.size });
+          signal.throwIfAborted();
+          if (precheck.match !== "NONE") {
+            settle?.(precheck.match);
+            throw new Error(precheck.match === "DRAFT"
+              ? "相同文件已在待校对列表中，请继续处理已有草稿" : "相同文件已存在于书库中，请勿重复上传");
+          }
+          setLocal(current => patchLocal(current, item.id, { state: "UPLOADING", progress: 0 }));
           const session = await api.createBookUpload({ libraryRootId: rootId, filename: item.file.name, sizeBytes: item.file.size });
           const received = await api.uploadBookContent(session.id, item.file, progress => setLocal(current => patchLocal(current, item.id, { progress })));
           if (received.status === "DUPLICATE") {
             throw new Error(received.errorDetail || "相同文件已存在于书库中，请勿重复上传。");
           }
           if (received.status === "FAILED") throw new Error(received.errorDetail || "文件处理失败。");
+          settle?.("DRAFT");
           setFreshUploadIds(current => [...current, session.id]);
           setLocal(current => patchLocal(current, item.id, { uploadId: session.id, state: "UPLOADED", progress: 100 }));
         } catch (reason) {
           setLocal(current => patchLocal(current, item.id, { state: "FAILED", error: errorMessage(reason) }));
-        }
+        } finally { settle?.(null); }
       }
     };
     try { await Promise.all([worker(), worker()]); }
@@ -139,8 +167,8 @@ function LocalQueue({ items, onRemove }: { items: LocalUpload[]; onRemove: (id: 
   return <Stack spacing={1.25}>{items.map((item) => (
     <Stack key={item.id} direction="row" sx={{ gap: 1.5, alignItems: "center", border: 1, borderColor: "divider", borderRadius: 2, p: 1.5 }}>
       <InsertDriveFileOutlined color={item.state === "FAILED" ? "error" : "action"} />
-      <Box sx={{ flex: 1, minWidth: 0 }}><Typography variant="body2" noWrap>{item.file.name}</Typography><Typography variant="caption" color={item.state === "FAILED" ? "error" : "text.secondary"}>{item.error ?? `${formatBytes(item.file.size)} · ${item.state === "QUEUED" ? "等待上传" : item.state === "UPLOADED" ? "已上传" : "正在上传"}`}</Typography>{item.state === "UPLOADING" && <LinearProgress variant="determinate" value={item.progress} sx={{ mt: 0.75 }} />}</Box>
-      {item.state !== "UPLOADING" && <IconButton aria-label={`移除 ${item.file.name}`} onClick={() => onRemove(item.id)}><DeleteOutlineRounded /></IconButton>}
+      <Box sx={{ flex: 1, minWidth: 0 }}><Typography variant="body2" noWrap>{item.file.name}</Typography><Typography variant="caption" color={item.state === "FAILED" ? "error" : "text.secondary"}>{item.error ?? `${formatBytes(item.file.size)} · ${item.state === "QUEUED" ? "等待上传" : item.state === "UPLOADED" ? "已上传" : item.state === "CHECKING" ? "正在检查文件" : "正在上传"}`}</Typography>{(item.state === "UPLOADING" || item.state === "CHECKING") && <LinearProgress variant="determinate" value={item.progress} sx={{ mt: 0.75 }} />}</Box>
+      {item.state !== "UPLOADING" && item.state !== "CHECKING" && <IconButton aria-label={`移除 ${item.file.name}`} onClick={() => onRemove(item.id)}><DeleteOutlineRounded /></IconButton>}
     </Stack>
   ))}</Stack>;
 }

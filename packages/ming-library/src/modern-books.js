@@ -8,7 +8,7 @@ import * as THREE from 'three';
  */
 
 const PALETTE = ['#29434d','#773c34','#ccb88c','#354b3c','#485979','#9e6d42','#6b5865','#c8c8ba','#304c57','#887953','#5c6866','#b1a17c'];
-const FONT = 'MingSerif, BookCJK, "Noto Serif SC", "Songti SC", "Microsoft YaHei", serif';
+const FONT = 'BookKin Serif, Noto Serif SC, serif';
 const PER_PAGE = 64;
 const FACES_PER_BOOK = 18; // Nine casing quads, two triangles per quad.
 const VERTICES_PER_BOOK = 36;
@@ -490,7 +490,7 @@ export function generateDemoBooks(count=48) {
     ctx.fillStyle=ink;ctx.textAlign='left';ctx.textBaseline='top';ctx.font=`12px ${FONT}`;ctx.fillText('GUANWEN / COLLECTION',28,25);
     ctx.fillRect(28,52,264,1);ctx.font=`500 38px ${FONT}`;wrapText(ctx,title,28,82,250,51,3);
     ctx.font=`15px ${FONT}`;ctx.fillText(book.author,29,208);ctx.font=`11px ${FONT}`;ctx.fillText(book.category,29,428);
-    ctx.fillText('示范书目 · 可替换封面',29,451);ctx.textAlign='right';ctx.font='12px Georgia, serif';ctx.fillText(String(i+1).padStart(2,'0'),289,430);
+    ctx.fillText('示范书目 · 可替换封面',29,451);ctx.textAlign='right';ctx.font='12px BookKin Serif, Noto Serif SC, serif';ctx.fillText(String(i+1).padStart(2,'0'),289,430);
     book.coverUrl=c.toDataURL('image/png');records.push(book);
   }
   demoCache.set(count,records);return records.map(b=>({...b}));

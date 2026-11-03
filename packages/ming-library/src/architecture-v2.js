@@ -96,7 +96,7 @@ function inscription(text, vertical = false) {
     c.strokeStyle = '#c0a56a'; c.lineWidth = vertical ? 7 : 10; c.strokeRect(14, 14, w - 28, h - 28);
     c.lineWidth = 2; c.strokeRect(26, 26, w - 52, h - 52);
     c.fillStyle = '#dbc48c'; c.textAlign = 'center'; c.textBaseline = 'middle';
-    const chars = [...text]; c.font = `${vertical ? 92 : 190}px MingSerif, 'Songti SC', serif`;
+    const chars = [...text]; c.font = `${vertical ? 92 : 190}px BookKin Serif, Noto Serif SC, serif`;
     chars.forEach((ch, i) => c.fillText(ch, vertical ? w / 2 : w * (i + 1) / (chars.length + 1), vertical ? h * (i + 1) / (chars.length + 1) : h * .53));
   });
 }

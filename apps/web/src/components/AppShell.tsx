@@ -38,6 +38,7 @@ import { useBookKinTheme } from "../theme/BookKinThemeProvider";
 import { bookKinThemeOptions } from "../theme/theme";
 import { useOrdinaryPageScale } from "../theme/useOrdinaryPageScale";
 import { articlesNavigationSections, libraryNavigationSections, notesNavigationSections } from "./app-navigation-sections";
+import { useVaultNavigationStatus } from "../features/vault/use-vault-navigation-status";
 
 const navigation = [
   { label: "藏书楼", path: "/library", icon: <LibraryBooksOutlined /> },
@@ -70,6 +71,7 @@ export function AppShell({ children }: PropsWithChildren) {
   const site = siteQuery.data ?? DEFAULT_SITE_SETTINGS;
   const { user, logout } = useAuth();
   const { canVisit } = usePermissions();
+  const vaultEnabled = useVaultNavigationStatus(user?.id, Boolean(user && canVisit("/vault")));
   const [logoutError, setLogoutError] = useState("");
   const { mode: bookKinTheme, setMode: setBookKinTheme } = useBookKinTheme();
   const location = useLocation();
@@ -86,11 +88,12 @@ export function AppShell({ children }: PropsWithChildren) {
   const [themeMenuOpen, setThemeMenuOpen] = useState(false);
   const themeMenuSelectionRef = useRef(false);
   const librarySections = libraryNavigationSections.filter(item => (!item.requiresUser || user)
-    && (item.path !== "/virtual-library" || (user && siteQuery.isSuccess && site.virtualLibraryEnabled)))
+    && (item.path !== "/virtual-library" || (siteQuery.isSuccess && site.virtualLibraryEnabled)))
     .filter(item => canVisit(item.path));
   const notesSections = notesNavigationSections.filter(item => canVisit(item.path));
   const articlesSections = articlesNavigationSections.filter(item => canVisit(item.path));
-  const libraryNavigation = (user ? navigation : navigation.filter(item => item.path === "/library")).filter(item =>
+  const libraryNavigation = (user ? navigation : navigation.filter(item => item.path === "/library"))
+    .filter(item => item.path !== "/vault" || vaultEnabled).filter(item =>
     canVisit(item.path) || (item.path === "/articles" && articlesSections.length > 0)
       || (item.path === "/annotations" && notesSections.length > 0));
   const searchLabel = "搜索书籍、笔记、书目";

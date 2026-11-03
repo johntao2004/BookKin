@@ -6,6 +6,7 @@ import { Alert } from "../ui/feedback";
 import { Stack, Typography } from "../ui/primitives";
 import { Switch } from "../ui/forms";
 import { Skeleton } from "../ui/antd";
+import { publishVaultPolicyChange, vaultNavigationStatusKey } from "../features/vault/use-vault-navigation-status";
 
 export function VaultPolicySettings() {
   const { user } = useAuth(); const client = useQueryClient();
@@ -21,7 +22,11 @@ export function VaultPolicySettings() {
       </Stack>
       <Switch checked={query.data.enabled} disabled={busy || user?.role !== "OWNER" || (!query.data.configured && !query.data.enabled)} slotProps={{ input: { "aria-label": "启用禁书区" } }} sx={{ alignSelf: { xs: "flex-end", sm: "auto" }, flexShrink: 0 }} onChange={async (_, enabled) => {
         setBusy(true); setError("");
-        try { const saved = await vaultAccessApi.savePolicy(enabled, query.data.revision); client.setQueryData(["vault-policy"], saved); }
+        try { const saved = await vaultAccessApi.savePolicy(enabled, query.data.revision); client.setQueryData(["vault-policy"], saved); if (user?.id) {
+          const navKey = vaultNavigationStatusKey(user.id);
+          await client.cancelQueries({ queryKey: navKey });
+          publishVaultPolicyChange(saved.enabled, user.id, client);
+        } }
         catch (reason) { setError(reason instanceof Error ? reason.message : "保存失败"); }
         finally { setBusy(false); }
       }} />

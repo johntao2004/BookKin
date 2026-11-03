@@ -214,6 +214,23 @@ describe("ReaderWorkspace independent source", () => {
   });
 
 
+  it("hides navigation without a source TOC and keeps saved bookmarks independently reachable", async () => {
+    const source = independentSource();
+    const view = render(<TestProviders><ReaderWorkspace source={source} /></TestProviders>);
+    await screen.findByRole("region", { name: "共享正文" });
+    fireEvent.click(screen.getByRole("button", { name: "更多阅读操作" }));
+    expect(screen.queryByRole("menuitem", { name: "目录" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("menuitem", { name: "书签" })).not.toBeInTheDocument();
+    view.unmount();
+    source.annotations = [{ id: "bookmark-no-toc", bookId: source.id, type: "BOOKMARK", style: "HIGHLIGHT", quote: "", note: "", locator: "epubcfi(/6/2!/4/2)", createdAt: "2026-10-23T00:00:00Z" }];
+    render(<TestProviders><ReaderWorkspace source={source} /></TestProviders>);
+    await screen.findByRole("region", { name: "共享正文" });
+    fireEvent.click(screen.getByRole("button", { name: "更多阅读操作" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "书签" }));
+    expect(await screen.findByRole("navigation", { name: "书签" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "目录" })).not.toBeInTheDocument();
+  });
+
   it("restores chapter bookmark markers and jumps to the exact saved position on every click", async () => {
     const source = independentSource();
     const locator = "epubcfi(/6/2!/4/4/1:25)";

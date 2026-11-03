@@ -28,6 +28,7 @@ import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
@@ -141,12 +142,21 @@ public class BookUploadService {
         LibraryRoot root = writableRoot(upload.libraryRootId(), contentLength);
         Path rootPath = rootPath(root);
         Path target = internalTarget(rootPath, upload.stagingPath());
+        boolean claimed = false;
+        boolean targetCreated = false;
+        boolean receiveRecorded = false;
         try {
+            if (!uploads.claimReceiving(id, actor)) {
+                throw ApiException.conflict("UPLOAD_STATE", "当前上传会话已由另一个请求接收文件。");
+            }
+            claimed = true;
             ensureInternalDirectory(rootPath, target.getParent());
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             long written = 0;
+            long nextLeaseRefreshAt = 16L * 1024 * 1024;
             byte[] buffer = new byte[1024 * 1024];
             try (FileChannel channel = FileChannel.open(target, StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE)) {
+                targetCreated = true;
                 int read;
                 while ((read = input.read(buffer)) >= 0) {
                     if (read == 0) continue;
@@ -155,26 +165,44 @@ public class BookUploadService {
                     digest.update(buffer, 0, read);
                     ByteBuffer bytes = ByteBuffer.wrap(buffer, 0, read);
                     while (bytes.hasRemaining()) channel.write(bytes);
+                    if (written >= nextLeaseRefreshAt) {
+                        if (!uploads.renewReceivingClaim(id, actor)) {
+                            throw ApiException.conflict("UPLOAD_STATE", "上传会话已失效，请重新创建上传。");
+                        }
+                        nextLeaseRefreshAt = written + 16L * 1024 * 1024;
+                    }
                 }
                 channel.force(true);
             }
             if (written != upload.declaredSizeBytes()) throw new IllegalArgumentException("上传文件不完整");
             String fingerprint = "sha256:" + HexFormat.of().formatHex(digest.digest());
-            uploads.received(id, written, fingerprint);
+            if (!uploads.receivedClaimed(id, written, fingerprint)) {
+                throw ApiException.conflict("UPLOAD_STATE", "上传会话状态已变化，请重新打开上传列表。");
+            }
+            receiveRecorded = true;
             UUID existingBook = catalog.duplicateBookId(fingerprint);
             if (existingBook != null) uploads.duplicate(id, existingBook);
             var received = uploads.findOwned(id, actor).orElseThrow();
             if (received.status() == BookUploadStatus.DUPLICATE) {
                 deleteQuietly(target);
+                targetCreated = false;
                 return received.view();
             }
             processor.process(id);
             audit.record(actor, "BOOK_UPLOAD_RECEIVED", "BOOK_UPLOAD", id.toString(), upload.originalFilename(), upload.stagingPath(),
                     null, fingerprint, "SUCCEEDED", "{\"sizeBytes\":" + written + "}");
             return uploads.findOwned(id, actor).orElseThrow().view();
+        } catch (ApiException exception) {
+            if (claimed && !receiveRecorded) {
+                if (targetCreated) deleteQuietly(target);
+                uploads.failedReceiving(id, "UPLOAD_FAILED", safeMessage(exception));
+            }
+            throw exception;
         } catch (Exception exception) {
-            deleteQuietly(target);
-            uploads.failed(id, "UPLOAD_FAILED", safeMessage(exception));
+            if (claimed && !receiveRecorded) {
+                if (targetCreated) deleteQuietly(target);
+                uploads.failedReceiving(id, "UPLOAD_FAILED", safeMessage(exception));
+            }
             throw new ApiException(HttpStatus.BAD_REQUEST, "UPLOAD_FAILED", safeMessage(exception));
         }
     }
@@ -506,13 +534,16 @@ public class BookUploadService {
     public void cancel(UUID id, Principal principal) {
         UUID actor = actor(principal);
         var upload = owned(id, actor);
-        if (upload.status() == BookUploadStatus.COMMITTING || upload.status() == BookUploadStatus.SUCCEEDED) {
-            throw ApiException.conflict("UPLOAD_STATE", "正在入库或已经完成的上传不能取消。");
+        boolean cancellationClaimed = uploads.cancelOwnedIfCancellable(id, actor);
+        if (!cancellationClaimed && upload.status() != BookUploadStatus.CANCELLED) {
+            throw ApiException.conflict("UPLOAD_STATE", "文件接收或处理已开始，或上传已提交，不能取消。");
         }
-        deleteUploadFiles(upload);
-        uploads.cancelled(id);
-        audit.record(actor, "BOOK_UPLOAD_CANCELLED", "BOOK_UPLOAD", id.toString(), upload.originalFilename(), null,
-                upload.fingerprint(), null, "SUCCEEDED", "{}");
+        // A repeated DELETE retries incomplete filesystem cleanup without changing state or adding a second audit event.
+        deleteUploadFilesForCancellation(upload);
+        if (cancellationClaimed) {
+            audit.record(actor, "BOOK_UPLOAD_CANCELLED", "BOOK_UPLOAD", id.toString(), upload.originalFilename(), null,
+                    upload.fingerprint(), null, "SUCCEEDED", "{}");
+        }
     }
 
     public CoverLocation cover(UUID id, Principal principal) {
@@ -822,6 +853,29 @@ public class BookUploadService {
                 Files.deleteIfExists(directory);
             }
         } catch (Exception ignored) {}
+    }
+
+    private void deleteUploadFilesForCancellation(BookUploadModels.UploadEntity upload) {
+        try {
+            LibraryRoot root = roots.findById(upload.libraryRootId())
+                    .orElseThrow(() -> new IOException("上传书库根目录不存在"));
+            Path rootPath = rootPath(root);
+            Path directory = internalTarget(rootPath, ".bookkin-staging/uploads/" + upload.id());
+            if (Files.isSymbolicLink(directory)) throw new IOException("上传暂存目录不能是软链接");
+            if (!Files.isDirectory(directory, LinkOption.NOFOLLOW_LINKS)) return;
+            try (var stream = Files.list(directory)) {
+                for (Path file : stream.toList()) {
+                    if (Files.isSymbolicLink(file) || !file.normalize().startsWith(directory)) {
+                        throw new IOException("上传暂存文件路径无效");
+                    }
+                    Files.deleteIfExists(file);
+                }
+            }
+            Files.deleteIfExists(directory);
+        } catch (Exception exception) {
+            throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "UPLOAD_CLEANUP_FAILED",
+                    "上传已取消，但暂存文件清理未完成；重试取消可继续清理。");
+        }
     }
 
     private BookUploadModels.UploadEntity owned(UUID id, UUID actor) {

@@ -18,6 +18,7 @@ import { useAuth } from "../auth/AuthContext";
 import { BooklistCard } from "../components/CatalogDiscoveryCards";
 import { BookCatalogEmptyState } from "../components/BookCatalogEmptyState";
 import { BooklistFormDialog } from "../components/BooklistFormDialog";
+import { CatalogSection } from "../components/CatalogSection";
 import { PageContainer, PageHeader } from "../components/PageHeader";
 import type { BooklistSummary } from "../domain/types";
 import { tokens } from "../theme/generated-tokens";
@@ -38,7 +39,8 @@ export function BooklistsPage() {
   });
   const all = booklistsQuery.data?.items ?? [];
   const mine = user ? all.filter((booklist) => booklist.ownedByViewer && booklist.visibility === "PRIVATE") : [];
-  const discovery = all.filter((booklist) => booklist.visibility === "PUBLIC" || (user && booklist.visibility === "MEMBERS"));
+  const publicBooklists = all.filter((booklist) => booklist.visibility === "PUBLIC");
+  const family = user ? all.filter((booklist) => booklist.visibility === "MEMBERS") : [];
 
   const updateQuery = (value: string) => {
     const next = new URLSearchParams(params);
@@ -59,15 +61,13 @@ export function BooklistsPage() {
         <Stack sx={{ alignItems: "center", py: `${tokens.spacing[20]}px` }}><CircularProgress /><Typography color="text.secondary" sx={{ mt: 2 }}>正在展开书目…</Typography></Stack>
       ) : booklistsQuery.isError ? (
         <Alert severity="error" action={<Button color="inherit" onClick={() => void booklistsQuery.refetch()}>重试</Button>}>书目暂时无法读取。</Alert>
-      ) : all.length ? (
-        <Stack sx={{ gap: `${tokens.spacing[16]}px` }}>
-          {user ? <BooklistSection title="我的书目" items={mine} /> : null}
-          <BooklistSection title={user ? "家庭共享" : "公开书目"} items={discovery} />
-        </Stack>
       ) : (
-        <BookCatalogEmptyState title={query ? "未找到匹配的书目" : EMPTY_BOOKLISTS_TITLE}
-          action={query ? <Button onClick={() => updateQuery("")}>清除搜索</Button> : undefined}
-        />
+        <Stack sx={{ gap: `${tokens.spacing[16]}px` }}>
+          {user ? <BooklistSection title="我的书目" items={mine} emptyTitle={query ? "未找到匹配的书目" : EMPTY_BOOKLISTS_TITLE} /> : null}
+          {user ? <BooklistSection title="家庭共享" items={family} emptyTitle={query ? "未找到匹配的书目" : "暂无家庭共享书目"} /> : null}
+          <BooklistSection title="公开书目" items={publicBooklists} emptyTitle={query ? "未找到匹配的书目" : "暂无公开书目"}
+            action={query ? <Button onClick={() => updateQuery("")}>清除搜索</Button> : undefined} />
+        </Stack>
       )}
       {user ? (
         <BooklistFormDialog
@@ -85,28 +85,24 @@ export function BooklistsPage() {
   );
 }
 
-function BooklistSection({ title, description, items, action }: {
+function BooklistSection({ title, description, items, action, emptyTitle }: {
   title: string;
   description?: string;
   items: BooklistSummary[];
   action?: ReactNode;
+  emptyTitle: string;
 }) {
   return (
-    <Box component="section" aria-labelledby={`section-${title}`}>
-      <Stack direction={{ xs: "column", sm: "row" }} sx={{ justifyContent: "space-between", alignItems: { xs: "flex-start", sm: "flex-end" }, gap: `${tokens.spacing[3]}px`, mb: `${tokens.spacing[6]}px` }}>
-        <Box>
-          <Typography id={`section-${title}`} variant="h3">{title}</Typography>
-          {description && <Typography color="text.secondary" sx={{ mt: `${tokens.spacing[1]}px` }}>{description}</Typography>}
-        </Box>
-        {action}
-      </Stack>
+    <Box component="section" aria-label={title} sx={{ minWidth: 0 }}>
+      <CatalogSection title={title} summary={description ? <Typography color="text.secondary">{description}</Typography> : undefined} tools={action}>
       {items.length ? (
         <Box sx={{ display: "grid", gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(auto-fill, minmax(240px, 1fr))" }, gap: { xs: `${tokens.spacing[8]}px`, md: `${tokens.spacing[10]}px` } }}>
           {items.map((booklist) => <BooklistCard key={booklist.id} booklist={booklist} />)}
         </Box>
       ) : (
-        <BookCatalogEmptyState title={title === "家庭共享" ? "暂无家庭共享书目" : title === "公开书目" ? "暂无公开书目" : EMPTY_BOOKLISTS_TITLE} />
+        <BookCatalogEmptyState title={emptyTitle} />
       )}
+      </CatalogSection>
     </Box>
   );
 }

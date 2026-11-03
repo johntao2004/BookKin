@@ -4,15 +4,18 @@ import { act, fireEvent, render, screen, waitFor, within } from "@testing-librar
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter, useLocation } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { ReactNode } from "react";
 import { api, DEFAULT_SITE_SETTINGS } from "../api/client";
+import { vaultAccessApi } from "../features/vault/access-api";
+import { VaultPolicySettings } from "../pages/VaultPolicySettings";
 import { AppShell } from "./AppShell";
 import { BookKinThemeProvider } from "../theme/BookKinThemeProvider";
 
-const authState = vi.hoisted(() => ({ signedIn: true }));
+const authState = vi.hoisted(() => ({ signedIn: true, role: "OWNER" as "OWNER" | "MEMBER" }));
 
 vi.mock("../auth/AuthContext", () => ({
   useAuth: () => ({
-    user: authState.signedIn ? { id: "user-owner", username: "owner", displayName: "林", role: "OWNER", mustChangePassword: false } : null,
+    user: authState.signedIn ? { id: "user-owner", username: "owner", displayName: "林", role: authState.role, mustChangePassword: false } : null,
     logout: vi.fn(),
     ready: true,
   }),
@@ -29,24 +32,25 @@ function RouteProbe() {
   return <output data-testid="search-route">{location.pathname}{location.search}</output>;
 }
 
-function renderShell(initialPath: string, virtualLibraryEnabled = true) {
+function renderShell(initialPath: string, virtualLibraryEnabled = true, extraContent?: ReactNode) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
   queryClient.setQueryData(['site-settings'], {...DEFAULT_SITE_SETTINGS, virtualLibraryEnabled});
-  return render(
+  const view = render(
     <QueryClientProvider client={queryClient}>
       <MemoryRouter initialEntries={[initialPath]}>
         <BookKinThemeProvider>
-          <AppShell><div>正文</div><RouteProbe /></AppShell>
+          <AppShell><div>正文</div><RouteProbe />{extraContent}</AppShell>
         </BookKinThemeProvider>
       </MemoryRouter>
     </QueryClientProvider>,
   );
+  return { ...view, queryClient };
 }
 
 describe("AppShell", () => {
-  beforeEach(() => { localStorage.clear(); authState.signedIn = true; });
+  beforeEach(() => { localStorage.clear(); authState.signedIn = true; authState.role = "OWNER"; vi.spyOn(vaultAccessApi, "status").mockResolvedValue({ enabled: true, configured: true, bound: true, verified: true, expiresAt: Date.now() + 1000 }); });
   afterEach(() => {vi.restoreAllMocks(); vi.useRealTimers();});
 
   it.each(["/library/books/book-1", "/annotations/books", "/vault"])("does not select an article entry outside the article section on %s", async (path) => {
@@ -149,7 +153,7 @@ describe("AppShell", () => {
     expect(screen.getByRole("main")).toHaveTextContent("正文");
   });
 
-  it("keeps the global navigation on library routes", () => {
+  it("keeps the global navigation on library routes", async () => {
     renderShell("/library");
 
     expect(screen.getByRole("banner")).toBeInTheDocument();
@@ -161,6 +165,7 @@ describe("AppShell", () => {
     expect(within(screen.getByRole("navigation", { name: "全站导航" })).queryByRole("link", { name: "书目" })).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: "藏书楼" })).toHaveAttribute("aria-haspopup", "menu");
     expect(screen.getByRole("link", { name: "读书录" })).toBeInTheDocument();
+    await screen.findByRole("link", { name: "秘阁" });
     fireEvent.click(within(screen.getByRole("navigation", { name: "全站导航" })).getByRole("link", { name: "秘阁" }));
     expect(screen.getByTestId("search-route")).toHaveTextContent("/vault");
     expect(screen.getByRole("link", { name: "秘阁" })).toHaveAttribute("aria-current", "page");
@@ -168,6 +173,73 @@ describe("AppShell", () => {
     expect(screen.queryByRole("link", { name: "首页" })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "学脉图" })).not.toBeInTheDocument();
     expect(screen.queryByText("已同步")).not.toBeInTheDocument();
+  });
+
+  it("shows 秘阁 only after the visit-authorized status confirms it is enabled", async () => {
+    vi.mocked(vaultAccessApi.status).mockResolvedValue({ enabled: false, configured: true, bound: false, verified: false, expiresAt: 0 });
+    renderShell("/library");
+    await waitFor(() => expect(vaultAccessApi.status).toHaveBeenCalledTimes(1));
+    expect(screen.queryByRole("link", { name: "秘阁" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "打开导航" }));
+    expect(within(screen.getByRole("navigation", { name: "移动端导航" })).queryByText("秘阁")).not.toBeInTheDocument();
+  });
+
+  it("updates same-tab navigation immediately after the owner saves the enabled policy", async () => {
+    vi.mocked(vaultAccessApi.status).mockResolvedValue({ enabled: false, configured: true, bound: false, verified: false, expiresAt: 0 });
+    vi.spyOn(vaultAccessApi, "policy").mockResolvedValue({ enabled: false, configured: true, revision: 2 });
+    vi.spyOn(vaultAccessApi, "savePolicy").mockResolvedValue({ enabled: true, configured: true, revision: 3 });
+    renderShell("/library", true, <VaultPolicySettings />);
+    const toggle = await screen.findByRole("switch", { name: "启用禁书区" });
+    expect(screen.queryByRole("link", { name: "秘阁" })).not.toBeInTheDocument();
+    fireEvent.click(toggle);
+    await screen.findByRole("link", { name: "秘阁" });
+  });
+
+  it("keeps the current navigation state when saving the policy fails", async () => {
+    vi.mocked(vaultAccessApi.status).mockResolvedValue({ enabled: true, configured: true, bound: true, verified: false, expiresAt: 0 });
+    vi.spyOn(vaultAccessApi, "policy").mockResolvedValue({ enabled: true, configured: true, revision: 2 });
+    vi.spyOn(vaultAccessApi, "savePolicy").mockRejectedValue(new Error("保存失败"));
+    renderShell("/library", true, <VaultPolicySettings />);
+    await screen.findByRole("link", { name: "秘阁" });
+    fireEvent.click(await screen.findByRole("switch", { name: "启用禁书区" }));
+    expect(await screen.findByText("保存失败")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "秘阁" })).toBeInTheDocument();
+  });
+
+  it("keeps a confirmed enabled link during refresh and hides it after refresh failure", async () => {
+    let rejectRefresh!: (reason: Error) => void;
+    vi.mocked(vaultAccessApi.status).mockResolvedValueOnce({ enabled: true, configured: true, bound: true, verified: false, expiresAt: 0 })
+      .mockImplementationOnce(() => new Promise((_, reject) => { rejectRefresh = reject; }));
+    const { queryClient } = renderShell("/library");
+    await screen.findByRole("link", { name: "秘阁" });
+    void queryClient.invalidateQueries({ queryKey: ["vault-navigation-status", "user-owner"] });
+    await waitFor(() => expect(vaultAccessApi.status).toHaveBeenCalledTimes(2));
+    expect(screen.getByRole("link", { name: "秘阁" })).toBeInTheDocument();
+    rejectRefresh(new Error("offline"));
+    await waitFor(() => expect(screen.queryByRole("link", { name: "秘阁" })).not.toBeInTheDocument());
+  });
+
+  it("does not expose 秘阁 while status is unknown, denied, or the visitor is anonymous", async () => {
+    vi.mocked(vaultAccessApi.status).mockImplementation(() => new Promise(() => undefined));
+    const { unmount } = renderShell("/library");
+    expect(screen.queryByRole("link", { name: "秘阁" })).not.toBeInTheDocument();
+    unmount();
+    vi.mocked(vaultAccessApi.status).mockRejectedValueOnce(new Error("forbidden"));
+    const failed = renderShell("/library");
+    await waitFor(() => expect(vaultAccessApi.status).toHaveBeenCalledTimes(2));
+    expect(screen.queryByRole("link", { name: "秘阁" })).not.toBeInTheDocument();
+    failed.unmount();
+    authState.role = "MEMBER";
+    sessionStorage.setItem("bookkin-demo-role-permissions", JSON.stringify({ revision: 0, grants: { OWNER: [], ADMIN: [], MEMBER: [] } }));
+    vi.mocked(vaultAccessApi.status).mockClear();
+    const denied = renderShell("/library");
+    expect(vaultAccessApi.status).not.toHaveBeenCalled();
+    expect(screen.queryByRole("link", { name: "秘阁" })).not.toBeInTheDocument();
+    denied.unmount();
+    authState.signedIn = false;
+    renderShell("/library");
+    expect(vaultAccessApi.status).not.toHaveBeenCalled();
+    expect(screen.queryByText("秘阁")).not.toBeInTheDocument();
   });
 
   it("keeps search, theme, and account controls reachable in the phone header", () => {
@@ -187,6 +259,7 @@ describe("AppShell", () => {
 
   it("keeps management pages in the account menu instead of the main drawer", async () => {
     renderShell("/library");
+    await screen.findByRole("link", { name: "秘阁" });
     const managementLabels = ["管理设置"];
 
     fireEvent.click(screen.getByRole("button", { name: "打开导航" }));
@@ -309,7 +382,7 @@ describe("AppShell", () => {
     await waitFor(() => expect(screen.queryByRole("navigation", { name: "移动端导航" })).not.toBeInTheDocument());
   });
 
-  it("keeps public booklists under the library and hides private secondary entries when signed out", async () => {
+  it("keeps public booklists and enabled virtual shelves under the library while hiding private entries when signed out", async () => {
     authState.signedIn = false;
     renderShell("/library");
     expect(screen.getByRole("link", { name: "藏书楼" })).toHaveAttribute("href", "/library");
@@ -319,11 +392,11 @@ describe("AppShell", () => {
     const drawer = screen.getByRole("navigation", { name: "移动端导航" });
     expect(screen.queryByText("秘阁")).not.toBeInTheDocument();
     const children = within(drawer).getByRole("group", { name: "藏书楼二级菜单" });
-    expect(within(children).getAllByRole("button")).toHaveLength(1);
+    expect(within(children).getAllByRole("button")).toHaveLength(2);
     expect(within(children).getByRole("button", { name: "书目" })).toBeInTheDocument();
     expect(within(drawer).queryByText("楼中一览")).not.toBeInTheDocument();
     expect(within(drawer).queryByText("学脉图")).not.toBeInTheDocument();
-    expect(within(drawer).queryByText("书楼漫游")).not.toBeInTheDocument();
+    expect(within(children).getByRole("button", { name: "书楼漫游" })).toBeInTheDocument();
   });
 
   it("switches the whole site to the same night theme used by the reader", async () => {

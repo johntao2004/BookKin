@@ -18,7 +18,7 @@ export const cardCoverAspectRatio = { book: BOOK_COVER_ASPECT_RATIO, article: "2
 
 // 所有书籍集合共用一套书卡布局与操作入口。
 /** One catalog layout and action entry point across all book collections. */
-export function BookCardPresentation({ book, variant = "book", href, description, status, onOpen, onRead, actions = [], showReadAction = true }: {
+export function BookCardPresentation({ book, variant = "book", href, description, status, onOpen, onRead, actions = [], showReadAction = true, primaryActionLabel }: {
   book: { id: string; title: string; author: string; coverUrl?: string; available?: boolean };
   variant?: BookCardVariant;
   href?: string;
@@ -28,6 +28,7 @@ export function BookCardPresentation({ book, variant = "book", href, description
   onRead?: () => void;
   actions?: BookCardAction[];
   showReadAction?: boolean;
+  primaryActionLabel?: string;
 }) {
   const available = book.available !== false;
   const navigate = useNavigate();
@@ -62,7 +63,7 @@ export function BookCardPresentation({ book, variant = "book", href, description
         <IconButton aria-label={`${book.title}更多操作`} onClick={(event: any) => setAnchor(event.currentTarget)}><MoreVert fontSize="small" /></IconButton>
       </Box>
       <Menu anchorEl={anchor} open={Boolean(anchor)} onClose={() => setAnchor(null)}>
-        {showReadAction && <MenuItem disabled={!available} onClick={() => { setAnchor(null); if (available) { if (onRead) onRead(); else if (variant === "article" && onOpen) onOpen(); else navigate(destination); } }}>{variant === "article" ? "打开文章" : "开始阅读"}</MenuItem>}
+        {showReadAction && <MenuItem disabled={!available} onClick={() => { setAnchor(null); if (available) { if (onRead) onRead(); else if (variant === "article" && onOpen) onOpen(); else navigate(destination); } }}>{primaryActionLabel ?? (variant === "article" ? "打开文章" : "开始阅读")}</MenuItem>}
         {actions.map(action => <MenuItem key={action.label} onClick={() => { setAnchor(null); action.onClick(); }} sx={{ color: action.danger ? "error.main" : undefined }}>{action.label}</MenuItem>)}
       </Menu>
     </Card>

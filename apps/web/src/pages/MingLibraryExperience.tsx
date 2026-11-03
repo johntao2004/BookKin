@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../auth/AuthContext';
 import { ApiRequestError } from '../api/errors';
 import { Button } from '../ui/buttons';
 import { Alert, CircularProgress } from '../ui/feedback';
@@ -8,16 +9,19 @@ import { RequestErrorPage } from './HttpErrorPage';
 import { mingLibraryCatalog } from './ming-library-catalog';
 import { readMingLibraryReaderState, readMingLibraryView } from './ming-library-view';
 import {
-  refreshVirtualLibraryBooks, VIRTUAL_LIBRARY_BOOKS_QUERY_KEY,
+  refreshVirtualLibraryBooks, virtualLibraryBooksQueryKey, fetchPublicVirtualLibraryBooks, PUBLIC_VIRTUAL_LIBRARY_BOOKS_QUERY_KEY,
   VIRTUAL_LIBRARY_BOOKS_REFRESH_INTERVAL, VIRTUAL_LIBRARY_BOOKS_STALE_TIME,
 } from './virtual-library-query';
 import './ming-library.css';
 
 export const MING_LIBRARY_CHANNEL = 'bookkin:ming-library';
 
-/** Keep the imported scene local and connect its documented catalog API to the authenticated product. */
+/** Keep the imported scene local and connect its documented catalog API to the visible catalog. */
 export function MingLibraryExperience() {
   const navigate = useNavigate();
+  const { user, ready: authReady } = useAuth();
+  const libraryReturn = user ? "/library/all" : "/library";
+  const audience = user?.id ?? "anonymous";
   const location = useLocation();
   const restoredView = useRef(readMingLibraryReaderState(location.state)?.mingLibraryView ?? null);
   const queryClient = useQueryClient();
@@ -26,8 +30,9 @@ export function MingLibraryExperience() {
   const [sceneError, setSceneError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
   const query = useQuery({
-    queryKey: VIRTUAL_LIBRARY_BOOKS_QUERY_KEY,
-    queryFn: ({signal}) => refreshVirtualLibraryBooks(queryClient, signal),
+    queryKey: user ? virtualLibraryBooksQueryKey(user.id) : PUBLIC_VIRTUAL_LIBRARY_BOOKS_QUERY_KEY,
+    queryFn: ({signal}) => user ? refreshVirtualLibraryBooks(queryClient, signal, user.id) : fetchPublicVirtualLibraryBooks(signal),
+    enabled: authReady,
     staleTime: VIRTUAL_LIBRARY_BOOKS_STALE_TIME,
     refetchInterval: VIRTUAL_LIBRARY_BOOKS_REFRESH_INTERVAL,
     refetchOnMount: 'always',
@@ -37,13 +42,15 @@ export function MingLibraryExperience() {
   const currentCatalog = useRef(catalog);
   currentCatalog.current = catalog;
 
+  useEffect(() => { setReady(false); setSceneError(null); }, [audience]);
+
   useEffect(() => {
     const receive = (event: MessageEvent) => {
       if (event.origin !== window.location.origin || event.source !== frame.current?.contentWindow
         || !event.data || event.data.channel !== MING_LIBRARY_CHANNEL) return;
       if (event.data.type === 'ready') { setReady(true); setSceneError(null); }
       if (event.data.type === 'catalog-applied') setSceneError(null);
-      if (event.data.type === 'back') navigate('/library/all');
+      if (event.data.type === 'back') navigate(libraryReturn);
       if (event.data.type === 'read-book' && typeof event.data.bookId === 'string'
         && currentCatalog.current.some(book => book.id === event.data.bookId)) {
         navigate(`/reader/${encodeURIComponent(event.data.bookId)}`, {
@@ -55,7 +62,7 @@ export function MingLibraryExperience() {
     };
     window.addEventListener('message', receive);
     return () => window.removeEventListener('message', receive);
-  }, [navigate]);
+  }, [navigate, libraryReturn]);
 
   useEffect(() => {
     if (ready && query.data) frame.current?.contentWindow?.postMessage({
@@ -69,7 +76,7 @@ export function MingLibraryExperience() {
   if (!query.data) return <section className="ming-library-page ming-library-loading" aria-label="正在同步真实书目"><CircularProgress /></section>;
 
   return <section className="ming-library-page" aria-label="书楼漫游">
-    <iframe key={attempt} ref={frame} title="明式藏书楼三维场景"
+    <iframe key={`${audience}:${attempt}`} ref={frame} title="明式藏书楼三维场景"
       className="ming-library-frame" src="/assets/ming-library/index.html"
       allow="fullscreen" allowFullScreen
       onError={() => setSceneError('书楼场景资源加载失败，请重试。')}

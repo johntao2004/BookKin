@@ -27,7 +27,7 @@ esbuild is a development dependency; users do not need it to open the finished H
 
 ## Noto Serif SC
 
-The supplied `MingLibrarySerif.woff2` is a character subset of Noto Serif SC, using the SIL Open Font License 1.1. Its CSS family is `MingSerif`.
+The supplied `MingLibrarySerif.woff2` is a character subset of Noto Serif SC, using the SIL Open Font License 1.1. Its shared CSS family is `BookKin Serif`, registered in `/assets/fonts/bookkin-serif.css`. The bundled `Noto Serif SC` unicode subsets provide fallback coverage beyond this interface subset.
 
 - Upstream font: https://github.com/google/fonts/tree/main/ofl/notoserifsc
 - Complete license and copyright notice: `assets/OFL-NotoSerifSC.txt`

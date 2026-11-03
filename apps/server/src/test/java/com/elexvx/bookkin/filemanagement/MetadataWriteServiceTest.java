@@ -1,12 +1,14 @@
-// 分别验证成功清理暂存快照和数据库失败恢复原文件，不把暂存补偿误认成持久版本历史。
-// Checks temporary-snapshot cleanup on success and original restoration on database failure, not persistent version history.
+// 元数据写回会把原文件登记为可恢复版本，失败回滚仍保留该版本直到常规保留清理。
+// Metadata writeback registers the original as a restorable version that remains through rollback and normal retention.
 package com.elexvx.bookkin.filemanagement;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.elexvx.bookkin.catalog.BookFile;
@@ -14,6 +16,7 @@ import com.elexvx.bookkin.catalog.BookFileStatus;
 import com.elexvx.bookkin.catalog.BookFormat;
 import com.elexvx.bookkin.catalog.BookMetadataRepository;
 import com.elexvx.bookkin.catalog.BookMetadataRepository.BookMetadata;
+import com.elexvx.bookkin.config.BookKinProperties;
 import com.elexvx.bookkin.ingestion.LibraryRoot;
 import com.elexvx.bookkin.ingestion.LibraryRoot.RootStatus;
 import java.math.BigDecimal;
@@ -31,35 +34,53 @@ class MetadataWriteServiceTest {
     Path libraryRoot;
 
     @Test
-    void replacesCurrentFileAndRemovesTransientRollbackAfterCommit() throws Exception {
+    void replacesCurrentFileAndRetainsRegisteredVersionAfterCommit() throws Exception {
         Fixture fixture = fixture();
 
-        var result = fixture.service().write(fixture.operationId(), fixture.file(), fixture.root(), fixture.source());
+        var result = fixture.service().write(fixture.operationId(), fixture.file(), fixture.root(), fixture.source(), fixture.actorId());
 
         assertThat(Files.readString(fixture.source())).isEqualTo("updated");
-        assertThat(result.rollbackPath()).exists();
-        assertThat(libraryRoot.resolve(".bookkin-versions")).doesNotExist();
-
-        fixture.service().complete(result);
-
-        assertThat(result.rollbackPath()).doesNotExist();
+        assertThat(result.versionPath()).exists();
+        assertThat(result.versionPath().startsWith(libraryRoot.toRealPath().resolve(".bookkin-versions"))).isTrue();
+        assertThat(Files.readString(result.versionPath())).isEqualTo("original");
+        verify(fixture.versions()).create(eq(fixture.file().id()), eq(fixture.root().id()),
+                eq(".bookkin-versions/" + fixture.file().id() + "/metadata-" + fixture.operationId() + ".version"),
+                eq(fixture.file().relativePath()), eq(fixture.file().fingerprint()), eq(Files.size(result.versionPath())),
+                eq("METADATA_WRITE"), eq(fixture.actorId()), any(OffsetDateTime.class));
+        assertThat(result.versionPath()).exists();
+        assertThat(Files.readString(result.versionPath())).isEqualTo("original");
         assertThat(Files.readString(fixture.source())).isEqualTo("updated");
     }
 
     @Test
-    void restoresOriginalFromTransientRollbackWhenDatabaseCommitFails() throws Exception {
+    void restoresOriginalFromPersistentVersionWhenDatabaseCommitFails() throws Exception {
         Fixture fixture = fixture();
 
-        var result = fixture.service().write(fixture.operationId(), fixture.file(), fixture.root(), fixture.source());
+        var result = fixture.service().write(fixture.operationId(), fixture.file(), fixture.root(), fixture.source(), fixture.actorId());
         fixture.service().restoreOriginal(fixture.operationId(), fixture.file(), fixture.root(), fixture.source(), result);
 
         assertThat(Files.readString(fixture.source())).isEqualTo("original");
-        assertThat(result.rollbackPath()).doesNotExist();
-        assertThat(libraryRoot.resolve(".bookkin-versions")).doesNotExist();
+        assertThat(result.versionPath()).exists();
+        assertThat(Files.readString(result.versionPath())).isEqualTo("original");
+    }
+
+    @Test
+    void duplicateOperationIdCannotOverwriteAnExistingVersionOrCurrentFile() throws Exception {
+        Fixture fixture = fixture();
+        var first = fixture.service().write(fixture.operationId(), fixture.file(), fixture.root(), fixture.source(), fixture.actorId());
+        String archived = Files.readString(first.versionPath());
+        String current = Files.readString(fixture.source());
+
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> fixture.service().write(fixture.operationId(), fixture.file(),
+                fixture.root(), fixture.source(), fixture.actorId())).isInstanceOf(java.io.IOException.class);
+
+        assertThat(Files.readString(first.versionPath())).isEqualTo(archived);
+        assertThat(Files.readString(fixture.source())).isEqualTo(current);
     }
 
     private Fixture fixture() throws Exception {
         UUID operationId = UUID.randomUUID();
+        UUID actorId = UUID.randomUUID();
         UUID bookId = UUID.randomUUID();
         UUID fileId = UUID.randomUUID();
         UUID rootId = UUID.randomUUID();
@@ -85,11 +106,13 @@ class MetadataWriteServiceTest {
             return null;
         }).when(pdfWriter).write(any(Path.class), any(Path.class), any(BookMetadata.class));
 
+        var versions = mock(FileVersionRepository.class);
         var service = new MetadataWriteService(metadataRepository, fingerprints, inspector,
-                mock(EpubMetadataWriter.class), pdfWriter);
-        return new Fixture(operationId, file, root, source, service);
+                mock(EpubMetadataWriter.class), pdfWriter, versions,
+                new BookKinProperties(null, null, null, null, null, null, null, null, null, null, null));
+        return new Fixture(operationId, actorId, file, root, source, service, versions);
     }
 
-    private record Fixture(UUID operationId, BookFile file, LibraryRoot root, Path source,
-                           MetadataWriteService service) {}
+    private record Fixture(UUID operationId, UUID actorId, BookFile file, LibraryRoot root, Path source,
+                           MetadataWriteService service, FileVersionRepository versions) {}
 }

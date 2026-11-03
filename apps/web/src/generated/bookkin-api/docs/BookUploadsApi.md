@@ -858,3 +858,73 @@ example().catch(console.error);
 | **200** | Cover normalized and selected |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
+## precheckBookUpload
+
+> PrecheckBookUpload200Response precheckBookUpload(precheckBookUploadRequest)
+
+
+
+Advisory SHA-256 and size check limited to the visible regular catalog and the current manager\&#39;s pending drafts. Does not create a session or write files. Server receive and commit independently verify actual content.
+
+### Example
+
+```ts
+import {
+  Configuration,
+  BookUploadsApi,
+} from '';
+import type { PrecheckBookUploadOperationRequest } from '';
+
+async function example() {
+  console.log("🚀 Testing  SDK...");
+  const config = new Configuration({
+    // To configure API key authorization: sessionCookie
+    apiKey: "YOUR API KEY",
+  });
+  const api = new BookUploadsApi(config);
+
+  const body = {
+    // PrecheckBookUploadRequest
+    precheckBookUploadRequest: ...,
+  } satisfies PrecheckBookUploadOperationRequest;
+
+  try {
+    const data = await api.precheckBookUpload(body);
+    console.log(data);
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+// Run the test
+example().catch(console.error);
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **precheckBookUploadRequest** | [PrecheckBookUploadRequest](PrecheckBookUploadRequest.md) |  | |
+
+### Return type
+
+[**PrecheckBookUpload200Response**](PrecheckBookUpload200Response.md)
+
+### Authorization
+
+[sessionCookie](../README.md#sessionCookie)
+
+### HTTP request headers
+
+- **Content-Type**: `application/json`
+- **Accept**: `application/json`
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | Private advisory duplicate result, Cache-Control no-store |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)

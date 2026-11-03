@@ -47,6 +47,36 @@ class DeepSeekStructuredOutputTest {
         assertFalse(requestBody(http).has("thinking"));
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = {"glm-4.5-flash", "glm-4.6", "glm-4.7-flash", "glm-5", "glm-5.1", "glm-5.2"})
+    void officialZhipuSupportedModelsDisableThinkingAndUseOpenAiCompatibleAuth(String model) throws Exception {
+        var http = response("stop", "{\"points\":[]}");
+        service("zhipu", model, "https://open.bigmodel.cn/api/paas/v4/", http).extractKnowledge(List.of());
+
+        var request = capturedRequest(http);
+        assertEquals("https://open.bigmodel.cn/api/paas/v4/chat/completions", request.uri().toString());
+        assertEquals("Bearer fixture-key", request.headers().firstValue("Authorization").orElseThrow());
+        var body = requestBody(http);
+        assertEquals(model, body.path("model").asText());
+        assertEquals("disabled", body.at("/thinking/type").asText());
+        assertEquals(4096, body.path("max_tokens").asInt());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"glm-5.3", "custom-model"})
+    void unsupportedZhipuModelDoesNotReceiveThinkingOverride(String model) throws Exception {
+        var http = response("stop", "{\"points\":[]}");
+        service("zhipu", model, "https://open.bigmodel.cn/api/paas/v4/", http).extractKnowledge(List.of());
+        assertFalse(requestBody(http).has("thinking"));
+    }
+
+    @Test
+    void zhipuLookalikeHostDoesNotReceiveThinkingOverride() throws Exception {
+        var http = response("stop", "{\"points\":[]}");
+        service("zhipu", "glm-4.7", "https://open.bigmodel.cn.attacker.example/v4/", http).extractKnowledge(List.of());
+        assertFalse(requestBody(http).has("thinking"));
+    }
+
     @Test
     void truncatedOutputIsRejectedEvenWhenItsPartialBodyLooksLikeValidJson() throws Exception {
         var http = response("length", "{\"points\":[]}");
@@ -56,8 +86,12 @@ class DeepSeekStructuredOutputTest {
     }
 
     private AiMetadataService service(String baseUrl, HttpClient http) {
-        var provider = new AiProvider("deepseek", "DeepSeek", AiProviderType.OPENAI_COMPATIBLE, true,
-                baseUrl, "fixture-key", "deepseek-flash");
+        return service("deepseek", "deepseek-flash", baseUrl, http);
+    }
+
+    private AiMetadataService service(String id, String model, String baseUrl, HttpClient http) {
+        var provider = new AiProvider(id, id, AiProviderType.OPENAI_COMPATIBLE, true,
+                baseUrl, "fixture-key", model);
         var properties = new BookKinProperties(null, null, null, null, null, null, null, null, null, null,
                 new BookKinProperties.Ai(true, false, 3, Duration.ofSeconds(5), List.of(provider), "fixture-key"));
         return new AiMetadataService(properties, mock(BookUploadRepository.class), json, http);
@@ -75,11 +109,10 @@ class DeepSeekStructuredOutputTest {
     }
 
     private tools.jackson.databind.JsonNode requestBody(HttpClient http) throws Exception {
-        var request = ArgumentCaptor.forClass(HttpRequest.class);
-        verify(http).send(request.capture(), any(HttpResponse.BodyHandler.class));
+        var request = capturedRequest(http);
         var bytes = new ByteArrayOutputStream();
         var completed = new CompletableFuture<Void>();
-        request.getValue().bodyPublisher().orElseThrow().subscribe(new Flow.Subscriber<ByteBuffer>() {
+        request.bodyPublisher().orElseThrow().subscribe(new Flow.Subscriber<ByteBuffer>() {
             public void onSubscribe(Flow.Subscription subscription) { subscription.request(Long.MAX_VALUE); }
             public void onNext(ByteBuffer buffer) {
                 var chunk = new byte[buffer.remaining()];
@@ -91,5 +124,12 @@ class DeepSeekStructuredOutputTest {
         });
         completed.get(5, java.util.concurrent.TimeUnit.SECONDS);
         return json.readTree(bytes.toString(StandardCharsets.UTF_8));
+    }
+
+    @SuppressWarnings("unchecked")
+    private HttpRequest capturedRequest(HttpClient http) throws Exception {
+        var request = ArgumentCaptor.forClass(HttpRequest.class);
+        verify(http).send(request.capture(), any(HttpResponse.BodyHandler.class));
+        return request.getValue();
     }
 }

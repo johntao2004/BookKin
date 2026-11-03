@@ -328,7 +328,8 @@ export function ReaderWorkspace({ source }: { source?: IndependentReaderSource }
         notesLabel={notesTitle}
         notesAvailable={Boolean(source) || !guest}
         progressPercent={progressPercent}
-        tableOfContentsAvailable={!demo || bookmarks.length > 0}
+        tableOfContentsAvailable={tocItems.length > 0 || bookmarks.length > 0}
+        tableOfContentsLabel={tocItems.length > 0 ? "目录" : "书签"}
         bookmarked={Boolean(bookmark)}
         bookmarkBusy={bookmarkBusy || !currentLocator || (!source && annotationsQuery.isPending)}
         privateActions={!guest && canAnnotate}
@@ -451,8 +452,8 @@ export function ReaderWorkspace({ source }: { source?: IndependentReaderSource }
           </Stack>}
         </Box>
       </Drawer>
-      <Drawer anchor="left" title="目录" closeLabel="关闭目录" open={tocOpen} onClose={() => setTocOpen(false)} slotProps={{ paper: { sx: { width: { xs: `calc(100vw - ${tokens.spacing[6]}px)`, sm: 360 }, maxWidth: "100vw" } } }}>
-        <Box role="navigation" aria-label={source ? "文章目录" : "书籍目录"} sx={{ width: "100%", maxWidth: "100%", height: "100%", overflowY: "auto", overscrollBehavior: "contain", p: 0 }}>
+      <Drawer anchor="left" title={tocItems.length > 0 ? "目录" : "书签"} closeLabel={tocItems.length > 0 ? "关闭目录" : "关闭书签"} open={tocOpen} onClose={() => setTocOpen(false)} slotProps={{ paper: { sx: { width: { xs: `calc(100vw - ${tokens.spacing[6]}px)`, sm: 360 }, maxWidth: "100vw" } } }}>
+        <Box role="navigation" aria-label={tocItems.length > 0 ? source ? "文章目录" : "书籍目录" : "书签"} sx={{ width: "100%", maxWidth: "100%", height: "100%", overflowY: "auto", overscrollBehavior: "contain", p: 0 }}>
           {tocItems.length === 0 && bookmarks.length === 0 && <EmptyState compact title="暂无目录或书签" />}
           <List sx={{ p: 0 }}>
             {tocItems.map((item, index) => <Box key={`${item.href}-${index}`} sx={{ display: "flex", alignItems: "center" }}>

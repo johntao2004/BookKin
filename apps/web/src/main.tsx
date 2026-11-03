@@ -7,8 +7,6 @@ import { BrowserRouter } from "react-router-dom";
 import App from "./App";
 import { AppErrorBoundary } from "./components/AppErrorBoundary";
 import { AuthProvider } from "./auth/AuthContext";
-import "antd/dist/reset.css";
-import "./styles.css";
 import { BookKinThemeProvider } from "./theme/BookKinThemeProvider";
 
 const queryClient = new QueryClient({

@@ -3,7 +3,7 @@ export const libraryNavigationSections = [
   { label: "楼中一览", path: "/library/overview", requiresUser: true },
   { label: "书目", path: "/booklists", requiresUser: false },
   { label: "学脉图", path: "/knowledge-graph", requiresUser: true },
-  { label: "书楼漫游", path: "/virtual-library", requiresUser: true },
+  { label: "书楼漫游", path: "/virtual-library", requiresUser: false },
 ] as const;
 
 export const articlesNavigationSections = [

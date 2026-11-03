@@ -37,7 +37,7 @@ it('waits for settings and never imports the scene when disabled', async () => {
   await act(async () => resolve({...DEFAULT_SITE_SETTINGS,virtualLibraryEnabled:false}));
   expect(await screen.findByRole('heading',{name:'书楼漫游未启用'})).toBeInTheDocument();
   expect(scene.imported).toHaveBeenCalledTimes(imports);
-  expect(screen.getByRole('link',{name:'返回藏书库'})).toHaveAttribute('href','/library/all');
+  expect(screen.getByRole('link',{name:'返回藏书库'})).toHaveAttribute('href','/library');
 });
 
 it('does not mount 3D when settings cannot be verified', async () => {

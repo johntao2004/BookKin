@@ -15,6 +15,7 @@ import { InputActionGroup, TextField, Switch } from "@/ui/forms";
 import { Divider } from "@/ui/feedback";
 import { tokens } from "../theme/generated-tokens";
 import { PublicationMonthField } from "../ui/PublicationMonthField";
+import { DisplayTypographyScope } from "../ui/DisplayTypographyScope";
 
 export interface MetadataEditorValues {
   title: string; subtitle: string; authors: string; translators: string;
@@ -86,10 +87,10 @@ export function MetadataEditorForm({ value, onChange, coverUrl, coverAlt, coverA
     </InputActionGroup>
   </Stack>;
 
-  return <BookMetadataLayout coverUrl={coverUrl} coverAlt={coverAlt} coverActions={coverActions}>
+  return <DisplayTypographyScope><BookMetadataLayout coverUrl={coverUrl} coverAlt={coverAlt} coverActions={coverActions}>
       {coverDetails && <Stack direction="row" sx={{ flexWrap: "wrap", gap: `${tokens.spacing[2]}px` }}>{coverDetails}</Stack>}
       <Stack sx={{ minWidth: 0, gap: `${tokens.spacing[2]}px` }}>
-        {renderField(fields[0], { hero: true, multiline: true, resizable: false, sx: { "& .ant-input": { ...bookMetadataTitleSx, fontFamily: tokens.typography.fontFamily.body, overflow: "hidden" } } })}
+        {renderField(fields[0], { hero: true, multiline: true, resizable: false, sx: { "& .ant-input": { ...bookMetadataTitleSx, overflow: "hidden" } } })}
         {renderField(fields[1], { hero: true })}
         {renderField(fields[2], { hero: true, sx: { "& .ant-input": { color: "text.secondary" } } })}
       </Stack>
@@ -113,5 +114,5 @@ export function MetadataEditorForm({ value, onChange, coverUrl, coverAlt, coverA
       </Box>
       {children}
       {actions && <Box component="fieldset" disabled={savingTerms} sx={{ border: 0, p: 0, m: 0, minWidth: 0 }}><ActionToolbar>{actions}</ActionToolbar></Box>}
-  </BookMetadataLayout>;
+  </BookMetadataLayout></DisplayTypographyScope>;
 }

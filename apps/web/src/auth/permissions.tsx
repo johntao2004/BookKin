@@ -73,7 +73,7 @@ export function usePermissions() {
   const can = (code: string) => Boolean(user && grants.includes(code));
   const canVisit = (path: string, hash = "") => {
     const permission = routePermission(path, hash);
-    if (!user) return ["/library", "/search", "/categories", "/booklists", "/reader"].some(p => path === p || path.startsWith(`${p}/`));
+    if (!user) return ["/library", "/search", "/categories", "/booklists", "/reader", "/virtual-library"].some(p => path === p || path.startsWith(`${p}/`));
     if (path === "/settings" && !hash) return Object.values(settingsPermissions).some(can);
     return !permission || can(permission);
   };
@@ -108,7 +108,7 @@ export function PermissionBoundary({ children }: PropsWithChildren) {
     }
     previous.current = signature;
   }, [access.ready, client, signature]);
-  if (failure !== null) return <HttpErrorPage failure={failure} title="无法确认功能权限。"
+  if (failure !== null) return <HttpErrorPage failure={failure} title="无法确认功能权限"
     actions={<Button disabled={access.fetching} onClick={() => void access.retry()}>{access.fetching ? "正在重试…" : "重试"}</Button>} />;
   if (!access.ready) return <CircularProgress />;
   if (!access.canVisit(location.pathname, location.hash)) return <AccessDeniedPage reason="INSUFFICIENT_ROLE" returnTo={`${location.pathname}${location.search}${location.hash}`} />;

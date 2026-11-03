@@ -1,3 +1,4 @@
+import { AppLoading } from "../components/AppLoading";
 import { RequestErrorPage } from "./HttpErrorPage";
 import { usePermissions } from "../auth/permissions";
 import { BookReviewsPanel } from "../features/reviews/BookReviewsPanel";
@@ -7,7 +8,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, type ReactNode } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { api } from "../api/client";
-import { useAuth } from "../auth/AuthContext";
+import { RequireAuth, useAuth } from "../auth/AuthContext";
 import { AddToBooklistDialog } from "../components/AddToBooklistDialog";
 import { FileOperationDialog } from "../components/FileOperationDialog";
 import { PageBackAction, PageContainer, PageHeader } from "../components/PageHeader";
@@ -25,6 +26,57 @@ import { formatPublicationDate } from "../domain/publication-date";
 // 详情页原位编辑书目资料，文件写操作继续使用现有安全预览流程。
 // Book details edit bibliography in place while retaining safe file-operation previews.
 export function BookDetailPage() {
+  const { user, ready } = useAuth();
+  if (!ready) return <AppLoading label="正在确认登录状态…" />;
+  return user ? <RequireAuth><MemberBookDetailPage /></RequireAuth> : <PublicBookDetailPage />;
+}
+
+function PublicBookDetailPage() {
+  const { bookId = "" } = useParams();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const previousPath = location.state?.bookReturnTo;
+  const returnTo = typeof previousPath === "string" && /^\/library(?:\/all)?(?:[?#]|$)/.test(previousPath) ? previousPath : "/library";
+  const query = useQuery({ queryKey: ["display-book", bookId], queryFn: () => api.getDisplayBook(bookId) });
+  const book = query.data;
+  const metadataQuery = useQuery({ queryKey: ["display-book-metadata", bookId], queryFn: () => api.getDisplayBookMetadata(bookId), enabled: Boolean(book) });
+  const metadata = metadataQuery.data;
+  const sourceQuery = useQuery({ queryKey: ["display-book-bibliography-source", bookId], queryFn: ({ signal }) => api.getDisplayBookBibliographySource(bookId, signal),
+    enabled: Boolean(metadata && book?.available && ((!metadata.description && metadata.sources.description !== "MANUAL") || (!metadata.authorBiography && metadata.sources.authorBiography !== "MANUAL"))), retry: false, staleTime: 300000 });
+  const title = metadata?.title || book?.title || "";
+  const author = metadata?.authors.join(" / ") || book?.author;
+  const description = metadata ? metadata.description || (metadata.sources.description === "MANUAL" ? undefined : sourceQuery.data?.description) : book?.description;
+  const biography = metadata?.authorBiography || (metadata?.sources.authorBiography === "MANUAL" ? undefined : sourceQuery.data?.authorBiography);
+  const back = <PageBackAction onClick={() => navigate(returnTo)}>返回书库</PageBackAction>;
+  if (query.isError && !book) return <RequestErrorPage error={query.error} retrying={query.isFetching} onRetry={() => void query.refetch()} back={back} />;
+  return <PageContainer>
+    {back}
+    <PageHeader eyebrow="BOOK DETAILS" title="书籍详情" />
+    {query.isPending ? <div role="status" aria-label="正在加载书籍详情"><Skeleton active paragraph={{ rows: 8 }} /></div> : book && <BookMetadataLayout coverUrl={metadata?.coverUrl || book.coverUrl} coverAlt={`${title}封面`}>
+      {book.format && <Stack direction="row" sx={{ flexWrap: "wrap", gap: `${tokens.spacing[2]}px` }}><Chip label={book.format} variant="outlined" size="small" sx={{ maxWidth: "100%" }} /></Stack>}
+      <Box sx={{ minWidth: 0 }}>
+        <Typography variant="h2" component="h2" sx={bookMetadataTitleSx}>{title}</Typography>
+        {metadata?.subtitle && <Typography sx={{ mt: `${tokens.spacing[2]}px`, overflowWrap: "anywhere" }}>{metadata.subtitle}</Typography>}
+        <Typography color="text.secondary" sx={{ mt: `${tokens.spacing[2]}px`, overflowWrap: "anywhere" }}>{author}</Typography>
+      </Box>
+      <Stack direction="row"><Button variant="contained" disabled={!book.available} onClick={() => navigate(`/reader/${book.id}`)}>开始阅读</Button></Stack>
+      {!book.available && <Alert severity="warning">这本书暂时无法阅读。</Alert>}
+      <Divider />
+      <Box component="section" aria-labelledby="book-bibliography-title">
+        <Typography id="book-bibliography-title" variant="h5" component="h3" sx={{ mb: `${tokens.spacing[4]}px` }}>书目资料</Typography>
+        {metadataQuery.isPending ? <div role="status" aria-label="正在加载元数据"><Skeleton active paragraph={{ rows: 5 }} /></div>
+          : metadataQuery.isError || !metadata ? <Stack role="alert" spacing={2} sx={{ alignItems: "flex-start" }}><Typography color="error.main">书目资料暂时无法加载。</Typography><Button variant="outlined" disabled={metadataQuery.isFetching} onClick={() => void metadataQuery.refetch()}>重试元数据</Button></Stack>
+          : <MetadataFields metadata={{ ...metadata, publiclyVisible: true }} />}
+      </Box>
+      {Boolean(metadata?.knowledgeTerms?.length) && <Box component="section" aria-label="知识点"><Typography variant="caption" color="text.muted">知识点</Typography><Stack direction="row" sx={{ flexWrap: "wrap", gap: `${tokens.spacing[2]}px` }}>{metadata?.knowledgeTerms?.map(term => <Chip key={term} label={term} sx={{ maxWidth: "100%" }} />)}</Stack></Box>}
+      {sourceQuery.isError && <Alert severity="warning" action={<Button onClick={() => void sourceQuery.refetch()}>重试原书信息</Button>}>原书补充信息暂时无法读取。</Alert>}
+      <Box component="section" aria-labelledby="book-description-title"><Typography id="book-description-title" variant="h5" component="h3" sx={{ mb: `${tokens.spacing[3]}px` }}>内容简介</Typography><Typography color={description ? "text.primary" : "text.muted"} sx={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{description || "—"}</Typography></Box>
+      <Box component="section" aria-label="作者介绍"><Typography variant="h5" component="h3" sx={{ mb: `${tokens.spacing[3]}px` }}>作者介绍</Typography><Typography color={biography ? "text.primary" : "text.muted"} sx={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{biography || "—"}</Typography></Box>
+    </BookMetadataLayout>}
+  </PageContainer>;
+}
+
+function MemberBookDetailPage() {
   const { bookId = "" } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -45,16 +97,12 @@ export function BookDetailPage() {
   const title = metadata?.title || book?.title || "";
   const author = metadata?.authors.join(" / ") || book?.author;
   const sourceQuery = useQuery({ queryKey: ["book-bibliography-source", bookId], queryFn: ({ signal }) => api.getBookBibliographySource(bookId, signal),
-    enabled: Boolean(metadata && book?.status === "AVAILABLE" && (
-      (!metadata.tableOfContents && metadata.sources.tableOfContents !== "MANUAL")
-      || (!metadata.authorBiography && metadata.sources.authorBiography !== "MANUAL")
-    )), retry: false, staleTime: 300000 });
+    enabled: Boolean(metadata && book?.status === "AVAILABLE" && !metadata.authorBiography && metadata.sources.authorBiography !== "MANUAL"), retry: false, staleTime: 300000 });
   const knowledgeQuery = useQuery({
     queryKey: ["book-knowledge-draft", bookId], queryFn: ({ signal }) => api.getBookKnowledge(bookId, signal),
     enabled: Boolean(book) && can("knowledge.view"), retry: false,
   });
   const description = metadata ? metadata.description : book?.description;
-  const contents = metadata?.tableOfContents || (metadata?.sources.tableOfContents === "MANUAL" ? undefined : sourceQuery.data?.tableOfContents);
   const authorBiography = metadata?.authorBiography || (metadata?.sources.authorBiography === "MANUAL" ? undefined : sourceQuery.data?.authorBiography);
 
   if (query.isError && !query.data) return <RequestErrorPage error={query.error} retrying={query.isFetching} onRetry={() => void query.refetch()} back={<PageBackAction onClick={() => navigate(returnTo)}>返回书库</PageBackAction>} />;
@@ -110,7 +158,6 @@ export function BookDetailPage() {
             </Box>}
             <Box component="section" aria-labelledby="book-description-title"><Typography id="book-description-title" variant="h5" component="h3" sx={{ mb: `${tokens.spacing[3]}px` }}>内容简介</Typography><Typography color={description ? "text.primary" : "text.muted"} sx={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{description || "—"}</Typography></Box>
             <Box component="section" aria-label="作者介绍"><Typography variant="h5" component="h3" sx={{ mb: `${tokens.spacing[3]}px` }}>作者介绍</Typography><Typography color={authorBiography ? "text.primary" : "text.muted"} sx={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{authorBiography || "—"}</Typography></Box>
-            <Box component="section" aria-label="书籍目录">{sourceQuery.isFetching && <Typography role="status" variant="caption">正在读取原书目录…</Typography>}{sourceQuery.isError && <Alert severity="warning" action={<Button onClick={() => void sourceQuery.refetch()}>重试目录</Button>}>原书目录暂时无法读取。</Alert>}<Typography variant="h5" component="h3" sx={{ mb: `${tokens.spacing[3]}px` }}>目录</Typography><Typography color={contents ? "text.primary" : "text.muted"} sx={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{contents || "—"}</Typography></Box>
         </BookMetadataLayout>}
         <BookReviewsPanel key={`${book.id}:${user?.id}`} bookId={book.id} bookTitle={book.title} />
         <AddToBooklistDialog open={adding} bookId={book.id} bookTitle={book.title} onClose={() => setAdding(false)} onCompleted={message => { setAdding(false); setNotice(message); }} />

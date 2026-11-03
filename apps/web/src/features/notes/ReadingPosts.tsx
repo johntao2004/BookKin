@@ -18,6 +18,7 @@ import { Drawer } from "../../ui/overlays";
 import { Box, MenuItem, Stack, Typography } from "../../ui/primitives";
 import { articles } from "../content/api";
 import { reviewMarkdownToHtml } from "../reviews/markdown";
+import { MarkdownEditor } from "../content/MarkdownEditor";
 import { postHref, postLabels, postSections, readingPosts, type PostDraft, type PostFilter, type PostKind, type ReadingPost } from "./posts-api";
 import "../content/content.css";
 import "./notes.css";
@@ -94,7 +95,6 @@ export function PostEditor({ saved, initialKind, initialSourceId, sourceTitle, a
   const formId = useId();
   const { can } = usePermissions();
   const [draft, setDraft] = useState<PostDraft>(() => ({ kind: saved?.kind ?? initialKind, sourceId: saved?.sourceId ?? initialSourceId ?? "", title: saved?.title ?? "", markdown: saved?.markdown ?? "", visibility: saved?.visibility ?? "PRIVATE" }));
-  const [preview, setPreview] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -108,7 +108,6 @@ export function PostEditor({ saved, initialKind, initialSourceId, sourceTitle, a
   const sources = draft.kind === "BOOK" ? (sourceBooks.data?.items ?? []) : (sourceArticles.data ?? []).filter(article => `${article.title} ${article.author}`.toLocaleLowerCase().includes(sourceSearch.toLocaleLowerCase()));
   const sourceLoading = draft.kind === "BOOK" ? sourceBooks.isPending : sourceArticles.isPending;
   const sourceFailed = draft.kind === "BOOK" ? sourceBooks.isError : sourceArticles.isError;
-  const html = useMemo(() => preview ? reviewMarkdownToHtml(draft.markdown) : "", [preview, draft.markdown]);
   const change = (patch: Partial<PostDraft>) => setDraft(current => ({ ...current, ...patch }));
   const save = async () => {
     if (busy) return;
@@ -126,7 +125,7 @@ export function PostEditor({ saved, initialKind, initialSourceId, sourceTitle, a
   return <Drawer anchor="right" open title={saved ? "编辑随笔" : "写随笔"} closeLabel="关闭随笔编辑" destroyOnHidden onClose={() => !busy && onClose()}
     className={`bk-post-editor${fullscreen ? " bk-post-editor-fullscreen" : ""}`}
     slotProps={{ paper: { sx: { width: fullscreen ? "100vw" : `min(100vw, ${tokens.layout.touchTarget * 16}px)` } } }}
-    footer={<Stack direction="row" sx={{ justifyContent: "flex-end", flexWrap: "wrap", gap: `${tokens.spacing[3]}px` }}><Button aria-pressed={fullscreen} onClick={() => setFullscreen(value => !value)}>{fullscreen ? "退出全屏" : "全屏"}</Button><Button disabled={busy} onClick={() => setPreview(value => !value)}>{preview ? "编辑" : "预览"}</Button><Button variant="contained" type="submit" form={formId} loading={busy} aria-label="保存随笔">保存</Button></Stack>}>
+    footer={<Stack direction="row" sx={{ justifyContent: "flex-end", flexWrap: "wrap", gap: `${tokens.spacing[3]}px` }}><Button aria-pressed={fullscreen} onClick={() => setFullscreen(value => !value)}>{fullscreen ? "退出全屏" : "全屏"}</Button><Button variant="contained" type="submit" form={formId} loading={busy} aria-label="保存随笔">保存</Button></Stack>}>
     <Box component="form" id={formId} noValidate onSubmit={(event: React.FormEvent) => { event.preventDefault(); void save(); }} sx={{ py: `${tokens.spacing[4]}px`, px: "var(--bk-drawer-gutter)", display: "flex", flexDirection: "column", gap: `${tokens.spacing[5]}px`, minWidth: 0, width: "100%", maxWidth: fullscreen ? `${tokens.layout.readingMax}px` : "none", mx: "auto", flex: 1 }}>
       {error && <Alert severity="error">{error}</Alert>}
       {fullscreen && <Typography color="text.secondary">{draft.title || "未命名随笔"} · {postLabels[draft.kind]}</Typography>}
@@ -146,7 +145,7 @@ export function PostEditor({ saved, initialKind, initialSourceId, sourceTitle, a
       <Stack spacing={1}><Typography component="label">可见范围</Typography><Select label="可见范围" aria-label="可见范围" value={draft.visibility} disabled={busy} onChange={event => change({ visibility: event.target.value })}><MenuItem value="PRIVATE">仅自己</MenuItem><MenuItem value="LIBRARY">书库共享</MenuItem></Select></Stack>
       </Box>
       {draft.kind === "BOOK" && can("notes.edit") && <Box><AiAssistantButton source="NOTE_DRAFT" label="AI 写作辅助" draft={draft.markdown} disabled={busy} onApply={text => change({ markdown: text })} /></Box>}
-      {preview ? <section aria-label="随笔预览" className={proseClass} dangerouslySetInnerHTML={{ __html: html }} /> : <TextField className="bk-post-writing-area" label="正文（Markdown）" aria-label="随笔正文" placeholder="# 阅读感想" fullWidth multiline required minRows={fullscreen ? 18 : 14} maxRows={fullscreen ? undefined : 24} disabled={busy} value={draft.markdown} slotProps={{ htmlInput: { maxLength: 500000 } }} onChange={event => change({ markdown: event.target.value })} />}
+      <Stack spacing={1} sx={{ minHeight: 0, flex: 1 }}><Typography component="label">正文</Typography><MarkdownEditor label="随笔正文" mode="note" value={draft.markdown} onChange={markdown => change({ markdown })} disabled={busy} maxLength={500_000} placeholder="# 阅读感想" /></Stack>
     </Box>
   </Drawer>;
 }

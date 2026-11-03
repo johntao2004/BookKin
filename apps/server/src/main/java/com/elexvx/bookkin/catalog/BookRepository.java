@@ -23,6 +23,15 @@ public class BookRepository {
         this.dsl = dsl;
     }
 
+    /** Mirrors the ordinary catalog's AVAILABLE-file boundary; callers enforce library.view. */
+    public boolean hasAvailableFingerprint(String fingerprint, long sizeBytes) {
+        return !dsl.fetch("""
+                select 1 from books b join book_files f on f.book_id = b.id
+                  join library_roots lr on lr.id = f.library_root_id
+                 where f.fingerprint = ? and f.size_bytes = ? and f.status = 'AVAILABLE' limit 1
+                """, fingerprint, sizeBytes).isEmpty();
+    }
+
     public CatalogRevision catalogRevision(UUID userId) {
         var record = dsl.fetchOne("""
                 select c.revision,

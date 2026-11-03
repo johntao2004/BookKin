@@ -360,7 +360,6 @@ export function ArticlesPage() {
             <ArticleBodyEditor
               markdown={markdown}
               onChange={value => { setMarkdown(value); setBodyDirty(true); }}
-              html={draft.html}
               disabled={busy}
               onImportImages={importBodyImages}
             />

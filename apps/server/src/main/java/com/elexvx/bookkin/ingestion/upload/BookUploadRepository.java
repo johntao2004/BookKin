@@ -49,31 +49,82 @@ public class BookUploadRepository {
         return dsl.fetchOptional(SELECT + " where u.id = ? and u.requested_by = ?", id, actorId).map(this::map);
     }
 
+    /** Claims the existing receive state with a short database compare-and-set; no connection is held while bytes stream. */
+    public boolean claimReceiving(UUID id, UUID actorId) {
+        return dsl.execute("""
+                update book_uploads set status = 'INSPECTING',
+                  expires_at = greatest(expires_at, now() + interval '24 hours'), updated_at = now()
+                 where id = ? and requested_by = ? and status = 'RECEIVING'
+                   and received_bytes = 0 and fingerprint is null
+                """, id, actorId) == 1;
+    }
+
+    /** Renews the in-progress receive lease without holding a transaction for the upload stream. */
+    public boolean renewReceivingClaim(UUID id, UUID actorId) {
+        return dsl.execute("""
+                update book_uploads set expires_at = greatest(expires_at, now() + interval '24 hours'), updated_at = now()
+                 where id = ? and requested_by = ? and status = 'INSPECTING'
+                   and received_bytes = 0 and fingerprint is null
+                """, id, actorId) == 1;
+    }
+
+    /** Marks only this incomplete receive claim failed, preserving any state changed by another operation. */
+    public boolean failedReceiving(UUID id, String code, String detail) {
+        return dsl.execute("""
+                update book_uploads set status = 'FAILED', error_code = ?, error_detail = ?, updated_at = now()
+                 where id = ? and status = 'INSPECTING' and received_bytes = 0 and fingerprint is null
+                """, code, detail, id) == 1;
+    }
+
+    public boolean hasOwnedPendingFingerprint(UUID actorId, String fingerprint, long sizeBytes) {
+        return !dsl.fetch("""
+                select 1 from book_uploads where requested_by = ? and fingerprint = ?
+                  and declared_size_bytes = ? and received_bytes = declared_size_bytes
+                  and (status = 'READY_FOR_REVIEW' or
+                       (status in ('INSPECTING','ENRICHING','COMMITTING') and expires_at > now())) limit 1
+                """, actorId, fingerprint, sizeBytes).isEmpty();
+    }
+
     public List<UploadEntity> listOwned(UUID actorId) {
         return dsl.fetch(SELECT + " where u.requested_by = ? and (u.status = 'READY_FOR_REVIEW' or (u.status = 'ENRICHING' and u.expires_at > now()) or u.created_at > now() - interval '7 days') order by u.created_at desc", actorId).map(this::map);
     }
 
     @Transactional
     public void received(UUID id, long bytes, String fingerprint) {
+        persistReceived(id, bytes, fingerprint, false);
+    }
+
+    /** Completes a claimed receive only while it is still the same incomplete session. */
+    @Transactional
+    public boolean receivedClaimed(UUID id, long bytes, String fingerprint) {
+        return persistReceived(id, bytes, fingerprint, true);
+    }
+
+    private boolean persistReceived(UUID id, long bytes, String fingerprint, boolean claimed) {
         // Serialize identical incoming content, including concurrent batch uploads.
         dsl.fetchOne("select pg_advisory_xact_lock(hashtextextended(?, 0))", fingerprint);
-        var current = dsl.fetchOne("select requested_by from book_uploads where id = ?", id);
-        if (current != null && !dsl.fetch("""
+        String expectedState = claimed
+                ? "status = 'INSPECTING' and received_bytes = 0 and fingerprint is null"
+                : "status = 'RECEIVING'";
+        var current = dsl.fetchOne("select requested_by from book_uploads where id = ? and " + expectedState, id);
+        if (current == null) return false;
+        if (!dsl.fetch("""
                 select 1 from book_uploads where id <> ? and requested_by = ? and fingerprint = ?
                   and (status = 'READY_FOR_REVIEW' or
                        (status in ('INSPECTING', 'ENRICHING', 'COMMITTING') and expires_at > now())) limit 1
                 """, id, current.get("requested_by", UUID.class), fingerprint).isEmpty()) {
-            dsl.execute("""
+            return dsl.execute("""
                     update book_uploads set received_bytes = ?, fingerprint = ?, status = 'DUPLICATE',
                       error_code = 'DUPLICATE_UPLOAD', error_detail = '相同文件已在待校对列表中，请继续处理已有草稿。',
-                      updated_at = now() where id = ? and status = 'RECEIVING'
-                    """, bytes, fingerprint, id);
-            return;
+                      updated_at = now() where id = ?
+                    """ + " and " + expectedState,
+                    bytes, fingerprint, id) == 1;
         }
-        dsl.execute("""
+        return dsl.execute("""
                 update book_uploads set received_bytes = ?, fingerprint = ?, status = 'INSPECTING',
-                  error_code = null, error_detail = null, updated_at = now() where id = ? and status = 'RECEIVING'
-                """, bytes, fingerprint, id);
+                  error_code = null, error_detail = null, updated_at = now() where id = ?
+                """ + " and " + expectedState,
+                bytes, fingerprint, id) == 1;
     }
 
     public boolean processing(UUID id, BookUploadStatus status) {
@@ -159,8 +210,13 @@ public class BookUploadRepository {
                 """, id, idempotencyKey) == 1;
     }
 
-    public void cancelled(UUID id) {
-        dsl.execute("update book_uploads set status = 'CANCELLED', completed_at = now(), updated_at = now() where id = ?", id);
+    /** Claims cancellation only before receive, enrichment, or commit has started. */
+    public boolean cancelOwnedIfCancellable(UUID id, UUID actorId) {
+        return dsl.execute("""
+                update book_uploads set status = 'CANCELLED', completed_at = now(), updated_at = now()
+                 where id = ? and requested_by = ?
+                   and status in ('RECEIVING', 'READY_FOR_REVIEW', 'DUPLICATE', 'FAILED', 'EXPIRED')
+                """, id, actorId) == 1;
     }
 
     public List<UploadEntity> expired() {

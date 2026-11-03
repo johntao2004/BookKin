@@ -48,12 +48,16 @@ describe("BooklistsPage", () => {
     expect(screen.queryByRole("button", { name: "新建书目" })).not.toBeInTheDocument();
   });
 
-  it.each(["/booklists", "/booklists?q=not-found"]) ("空书目列表使用统一空态（%s）", async (initialPath) => {
+  it.each(["/booklists", "/booklists?q=not-found"]) ("空书目列表仍保留各分区空态（%s）", async (initialPath) => {
     sessionStorage.setItem("bookkin-demo-session", JSON.stringify(owner));
     vi.spyOn(api, "listBooklists").mockResolvedValue({ items: [] });
     render(<TestProviders initialPath={initialPath}><BooklistsPage /></TestProviders>);
 
-    expect(await screen.findByRole("heading", { name: initialPath.includes("?q=") ? "未找到匹配的书目" : "暂无书目" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "我的书目" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "家庭共享" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "公开书目" })).toBeInTheDocument();
+    const emptyTitle = initialPath.includes("?q=") ? "未找到匹配的书目" : "暂无书目";
+    expect(screen.getAllByText(emptyTitle)).toHaveLength(initialPath.includes("?q=") ? 3 : 1);
     expect(screen.queryByText(/试试书目名称|创建一份个人书目|登录后可以创建/)).not.toBeInTheDocument();
     expect(screen.getAllByRole("button", { name: "新建书目" })).toHaveLength(1);
     if (initialPath.includes("?q=")) {
@@ -77,31 +81,42 @@ describe("BooklistsPage", () => {
     expect(screen.queryByText("由主人和管理员整理的馆内阅读路径。")).not.toBeInTheDocument();
   });
 
-  it("按可见性分组，自己创建的家庭和公开书目也只出现在家庭共享", async () => {
+  it("登录后按个人、家庭、公开顺序分组书目", async () => {
     sessionStorage.setItem("bookkin-demo-session", JSON.stringify(owner));
     const mine = createBooklist("仅自己可见", "PERSONAL", true);
+    const privateOther = { ...createBooklist("他人的私人书目", "PERSONAL", false), visibility: "PRIVATE" as const };
     const family = { ...createBooklist("我的家庭书目", "PERSONAL", true), visibility: "MEMBERS" as const };
     const publicList = { ...createBooklist("我的公开书目", "PERSONAL", true), visibility: "PUBLIC" as const };
     const otherFamily = { ...createBooklist("他人的家庭书目", "PERSONAL", false), visibility: "MEMBERS" as const };
     const otherPublic = createBooklist("他人的公开书目", "PERSONAL", false);
-    vi.spyOn(api, "listBooklists").mockResolvedValue({ items: [mine, family, publicList, otherFamily, otherPublic] });
+    vi.spyOn(api, "listBooklists").mockResolvedValue({ items: [mine, privateOther, family, publicList, otherFamily, otherPublic] });
     render(<TestProviders initialPath="/booklists"><BooklistsPage /></TestProviders>);
 
+    const sectionOrder = (await screen.findAllByRole("region")).map((section) => section.getAttribute("aria-label"));
+    expect(sectionOrder).toEqual(["我的书目", "家庭共享", "公开书目"]);
+    const publicSection = within(screen.getByRole("region", { name: "公开书目" }));
     const personalSection = within(await screen.findByRole("region", { name: "我的书目" }));
     const sharedSection = within(screen.getByRole("region", { name: "家庭共享" }));
     expect(personalSection.getByRole("heading", { name: mine.title })).toBeInTheDocument();
-    expect(sharedSection.queryByRole("heading", { name: mine.title })).not.toBeInTheDocument();
-    for (const shared of [family, publicList, otherFamily, otherPublic]) {
-      expect(sharedSection.getByRole("heading", { name: shared.title })).toBeInTheDocument();
+    expect(personalSection.queryByRole("heading", { name: privateOther.title })).not.toBeInTheDocument();
+    expect(publicSection.getByRole("heading", { name: publicList.title })).toBeInTheDocument();
+    expect(publicSection.getByRole("heading", { name: otherPublic.title })).toBeInTheDocument();
+    expect(publicSection.queryByRole("heading", { name: mine.title })).not.toBeInTheDocument();
+    expect(publicSection.queryByRole("heading", { name: family.title })).not.toBeInTheDocument();
+    expect(sharedSection.getByRole("heading", { name: family.title })).toBeInTheDocument();
+    expect(sharedSection.getByRole("heading", { name: otherFamily.title })).toBeInTheDocument();
+    for (const shared of [publicList, otherPublic, family, otherFamily]) {
       expect(personalSection.queryByRole("heading", { name: shared.title })).not.toBeInTheDocument();
     }
+    expect(sharedSection.queryByRole("heading", { name: mine.title })).not.toBeInTheDocument();
   });
 
-  it("登录后分开我的书目与家庭发现，且不再提供官方类型", async () => {
+  it("登录后按个人、家庭、公开的顺序展示，且不再提供官方类型", async () => {
     sessionStorage.setItem("bookkin-demo-session", JSON.stringify(owner));
     render(<TestProviders initialPath="/booklists"><BooklistsPage /></TestProviders>);
 
     expect(await screen.findByRole("heading", { name: "我的书目" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "公开书目" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "家庭共享" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "想读的自然笔记" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "灯塔与远方" })).toBeInTheDocument();

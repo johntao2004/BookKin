@@ -23,6 +23,8 @@ public final class FileOperationModels {
     // Execution references a stored preview and fingerprint instead of redefining the previewed operation on the client.
     public record ExecuteRequest(@NotNull UUID previewToken, @NotNull String expectedFingerprint) {}
 
+    public record VersionRestorePreviewRequest(@NotNull String expectedFingerprint) {}
+
     public record FileConflict(String code, String message, String path) {}
 
     public record Preview(
@@ -46,4 +48,10 @@ public final class FileOperationModels {
             String stage,
             String errorCode,
             String errorDetail) {}
+
+    public record FileVersionList(List<FileVersionView> items) {}
+
+    public record FileVersionView(UUID id, String sourcePath, String fingerprint, long sizeBytes, String reason,
+                                  OffsetDateTime createdAt, OffsetDateTime expiresAt, OffsetDateTime restoredAt) {}
+
 }

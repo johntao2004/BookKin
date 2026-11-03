@@ -4,6 +4,11 @@ import { TestProviders } from "../../test/TestProviders";
 import { BookReviewsPanel } from "./BookReviewsPanel";
 import { bookReviews, type BookReview } from "./api";
 
+vi.mock("../content/MarkdownEditor", async () => {
+  const React = await import("react");
+  return { MarkdownEditor: ({ value, onChange, label, disabled }: { value: string; onChange: (value: string) => void; label: string; disabled?: boolean }) => React.createElement("textarea", { "aria-label": label, value, disabled, onChange: (event: React.ChangeEvent<HTMLTextAreaElement>) => onChange(event.target.value) }) };
+});
+
 const saved: BookReview = { id: "review-1", bookId: "book-1", userId: "owner", authorName: "作者", title: "重新理解阅读", markdown: "## 原文\n\n**思考**", visibility: "PRIVATE", revision: 3, createdAt: "2026-10-22T00:00:00Z", updatedAt: "2026-10-22T00:00:00Z" };
 
 function renderPanel() { return render(<TestProviders><BookReviewsPanel bookId="book-1" /></TestProviders>); }
@@ -24,11 +29,8 @@ describe("BookReviewsPanel", () => {
     fireEvent.change(within(drawer).getByRole("textbox", { name: "标题" }), { target: { value: "读后的思考" } });
     const markdown = "## 我的观点\n\n**重点**\n\n- 观察\n\n| 名称 | 内容 |\n| --- | --- |\n| 思考 | 重新理解 |\n\n```js\nconst read = true;\n```";
     fireEvent.change(within(drawer).getByRole("textbox", { name: "随笔正文" }), { target: { value: markdown } });
-    fireEvent.click(within(drawer).getByRole("button", { name: "预览" }));
-    const preview = within(drawer).getByRole("region", { name: "随笔预览" });
-    expect(within(preview).getByRole("heading", { name: "我的观点" })).toBeInTheDocument();
-    expect(within(preview).getByText("重点").tagName).toBe("STRONG");
-    expect(within(preview).getByRole("table")).toBeInTheDocument();
+    expect(within(drawer).queryByRole("button", { name: "预览" })).not.toBeInTheDocument();
+    expect(within(drawer).getByRole("textbox", { name: "随笔正文" })).toHaveValue(markdown);
     fireEvent.click(within(drawer).getByRole("button", { name: "保存随笔" }));
     await waitFor(() => expect(create).toHaveBeenCalledWith("book-1", { title: "读后的思考", markdown, visibility: "PRIVATE" }));
     expect(await screen.findByRole("heading", { name: "读后的思考" })).toBeInTheDocument();

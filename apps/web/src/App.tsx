@@ -8,8 +8,7 @@ const VaultPage = lazy(() => import("./pages/VaultPage").then(m => ({default:m.V
 const SearchPage = lazy(() => import("./pages/SearchPage").then(m => ({ default: m.SearchPage })));
 const ProfilePage = lazy(() => import("./pages/ProfilePage").then(m => ({ default: m.ProfilePage })));
 const RegisterPage = lazy(() => import("./pages/RegisterPage").then(m => ({default:m.RegisterPage})));
-import { Skeleton } from "@/ui/antd";
-import { PageContainer } from "./components/PageHeader";
+import { AppLoading } from "./components/AppLoading";
 import { lazy, Suspense } from "react";
 import { Navigate, Outlet, Route, Routes, useLocation, useParams } from "react-router-dom";
 import { RequireAuth, useAuth } from "./auth/AuthContext";
@@ -48,7 +47,7 @@ function LegacyCategoryRedirect() {
   const { ready } = useAuth();
   const location = useLocation();
   const { categoryId } = useParams();
-  if (!ready) return null;
+  if (!ready) return <AppLoading label="正在确认登录状态…" />;
 
   const params = new URLSearchParams(location.search);
   if (categoryId) params.set("category", categoryId);
@@ -79,7 +78,7 @@ function LegacyNotesOverviewRedirect() {
 
 export default function App() {
   return (
-    <Suspense fallback={<PageContainer><div role="status" aria-label="正在加载页面"><Skeleton active paragraph={{ rows: 8 }} /></div></PageContainer>}>
+    <Suspense fallback={<AppLoading label="正在打开页面…" />}>
       <SetupGate>
       <Routes>
         <Route path="/recover" element={<RecoveryPage />} />
@@ -96,6 +95,8 @@ export default function App() {
           <Route path="/booklists" element={<BooklistsPage />} />
           <Route path="/booklists/:booklistId" element={<BooklistDetailPage />} />
           <Route path="/reader/:bookId" element={<ReaderPage />} />
+          <Route path="/virtual-library" element={<VirtualLibraryRoute />} />
+          <Route path="/library/books/:bookId" element={<BookDetailPage />} />
         </Route>
         <Route element={<ProtectedShell />}>
           <Route path="/library/overview" element={<LibraryOverviewPage />} />
@@ -103,7 +104,6 @@ export default function App() {
           <Route path="/articles/:articleId" element={<ArticleReaderPage />} />
           <Route path="/article-collections" element={<ArticleCollectionsPage />} />
           <Route path="/article-collections/:collectionId" element={<ArticleCollectionDetailPage />} />
-          <Route path="/library/books/:bookId" element={<BookDetailPage />} />
           <Route path="/library/books/:bookId/edit" element={<RequireAuth roles={["OWNER", "ADMIN"]}><MetadataEditPage /></RequireAuth>} />
           <Route path="/library/uploads/:uploadId" element={<RequireAuth roles={["OWNER", "ADMIN"]}><MetadataEditPage /></RequireAuth>} />
           <Route path="/vault" element={<VaultPage />} />
@@ -111,7 +111,6 @@ export default function App() {
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/library/all" element={<LegacyLibraryRedirect />} />
           <Route path="/knowledge-graph" element={<KnowledgeGraphPage />} />
-          <Route path="/virtual-library" element={<VirtualLibraryRoute />} />
           <Route path="/display-books" element={<LegacyLibraryRedirect />} />
           <Route path="/settings/display-books" element={<LegacyLibraryRedirect />} />
           <Route path="/recycle-bin" element={<RequireAuth roles={["OWNER", "ADMIN"]}><Navigate to="/settings#catalog/recycle-bin" replace /></RequireAuth>} />

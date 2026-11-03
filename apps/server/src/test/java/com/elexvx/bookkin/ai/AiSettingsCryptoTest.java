@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.elexvx.bookkin.config.BookKinProperties;
 import java.time.Duration;
@@ -28,6 +29,8 @@ class AiSettingsCryptoTest {
 
         var ciphertext = crypto.encrypt("provider-secret");
 
+        assertFalse(ciphertext.contains("provider-secret"));
+        assertTrue(ciphertext.startsWith("v1:"));
         assertEquals("provider-secret", crypto.decrypt(ciphertext));
     }
 

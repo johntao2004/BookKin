@@ -1,4 +1,5 @@
 import Empty from "antd/es/empty";
+import { statusTitle } from "./status-title";
 import type { ReactNode } from "react";
 import { Stack, Typography } from "./primitives";
 import { tokens } from "../theme/generated-tokens";
@@ -20,7 +21,7 @@ export function EmptyState({ title, action, compact = false, padded = true }: {
     py: padded ? `${compact ? tokens.spacing[4] : tokens.spacing[8]}px` : 0 }}>
     <EmptyStateIllustration compact={compact} />
     <Typography variant={compact ? "body2" : "h4"} color={compact ? "text.secondary" : "text.primary"}
-      sx={compact ? undefined : { fontSize: { xs: tokens.typography.fontSize.title, sm: tokens.typography.fontSize.headingSm } }}>{title}</Typography>
+      sx={compact ? undefined : { fontSize: { xs: tokens.typography.fontSize.title, sm: tokens.typography.fontSize.headingSm } }}>{statusTitle(title)}</Typography>
     {action}
   </Stack>;
 }

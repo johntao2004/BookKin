@@ -105,3 +105,5 @@ export * from './UpdateReaderFontRequest';
 export * from './UserRole';
 export * from './UserStatus';
 export * from './WeeklyReadingStats';
+export * from './PrecheckBookUploadRequest';
+export * from './PrecheckBookUpload200Response';

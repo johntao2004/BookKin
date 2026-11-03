@@ -232,6 +232,18 @@ describe("BookDetailPage", () => {
     expect(screen.getByTestId("route-location")).toHaveTextContent(`/library/books/${book.id}`);
   });
 
+  it("omits saved and source TOC fields and does not read the source just for a TOC", async () => {
+    const book = demoBooks[0];
+    vi.spyOn(api, "getBook").mockResolvedValue(book);
+    vi.mocked(api.getBookMetadata).mockResolvedValue({ ...metadataForBook(book), authorBiography: "已有作者介绍", tableOfContents: "旧目录", sources: { tableOfContents: "FILE" } });
+    const source = vi.spyOn(api, "getBookBibliographySource");
+    renderDetail(`/library/books/${book.id}`);
+    expect(await screen.findByText("已有作者介绍")).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "目录" })).not.toBeInTheDocument();
+    expect(screen.queryByText("旧目录")).not.toBeInTheDocument();
+    expect(source).not.toHaveBeenCalled();
+  });
+
   it("keeps source biography and a manually saved table of contents consistent when editing in place", async () => {
     const book = demoBooks[0];
     vi.spyOn(api, "getBook").mockResolvedValue(book);
@@ -240,12 +252,12 @@ describe("BookDetailPage", () => {
     renderDetail(`/library/books/${book.id}`);
 
     expect(await screen.findByText("原书作者介绍")).toBeInTheDocument();
-    expect(screen.getByText("人工目录")).toBeInTheDocument();
+    expect(screen.queryByText("人工目录")).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "编辑元信息" }));
     expect(await screen.findByRole("textbox", { name: "作者介绍" })).toHaveValue("原书作者介绍");
     expect(screen.queryByRole("textbox", { name: "目录" })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "取消" }));
-    expect(await screen.findByText("人工目录")).toBeInTheDocument();
+    expect(screen.queryByText("人工目录")).not.toBeInTheDocument();
   });
 
   it("keeps one metadata-editing entry without a separate file-management button", async () => {

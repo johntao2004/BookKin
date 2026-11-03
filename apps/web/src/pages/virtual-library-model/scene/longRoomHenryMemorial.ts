@@ -11,7 +11,7 @@ function createInscriptionMaterial(lines:string[], color:string, fontSize:number
   const context=canvas.getContext('2d'); if(!context) return null;
   context.clearRect(0,0,canvas.width,canvas.height);
   context.fillStyle=color; context.textAlign='center'; context.textBaseline='middle';
-  context.font=`700 ${fontSize}px Georgia, serif`;
+  context.font=`700 ${fontSize}px BookKin Serif, Noto Serif SC, serif`;
   const lineHeight=fontSize*1.28, start=(canvas.height-lineHeight*(lines.length-1))/2;
   lines.forEach((line,index)=>context.fillText(line,canvas.width/2,start+index*lineHeight,950));
   const map=new THREE.CanvasTexture(canvas); map.colorSpace=THREE.SRGBColorSpace; map.anisotropy=4;

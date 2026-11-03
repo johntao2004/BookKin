@@ -1,7 +1,5 @@
 import { prepareSessionExit, setPersistenceUser } from "./session-save";
 import { Button } from "@/ui/buttons";
-import { CircularProgress } from "@/ui/feedback";
-import { Stack } from "@/ui/primitives";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type PropsWithChildren } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
@@ -9,6 +7,8 @@ import { api } from "../api/client";
 import type { SessionUser, UserRole } from "../domain/types";
 import { AccessDeniedPage } from "../pages/AccessDeniedPage";
 import { HttpErrorPage, pageFailure, type PageFailure } from "../pages/HttpErrorPage";
+import { AppLoading } from "../components/AppLoading";
+import { setupStatusQueryKey } from "./setup-status";
 
 interface AuthContextValue {
   user: SessionUser | null;
@@ -49,7 +49,13 @@ export function AuthProvider({ children }: PropsWithChildren) {
   // Clear query caches on identity changes to avoid showing the previous user’s private data.
   const persist = useCallback((next: SessionUser | null) => {
     if (identity.current !== (next ? `${next.id}:${next.role}` : null)) {
-      queryClient.clear();
+      // Setup status is anonymous and contains no user data. Keep its short-lived result
+      // so session restoration does not cancel and immediately repeat the startup request.
+      queryClient.removeQueries({
+        predicate: ({ queryKey }) => queryKey.length !== setupStatusQueryKey.length
+          || setupStatusQueryKey.some((part, index) => queryKey[index] !== part),
+      });
+      queryClient.getMutationCache().clear();
       identity.current = next ? `${next.id}:${next.role}` : null;
     }
     setPersistenceUser(next?.id ?? null);
@@ -177,7 +183,7 @@ export function useAuth() {
 export function RequireAuth({ children, roles }: PropsWithChildren<{ roles?: UserRole[] }>) {
   const { user, ready, sessionError, sessionFailure, retrySession } = useAuth();
   const location = useLocation();
-  if (!ready) return <Stack sx={{ minHeight: "100vh", alignItems: "center", justifyContent: "center" }}><CircularProgress /></Stack>;
+  if (!ready) return <AppLoading label="正在确认登录状态…" />;
   if (sessionError) return <HttpErrorPage fullHeight failure={sessionFailure ?? { code: "SESSION_CHECK_FAILED", reason: sessionError }}
     actions={<Button onClick={retrySession}>重试</Button>} />;
   const returnTo = `${location.pathname}${location.search}${location.hash}`;

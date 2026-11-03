@@ -25,6 +25,23 @@ describe('shared icon buttons', () => {
     fireEvent.click(purge);
     expect(onClick).not.toHaveBeenCalled();
   });
+  it('keeps disabled primary actions native and inert while enabled danger actions retain their semantics', () => {
+    const onClick = vi.fn();
+    render(<TestProviders>
+      <Button variant="contained" disabled onClick={onClick}>确认重命名</Button>
+      <Button variant="contained">保存更改</Button>
+      <Button variant="contained" danger>删除书籍</Button>
+    </TestProviders>);
+    const rename = screen.getByRole('button', { name: '确认重命名' });
+    expect(rename).toBeDisabled();
+    expect(rename).toHaveClass('ant-btn-primary');
+    fireEvent.click(rename);
+    expect(onClick).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: '保存更改' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: '删除书籍' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: '删除书籍' })).toHaveClass('ant-btn-dangerous');
+  });
+
   it('keeps both icons outside the label so the button gap can separate them', () => {
     render(<TestProviders><Button startIcon={<AddRounded />} endIcon={<ArrowForwardRounded />}>新建书单</Button></TestProviders>);
     const button = screen.getByRole('button', {name: '新建书单'});

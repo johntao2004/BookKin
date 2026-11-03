@@ -30,6 +30,7 @@ interface ReaderTopBarProps {
   notesLabel?: string;
   progressPercent: number;
   tableOfContentsAvailable: boolean;
+  tableOfContentsLabel?: string;
   bookmarked: boolean;
   bookmarkBusy: boolean;
   onBack: () => void;
@@ -49,6 +50,7 @@ export function ReaderTopBar({
   format,
   progressPercent,
   tableOfContentsAvailable,
+  tableOfContentsLabel = "目录",
   bookmarked,
   bookmarkBusy,
   onBack,
@@ -115,8 +117,8 @@ export function ReaderTopBar({
           )}
         </Stack> : <Stack direction="row" sx={{ alignItems: "center", flexShrink: 0 }}>
           {tableOfContentsAvailable && (
-            <Tooltip title="目录">
-              <IconButton onClick={onOpenTableOfContents} color="inherit" aria-label="打开目录" sx={touchIconSx}><FormatListBulletedRounded /></IconButton>
+            <Tooltip title={tableOfContentsLabel}>
+              <IconButton onClick={onOpenTableOfContents} color="inherit" aria-label={`打开${tableOfContentsLabel}`} sx={touchIconSx}><FormatListBulletedRounded /></IconButton>
             </Tooltip>
           )}
           {privateActions && <Tooltip title={bookmarked ? "移除书签" : "添加书签"}>
@@ -143,7 +145,7 @@ export function ReaderTopBar({
         onClose={closeMore}
         slotProps={{ paper: { sx: { minWidth: `calc(100vw - ${tokens.spacing[8]}px)`, maxWidth: `calc(100vw - ${tokens.spacing[8]}px)`, maxHeight: `calc(100dvh - ${tokens.spacing[8]}px)`, overflowY: "auto", overscrollBehavior: "contain" } } }}
       >
-        {tableOfContentsAvailable && <MenuItem onClick={() => { closeMore(); onOpenTableOfContents(); }}>目录</MenuItem>}
+        {tableOfContentsAvailable && <MenuItem onClick={() => { closeMore(); onOpenTableOfContents(); }}>{tableOfContentsLabel}</MenuItem>}
         {privateActions && (
           <MenuItem disabled={bookmarkBusy} onClick={() => { closeMore(); onToggleBookmark(); }}>{bookmarked ? "移除书签" : "添加书签"}</MenuItem>
         )}

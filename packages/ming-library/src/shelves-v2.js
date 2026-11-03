@@ -160,7 +160,7 @@ export function buildShelvesV2({planScale=1}={}){
     }
     const signMap=tex(512,96,(c,w,h)=>{
       c.fillStyle='#29463e';c.fillRect(0,0,w,h);c.strokeStyle='#b99354';c.lineWidth=3;c.strokeRect(6,6,w-12,h-12);
-      c.fillStyle='#e9d8ad';c.font='500 38px MingSerif, serif';c.textAlign='center';c.textBaseline='middle';c.fillText(`${rack.id}  ·  ${rack.category}`,w/2,h*.54);
+      c.fillStyle='#e9d8ad';c.font='500 38px BookKin Serif, Noto Serif SC, serif';c.textAlign='center';c.textBaseline='middle';c.fillText(`${rack.id}  ·  ${rack.category}`,w/2,h*.54);
     });
     const signMat=new THREE.MeshStandardMaterial({map:signMap,color:0xffffff,roughness:.7});
     for(const face of [-1,1]){

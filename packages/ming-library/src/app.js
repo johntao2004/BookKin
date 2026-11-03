@@ -50,8 +50,12 @@ function normalizeCollection(input){
   const seen=new Set();return data.map(raw=>{const b=normalizeBookData(raw);if(seen.has(b.id))throw new Error('书目 ID 重复：'+b.id);seen.add(b.id);return b;});
 }
 async function loadBookFont(books){
-  const text=books.map(b=>(b.title||'')+(b.author||'')).join('');
-  if(text)await document.fonts.load('500 24px BookCJK',text.slice(0,200000));
+  const text=books.map(b=>(b.title||'')+(b.author||'')+(b.category||'')+(b.description||'')).join('');
+  if(text){
+    await document.fonts.ready;
+    await document.fonts.load('500 24px "BookKin Serif"',text.slice(0,200000));
+    await document.fonts.load('400 24px "Noto Serif SC"',text.slice(0,200000));
+  }
 }
 async function replaceCollection(input,{demo=false,loadFont=true}={}){
   const revision=++collectionRevision;
@@ -109,7 +113,11 @@ async function loadBooksFromUrl(url){
 
 async function init(){
   try{
-    await document.fonts.load('500 32px MingSerif','观文藏阁現代書籍文華殿重檐庑殿建極綏猷崇文尚學');
+    const inscriptionText='观文藏阁現代書籍文華殿重檐庑殿建極綏猷崇文尚學0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+    // Wait for imported font stylesheets before requesting fonts used by canvas textures.
+    if(document.readyState!=='complete')await new Promise(resolve=>window.addEventListener('load',resolve,{once:true}));
+    // This fixed inscription is completely covered by the bundled interface subset.
+    await document.fonts.load('500 32px "BookKin Serif"',inscriptionText);
     renderer=makeRenderer();
     adaptiveResolution=new AdaptiveResolution({coarse:matchMedia('(pointer: coarse)').matches,fallback:renderer.isFallback});
     applyResolution();renderer.setSize(innerWidth,innerHeight);

@@ -108,6 +108,19 @@ For production, expose BookKin only through a trusted LAN or VPN and mount the i
 - Cross-root moves use staging, fsync, SHA-256 verification, parse validation and recoverable source placement.
 - Book files, upload staging data and cover binaries stay on disk rather than in PostgreSQL.
 
+### Optional Zhipu AI provider
+
+The Zhipu OpenAI-compatible provider is disabled by default and makes no external requests unless both the global AI service and the provider are enabled. Configure it through the API/Worker environment; keep the API key private and retain the existing instance-specific `BOOKKIN_AI_SETTINGS_ENCRYPTION_KEY` for encrypted saved settings.
+
+```bash
+BOOKKIN_AI_ZHIPU_ENABLED=false
+BOOKKIN_AI_ZHIPU_BASE_URL=https://open.bigmodel.cn/api/paas/v4/
+BOOKKIN_AI_ZHIPU_API_KEY=
+BOOKKIN_AI_ZHIPU_MODEL=glm-4.7-flash
+```
+
+The owner can also configure the endpoint, model and key in 管理设置 → 外部服务 → AI. A blank key keeps the saved key; the UI never returns a saved key in settings responses.
+
 ## Repository map
 
 ```text
@@ -161,6 +174,8 @@ BookKin source code is available under the [MIT License](LICENSE). Bundled fonts
 用户在「设置 → 找回邮箱」输入当前密码和邮箱，通过邮件中的链接确认绑定。登录页「忘记密码？」向已验证邮箱发送 30 分钟有效的一次性链接；重置成功撤销旧会话，需要重新登录。不存在或停用的账户使用相同申请响应。发送失败可由主人通过测试邮件检查 SMTP 配置，服务端记录重置投递失败审计。
 
 邮件中的站点地址必须为可访问的 HTTPS 根地址；本机测试可使用 `http://127.0.0.1:4175`。`BOOKKIN_WEB_PORT=4175 pnpm start:preview` 可选择空闲的本地端口，成功启动后会记住该端口供后续启动和状态检查使用。用户仍处于临时密码状态时，需要先设置自己的密码才能管理邮件配置或绑定邮箱。
+
+来源地址默认取 TCP 对端，忽略 `Forwarded` 和 `X-Forwarded-*`，用于初始化网络限制、限流及登录审计。站点链接通过 `BOOKKIN_PUBLIC_BASE_URL` 配置，HTTPS 部署同时设置 `BOOKKIN_COOKIE_SECURE=true`。如需反向代理恢复真实客户端地址，必须先限制应用仅接受可信代理连接，并在代理清除外部转发头、配置精确可信代理范围；不得直接将 `server.forward-headers-strategy` 改为无来源校验的 `framework`。
 
 ### 密码复杂度
 

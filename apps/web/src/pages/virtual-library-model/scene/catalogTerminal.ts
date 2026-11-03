@@ -86,7 +86,7 @@ export function createCatalogTerminal(materials: LibraryMaterials) {
     context.fillStyle = color(PALETTE.parchment);
     context.textAlign = 'center';
     context.textBaseline = 'middle';
-    context.font = '64px serif';
+    context.font = '64px BookKin Serif, Noto Serif SC, serif';
     context.fillText('查阅藏书', 384, 96);
   }
   const labelTexture = new THREE.CanvasTexture(canvas);

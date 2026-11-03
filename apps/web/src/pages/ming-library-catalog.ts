@@ -1,6 +1,8 @@
 import type { Book } from '../domain/types';
 import { themaPath } from '../domain/thema';
 
+export type MingLibraryCatalogBook = Pick<Book, "id" | "title" | "author" | "coverUrl" | "description" | "format" | "status" | "subjectCodes">;
+
 /** The scene receives bibliographic fields only, never NAS paths or file fingerprints. */
 export interface MingLibraryBook {
   id: string;
@@ -13,7 +15,7 @@ export interface MingLibraryBook {
   readUrl: string;
 }
 
-export function mingLibraryCatalog(books: readonly Book[], origin: string): MingLibraryBook[] {
+export function mingLibraryCatalog(books: readonly MingLibraryCatalogBook[], origin: string): MingLibraryBook[] {
   const seen = new Set<string>();
   return books.filter(book => {
     if (book.status !== 'AVAILABLE' || seen.has(book.id)) return false;

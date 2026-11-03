@@ -23,6 +23,7 @@ const settings = {
   providers: [
     { id: "openai", label: "OpenAI", type: "OPENAI_COMPATIBLE" as const, enabled: false, baseUrl: "https://api.openai.com/v1", model: "gpt-4o-mini", configured: false, available: false, apiKeyConfigured: false },
     { id: "deepseek", label: "DeepSeek", type: "OPENAI_COMPATIBLE" as const, enabled: false, baseUrl: "https://api.deepseek.com", model: "deepseek-flash", configured: false, available: false, apiKeyConfigured: false },
+    { id: "zhipu", label: "智谱", type: "OPENAI_COMPATIBLE" as const, enabled: false, baseUrl: "https://open.bigmodel.cn/api/paas/v4/", model: "glm-4.7-flash", configured: false, available: false, apiKeyConfigured: false },
   ],
 };
 
@@ -69,7 +70,25 @@ it("saves only the selected provider as enabled without an extra switch", async 
     providers: [
       expect.objectContaining({ id: "openai", enabled: false }),
       expect.objectContaining({ id: "deepseek", enabled: true }),
+      expect.objectContaining({ id: "zhipu", enabled: false }),
     ],
+  })));
+});
+
+it("selects Zhipu, supports its custom model option and keeps the saved key out of the loaded draft", async () => {
+  vi.mocked(api.getAiSettings).mockResolvedValue({ ...settings, providers: settings.providers.map(provider => provider.id === "zhipu" ? { ...provider, apiKeyConfigured: true } : provider) });
+  render(<TestProviders><AiSettingsPage /></TestProviders>);
+  fireEvent.mouseDown(await screen.findByRole("combobox", { name: "选择厂商" }));
+  fireEvent.click(await screen.findByText("智谱"));
+  expect(screen.getByRole("textbox", { name: "接口地址" })).toHaveValue("https://open.bigmodel.cn/api/paas/v4/");
+  expect(await screen.findByText("GLM-4.7 Flash")).toBeInTheDocument();
+  expect(screen.getByLabelText("API 密钥")).toHaveValue("");
+  fireEvent.mouseDown(screen.getByRole("combobox", { name: "模型预设" }));
+  fireEvent.click(await screen.findByText("自定义模型"));
+  fireEvent.change(screen.getByRole("textbox", { name: "自定义模型 ID" }), { target: { value: "glm-custom" } });
+  fireEvent.click(screen.getByRole("button", { name: "保存平台" }));
+  await waitFor(() => expect(api.updateAiSettings).toHaveBeenCalledWith(expect.objectContaining({
+    providers: expect.arrayContaining([expect.objectContaining({ id: "zhipu", enabled: true, model: "glm-custom", apiKey: "", clearApiKey: false })]),
   })));
 });
 

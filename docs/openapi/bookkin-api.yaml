@@ -829,6 +829,35 @@ paths:
       responses:
         '204': { description: Removed from public display catalog }
         '409': { $ref: '#/components/responses/Problem' }
+  /display-books/{id}/metadata:
+    get:
+      tags: [Display catalog]
+      security: []
+      operationId: getDisplayBookMetadata
+      parameters: [{ $ref: '#/components/parameters/Id' }]
+      responses:
+        '200': { description: Public bibliography without storage identifiers or personal reading data, content: { application/json: { schema: { $ref: '#/components/schemas/PublicBookMetadata' } } } }
+        '404': { $ref: '#/components/responses/Problem' }
+  /display-books/{id}/bibliography-source:
+    get:
+      tags: [Display catalog]
+      security: []
+      operationId: getDisplayBookBibliographySource
+      parameters: [{ $ref: '#/components/parameters/Id' }]
+      responses:
+        '200':
+          description: Published book source bibliography under managed-path, read-lease and fingerprint checks
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  description: { type: [string, 'null'] }
+                  authorBiography: { type: [string, 'null'] }
+                  tableOfContents: { type: [string, 'null'] }
+                  subjectCodes: { type: array, items: { type: string } }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
   /display-books/{id}/cover:
     get:
       tags: [Display catalog]
@@ -1068,6 +1097,15 @@ paths:
       operationId: deleteAnnotation
       parameters: [{ $ref: '#/components/parameters/Id' }]
       responses: { '200': { description: Deleted } }
+  /file-task-history:
+    get:
+      tags: [File operations]
+      operationId: listFileTaskHistory
+      parameters:
+        - { name: page, in: query, schema: { type: integer, default: 0, minimum: 0 } }
+        - { name: pageSize, in: query, schema: { type: integer, default: 10, minimum: 1, maximum: 100 } }
+      responses:
+        '200': { description: Unified chronologically merged file operation and book upload history, content: { application/json: { schema: { type: object, required: [total, items], properties: { total: { type: integer, format: int64 }, items: { type: array, items: { type: object, required: [id, type, status, title, createdAt, updatedAt], properties: { id: { type: string, format: uuid }, type: { type: string, enum: [FILE_OPERATION, BOOK_UPLOAD] }, action: { type: string, nullable: true }, status: { type: string }, stage: { type: string, nullable: true }, title: { type: string }, originalFilename: { type: string, nullable: true }, createdAt: { type: string, format: date-time }, updatedAt: { type: string, format: date-time } } } } } } } } }
   /file-operations/preview:
     post:
       tags: [File operations]
@@ -1099,6 +1137,34 @@ paths:
       parameters: [{ $ref: '#/components/parameters/Id' }]
       responses:
         '200': { description: Operation, content: { application/json: { schema: { $ref: '#/components/schemas/FileOperation' } } } }
+  /file-operations/book-files/{bookFileId}/versions:
+    get:
+      tags: [File operations]
+      operationId: listFileVersions
+      description: OWNER/ADMIN with settings.recycle.view can list retained, unexpired file versions.
+      parameters: [{ name: bookFileId, in: path, required: true, schema: { type: string, format: uuid } }]
+      responses:
+        '200': { description: Retained versions, content: { application/json: { schema: { type: object, required: [items], properties: { items: { type: array, items: { $ref: '#/components/schemas/FileVersion' } } } } } } }
+  /file-operations/versions/{versionId}/restore/preview:
+    post:
+      tags: [File operations]
+      operationId: previewFileVersionRestore
+      description: Requires settings.recycle.restore; validates the current file and archive fingerprints before creating a bound preview.
+      parameters: [{ name: versionId, in: path, required: true, schema: { type: string, format: uuid } }]
+      requestBody: { required: true, content: { application/json: { schema: { type: object, required: [expectedFingerprint], properties: { expectedFingerprint: { type: string } } } } } }
+      responses:
+        '200': { description: Version restore preview, content: { application/json: { schema: { $ref: '#/components/schemas/FileOperationPreview' } } } }
+  /file-operations/versions/{versionId}/restore:
+    post:
+      tags: [File operations]
+      operationId: restoreFileVersion
+      description: Executes a matching preview with settings.recycle.restore; preserves the current file as another retained version.
+      parameters:
+        - { name: versionId, in: path, required: true, schema: { type: string, format: uuid } }
+        - { $ref: '#/components/parameters/IdempotencyKey' }
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/FileOperationExecuteRequest' } } } }
+      responses:
+        '200': { description: Queued or existing restore operation, content: { application/json: { schema: { $ref: '#/components/schemas/FileOperation' } } } }
   /recycle-bin:
     get:
       tags: [File operations]
@@ -1163,6 +1229,31 @@ paths:
       requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/CreateBookUploadRequest' } } } }
       responses:
         '200': { description: Created staging session, content: { application/json: { schema: { $ref: '#/components/schemas/BookUpload' } } } }
+  /book-uploads/precheck:
+    post:
+      tags: [Book uploads]
+      operationId: precheckBookUpload
+      description: Advisory SHA-256 and size check limited to the visible regular catalog and the current manager's pending drafts. Does not create a session or write files. Server receive and commit independently verify actual content.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [fingerprint, sizeBytes]
+              properties:
+                fingerprint: { type: string, pattern: '^sha256:[0-9a-f]{64}$' }
+                sizeBytes: { type: integer, format: int64, minimum: 1 }
+      responses:
+        '200':
+          description: Private advisory duplicate result, Cache-Control no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [match]
+                properties:
+                  match: { type: string, enum: [NONE, CATALOG, DRAFT] }
   /book-uploads/{id}:
     get:
       tags: [Book uploads]
@@ -1653,6 +1744,29 @@ components:
     MetadataSource: { type: string, enum: [FILE, FILENAME, OPEN_LIBRARY, WIKIDATA, GOOGLE_BOOKS, AI, MANUAL] }
     CoverSource: { type: string, enum: [EMBEDDED, PDF_FIRST_PAGE, OPEN_LIBRARY, GOOGLE_BOOKS, CUSTOM, GENERATED] }
     BookUploadStatus: { type: string, enum: [RECEIVING, INSPECTING, ENRICHING, READY_FOR_REVIEW, COMMITTING, SUCCEEDED, DUPLICATE, FAILED, CANCELLED, EXPIRED] }
+    PublicBookMetadata:
+      type: object
+      required: [id, title, authors, translators, tags, subjectCodes, coverUrl, sources, knowledgeTerms]
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string }
+        subtitle: { type: [string, 'null'] }
+        authors: { type: array, items: { type: string } }
+        translators: { type: array, items: { type: string } }
+        language: { type: [string, 'null'] }
+        publisher: { type: [string, 'null'] }
+        publishedDate: { type: [string, 'null'] }
+        isbn: { type: [string, 'null'] }
+        description: { type: [string, 'null'] }
+        series: { type: [string, 'null'] }
+        seriesIndex: { type: [number, 'null'] }
+        tags: { type: array, items: { type: string } }
+        subjectCodes: { type: array, items: { type: string } }
+        coverUrl: { type: string }
+        sources: { type: object, additionalProperties: { $ref: '#/components/schemas/MetadataSource' } }
+        authorBiography: { type: [string, 'null'] }
+        tableOfContents: { type: [string, 'null'] }
+        knowledgeTerms: { type: array, items: { type: string } }
     BookMetadata:
       type: object
       required: [id, title, authors, translators, tags, subjectCodes, sources]
@@ -1903,6 +2017,18 @@ components:
       properties:
         items: { type: array, items: { $ref: '#/components/schemas/AnnotationBookSummary' } }
         nextCursor: { type: [string, 'null'] }
+    FileVersion:
+      type: object
+      required: [id, sourcePath, fingerprint, sizeBytes, reason, createdAt, expiresAt]
+      properties:
+        id: { type: string, format: uuid }
+        sourcePath: { type: string }
+        fingerprint: { type: string }
+        sizeBytes: { type: integer, format: int64 }
+        reason: { type: string }
+        createdAt: { type: string, format: date-time }
+        expiresAt: { type: string, format: date-time }
+        restoredAt: { type: [string, 'null'], format: date-time }
     FileOperationType: { type: string, description: MOVE is retained for historical records only; new previews and executions are disabled., enum: [RENAME, MOVE, TRASH, RESTORE, WRITE_METADATA, PURGE] }
     FileOperationStatus: { type: string, enum: [PLANNED, RUNNING, SUCCEEDED, FAILED, ROLLED_BACK] }
     FileConflict: { type: object, required: [code, message], properties: { code: { type: string }, message: { type: string }, path: { type: [string, 'null'] } } }

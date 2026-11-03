@@ -22,8 +22,7 @@ export function AuthFrame({ children, title, setupLocked = false }: { children: 
   return (
     <Box sx={{ minHeight: "100dvh", display: "grid", gridTemplateColumns: {
       xs: "minmax(0, 1fr)",
-      md: `minmax(0, 1fr) minmax(calc(${tokens.layout.touchTarget}px * 8), 0.9fr)`,
-      xl: `minmax(0, 1fr) ${tokens.layout.readingMax}px`,
+      md: `minmax(0, 1fr) min(50%, ${tokens.layout.authPanelMax}px)`,
     } }}>
       <SiteMetadata />
       <Box sx={{ display: { xs: "none", md: "block" }, position: "relative", overflow: "hidden", bgcolor: "secondary.dark", minHeight: "100dvh" }}>

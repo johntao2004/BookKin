@@ -276,11 +276,13 @@ public class AiMetadataService {
         body.put("model", provider.model());
         body.put("temperature", 0);
         body.put("max_tokens", systemPrompt.equals(SYSTEM_PROMPT) ? 1200 : 4096);
-        // DeepSeek enables thinking by default; its reasoning shares this bounded
-        // output budget and can consume it before producing the required JSON.
-        // Scope the extension to the official API so other compatible providers
-        // are not sent an unsupported parameter.
-        if ("api.deepseek.com".equalsIgnoreCase(URI.create(defaultValue(provider.baseUrl(), "https://api.openai.com/v1")).getHost())) {
+        // DeepSeek and supported Zhipu GLM versions enable thinking by default;
+        // reasoning can consume the bounded output budget before producing JSON.
+        // Keep provider-specific parameters scoped to official hosts and models.
+        URI baseUri = URI.create(defaultValue(provider.baseUrl(), "https://api.openai.com/v1"));
+        String host = baseUri.getHost();
+        if ("api.deepseek.com".equalsIgnoreCase(host)
+                || ("open.bigmodel.cn".equalsIgnoreCase(host) && supportsZhipuThinkingControl(provider.model()))) {
             body.put("thinking", Map.of("type", "disabled"));
         }
         body.put("messages", List.of(
@@ -301,6 +303,12 @@ public class AiMetadataService {
             }
         }
         throw new IllegalStateException("AI 平台没有返回文本结果");
+    }
+
+    private boolean supportsZhipuThinkingControl(String model) {
+        if (model == null) return false;
+        String normalized = model.strip().toLowerCase(java.util.Locale.ROOT);
+        return normalized.matches("glm-(4\\.(5|6|7)|5(\\.1|\\.2)?)(-.+)?");
     }
 
     private String invokeAnthropic(AiProvider provider, String prompt, String systemPrompt) throws Exception {

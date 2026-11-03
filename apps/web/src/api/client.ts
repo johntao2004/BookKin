@@ -21,6 +21,7 @@ import type {
   DisplayBook,
   DisplayBookPage,
   BookMetadata,
+  PublicBookMetadata,
   BookMetadataDraft,
   BookUpload,
   AiProviderInfo,
@@ -30,6 +31,7 @@ import type {
   MetadataProviderSettings,
   MetadataProviderSettingsInput,
   FileOperation,
+  FileTaskHistoryPage,
   FileOperationPreview,
   FileOperationType,
   LibraryRoot,
@@ -167,6 +169,7 @@ let demoAiSettings: AiSettings = {
   providers: [
     { id: "openai", label: "OpenAI", type: "OPENAI_COMPATIBLE", enabled: false, baseUrl: "https://api.openai.com/v1", model: "gpt-4o-mini", configured: false, available: false, apiKeyConfigured: false },
     { id: "deepseek", label: "DeepSeek", type: "OPENAI_COMPATIBLE", enabled: false, baseUrl: "https://api.deepseek.com", model: "deepseek-v4-flash", configured: false, available: false, apiKeyConfigured: false },
+    { id: "zhipu", label: "智谱", type: "OPENAI_COMPATIBLE", enabled: false, baseUrl: "https://open.bigmodel.cn/api/paas/v4/", model: "glm-4.7-flash", configured: false, available: false, apiKeyConfigured: false },
     { id: "qwen", label: "通义千问", type: "OPENAI_COMPATIBLE", enabled: false, baseUrl: "https://dashscope.aliyuncs.com/compatible-mode/v1", model: "qwen-plus", configured: false, available: false, apiKeyConfigured: false },
     { id: "siliconflow", label: "SiliconFlow", type: "OPENAI_COMPATIBLE", enabled: false, baseUrl: "https://api.siliconflow.cn/v1", model: "Qwen/Qwen3-32B", configured: false, available: false, apiKeyConfigured: false },
     { id: "anthropic", label: "Anthropic", type: "ANTHROPIC", enabled: false, baseUrl: "https://api.anthropic.com", model: "claude-sonnet-4-6", configured: false, available: false, apiKeyConfigured: false },
@@ -441,9 +444,9 @@ export const api = {
     }
   },
 
-  async getSetupStatus(): Promise<{ initialized: boolean }> {
+  async getSetupStatus(signal?: AbortSignal): Promise<{ initialized: boolean }> {
     if (demoMode) return { initialized: users.length > 0 };
-    return request("/auth/setup-status");
+    return request("/auth/setup-status", { signal }, { timeoutMs: 8_000 });
   },
 
   async login(username: string, password: string): Promise<SessionUser> {
@@ -847,6 +850,31 @@ export const api = {
     return displayBook(book, index + 1);
   },
 
+  async getDisplayBookMetadata(bookId: string): Promise<PublicBookMetadata> {
+    if (!demoMode) return request(`/display-books/${bookId}/metadata`);
+    await api.getDisplayBook(bookId);
+    const book = books.find(candidate => candidate.id === bookId);
+    if (!book) throw new Error("未找到这本书");
+    const metadata: PublicBookMetadata = { id: book.id, title: book.title, authors: [book.author], translators: [],
+      description: book.description, language: "zh-CN", publisher: "BookKin典藏", publishedDate: "2026",
+      isbn: "", series: "灯火集", tags: book.tags, subjectCodes: book.subjectCodes ?? [], sources: {} };
+    return {
+      id: metadata.id, title: metadata.title, subtitle: metadata.subtitle, authors: metadata.authors,
+      translators: metadata.translators, language: metadata.language, publisher: metadata.publisher,
+      publishedDate: metadata.publishedDate, isbn: metadata.isbn, description: metadata.description,
+      series: metadata.series, seriesIndex: metadata.seriesIndex, tags: metadata.tags,
+      subjectCodes: metadata.subjectCodes, coverUrl: `/api/v1/display-books/${bookId}/cover`,
+      sources: metadata.sources, authorBiography: metadata.authorBiography,
+      tableOfContents: metadata.tableOfContents, knowledgeTerms: metadata.knowledgeTerms,
+    };
+  },
+
+  async getDisplayBookBibliographySource(bookId: string, signal?: AbortSignal): Promise<{ description?: string; authorBiography?: string; tableOfContents?: string; subjectCodes?: string[] }> {
+    if (!demoMode) return request(`/display-books/${bookId}/bibliography-source`, { signal });
+    await api.getDisplayBook(bookId);
+    return {};
+  },
+
   async addDisplayBook(bookId: string, revision: number): Promise<DisplayBook> {
     if (!demoMode) return request("/display-books", { method: "POST", body: JSON.stringify({ bookId, revision }) });
     await pause(80);
@@ -1144,6 +1172,26 @@ export const api = {
     await pause(); return { items: operations.slice(page * pageSize, (page + 1) * pageSize), total: operations.length };
   },
 
+  async listFileTaskHistoryPage(page = 0, pageSize = 10): Promise<FileTaskHistoryPage> {
+    if (!demoMode) return request(`/file-task-history?page=${page}&pageSize=${pageSize}`);
+    await pause();
+    const items = operations.map((operation) => {
+      const originalFilename = operation.sourcePath.split(/[\\/]/).filter(Boolean).at(-1) ?? null;
+      return {
+        id: operation.id,
+        type: "FILE_OPERATION" as const,
+        action: operation.type,
+        status: operation.status,
+        title: originalFilename?.replace(/\.(epub|pdf)$/i, "") || "未知书籍",
+        originalFilename,
+        createdAt: operation.createdAt,
+        updatedAt: operation.createdAt,
+        stage: operation.stage ?? null,
+      };
+    });
+    return { items: items.slice(page * pageSize, (page + 1) * pageSize), total: items.length };
+  },
+
   async listFileOperations(): Promise<FileOperation[]> {
     if (!demoMode) return request<{ items: FileOperation[] }>("/file-operations?limit=50").then((result) => result.items);
     await pause();
@@ -1189,6 +1237,11 @@ export const api = {
 
   async listBookUploads(): Promise<BookUpload[]> {
     return request<{ items: BookUpload[] }>("/book-uploads").then((result) => result.items);
+  },
+
+  async precheckBookUpload(input: { fingerprint: string; sizeBytes: number }): Promise<{ match: "NONE" | "CATALOG" | "DRAFT" }> {
+    if (demoMode) return { match: "NONE" };
+    return request("/book-uploads/precheck", { method: "POST", body: JSON.stringify(input) });
   },
 
   async createBookUpload(input: { libraryRootId: string; filename: string; sizeBytes: number }): Promise<BookUpload> {

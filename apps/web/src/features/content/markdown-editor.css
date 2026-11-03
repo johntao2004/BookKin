@@ -1,0 +1,81 @@
+.bk-markdown-editor {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  gap: var(--spacing-2);
+}
+.bk-markdown-editor__toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--spacing-1);
+}
+.bk-markdown-editor__link-input,
+.bk-markdown-editor__control-input {
+  min-width: calc(var(--spacing-10) * 4);
+  max-width: calc(var(--spacing-10) * 6);
+  padding: var(--spacing-1) var(--spacing-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-primary);
+  background: var(--color-surface);
+  font: inherit;
+}
+.bk-markdown-editor__link-input:focus-visible,
+.bk-markdown-editor__control-input:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 1px;
+}
+.bk-markdown-editor__link-input:disabled,
+.bk-markdown-editor__control-input:disabled {
+  background: var(--color-surface-soft);
+}
+.bk-markdown-editor__surface {
+  min-height: var(--spacing-24);
+  max-height: 60vh;
+  overflow: auto;
+  outline: none;
+}
+.bk-markdown-editor__surface:focus-visible {
+  border-color: var(--color-focus);
+}
+.bk-markdown-editor__surface[aria-disabled="true"] {
+  background: var(--color-surface-soft);
+  cursor: not-allowed;
+}
+.bk-markdown-editor__surface .ProseMirror-trailingBreak { display: none; }
+.bk-markdown-editor__surface li[data-checked] { list-style: none; }
+.bk-markdown-editor__surface li[data-checked] > label { margin-inline-end: var(--spacing-2); }
+.bk-markdown-editor__surface li[data-checked] > label input { accent-color: var(--color-primary); }
+.bk-markdown-editor__surface table {
+  width: max-content;
+  min-width: 50%;
+  max-width: 100%;
+  border-collapse: collapse;
+}
+.bk-markdown-editor__surface th,
+.bk-markdown-editor__surface td {
+  min-width: calc(var(--spacing-10) * 2);
+  padding: var(--spacing-1) var(--spacing-2);
+  border: 1px solid var(--color-border);
+  vertical-align: top;
+}
+.bk-markdown-editor-loading {
+  min-height: var(--spacing-24);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+.bk-markdown-editor__surface [data-bk-markdown-image] {
+  display: inline-block;
+  max-width: 100%;
+  padding: var(--spacing-2);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-sm);
+}
+.bk-markdown-editor__surface img {
+  max-width: 100%;
+  height: auto;
+}
+.bk-post-editor-fullscreen .bk-markdown-editor { flex: 1; }
+.bk-post-editor-fullscreen .bk-markdown-editor__surface { flex: 1; max-height: none; }

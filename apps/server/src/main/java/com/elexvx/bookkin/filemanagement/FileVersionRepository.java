@@ -39,6 +39,14 @@ public class FileVersionRepository {
                 """, bookId).map(this::map);
     }
 
+    public List<FileVersion> listForFile(UUID bookFileId) {
+        return dsl.fetch("""
+                select * from file_versions
+                 where book_file_id = ? and expires_at > now()
+                 order by created_at desc, id desc
+                """, bookFileId).map(this::map);
+    }
+
     public void markRestored(UUID id) {
         dsl.execute("update file_versions set restored_at = now() where id = ?", id);
     }

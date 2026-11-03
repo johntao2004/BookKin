@@ -182,6 +182,9 @@ export interface BookMetadata {
   sources: Record<string, MetadataSource>;
 }
 
+/** Public bibliographic fields; storage identifiers and user reading data are excluded. */
+export type PublicBookMetadata = Omit<BookMetadata, "coverCacheKey" | "publiclyVisible" | "knowledgeDraft">;
+
 export interface BookMetadataDraft {
   knowledgeTerms?: string[];
   knowledgeDraft?: BookKnowledgeDraft;
@@ -353,6 +356,20 @@ export interface FileOperation {
   createdAt: string;
   stage?: string;
 }
+
+export type FileTaskHistoryStatus = FileOperationStatus | BookUploadStatus;
+export interface FileTaskHistoryItem {
+  id: string;
+  type: "FILE_OPERATION" | "BOOK_UPLOAD";
+  action: FileOperationType | null;
+  status: FileTaskHistoryStatus;
+  title: string;
+  originalFilename: string | null;
+  createdAt: string;
+  updatedAt: string;
+  stage?: string | null;
+}
+export interface FileTaskHistoryPage { items: FileTaskHistoryItem[]; total: number }
 
 export interface RecycleBinEntry {
   id: string;

@@ -21,6 +21,8 @@ import { tokens } from "../../theme/generated-tokens";
 import { readerWidthSx } from "../PageHeader";
 import { bindAnnotationNoteActivation } from "./annotation-activation";
 import { applyPdfTextAnnotations } from "./pdf-annotations";
+import { pdfNavigation } from "./pdf-navigation";
+import { PdfImageSpread } from "./PdfImageSpread";
 import { pdfTextToReadingBlocks, splitPdfInlineFootnoteReferences, type PdfReadingBlock } from "./pdf-reading-text";
 import type { ReaderPageLayout } from "./reader-layout";
 import { isEditableReaderTarget, isReaderSwipe } from "./reader-navigation";
@@ -215,15 +217,7 @@ export default function PdfDocumentReader({ bookId, annotations, theme, fontSize
     if (!document || !onNavigation) return;
     let disposed = false;
     void (async () => {
-      const outline = await document.getOutline();
-      const flatten = async (entries: NonNullable<typeof outline>, depth = 0): Promise<TocItem[]> => (await Promise.all(entries.map(async entry => {
-        const destination = typeof entry.dest === "string" ? await document.getDestination(entry.dest) : entry.dest;
-        const page = destination?.[0];
-        const pageNumber = page === undefined ? undefined : typeof page === "number" ? page + 1 : (await document.getPageIndex(page)) + 1;
-        const children = await flatten(entry.items, depth + 1);
-        return [...(pageNumber ? [{ href: `pdf:page=${pageNumber}`, locator: `pdf:page=${pageNumber}`, label: entry.title, depth }] : []), ...children];
-      }))).flat();
-      const items = outline ? await flatten(outline) : [];
+      const items = await pdfNavigation(document);
       if (!disposed) onNavigation(items);
     })().catch(() => { if (!disposed) onNavigation([]); });
     return () => { disposed = true; };
@@ -448,12 +442,12 @@ export default function PdfDocumentReader({ bookId, annotations, theme, fontSize
     <Stack ref={annotationActivationRootRef} className="reader-viewport" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} sx={{ height: "100%", minHeight: 0, overflow: "hidden", bgcolor: viewMode === "ORIGINAL" ? theme.foreground : theme.background, color: viewMode === "ORIGINAL" ? theme.background : theme.foreground }}>
       {fontSourceUrl && <style>{`@font-face { font-family: ${fontFamily.split(",")[0]}; src: url("${fontSourceUrl}"); font-display: swap; }`}</style>}
       {viewMode === "READING" ? (
-        <Box ref={readingSurfaceRef} className="reader-page-turn-surface" data-reader-spread={wideSpread} sx={{ position: "relative", ...readerWidthSx, flex: "1 1 auto", minHeight: 0, overflow: "hidden", bgcolor: theme.background, backfaceVisibility: "hidden", transformStyle: "preserve-3d", willChange: turning ? "transform, opacity, filter, clip-path" : "auto" }}>
-          <PdfReadingClipFrame width={pageLayout?.articleWidth}>
+        <Box ref={readingSurfaceRef} className="reader-page-turn-surface" data-reader-spread={wideSpread} sx={{ position: "relative", ...readerWidthSx, px: !textLoading && readingBlocks.length === 0 ? 0 : readerWidthSx.px, flex: "1 1 auto", minHeight: 0, overflow: "hidden", bgcolor: theme.background, backfaceVisibility: "hidden", transformStyle: "preserve-3d", willChange: turning ? "transform, opacity, filter, clip-path" : "auto" }}>
+          <PdfReadingClipFrame width={readingBlocks.length === 0 ? undefined : pageLayout?.articleWidth}>
             {textLoading
               ? <Stack spacing={1.5} sx={{ height: "100%", alignItems: "center", justifyContent: "center" }}><CircularProgress size={30} /><Typography sx={{ color: theme.muted }}>正在解析第 {pageNumber} 页文字…</Typography></Stack>
               : readingBlocks.length === 0 && document
-                ? <Box sx={{ display: "flex", height: "100%", gap: tokens.spacing[3] }}>{[pageNumber, ...(imageSpread && pageNumber < document.numPages ? [pageNumber + 1] : [])].map(page => <Box key={page} sx={{ flex: "1 1 0", minWidth: 0, height: "100%" }}><PdfImagePage document={document} pageNumber={page} muted={theme.muted} /></Box>)}</Box>
+                ? <PdfImageSpread document={document} pageNumber={pageNumber} spread={imageSpread} muted={theme.muted} />
                 : <PdfPagedText textRef={readingTextRef} blocks={readingBlocks} pageNumber={pageNumber} theme={theme} fontFamily={fontFamily} fontSize={fontSize} layout={pageLayout} pageIndex={virtualPageIndex} onPageCountChange={handleVirtualPageCountChange} onOpenFootnote={openFootnote} onReturnToReference={returnToFootnoteReference} onCaptureSelection={() => captureSelection(pageNumber)} />}
           </PdfReadingClipFrame>
           <PageTurnShade />
@@ -660,86 +654,4 @@ async function findPdfFootnote(document: PDFDocumentProxy | null, startPage: num
     if (match) return { text: match.text, pageNumber: candidatePage };
   }
   return null;
-}
-
-function PdfImagePage({ document, pageNumber, muted }: { document: PDFDocumentProxy; pageNumber: number; muted: string }) {
-  const hostRef = useRef<HTMLDivElement | null>(null);
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    const host = hostRef.current;
-    const canvas = canvasRef.current;
-    if (!host || !canvas) return;
-    let disposed = false;
-    let renderTask: RenderTask | undefined;
-    let resizeFrame = 0;
-    let cleanupObserver: () => void = () => undefined;
-
-    void document.getPage(pageNumber).then((page) => {
-      if (disposed) return;
-      const renderPage = () => {
-        if (disposed || !hostRef.current || !canvasRef.current) return;
-        renderTask?.cancel();
-        setLoading(true);
-        const baseViewport = page.getViewport({ scale: 1 });
-        const availableWidth = Math.max(1, hostRef.current.clientWidth);
-        const availableHeight = Math.max(1, hostRef.current.clientHeight);
-        const scale = Math.min(2, availableWidth / baseViewport.width, availableHeight / baseViewport.height);
-        const viewport = page.getViewport({ scale });
-        const outputScale = window.devicePixelRatio || 1;
-        const target = canvasRef.current;
-        const context = target.getContext("2d", { alpha: false });
-        if (!context) {
-          setError("浏览器无法创建 PDF 图片画布");
-          setLoading(false);
-          return;
-        }
-        target.width = Math.floor(viewport.width * outputScale);
-        target.height = Math.floor(viewport.height * outputScale);
-        target.style.width = `${Math.floor(viewport.width)}px`;
-        target.style.height = `${Math.floor(viewport.height)}px`;
-        renderTask = page.render({ canvas: null, canvasContext: context, viewport, transform: outputScale === 1 ? undefined : [outputScale, 0, 0, outputScale, 0, 0] });
-        void renderTask.promise.then(() => {
-          if (!disposed) setLoading(false);
-        }).catch((reason) => {
-          if (!disposed && reason?.name !== "RenderingCancelledException") {
-            setError(reason instanceof Error ? reason.message : "PDF 图片页渲染失败");
-            setLoading(false);
-          }
-        });
-      };
-      renderPage();
-      const observer = new ResizeObserver(() => {
-        window.cancelAnimationFrame(resizeFrame);
-        resizeFrame = window.requestAnimationFrame(renderPage);
-      });
-      observer.observe(host);
-      if (disposed) observer.disconnect();
-      else cleanupObserver = () => observer.disconnect();
-    }).catch((reason) => {
-      if (!disposed) {
-        setError(reason instanceof Error ? reason.message : "PDF 图片页读取失败");
-        setLoading(false);
-      }
-    });
-
-    return () => {
-      disposed = true;
-      cleanupObserver();
-      window.cancelAnimationFrame(resizeFrame);
-      renderTask?.cancel();
-    };
-  }, [document, pageNumber]);
-
-  return (
-    <Stack sx={{ height: "100%", minHeight: 0, alignItems: "center", gap: `${tokens.spacing[3]}px` }}>
-      {error && <Alert severity="error">{error}</Alert>}
-      <Box ref={hostRef} sx={{ position: "relative", width: "100%", flex: 1, minHeight: 0, display: "flex", justifyContent: "center", alignItems: "center", overflow: "hidden" }}>
-        <Box component="canvas" ref={canvasRef} role="img" aria-label={`PDF 第 ${pageNumber} 页图片`} sx={{ display: error ? "none" : "block", maxWidth: "100%", height: "auto", borderRadius: `${tokens.radius.lg}px`, boxShadow: tokens.shadow.cover }} />
-        {loading && !error && <Stack sx={{ position: "absolute", inset: 0, alignItems: "center", justifyContent: "center", gap: `${tokens.spacing[2]}px`, bgcolor: "background.default" }}><CircularProgress size={tokens.spacing[8]} /><Typography variant="body2" sx={{ color: muted }}>正在加载第 {pageNumber} 页图片…</Typography></Stack>}
-      </Box>
-    </Stack>
-  );
 }

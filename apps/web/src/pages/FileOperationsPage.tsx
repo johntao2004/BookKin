@@ -9,7 +9,7 @@ import { useEffect, useState } from "react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { api } from "../api/client";
 import { ActionToolbar, PageContainer } from "../components/PageHeader";
-import type { FileOperation, FileOperationStatus, FileOperationType } from "../domain/types";
+import type { FileTaskHistoryItem, FileTaskHistoryStatus, FileOperationType } from "../domain/types";
 import { tokens } from "../theme/generated-tokens";
 
 const operationLabels: Record<FileOperationType, string> = {
@@ -21,12 +21,20 @@ const operationLabels: Record<FileOperationType, string> = {
   PURGE: "永久清理",
 };
 
-const statusMeta: Record<FileOperationStatus, { label: string; color: "default" | "success" | "warning" | "error" }> = {
+const statusMeta: Record<FileTaskHistoryStatus, { label: string; color: "default" | "success" | "warning" | "error" }> = {
   PLANNED: { label: "等待执行", color: "default" },
   RUNNING: { label: "执行中", color: "warning" },
   SUCCEEDED: { label: "已完成", color: "success" },
   FAILED: { label: "失败", color: "error" },
   ROLLED_BACK: { label: "已回滚", color: "warning" },
+  RECEIVING: { label: "接收中", color: "warning" },
+  INSPECTING: { label: "检查中", color: "warning" },
+  ENRICHING: { label: "补全中", color: "warning" },
+  READY_FOR_REVIEW: { label: "待确认", color: "default" },
+  COMMITTING: { label: "入库中", color: "warning" },
+  DUPLICATE: { label: "重复文件", color: "default" },
+  CANCELLED: { label: "已取消", color: "default" },
+  EXPIRED: { label: "已过期", color: "default" },
 };
 
 const runningStageLabels: Record<string, string> = {
@@ -51,7 +59,7 @@ const formatCreatedAt = (createdAt: string) => new Intl.DateTimeFormat("zh-CN", 
 export function FileOperationsPage() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const query = useQuery({ queryKey: ["file-operations", page, pageSize], queryFn: () => api.listFileOperationPage(page - 1, pageSize), placeholderData: keepPreviousData, refetchInterval: 5000 });
+  const query = useQuery({ queryKey: ["file-task-history", page, pageSize], queryFn: () => api.listFileTaskHistoryPage(page - 1, pageSize), placeholderData: keepPreviousData, refetchInterval: 5000 });
   useEffect(() => {
     if (query.data && !query.isPlaceholderData) {
       const last = Math.max(1, Math.ceil(query.data.total / pageSize));
@@ -60,15 +68,15 @@ export function FileOperationsPage() {
   }, [page, pageSize, query.data, query.isPlaceholderData]);
   return <PageContainer>
     <Stack sx={{ mb: 2 }}><ActionToolbar><RefreshButton onClick={() => query.refetch()} disabled={query.isFetching}>刷新</RefreshButton></ActionToolbar></Stack>
-    {query.isError ? <Alert severity="error">无法读取操作日志，请刷新重试。</Alert> : <DataTable<FileOperation>
-      aria-label="操作日志列表" rowKey="id" loading={query.isFetching} dataSource={query.data?.items ?? []}
+    {query.isError ? <Alert severity="error">无法读取操作日志，请刷新重试。</Alert> : <DataTable<FileTaskHistoryItem>
+      aria-label="操作日志列表" rowKey={(record) => `${record.type}:${record.id}`} loading={query.isFetching} dataSource={query.data?.items ?? []}
       scroll={{ x: tokens.layout.touchTarget * 16 }}
-      locale={{ emptyText: <Stack spacing={1}><EmptyState title="暂无操作日志" padded={false} /><Typography color="text.secondary">从藏书卡片的更多菜单发起安全预览。</Typography></Stack> }}
+      locale={{ emptyText: <Stack spacing={1}><EmptyState title="暂无文件任务" padded={false} /><Typography color="text.secondary">书籍操作与上传任务会显示在这里。</Typography></Stack> }}
       pagination={{ current: page, pageSize, total: query.data?.total ?? 0, disabled: query.isFetching,
         onChange: (next, size) => { setPage(size === pageSize ? next : 1); setPageSize(size); } }}
       columns={[
-        { title: "任务", key: "type", render: (_, operation) => <Typography sx={{ fontWeight: tokens.typography.fontWeight.semibold }}>{operationLabels[operation.type]}</Typography> },
-        { title: "书籍", key: "book", render: (_, operation) => <Typography variant="body2" sx={{ overflowWrap: "anywhere" }}>{operation.sourcePath.split(/[\\/]/).filter(Boolean).at(-1)?.replace(/\.(epub|pdf)$/i, "") || "未知书籍"}</Typography> },
+        { title: "任务", key: "type", render: (_, operation) => <Typography sx={{ fontWeight: tokens.typography.fontWeight.semibold }}>{operation.type === "BOOK_UPLOAD" ? "上传书籍" : operation.action ? operationLabels[operation.action] : "文件操作"}</Typography> },
+        { title: "书籍", key: "book", render: (_, operation) => <Typography variant="body2" sx={{ overflowWrap: "anywhere" }}>{operation.title}</Typography> },
         { title: "状态", key: "status", render: (_, operation) => <Stack spacing={1} sx={{ alignItems: "flex-start" }}>
           <Chip size="small" variant="outlined" color={statusMeta[operation.status].color} label={statusMeta[operation.status].label} />
           {operation.status === "RUNNING" && operation.stage && <Typography variant="caption" color="text.secondary">{runningStageLabels[operation.stage] ?? "正在处理"}</Typography>}

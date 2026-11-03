@@ -2,6 +2,8 @@ import { act, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import ePub from "epubjs";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import EpubDocumentReader from "./EpubDocumentReader";
+import { api } from "../../api/client";
+import { prepareSessionExit, setPersistenceUser } from "../../auth/session-save";
 import { TestProviders } from "../../test/TestProviders";
 import { tokens } from "../../theme/generated-tokens";
 import { useBookKinTheme } from "../../theme/BookKinThemeProvider";
@@ -88,6 +90,7 @@ describe("EpubDocumentReader flow", () => {
   });
 
   afterEach(() => {
+    setPersistenceUser(null);
     localStorage.removeItem("bookkin-site-theme");
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
@@ -242,5 +245,82 @@ describe("EpubDocumentReader flow", () => {
     fireEvent.click(screen.getByRole("button", { name: "EPUB 下一页" }));
     expect(mocks.rendition.prev).toHaveBeenCalledOnce();
     expect(mocks.rendition.next).toHaveBeenCalledOnce();
+  });
+
+  it("flushes only the latest pending position when unmounted before the debounce expires", async () => {
+    const save = vi.spyOn(api, "saveReadingPosition").mockResolvedValue({
+      bookId: "book-1", locator: "latest", progress: 0.91, deviceId: "web", updatedAt: "2026-11-02T00:00:00Z",
+    });
+    const props = { ...baseProps(), readOnly: false };
+    const view = render(<TestProviders><EpubDocumentReader {...props} /></TestProviders>);
+    await waitFor(() => expect(mocks.rendition.display).toHaveBeenCalled());
+    const relocated = mocks.callbacks.relocated as (location: { start: { cfi: string; percentage: number } }) => void;
+
+    act(() => {
+      relocated({ start: { cfi: "first", percentage: 0.2 } });
+      relocated({ start: { cfi: "latest", percentage: 0.91 } });
+    });
+    expect(save).not.toHaveBeenCalled();
+    view.unmount();
+
+    expect(save).toHaveBeenCalledExactlyOnceWith("book-1", "latest", 0.91);
+  });
+
+  it("flushes on session exit and does not send the same position again on unmount", async () => {
+    const save = vi.spyOn(api, "saveReadingPosition").mockResolvedValue({
+      bookId: "book-1", locator: "pending", progress: 0.6, deviceId: "web", updatedAt: "2026-11-02T00:00:00Z",
+    });
+    const props = { ...baseProps(), readOnly: false };
+    const view = render(<TestProviders><EpubDocumentReader {...props} /></TestProviders>);
+    await waitFor(() => expect(mocks.rendition.display).toHaveBeenCalled());
+    act(() => (mocks.callbacks.relocated as (location: { start: { cfi: string; percentage: number } }) => void)(
+      { start: { cfi: "pending", percentage: 0.6 } },
+    ));
+
+    await prepareSessionExit();
+    expect(save).toHaveBeenCalledExactlyOnceWith("book-1", "pending", 0.6);
+    view.unmount();
+    expect(save).toHaveBeenCalledOnce();
+  });
+
+  it("does not save read-only positions and flushes a pending old-book position to its original book", async () => {
+    const save = vi.spyOn(api, "saveReadingPosition").mockResolvedValue({
+      bookId: "book-1", locator: "stale", progress: 0.4, deviceId: "web", updatedAt: "2026-11-02T00:00:00Z",
+    });
+    const readOnly = render(<TestProviders><EpubDocumentReader {...baseProps()} /></TestProviders>);
+    await waitFor(() => expect(mocks.rendition.display).toHaveBeenCalled());
+    act(() => (mocks.callbacks.relocated as (location: { start: { cfi: string; percentage: number } }) => void)(
+      { start: { cfi: "read-only", percentage: 0.4 } },
+    ));
+    readOnly.unmount();
+    expect(save).not.toHaveBeenCalled();
+
+    const props = { ...baseProps(), readOnly: false };
+    const switching = render(<TestProviders><EpubDocumentReader {...props} /></TestProviders>);
+    await waitFor(() => expect(mocks.rendition.display).toHaveBeenCalled());
+    act(() => (mocks.callbacks.relocated as (location: { start: { cfi: string; percentage: number } }) => void)(
+      { start: { cfi: "old-book", percentage: 0.4 } },
+    ));
+    switching.rerender(<TestProviders><EpubDocumentReader {...props} bookId="book-2" /></TestProviders>);
+    expect(save).toHaveBeenCalledExactlyOnceWith("book-1", "old-book", 0.4);
+    switching.unmount();
+    expect(save).toHaveBeenCalledOnce();
+  });
+
+  it("drops a pending position if its persistence user changes before flush", async () => {
+    setPersistenceUser("reader-a");
+    const save = vi.spyOn(api, "saveReadingPosition").mockResolvedValue({
+      bookId: "book-1", locator: "private-to-reader-a", progress: 0.5, deviceId: "web", updatedAt: "2026-11-02T00:00:00Z",
+    });
+    const props = { ...baseProps(), readOnly: false };
+    const view = render(<TestProviders><EpubDocumentReader {...props} /></TestProviders>);
+    await waitFor(() => expect(mocks.rendition.display).toHaveBeenCalled());
+    act(() => (mocks.callbacks.relocated as (location: { start: { cfi: string; percentage: number } }) => void)(
+      { start: { cfi: "private-to-reader-a", percentage: 0.5 } },
+    ));
+
+    setPersistenceUser("reader-b");
+    view.unmount();
+    expect(save).not.toHaveBeenCalled();
   });
 });

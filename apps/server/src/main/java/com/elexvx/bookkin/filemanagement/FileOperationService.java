@@ -5,6 +5,8 @@ import com.elexvx.bookkin.catalog.BookRepository;
 import com.elexvx.bookkin.common.ApiException;
 import com.elexvx.bookkin.filemanagement.FileOperationModels.ExecuteRequest;
 import com.elexvx.bookkin.filemanagement.FileOperationModels.FileConflict;
+import com.elexvx.bookkin.filemanagement.FileOperationModels.FileVersionList;
+import com.elexvx.bookkin.filemanagement.FileOperationModels.FileVersionView;
 import com.elexvx.bookkin.filemanagement.FileOperationModels.Operation;
 import com.elexvx.bookkin.filemanagement.FileOperationModels.Preview;
 import com.elexvx.bookkin.filemanagement.FileOperationModels.PreviewRequest;
@@ -41,11 +43,13 @@ public class FileOperationService {
     private final FileFingerprints fingerprints;
     private final FileLeaseRepository leases;
     private final RecycleBinRepository recycleBin;
+    private final FileVersionRepository versions;
 
     public FileOperationService(BookRepository books, LibraryRootRepository roots, UserRepository users,
                                 FileOperationRepository operations, PathPolicy pathPolicy,
                                 FileFingerprints fingerprints, FileLeaseRepository leases,
-                                RecycleBinRepository recycleBin, com.elexvx.bookkin.auth.RolePermissionService permissions) {
+                                RecycleBinRepository recycleBin, FileVersionRepository versions,
+                                com.elexvx.bookkin.auth.RolePermissionService permissions) {
         this.permissions = permissions;
         this.books = books;
         this.roots = roots;
@@ -55,6 +59,7 @@ public class FileOperationService {
         this.fingerprints = fingerprints;
         this.leases = leases;
         this.recycleBin = recycleBin;
+        this.versions = versions;
     }
 
     public Preview previewTitleRename(BookFile file, String titleStem, Principal principal) {
@@ -139,7 +144,7 @@ public class FileOperationService {
                 if (file.encrypted() || file.drmProtected() || file.digitallySigned()) {
                     conflicts.add(new FileConflict("WRITEBACK_PROTECTED", "加密、DRM 或带数字签名的文件禁止写回。", sourceDisplay));
                 }
-                warnings.add("写回会校验临时文件后原子覆盖当前原文件，不保留可浏览的历史版本。");
+                warnings.add("写回前会保存当前文件版本，可在保留期内预览并恢复。");
             }
         } catch (ApiException exception) {
             throw exception;
@@ -212,6 +217,85 @@ public class FileOperationService {
                 .orElseThrow(() -> ApiException.notFound("PREVIEW_NOT_FOUND", "预览不存在或已被使用。"));
         if (preview.recycleBinEntryId() == null || !preview.recycleBinEntryId().equals(entryId) || preview.type() != type) {
             throw ApiException.conflict("PREVIEW_TARGET_MISMATCH", "预览与当前回收站操作不匹配。");
+        }
+        return execute(input, idempotencyKey, principal);
+    }
+
+    public FileVersionList listVersions(UUID bookFileId, Principal principal) {
+        permissions.require(principal, "settings.recycle.view");
+        books.findFile(bookFileId).orElseThrow(() -> ApiException.notFound("BOOK_FILE_NOT_FOUND", "书籍文件不存在。"));
+        return new FileVersionList(versions.listForFile(bookFileId).stream()
+                .map(version -> new FileVersionView(version.id(), version.sourcePath(), version.fingerprint(),
+                        version.sizeBytes(), version.reason(), version.createdAt(), version.expiresAt(), version.restoredAt()))
+                .toList());
+    }
+
+    public Preview previewVersionRestore(UUID versionId, String expectedFingerprint, Principal principal) {
+        permissions.require(principal, "settings.recycle.restore");
+        var actor = users.findByUsername(principal.getName()).orElseThrow();
+        var version = versions.find(versionId)
+                .orElseThrow(() -> ApiException.notFound("FILE_VERSION_NOT_FOUND", "文件版本不存在。"));
+        if (!version.expiresAt().isAfter(OffsetDateTime.now())) {
+            throw ApiException.conflict("FILE_VERSION_EXPIRED", "文件版本已过期，不能恢复。");
+        }
+        var file = books.findFile(version.bookFileId())
+                .orElseThrow(() -> ApiException.notFound("BOOK_FILE_NOT_FOUND", "书籍文件不存在。"));
+        if (file.status() != com.elexvx.bookkin.catalog.BookFileStatus.AVAILABLE) {
+            throw ApiException.conflict("BOOK_FILE_UNAVAILABLE", "当前书籍文件不可恢复版本。");
+        }
+        String expectedVersionPrefix = ".bookkin-versions/" + file.id() + "/";
+        if (!version.bookFileId().equals(file.id()) || !version.libraryRootId().equals(file.libraryRootId())
+                || !version.versionPath().startsWith(expectedVersionPrefix)) {
+            throw ApiException.conflict("VERSION_MISMATCH", "文件版本与当前书籍文件不匹配。");
+        }
+
+        LibraryRoot root = roots.findById(file.libraryRootId()).orElseThrow();
+        String display = root.name() + "/" + file.relativePath();
+        List<FileConflict> conflicts = new ArrayList<>();
+        List<String> warnings = new ArrayList<>();
+        if (!root.canWrite()) conflicts.add(new FileConflict("ROOT_READ_ONLY", "书库当前为只读。", root.name()));
+        try {
+            pathPolicy.requireNoSymbolicLinks(rootPath(root), file.relativePath());
+            Path current = pathPolicy.resolveExisting(rootPath(root), file.relativePath());
+            String actual = fingerprints.sha256(current);
+            if (!actual.equals(expectedFingerprint) || !actual.equals(file.fingerprint())) {
+                conflicts.add(new FileConflict("SOURCE_CHANGED", "当前文件已被外部修改，请刷新后重新预览。", display));
+            }
+            Path archived = resolveVersionFile(root, file.id(), version.versionPath());
+            if (!fingerprints.sha256(archived).equals(version.fingerprint())) {
+                conflicts.add(new FileConflict("VERSION_CHANGED", "历史版本的文件指纹已变化，不能恢复。", version.sourcePath()));
+            }
+            if (leases.hasActiveReadLease(file.id())) warnings.add("这本书正在被阅读；Worker 会等待读取租约释放，超时后安全失败。");
+            warnings.add("恢复会用所选版本覆盖当前文件，并把当前文件另存为可恢复版本。");
+        } catch (ApiException exception) {
+            throw exception;
+        } catch (IOException exception) {
+            conflicts.add(new FileConflict("VERSION_UNAVAILABLE", "无法读取当前文件或历史版本。", display));
+        }
+
+        return operations.savePreview(actor.id(), FileOperationType.RESTORE, file.id(), root.id(), root.id(),
+                display, display, expectedFingerprint, 0, conflicts, warnings, null, version.id());
+    }
+
+    public Operation executeForVersion(UUID versionId, ExecuteRequest input, String idempotencyKey, Principal principal) {
+        if (idempotencyKey == null || idempotencyKey.isBlank() || idempotencyKey.length() > 160) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "IDEMPOTENCY_KEY_REQUIRED", "必须提供有效的幂等键。");
+        }
+        var actor = users.findByUsername(principal.getName()).orElseThrow();
+        var existing = operations.findIdempotency(actor.id(), idempotencyKey);
+        if (existing.isPresent()) {
+            requirePermission(principal, existing.get().type());
+            requireSameRequest(existing.get(), input);
+            if (existing.get().type() != FileOperationType.RESTORE
+                    || !Objects.equals(existing.get().fileVersionId(), versionId)) {
+                throw ApiException.conflict("IDEMPOTENCY_KEY_REUSED", "同一幂等键不能用于不同的文件版本恢复请求。");
+            }
+            return existing.get().operation();
+        }
+        var preview = operations.findPreview(input.previewToken())
+                .orElseThrow(() -> ApiException.notFound("PREVIEW_NOT_FOUND", "预览不存在或已被使用。"));
+        if (preview.type() != FileOperationType.RESTORE || !Objects.equals(preview.fileVersionId(), versionId)) {
+            throw ApiException.conflict("PREVIEW_TARGET_MISMATCH", "预览与当前文件版本恢复操作不匹配。");
         }
         return execute(input, idempotencyKey, principal);
     }
@@ -294,6 +378,30 @@ public class FileOperationService {
         }
         Path real = candidate.toRealPath();
         if (!real.startsWith(canonicalRoot)) throw invalid("UNSAFE_INTERNAL_PATH", "内部文件路径越过书库边界。");
+        return real;
+    }
+
+    private Path resolveVersionFile(LibraryRoot root, UUID fileId, String relative) throws IOException {
+        String expectedPrefix = ".bookkin-versions/" + fileId + "/";
+        if (relative == null || !relative.startsWith(expectedPrefix)) {
+            throw invalid("UNSAFE_VERSION_PATH", "历史版本路径不安全。");
+        }
+        Path relativePath = Path.of(relative).normalize();
+        if (relativePath.isAbsolute() || relativePath.startsWith("..")
+                || !relativePath.toString().replace('\\', '/').equals(relative)) {
+            throw invalid("UNSAFE_VERSION_PATH", "历史版本路径不安全。");
+        }
+        Path canonicalRoot = rootPath(root).toRealPath();
+        Path candidate = canonicalRoot.resolve(relativePath).normalize();
+        if (!candidate.startsWith(canonicalRoot)) throw invalid("UNSAFE_VERSION_PATH", "历史版本路径越过书库边界。");
+        Path segment = canonicalRoot;
+        for (Path part : relativePath) {
+            segment = segment.resolve(part);
+            if (Files.isSymbolicLink(segment)) throw invalid("UNSAFE_VERSION_PATH", "历史版本路径不能包含软链接。");
+        }
+        if (!Files.isRegularFile(candidate, LinkOption.NOFOLLOW_LINKS)) throw new IOException("历史版本文件不存在");
+        Path real = candidate.toRealPath();
+        if (!real.startsWith(canonicalRoot)) throw invalid("UNSAFE_VERSION_PATH", "历史版本路径越过书库边界。");
         return real;
     }
 

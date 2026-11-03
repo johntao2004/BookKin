@@ -116,7 +116,7 @@ class RolePermissionsNativePersistenceTest {
     }
     @Test void savedFilePreviewsCannotBypassRevokedActionOrMemberCeiling() {
         var operations=mock(FileOperationRepository.class);
-        var service=new FileOperationService(mock(BookRepository.class),mock(LibraryRootRepository.class),users,operations,mock(PathPolicy.class),mock(FileFingerprints.class),mock(FileLeaseRepository.class),mock(RecycleBinRepository.class),permissions);
+        var service=new FileOperationService(mock(BookRepository.class),mock(LibraryRootRepository.class),users,operations,mock(PathPolicy.class),mock(FileFingerprints.class),mock(FileLeaseRepository.class),mock(RecycleBinRepository.class),mock(FileVersionRepository.class),permissions);
         var token=UUID.randomUUID(); var preview=new FileOperationRepository.PreviewRecord(token,adminId,FileOperationType.TRASH,UUID.randomUUID(),null,null,null,null,"book.epub",null,"fingerprint",0,"[]","[]",java.time.OffsetDateTime.now().plusMinutes(1));
         when(operations.findIdempotency(any(),any())).thenReturn(Optional.empty()); when(operations.findPreview(token)).thenReturn(Optional.of(preview));
         permissions.update(without(UserRole.ADMIN,"library.trash"),owner);

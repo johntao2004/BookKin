@@ -26,7 +26,8 @@ class BookMoveDisabledTest {
     private final FileFingerprints fingerprints = mock(FileFingerprints.class);
     private final RolePermissionService permissions = mock(RolePermissionService.class);
     private final FileOperationService service = new FileOperationService(books, roots, users, operations,
-        paths, fingerprints, mock(FileLeaseRepository.class), mock(RecycleBinRepository.class), permissions);
+        paths, fingerprints, mock(FileLeaseRepository.class), mock(RecycleBinRepository.class),
+        mock(FileVersionRepository.class), permissions);
     private final UUID actorId = UUID.randomUUID();
     private final Principal actor = () -> "owner";
 

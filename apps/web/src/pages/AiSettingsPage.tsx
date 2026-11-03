@@ -41,6 +41,13 @@ const modelPresetsByProvider: Record<string, ModelPreset[]> = {
     { value: "deepseek-flash", label: "deepseek-flash" },
     { value: "deepseek-v4-pro", label: "deepseek-v4-pro" },
   ],
+  zhipu: [
+    { value: "glm-5.1", label: "GLM-5.1" },
+    { value: "glm-5", label: "GLM-5" },
+    { value: "glm-4.7", label: "GLM-4.7" },
+    { value: "glm-4.7-flash", label: "GLM-4.7 Flash" },
+    { value: "glm-4.5-flash", label: "GLM-4.5 Flash" },
+  ],
   qwen: [
     { value: "qwen3-max", label: "qwen3-max" },
     { value: "qwen-plus", label: "qwen-plus" },

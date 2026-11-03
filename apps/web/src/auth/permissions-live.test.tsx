@@ -25,7 +25,7 @@ it("fails closed when the permission service fails", async () => {
   vi.mocked(request).mockRejectedValue(new Error("offline"));
   const mounted = vi.fn(); function Private() { mounted(); return <p>私有内容</p>; }
   setup(<Private />);
-  expect(await screen.findByText("无法确认功能权限。")).toBeInTheDocument(); expect(mounted).not.toHaveBeenCalled();
+  expect(await screen.findByText("无法确认功能权限")).toBeInTheDocument(); expect(mounted).not.toHaveBeenCalled();
 });
 it("keeps the reason visible beyond notification expiry and during automatic recovery", async () => {
   vi.useFakeTimers({ toFake: ["setInterval", "clearInterval"] });

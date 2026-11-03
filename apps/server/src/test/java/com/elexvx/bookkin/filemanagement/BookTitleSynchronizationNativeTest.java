@@ -54,7 +54,7 @@ class BookTitleSynchronizationNativeTest {
                 when(users.findByUsername("owner")).thenReturn(Optional.of(new BookKinUser(actor,"owner","主人","hash",UserRole.OWNER,UserStatus.ACTIVE,false,OffsetDateTime.now(),null)));
                 var permissions=mock(RolePermissionService.class); var audit=mock(AuditService.class); var recycle=mock(RecycleBinRepository.class);
                 var executor=new FileTransactionExecutor(operations,books,roots,recycle,mock(FileVersionRepository.class),leases,fingerprints,mock(FileInspector.class),mock(MetadataWriteService.class),audit,properties,paths);
-                var files=new FileOperationService(books,roots,users,operations,paths,fingerprints,leases,recycle,permissions);
+                var files=new FileOperationService(books,roots,users,operations,paths,fingerprints,leases,recycle,mock(FileVersionRepository.class),permissions);
                 var sync=new BookTitleFileService(books,files,operations,executor,paths);
                 var metadata=new BookMetadataRepository(db,new ObjectMapper());
                 var editing=new MetadataEditingService(metadata,mock(DisplayCatalogService.class),sync);

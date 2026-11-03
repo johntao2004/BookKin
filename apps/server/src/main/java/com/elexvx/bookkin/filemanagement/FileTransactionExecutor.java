@@ -289,7 +289,13 @@ public class FileTransactionExecutor {
 
     private String restoreVersion(ExecutionRecord operation, BookFile file) throws IOException {
         var version = versions.find(operation.fileVersionId()).orElseThrow(() -> new OperationFailure("VERSION_MISSING", "文件版本不存在"));
+        String expectedVersionPrefix = ".bookkin-versions/" + file.id() + "/";
+        if (!version.bookFileId().equals(file.id()) || !version.libraryRootId().equals(file.libraryRootId())
+                || !version.versionPath().startsWith(expectedVersionPrefix)) {
+            throw new OperationFailure("VERSION_MISMATCH", "文件版本与当前书籍文件不匹配");
+        }
         LibraryRoot root = root(version.libraryRootId());
+        pathPolicy.requireNoSymbolicLinks(rootPath(root), file.relativePath());
         Path current = pathPolicy.resolveExisting(rootPath(root), file.relativePath());
         verifyFingerprint(current, operation.expectedFingerprint());
         Path archived = internal(rootPath(root), version.versionPath());
@@ -347,19 +353,15 @@ public class FileTransactionExecutor {
 
     private String writeMetadata(ExecutionRecord operation, BookFile file) throws IOException {
         LibraryRoot root = root(file.libraryRootId());
+        pathPolicy.requireNoSymbolicLinks(rootPath(root), file.relativePath());
         Path source = pathPolicy.resolveExisting(rootPath(root), file.relativePath());
         verifyFingerprint(source, operation.expectedFingerprint());
         operations.updateStage(operation.id(), "PREPARING_OVERWRITE");
-        var result = metadataWriter.write(operation.id(), file, root, source);
+        var result = metadataWriter.write(operation.id(), file, root, source, operation.requestedBy());
         try {
             var attributes = Files.readAttributes(source, BasicFileAttributes.class);
             books.updateFileLocation(file.id(), root.id(), file.relativePath(), normalized(file.relativePath()), result.fingerprint(),
                     attributes.size(), attributes.lastModifiedTime().toInstant().atOffset(ZoneOffset.UTC));
-            try {
-                metadataWriter.complete(result);
-            } catch (IOException cleanupFailure) {
-                log.warn("Unable to remove metadata rollback staging operationId={}: {}", operation.id(), cleanupFailure.getMessage());
-            }
             return result.fingerprint();
         } catch (Exception exception) {
             metadataWriter.restoreOriginal(operation.id(), file, root, source, result);

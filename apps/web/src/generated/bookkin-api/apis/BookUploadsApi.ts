@@ -14,6 +14,17 @@
 
 import * as runtime from '../runtime';
 import {
+    type PrecheckBookUpload200Response,
+    PrecheckBookUpload200ResponseFromJSON,
+    PrecheckBookUpload200ResponseToJSON,
+} from '../models/PrecheckBookUpload200Response';
+import {
+    type PrecheckBookUploadRequest,
+    PrecheckBookUploadRequestFromJSON,
+    PrecheckBookUploadRequestToJSON,
+} from '../models/PrecheckBookUploadRequest';
+
+import {
     type AiMatchRequest,
     AiMatchRequestFromJSON,
     AiMatchRequestToJSON,
@@ -78,6 +89,10 @@ export interface GetBookUploadRequest {
 
 export interface GetBookUploadCoverRequest {
     id: string;
+}
+
+export interface PrecheckBookUploadOperationRequest {
+    precheckBookUploadRequest: PrecheckBookUploadRequest;
 }
 
 export interface SelectBookUploadCoverOperationRequest {
@@ -456,6 +471,53 @@ export class BookUploadsApi extends runtime.BaseAPI {
      */
     async listBookUploads(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ListBookUploads200Response> {
         const response = await this.listBookUploadsRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Creates request options for precheckBookUpload without sending the request
+     */
+    async precheckBookUploadRequestOpts(requestParameters: PrecheckBookUploadOperationRequest): Promise<runtime.RequestOpts> {
+        if (requestParameters['precheckBookUploadRequest'] == null) {
+            throw new runtime.RequiredError(
+                'precheckBookUploadRequest',
+                'Required parameter "precheckBookUploadRequest" was null or undefined when calling precheckBookUpload().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+
+        let urlPath = `/book-uploads/precheck`;
+
+        return {
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: PrecheckBookUploadRequestToJSON(requestParameters['precheckBookUploadRequest']),
+        };
+    }
+
+    /**
+     * Advisory SHA-256 and size check limited to the visible regular catalog and the current manager\'s pending drafts. Does not create a session or write files. Server receive and commit independently verify actual content.
+     */
+    async precheckBookUploadRaw(requestParameters: PrecheckBookUploadOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PrecheckBookUpload200Response>> {
+        const requestOptions = await this.precheckBookUploadRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PrecheckBookUpload200ResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Advisory SHA-256 and size check limited to the visible regular catalog and the current manager\'s pending drafts. Does not create a session or write files. Server receive and commit independently verify actual content.
+     */
+    async precheckBookUpload(requestParameters: PrecheckBookUploadOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PrecheckBookUpload200Response> {
+        const response = await this.precheckBookUploadRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

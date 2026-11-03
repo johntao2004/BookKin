@@ -81,18 +81,41 @@ public class BookBibliographyReader {
 
     public String pdfContents(org.apache.pdfbox.pdmodel.PDDocument document) {
         var labels = new ArrayList<String>();
+        var pages = new ArrayList<Integer>();
         var outline = document.getDocumentCatalog().getDocumentOutline();
         if (outline == null) return null;
         var queue = new java.util.ArrayDeque<org.apache.pdfbox.pdmodel.interactive.documentnavigation.outline.PDOutlineItem>();
         if (outline.getFirstChild() != null) queue.add(outline.getFirstChild());
         var visited = java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<org.apache.pdfbox.cos.COSDictionary, Boolean>());
-        while (!queue.isEmpty() && labels.size() < 300 && visited.size() < 600) {
+        while (!queue.isEmpty() && labels.size() < 1000 && visited.size() < 2000) {
             var item = queue.removeFirst();
             if (!visited.add(item.getCOSObject())) continue;
             String title = item.getTitle();
-            if (title != null && !title.isBlank()) labels.add(title.substring(0, Math.min(title.length(), 300)));
+            if (title != null && !title.isBlank()) {
+                String label = title.replaceAll("\\s+", " ").strip();
+                labels.add(label.substring(0, Math.min(label.length(), 300)));
+                Integer page = null;
+                try {
+                    var destination = item.findDestinationPage(document);
+                    if (destination != null) page = document.getPages().indexOf(destination);
+                } catch (Exception ignored) { /* 单个目标损坏不丢弃目录。 A malformed destination must not erase the remaining source TOC. */ }
+                pages.add(page);
+            }
             if (item.getNextSibling() != null) queue.addFirst(item.getNextSibling());
             if (item.getFirstChild() != null) queue.addFirst(item.getFirstChild());
+        }
+        // 连续数字且逐页递增的是原书页码索引，不是章节编号。
+        // Only consecutive numeric bookmarks advancing one physical page form a page index.
+        for (int start = 0; start < labels.size();) {
+            int end = start + 1;
+            if (labels.get(start).matches("[0-9]{1,7}")) {
+                while (end < labels.size() && labels.get(end).matches("[0-9]{1,7}")
+                        && Integer.parseInt(labels.get(end)) == Integer.parseInt(labels.get(end - 1)) + 1
+                        && pages.get(end) != null && pages.get(end - 1) != null
+                        && pages.get(end) == pages.get(end - 1) + 1) end++;
+                if (end - start >= 8) for (int i = start; i < end; i++) labels.set(i, "第 " + labels.get(i) + " 页");
+            }
+            start = end;
         }
         String text = String.join("\n", labels);
         return text.isBlank() ? null : text.substring(0, Math.min(text.length(), 40_000));

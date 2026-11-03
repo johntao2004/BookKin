@@ -10,6 +10,12 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.crypto.argon2.Argon2PasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.header.writers.ContentSecurityPolicyHeaderWriter;
+import org.springframework.security.web.header.writers.DelegatingRequestMatcherHeaderWriter;
+import org.springframework.security.web.header.HeaderWriter;
+import org.springframework.security.web.header.writers.frameoptions.XFrameOptionsHeaderWriter;
+import org.springframework.security.web.util.matcher.NegatedRequestMatcher;
+import java.util.List;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.http.HttpMethod;
@@ -54,9 +60,12 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/users/**", "/api/v1/file-operations/**", "/api/v1/recycle-bin/**", "/api/v1/library-roots/**").hasAnyRole("OWNER", "ADMIN")
                         .requestMatchers("/actuator/**").hasRole("OWNER")
                         .anyRequest().authenticated())
-                .headers(headers -> headers
-                        .contentSecurityPolicy(csp -> csp.policyDirectives("default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; connect-src 'self' blob:; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; font-src 'self'; worker-src 'self' blob:; frame-src 'self' blob:; object-src 'none'; frame-ancestors 'none'; base-uri 'self'"))
-                        .frameOptions(frame -> frame.deny()))
+                .headers(headers -> {
+                    // Disable Spring's unconditional default writer; the conditional writers below
+                    // keep DENY on every document except the same-origin scene frame.
+                    headers.frameOptions(frame -> frame.disable());
+                    securityHeaderWriters().forEach(headers::addHeaderWriter);
+                })
                 .exceptionHandling(errors -> errors.accessDeniedHandler((request, response, exception) -> {
                     response.setStatus(403);
                     response.setCharacterEncoding("UTF-8");
@@ -77,6 +86,18 @@ public class SecurityConfig {
                 .addFilterBefore(new RolePermissionFilter(users, permissions), org.springframework.security.web.access.intercept.AuthorizationFilter.class)
                 .addFilterAfter(mustChangePasswordFilter, org.springframework.security.web.context.SecurityContextHolderFilter.class)
                 .build();
+    }
+
+    static List<HeaderWriter> securityHeaderWriters() {
+        var mingLibraryScene = (org.springframework.security.web.util.matcher.RequestMatcher)
+                request -> request.getRequestURI().equals("/assets/ming-library/index.html");
+        String defaultCsp = "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; connect-src 'self' blob:; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; font-src 'self'; worker-src 'self' blob:; frame-src 'self' blob:; object-src 'none'; frame-ancestors 'none'; base-uri 'self'";
+        String sceneCsp = "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; connect-src 'self' blob:; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; font-src 'self'; worker-src 'self' blob:; frame-src 'self' blob:; object-src 'none'; frame-ancestors 'self'; base-uri 'self'";
+        return List.of(
+                new DelegatingRequestMatcherHeaderWriter(new NegatedRequestMatcher(mingLibraryScene), new ContentSecurityPolicyHeaderWriter(defaultCsp)),
+                new DelegatingRequestMatcherHeaderWriter(mingLibraryScene, new ContentSecurityPolicyHeaderWriter(sceneCsp)),
+                new DelegatingRequestMatcherHeaderWriter(new NegatedRequestMatcher(mingLibraryScene), new XFrameOptionsHeaderWriter(XFrameOptionsHeaderWriter.XFrameOptionsMode.DENY)),
+                new DelegatingRequestMatcherHeaderWriter(mingLibraryScene, new XFrameOptionsHeaderWriter(XFrameOptionsHeaderWriter.XFrameOptionsMode.SAMEORIGIN)));
     }
 
     @Bean

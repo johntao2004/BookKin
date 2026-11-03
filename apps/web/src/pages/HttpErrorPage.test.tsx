@@ -21,3 +21,9 @@ it("does not invent an HTTP 500 for a connection failure", () => {
   expect(screen.getByRole("alert")).toHaveTextContent("CONNECTION_ERROR");
   expect(screen.getByRole("alert")).not.toHaveTextContent("500");
 });
+
+it("omits terminal title punctuation while retaining internal punctuation and the diagnostic sentence", () => {
+  render(<TestProviders><HttpErrorPage title="权限未确认，请重试。" failure={{code: "CONNECTION_ERROR", reason: "请求失败，请稍后再试。"}} /></TestProviders>);
+  expect(screen.getByRole("heading", {level: 1})).toHaveTextContent(/^权限未确认，请重试$/);
+  expect(screen.getByRole("alert")).toHaveTextContent("原因：请求失败，请稍后再试。");
+});

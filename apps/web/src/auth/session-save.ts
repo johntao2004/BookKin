@@ -21,16 +21,25 @@ let chain: Promise<unknown> = Promise.resolve();
 type Checkpoint = { bookId: string; locator: string; progress: number; revision: string };
 function key(user: string) { return `bookkin-pending-progress:${user}`; }
 function read(user: string): Record<string, Checkpoint> { try { return JSON.parse(localStorage.getItem(key(user)) ?? "{}"); } catch { return {}; } }
+function write(user: string, records: Record<string, Checkpoint>) {
+  try {
+    localStorage.setItem(key(user), JSON.stringify(records));
+  } catch {
+    // Storage limits must not block an online save or turn its acknowledgement into a failure.
+    // 存储限制不得阻断在线保存，也不得把服务端成功伪装成失败。
+  }
+}
 export function setPersistenceUser(user: string | null) { persistenceUser=user; }
+export function persistenceUserId() { return persistenceUser; }
 export function pendingPosition(bookId: string) { return persistenceUser ? read(persistenceUser)[bookId] : undefined; }
 // 先保存按用户分区的检查点，再串行发送；仅匹配当前修订号的成功响应才能清除检查点。
 // Store a per-user checkpoint before serialized sending; only an acknowledgement for the current revision clears it.
 export function persistPosition<T>(bookId: string, locator: string, progress: number, send: () => Promise<T>): Promise<T> {
   const user=persistenceUser;
   const entry={bookId,locator,progress,revision:randomId()};
-  if(user) localStorage.setItem(key(user),JSON.stringify({...read(user),[bookId]:entry}));
+  if(user) write(user,{...read(user),[bookId]:entry});
   const task=chain.catch(()=>undefined).then(()=>{ if(user && persistenceUser!==user) throw new Error("登录用户已变化，进度保留待原用户登录后同步。"); return send(); }).then(result=>{
-    if(user) { const records=read(user); if(records[bookId]?.revision===entry.revision) { delete records[bookId]; localStorage.setItem(key(user),JSON.stringify(records)); } }
+    if(user) { const records=read(user); if(records[bookId]?.revision===entry.revision) { delete records[bookId]; write(user,records); } }
     return result;
   });
   chain=task;

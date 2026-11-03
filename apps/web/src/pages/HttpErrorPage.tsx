@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { statusTitle } from "../ui/status-title";
 import { ApiRequestError } from "../api/errors";
 import { PageTitle, pageWidthSx } from "../components/PageHeader";
 import { Button } from "../ui/buttons";
@@ -18,16 +19,17 @@ export function HttpErrorPage({ failure, title, actions, recovery, back, fullHei
   failure: PageFailure; title?: string; actions?: ReactNode; recovery?: string; back?: ReactNode; fullHeight?: boolean;
 }) {
   const label = failure.status ? statusLabels[failure.status] ?? (failure.status >= 500 ? "服务器异常" : "请求无法完成") : "连接异常";
+  const heading = statusTitle(title ?? label);
   return <Stack component="section" aria-label="错误页面" role="alert" sx={{ ...pageWidthSx,
     minHeight: fullHeight ? "100dvh" : `calc(100dvh - ${tokens.layout.navHeight}px)`,
     py: `${tokens.spacing[10]}px`, alignItems: "center", textAlign: "center", bgcolor: "background.default", color: "text.primary" }}>
     {back && <Stack sx={{ width: "100%", alignItems: "flex-start" }}>{back}</Stack>}
     <Stack sx={{ flex: 1, justifyContent: "center", width: "100%", maxWidth: tokens.layout.readingMax, alignItems: "center", gap: `${tokens.spacing[5]}px`, overflowWrap: "anywhere" }}>
       <PageTitle className={failure.status ? 'http-error-status' : undefined} color={failure.status ? 'primary.main' : undefined}>
-        {failure.status ?? title ?? label}
+        {failure.status ?? heading}
       </PageTitle>
       {failure.status && <Typography component="h2">{label}</Typography>}
-      {failure.status && title && title !== label && <Typography>{title}</Typography>}
+      {failure.status && title && heading !== label && <Typography>{heading}</Typography>}
       <Typography>原因：{failure.reason}</Typography>
       <Stack spacing={1} sx={{ color: "text.secondary" }}>
         <Typography>错误代码：{failure.code}</Typography>

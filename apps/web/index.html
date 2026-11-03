@@ -8,9 +8,16 @@
     <meta name="theme-color" content="#FAF9F5" />
     <meta name="description" content="BookKin——你的 NAS 私人电子图书馆" />
     <title>BookKin · 电子图书馆</title>
+    <link rel="stylesheet" href="/src/styles.css" />
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <main class="bk-app-loading" role="status" aria-live="polite" aria-atomic="true" aria-busy="true">
+        <span class="bk-app-loading__brand" aria-hidden="true">BookKin</span>
+        <span class="bk-app-loading__indicator" aria-hidden="true"></span>
+        <span class="bk-app-loading__label">正在启动书库…</span>
+      </main>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

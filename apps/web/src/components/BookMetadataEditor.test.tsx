@@ -311,9 +311,8 @@ describe("BookMetadataEditor", () => {
     const invalidate = vi.spyOn(client!, "invalidateQueries").mockResolvedValue();
     fireEvent.click(screen.getByRole("button", { name: "重命名原文件" }));
     fireEvent.change(screen.getByRole("textbox", { name: "新书名" }), { target: { value: "新书名" } });
-    fireEvent.click(screen.getByRole("button", { name: "预览" }));
     await waitFor(() => expect(previewRequest).toHaveBeenCalledWith(demoBooks[0], "RENAME", "新书名"));
-    await screen.findByText("预览已生成");
+    await waitFor(() => expect(screen.getByRole("button", { name: "确认重命名" })).toBeEnabled());
     fireEvent.click(screen.getByRole("button", { name: "确认重命名" }));
 
     await waitFor(() => expect(completed).toHaveBeenCalledWith("重命名任务已提交，可在文件任务页查看进度"));
@@ -353,8 +352,8 @@ describe("BookMetadataEditor", () => {
 
     await screen.findByDisplayValue(demoBooks[0].title);
     fireEvent.click(screen.getByRole("button", { name: "重命名原文件" }));
-    fireEvent.click(screen.getByRole("button", { name: "预览" }));
-    await screen.findByText("预览已生成");
+    fireEvent.change(screen.getByRole("textbox", { name: "新书名" }), { target: { value: "新书名" } });
+    await waitFor(() => expect(screen.getByRole("button", { name: "确认重命名" })).toBeEnabled());
     fireEvent.click(screen.getByRole("button", { name: "确认重命名" }));
 
     await waitFor(() => expect(failed).toHaveBeenCalledWith("重命名任务未完成，可在文件任务页查看结果"));

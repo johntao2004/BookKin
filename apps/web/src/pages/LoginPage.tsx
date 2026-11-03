@@ -15,6 +15,7 @@ import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import { setupStatusQueryOptions } from "../auth/setup-status";
 import { api } from "../api/client";
+import { AppLoading } from "../components/AppLoading";
 import { AuthFrame } from "../components/AuthFrame";
 
 export function getLoginDefaults(isDemo: boolean) {
@@ -51,7 +52,7 @@ export function LoginPage() {
     }
   };
 
-  if (!ready) return <AuthFrame title="登录"><Typography role="status">正在加载…</Typography></AuthFrame>;
+  if (!ready) return <AppLoading label="正在确认登录状态…" />;
   if (sessionError) return <AuthFrame title="登录"><Alert severity="error">{sessionError}</Alert><Button onClick={retrySession} sx={{ width: { xs: "100%", sm: "auto" } }}>重试</Button></AuthFrame>;
   if (user) return <Navigate to={user.mustChangePassword ? "/change-password" : "/library"} replace />;
 

@@ -3,7 +3,7 @@
 import { QueryClient, QueryObserver } from "@tanstack/react-query";
 import { api } from "../api/client";
 import type { Book } from "../domain/types";
-import { fetchVirtualLibraryBooks, refreshVirtualLibraryBooks, VIRTUAL_LIBRARY_BOOKS_QUERY_KEY } from "./virtual-library-query";
+import { fetchVirtualLibraryBooks, refreshVirtualLibraryBooks, VIRTUAL_LIBRARY_BOOKS_QUERY_KEY, fetchPublicVirtualLibraryBooks, PUBLIC_VIRTUAL_LIBRARY_BOOKS_QUERY_KEY, virtualLibraryBooksQueryKey } from "./virtual-library-query";
 
 const book = (id: string, title = id): Book => ({
   id, title, author: "作者", description: "", format: "EPUB", coverUrl: `/covers/${id}.jpg`,
@@ -97,4 +97,34 @@ it("syncs added, edited and removed books on catalog invalidation, retaining dat
     await client.invalidateQueries({queryKey: ["books"]});
     expect(observer.getCurrentResult().data?.pages[0].items).toEqual([]);
   } finally { unsubscribe(); client.clear(); }
+});
+
+
+it("builds anonymous shelves only from complete public pages without private data or cache reuse", async () => {
+  const privateList = vi.spyOn(api, "listBooks");
+  const privateRevision = vi.spyOn(api, "catalogRevision");
+  vi.spyOn(api, "listDisplayBooks").mockResolvedValueOnce({ items: [{ id: "public", title: "公开书", author: "作者", coverUrl: "/public.jpg", available: true, format: "PDF", sortOrder: 1 }], nextCursor: "next", revision: 2 })
+    .mockResolvedValueOnce({ items: [{ id: "unavailable", title: "不可读", author: "作者", coverUrl: "", available: false, format: "PDF", sortOrder: 2 }], revision: 2 });
+  const result = await fetchPublicVirtualLibraryBooks();
+  expect(result.pages[0].items).toEqual([{ id: "public", title: "公开书", author: "作者", description: "", coverUrl: "/public.jpg", format: "PDF", status: "AVAILABLE" }]);
+  expect(privateList).not.toHaveBeenCalled(); expect(privateRevision).not.toHaveBeenCalled();
+  expect(PUBLIC_VIRTUAL_LIBRARY_BOOKS_QUERY_KEY).not.toEqual(VIRTUAL_LIBRARY_BOOKS_QUERY_KEY);
+});
+
+it("rejects a public snapshot if publication changes during pagination", async () => {
+  vi.spyOn(api, "listDisplayBooks").mockResolvedValueOnce({ items: [], nextCursor: "next", revision: 1 }).mockResolvedValueOnce({ items: [], revision: 2 });
+  await expect(fetchPublicVirtualLibraryBooks()).rejects.toThrow("公开藏书在同步期间发生变化");
+});
+
+
+it("isolates signed-in catalog snapshots by user while preserving books-prefix invalidation", async () => {
+  const client = new QueryClient();
+  vi.spyOn(api, "catalogRevision").mockResolvedValue({ userId: "user-b", revision: 1 });
+  const list = vi.spyOn(api, "listBooks").mockResolvedValue({ items: [book("b")] });
+  client.setQueryData(virtualLibraryBooksQueryKey("user-a"), { pages: [{ items: [book("a")] }], pageParams: [undefined], catalogRevision: "user-b:1:" });
+  const snapshot = await refreshVirtualLibraryBooks(client, undefined, "user-b");
+  expect(snapshot.pages[0].items.map(item => item.id)).toEqual(["b"]);
+  expect(list).toHaveBeenCalledOnce();
+  expect(virtualLibraryBooksQueryKey("user-b").slice(0, 2)).toEqual(VIRTUAL_LIBRARY_BOOKS_QUERY_KEY);
+  client.clear();
 });

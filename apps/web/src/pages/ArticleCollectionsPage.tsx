@@ -32,8 +32,8 @@ export function ArticleCollectionsPage() {
     enabled: ready && Boolean(user) && can("articles.collections.view"),
   });
   const all = collectionsQuery.data?.items ?? [];
-  const mine = useMemo(() => all.filter((collection) => collection.ownedByViewer), [all]);
-  const shared = useMemo(() => all.filter((collection) => !collection.ownedByViewer && collection.visibility === "MEMBERS"), [all]);
+  const mine = useMemo(() => all.filter((collection) => collection.ownedByViewer && collection.visibility === "PRIVATE"), [all]);
+  const shared = useMemo(() => all.filter((collection) => collection.visibility === "MEMBERS"), [all]);
   const returnTo = `${location.pathname}${location.search}`;
 
   if (!user || !can("articles.collections.view")) return null;
@@ -49,7 +49,7 @@ export function ArticleCollectionsPage() {
       <Stack sx={{ gap: `${tokens.spacing[10]}px` }}>
         <CatalogSection title="我的选集">
           {mine.length ? <CollectionGrid items={mine} returnTo={returnTo} /> : <BookCatalogEmptyState
-            title="你还没有创建选集"
+            title="暂无私密选集"
           />}
         </CatalogSection>
         <CatalogSection title="书库共享">

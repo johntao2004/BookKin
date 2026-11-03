@@ -8,6 +8,7 @@ import { BookCardPresentation } from "../components/BookCardPresentation";
 import { CircularProgress } from "@/ui/feedback";
 import { Stack } from "@/ui/primitives";
 import { Typography } from "@/ui/primitives";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useCallback, useDeferredValue, useMemo } from "react";
 import { useCatalogFilterParams } from "../hooks/useCatalogFilterParams";
@@ -87,5 +88,8 @@ export function PublicLibraryPage() {
 }
 
 function PublicBookCard({ book }: { book: DisplayBook }) {
-  return <BookCardPresentation book={book} />;
+  const navigate = useNavigate();
+  const location = useLocation();
+  const openDetails = () => navigate(`/library/books/${book.id}`, { state: { bookReturnTo: location.pathname + location.search } });
+  return <BookCardPresentation book={book} onOpen={openDetails} onRead={openDetails} primaryActionLabel="前往详情页" />;
 }

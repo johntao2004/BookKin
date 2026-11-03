@@ -9,6 +9,8 @@ export { default as QRCode } from "antd/es/qr-code";
 
 import { ActionButton as AntButton } from "./action-button";
 import AntInput from "antd/es/input";
+import AntAlert from "antd/es/alert";
+import { statusTitle } from "./status-title";
 import AntList from "antd/es/list";
 import AntTable, { type TableProps } from "antd/es/table";
 import { tablePaginationDefaults } from "./table-pagination";
@@ -43,7 +45,9 @@ export function TableAction(props: ComponentProps<typeof AntButton>) {
 
 // 为组合探索界面保留原生控件入口。
 // Native controls for composed exploration surfaces.
-export { default as _AntAlert } from "antd/es/alert";
+export function _AntAlert({ title, ...props }: ComponentProps<typeof AntAlert>) {
+  return <AntAlert {...props} title={statusTitle(title)} />;
+}
 export { ActionButton as _AntButton } from "./action-button";
 export { default as Empty } from "antd/es/empty";
 export { default as Pagination } from "antd/es/pagination";

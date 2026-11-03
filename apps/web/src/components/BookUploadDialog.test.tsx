@@ -2,11 +2,15 @@
 // Checks LAN-HTTP upload and keyboard file selection, leading to persistent review rather than assuming catalog commit.
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { useState } from "react";
-import { afterEach, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { useLocation } from "react-router-dom";
 import { TestProviders } from "../test/TestProviders";
 import { api } from "../api/client";
 import { BookUploadDialog } from "./BookUploadDialog";
+
+vi.mock("../features/uploads/file-fingerprint", () => ({ fileFingerprint: vi.fn(async () => "sha256:" + "a".repeat(64)) }));
+import { fileFingerprint } from "../features/uploads/file-fingerprint";
+beforeEach(() => { vi.spyOn(api, "precheckBookUpload").mockResolvedValue({ match: "NONE" }); });
 
 afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 function Location() { const location = useLocation(); return <><output>{location.pathname}</output><output data-testid="upload-state">{JSON.stringify(location.state)}</output></>; }
@@ -74,4 +78,46 @@ it("does not offer editing for a duplicate upload response", async () => {
   fireEvent.change(document.querySelector('input[type="file"]')!, { target: { files: [new File(["same"], "same.pdf", { type: "application/pdf" })] } });
   expect(await screen.findByText("相同文件已在待校对列表中")).toBeInTheDocument();
   expect(screen.queryByRole("button", { name: "编辑信息" })).not.toBeInTheDocument();
+});
+
+function preparePrecheckUpload() {
+  vi.spyOn(api, "listLibraryRoots").mockResolvedValue([{ id: "root", status: "ONLINE", canWrite: true, canStage: true } as any]);
+  vi.spyOn(api, "listBookUploads").mockResolvedValue([]);
+  const create = vi.spyOn(api, "createBookUpload").mockResolvedValue({ id: "new-upload" } as any);
+  const transfer = vi.spyOn(api, "uploadBookContent").mockResolvedValue({ id: "new-upload", status: "INSPECTING" } as any);
+  const view = render(<TestProviders><BookUploadDialog open onClose={vi.fn()} onCompleted={vi.fn()} /></TestProviders>);
+  return { create, transfer, ...view };
+}
+it.each(["CATALOG", "DRAFT"] as const)("blocks %s duplicates before session creation and binary transfer", async match => {
+  vi.mocked(api.precheckBookUpload).mockResolvedValue({ match });
+  const { create, transfer } = preparePrecheckUpload();
+  await waitFor(() => expect(screen.getByRole("button", { name: "开始上传" })).toBeEnabled());
+  fireEvent.change(document.querySelector('input[type="file"]')!, { target: { files: [new File(["same"], "renamed.pdf")] } });
+  await screen.findByText(match === "DRAFT" ? "相同文件已在待校对列表中，请继续处理已有草稿" : "相同文件已存在于书库中，请勿重复上传");
+  expect(api.precheckBookUpload).toHaveBeenCalledWith({ fingerprint: "sha256:" + "a".repeat(64), sizeBytes: 4 });
+  expect(create).not.toHaveBeenCalled(); expect(transfer).not.toHaveBeenCalled();
+});
+it("serializes same-content files with different names within one concurrent batch", async () => {
+  const { create, transfer } = preparePrecheckUpload();
+  await waitFor(() => expect(screen.getByRole("button", { name: "开始上传" })).toBeEnabled());
+  fireEvent.change(document.querySelector('input[type="file"]')!, { target: { files: [new File(["same"], "one.pdf"), new File(["same"], "two.pdf")] } });
+  await screen.findByText("相同文件已在待校对列表中，请继续处理已有草稿");
+  expect(api.precheckBookUpload).toHaveBeenCalledTimes(1); expect(create).toHaveBeenCalledTimes(1); expect(transfer).toHaveBeenCalledTimes(1);
+});
+it("allows the later equal-content file to proceed when the first receive fails", async () => {
+  const { transfer } = preparePrecheckUpload();
+  transfer.mockRejectedValueOnce(new Error("连接中断"));
+  await waitFor(() => expect(screen.getByRole("button", { name: "开始上传" })).toBeEnabled());
+  fireEvent.change(document.querySelector('input[type="file"]')!, { target: { files: [new File(["same"], "one.pdf"), new File(["same"], "two.pdf")] } });
+  await screen.findByRole("button", { name: "编辑信息" });
+  expect(api.precheckBookUpload).toHaveBeenCalledTimes(2); expect(transfer).toHaveBeenCalledTimes(2);
+});
+it("does not upload after hashing fails and retries file checking explicitly", async () => {
+  const { create } = preparePrecheckUpload();
+  vi.mocked(fileFingerprint).mockRejectedValueOnce(new Error("文件读取失败"));
+  await waitFor(() => expect(screen.getByRole("button", { name: "开始上传" })).toBeEnabled());
+  fireEvent.change(document.querySelector('input[type="file"]')!, { target: { files: [new File(["same"], "bad.pdf")] } });
+  await screen.findByText("文件读取失败"); expect(create).not.toHaveBeenCalled(); expect(api.precheckBookUpload).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole("button", { name: "开始上传" }));
+  await screen.findByRole("button", { name: "编辑信息" }); expect(create).toHaveBeenCalledTimes(1);
 });

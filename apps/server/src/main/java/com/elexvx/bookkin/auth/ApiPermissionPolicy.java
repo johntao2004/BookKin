@@ -46,6 +46,7 @@ public final class ApiPermissionPolicy {
         if (p.startsWith("/book-uploads")) return Set.of(read ? "library.view" : "library.upload");
         if (p.startsWith("/recycle-bin")) return Set.of("settings.recycle." + (read ? "view" : method.equals("DELETE") ? "purge" : "restore"));
         // Actual preview/execute action is checked against the server-side preview type by FileOperationService.
+        if (p.equals("/file-task-history")) return Set.of("settings.operations.view");
         if (p.startsWith("/file-operations")) return read && p.equals("/file-operations") ? Set.of("settings.operations.view")
             : Set.of("library.files", "library.trash", "settings.recycle.restore", "settings.recycle.purge");
         if (p.matches("/books/[^/]+/download")) return Set.of("library.download");
@@ -76,6 +77,7 @@ public final class ApiPermissionPolicy {
         if (p.equals("/books") && read) return Set.of("library.query");
         if (p.equals("/books/revision")) return Set.of(read ? "library.query" : "library.edit");
         if (p.equals("/display-books") && read) return Set.of("library.query"); // Anonymous discovery bypasses role grants in RolePermissionFilter.
+        if (p.matches("/display-books/[^/]+/(metadata|bibliography-source)")) return Set.of(read ? "library.details.view" : "library.edit");
         if (p.matches("/books/[^/]+/metadata")) return Set.of(read ? "library.details.view" : "library.edit");
         if (p.matches("/books/[^/]+") || p.matches("/display-books/[^/]+")) return Set.of(read ? "library.details.view" : "library.edit");
         if (p.startsWith("/display-books")) return Set.of(read ? "library.view" : "library.edit");

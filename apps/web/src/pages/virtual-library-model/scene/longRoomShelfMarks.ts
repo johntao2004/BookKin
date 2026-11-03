@@ -28,7 +28,7 @@ export function addLongRoomShelfMarks(root: THREE.Group, includeRetiredStairBay 
   const letters = 'abcdefghi';
   const labels = [...letters, ...Array.from(letters, letter => letter + letter)];
   context.fillStyle = new THREE.Color(PALETTE.parchment).getStyle();
-  context.textAlign = 'center'; context.textBaseline = 'middle'; context.font = '76px Georgia, serif';
+  context.textAlign = 'center'; context.textBaseline = 'middle'; context.font = '76px BookKin Serif, Noto Serif SC, serif';
   labels.forEach((label, index) => context.fillText(label, (index % 8) * 128 + 64, Math.floor(index / 8) * 128 + 64));
   const map = new THREE.CanvasTexture(canvas); map.colorSpace = THREE.SRGBColorSpace; map.anisotropy = 4;
   const positions: number[] = [], normals: number[] = [], uvs: number[] = [], indices: number[] = [];
@@ -65,6 +65,6 @@ export function addLongRoomShelfMarks(root: THREE.Group, includeRetiredStairBay 
   const mesh = new THREE.Mesh(geometry, material); mesh.name = 'Photographic lower shelf letter marks';
   mesh.receiveShadow = true;
   mesh.userData = {fidelity: 'observed-letterforms-estimated-repeated-placement',
-    sequence: ['a-i', 'aa-ii'], font: 'Georgia approximation', isHistoricalScenery: true};
+    sequence: ['a-i', 'aa-ii'], font: 'Noto Serif SC approximation', isHistoricalScenery: true};
   root.add(mesh);
 }

@@ -1,4 +1,5 @@
 import { overviewContentSpacing } from "./overviewCardLayout";
+import { statusTitle } from "../ui/status-title";
 // 概览卡空态保留共享高度与标题对齐，文案由具体业务模块提供。
 // Overview empty states preserve shared sizing/alignment while business modules supply their copy.
 import { EmptyStateIllustration } from "../ui/empty-state";
@@ -33,7 +34,7 @@ export function OverviewEmptyState({
     >
       <EmptyStateIllustration compact />
       <Box>
-        <Typography id={titleId} variant="h4">{title}</Typography>
+        <Typography id={titleId} variant="h4">{statusTitle(title)}</Typography>
         {description != null ? (
           <Typography
             variant="body2"

@@ -1,9 +1,9 @@
-@font-face{font-family:MingSerif;src:url('./assets/MingLibrarySerif.woff2') format('woff2');font-weight:100 900;font-display:swap}
+@import url("/assets/fonts/bookkin-serif.css");
     @font-face{font-family:BookCJK;src:url('./assets/BookCJK.woff2') format('woff2');font-weight:100 900;font-display:swap}
     :root{
       --paper:var(--ming-library-paper);--paper-solid:var(--ming-library-paper-solid);--ink:var(--ming-library-ink);--muted:var(--ming-library-muted);--red:var(--ming-library-red);--gold:var(--ming-library-gold);
       --line:var(--ming-library-line);--light-line:var(--ming-library-light-line);--shadow:var(--ming-library-shadow);
-      --serif:MingSerif,BookCJK,'Songti SC',serif;--sans:-apple-system,BlinkMacSystemFont,'Segoe UI',BookCJK,'Microsoft YaHei',sans-serif;
+      --serif:"BookKin Serif","Noto Serif SC",serif;--sans:-apple-system,BlinkMacSystemFont,'Segoe UI',BookCJK,'Microsoft YaHei',sans-serif;
       --edge:var(--ming-library-edge);--dock-bottom:var(--ming-library-dock-bottom);--panel-bottom:var(--ming-library-panel-bottom);--panel-top:var(--ming-library-panel-top);
     }
     *{box-sizing:border-box}
@@ -40,7 +40,7 @@
     .top-button.active,.top-button[aria-expanded=true]{background:var(--ink);color:var(--paper)}
     .edition{position:absolute;left:var(--ming-library-left);top:var(--ming-library-top-2);display:flex;align-items:center;gap:var(--ming-library-gap-4);font-size:var(--ming-library-font-size-3);letter-spacing:var(--ming-library-letter-spacing);color:var(--ming-library-color-3);text-shadow:var(--ming-library-text-shadow);pointer-events:none}
     .edition:before{content:'';display:block;height:var(--ming-library-height-4);width:var(--ming-library-width-4);background:currentColor;opacity:.8}
-    .edition small{font-family:Georgia,serif;font-size:var(--ming-library-font-size-4);letter-spacing:var(--ming-library-letter-spacing-2);opacity:.85}
+    .edition small{font-family:var(--serif);font-size:var(--ming-library-font-size-4);letter-spacing:var(--ming-library-letter-spacing-2);opacity:.85}
     .throne-action{position:absolute;left:var(--edge);top:var(--ming-library-top-3);z-index:23;pointer-events:auto}
     .side-inscription{position:absolute;right:var(--ming-library-right);top:var(--ming-library-top-4);color:var(--ming-library-color-4);text-shadow:var(--ming-library-text-shadow-2);writing-mode:vertical-rl;font-family:var(--serif);font-size:var(--ming-library-font-size);letter-spacing:var(--ming-library-letter-spacing-3);line-height:2;pointer-events:none}
     .side-inscription small{margin-top:var(--ming-library-margin-top);font:var(--ming-library-font);letter-spacing:var(--ming-library-letter-spacing-4);opacity:.75}

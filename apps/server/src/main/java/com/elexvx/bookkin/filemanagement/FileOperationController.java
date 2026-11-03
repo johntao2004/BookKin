@@ -2,9 +2,11 @@ package com.elexvx.bookkin.filemanagement;
 
 import com.elexvx.bookkin.common.ApiException;
 import com.elexvx.bookkin.filemanagement.FileOperationModels.ExecuteRequest;
+import com.elexvx.bookkin.filemanagement.FileOperationModels.FileVersionList;
 import com.elexvx.bookkin.filemanagement.FileOperationModels.Operation;
 import com.elexvx.bookkin.filemanagement.FileOperationModels.Preview;
 import com.elexvx.bookkin.filemanagement.FileOperationModels.PreviewRequest;
+import com.elexvx.bookkin.filemanagement.FileOperationModels.VersionRestorePreviewRequest;
 import jakarta.validation.Valid;
 import java.security.Principal;
 import java.util.List;
@@ -45,6 +47,24 @@ public class FileOperationController {
                       @RequestHeader("Idempotency-Key") String idempotencyKey,
                       Principal principal) {
         return service.execute(request, idempotencyKey, principal);
+    }
+
+    @GetMapping("/book-files/{bookFileId}/versions")
+    FileVersionList versions(@PathVariable UUID bookFileId, Principal principal) {
+        return service.listVersions(bookFileId, principal);
+    }
+
+    @PostMapping("/versions/{versionId}/restore/preview")
+    Preview previewVersionRestore(@PathVariable UUID versionId,
+                                  @Valid @RequestBody VersionRestorePreviewRequest request,
+                                  Principal principal) {
+        return service.previewVersionRestore(versionId, request.expectedFingerprint(), principal);
+    }
+
+    @PostMapping("/versions/{versionId}/restore")
+    Operation restoreVersion(@PathVariable UUID versionId, @Valid @RequestBody ExecuteRequest request,
+                             @RequestHeader("Idempotency-Key") String idempotencyKey, Principal principal) {
+        return service.executeForVersion(versionId, request, idempotencyKey, principal);
     }
 
     @GetMapping("/{id}")

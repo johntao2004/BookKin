@@ -26,7 +26,19 @@ spring:
 
 server:
   shutdown: graceful
-  forward-headers-strategy: framework
+  # Directly exposed deployments must use the socket peer for setup and rate limits.
+  # Forwarded / X-Forwarded-* are client input unless a trusted proxy boundary is configured.
+  forward-headers-strategy: none
+  compression:
+    enabled: true
+    min-response-size: 1024
+    mime-types:
+      - text/html
+      - text/css
+      - text/javascript
+      - application/javascript
+      - application/json
+      - image/svg+xml
   servlet:
     session:
       cookie:
@@ -95,6 +107,13 @@ bookkin:
         base-url: ${BOOKKIN_AI_DEEPSEEK_BASE_URL:https://api.deepseek.com}
         api-key: ${BOOKKIN_AI_DEEPSEEK_API_KEY:}
         model: ${BOOKKIN_AI_DEEPSEEK_MODEL:deepseek-v4-flash}
+      - id: zhipu
+        label: 智谱
+        type: OPENAI_COMPATIBLE
+        enabled: ${BOOKKIN_AI_ZHIPU_ENABLED:false}
+        base-url: ${BOOKKIN_AI_ZHIPU_BASE_URL:https://open.bigmodel.cn/api/paas/v4/}
+        api-key: ${BOOKKIN_AI_ZHIPU_API_KEY:}
+        model: ${BOOKKIN_AI_ZHIPU_MODEL:glm-4.7-flash}
       - id: qwen
         label: 通义千问
         type: OPENAI_COMPATIBLE

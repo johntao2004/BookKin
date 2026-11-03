@@ -109,11 +109,11 @@ function getTitleMaterial(title) {
     ctx.fillStyle = '#ded1ae'; ctx.fillRect(0, 0, w, h);
     ctx.strokeStyle = '#978463'; ctx.lineWidth = 2; ctx.strokeRect(4, 4, w - 8, h - 8);
     ctx.strokeStyle = '#b2a386'; ctx.lineWidth = 1; ctx.strokeRect(8, 8, w - 16, h - 16);
-    ctx.fillStyle = '#322f28'; ctx.font = '44px MingSerif, "Noto Serif SC", "Noto Serif CJK SC", "Songti SC", "SimSun", serif';
+    ctx.fillStyle = '#322f28'; ctx.font = '44px BookKin Serif, Noto Serif SC, serif';
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     [...title].forEach((ch, i, arr) => ctx.fillText(ch, w / 2, 33 + i * Math.min(48, 184 / arr.length)));
     ctx.fillStyle = '#91694b'; ctx.fillRect(60, 218, 18, 18);
-    ctx.fillStyle = '#e1ccb1'; ctx.font = '12px MingSerif, "Noto Serif SC", serif'; ctx.fillText('藏', 69, 228);
+    ctx.fillStyle = '#e1ccb1'; ctx.font = '12px BookKin Serif, Noto Serif SC, serif'; ctx.fillText('藏', 69, 228);
   });
   const mat = new THREE.MeshStandardMaterial({ color: 0xf4e6c7, map: texture, roughness: 0.94, side: THREE.DoubleSide });
   mat.name = `Vertical title ${title}`;
@@ -304,7 +304,7 @@ function getManuscriptMaterial() {
     ctx.strokeStyle = '#ba9b74'; ctx.lineWidth = 1.3; ctx.strokeRect(22, 22, w - 44, h - 44);
     const lines = ['學而時習之', '不亦說乎', '有朋自遠方來', '不亦樂乎', '學而不思則罔', '思而不學則殆'];
     ctx.fillStyle = '#494237'; ctx.textBaseline = 'top'; ctx.textAlign = 'center';
-    ctx.font = '23px MingSerif, "Noto Serif SC", "Noto Serif CJK SC", "Songti SC", "SimSun", serif';
+    ctx.font = '23px BookKin Serif, Noto Serif SC, serif';
     lines.forEach((line, n) => [...line].forEach((ch, i) => ctx.fillText(ch, w - 55 - n * 72, 46 + i * 37)));
     ctx.fillStyle = '#9e513e'; ctx.fillRect(40, 294, 30, 30);
   });

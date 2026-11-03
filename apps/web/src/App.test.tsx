@@ -5,7 +5,7 @@ import { useLocation } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./App";
 import { articles } from "./features/content/api";
-import { api } from "./api/client";
+import { api, DEFAULT_SITE_SETTINGS } from "./api/client";
 import { readingPosts } from "./features/notes/posts-api";
 import { articleNotesApi } from "./features/notes/api";
 import { TestProviders } from "./test/TestProviders";
@@ -147,18 +147,39 @@ describe("App route permissions", () => {
     expect(screen.queryByRole("heading", { name: "全部藏书" })).not.toBeInTheDocument();
   });
 
-  it("blocks a signed-out direct visit to a book detail before private metadata mounts", async () => {
+  it("shows public details on a signed-out direct visit without mounting private metadata", async () => {
+    const privateBook = vi.spyOn(api, "getBook");
+    const metadata = vi.spyOn(api, "getBookMetadata");
+    vi.spyOn(api, "getDisplayBook").mockResolvedValue({ id: "book-1", title: "公开书籍", author: "作者", description: "公开简介", format: "PDF", coverUrl: "", available: true, sortOrder: 1 });
     render(<TestProviders initialPath="/library/books/book-1"><App /></TestProviders>);
 
-    expect(await screen.findByRole("heading", { name: "需要登录" })).toBeInTheDocument();
-    expect(screen.queryByRole("heading", { name: "书籍详情" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("heading", { name: "山川与灯火" })).not.toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "公开书籍", level: 2 })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "书籍详情", level: 1 })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "开始阅读" })).toBeEnabled();
+    expect(privateBook).not.toHaveBeenCalled();
+    expect(metadata).not.toHaveBeenCalled();
+    expect(screen.queryByRole("button", { name: "编辑元信息" })).not.toBeInTheDocument();
   });
 
-  it("blocks a signed-out direct visit to the optional 3D route", async () => {
+  it("retains the details permission for signed-in accounts before private requests mount", async () => {
+    sessionStorage.setItem("bookkin-demo-session", JSON.stringify(member));
+    sessionStorage.setItem("bookkin-demo-role-permissions", JSON.stringify({ revision: 1, grants: { MEMBER: [], ADMIN: [], OWNER: [] } }));
+    const privateBook = vi.spyOn(api, "getBook");
+    const publicBook = vi.spyOn(api, "getDisplayBook");
+    const metadata = vi.spyOn(api, "getBookMetadata");
+    render(<TestProviders initialPath="/library/books/book-1"><App /></TestProviders>);
+    expect(await screen.findByRole("heading", { name: "权限受限" })).toBeInTheDocument();
+    expect(privateBook).not.toHaveBeenCalled();
+    expect(publicBook).not.toHaveBeenCalled();
+    expect(metadata).not.toHaveBeenCalled();
+  });
+
+  it("allows anonymous access to the feature-gated public 3D route without private catalog requests", async () => {
+    vi.spyOn(api, "siteSettings").mockResolvedValue({ ...DEFAULT_SITE_SETTINGS, virtualLibraryEnabled: false });
+    const books = vi.spyOn(api, "listBooks"); const revision = vi.spyOn(api, "catalogRevision");
     render(<TestProviders initialPath="/virtual-library"><App /></TestProviders>);
-    expect(await screen.findByRole("heading", {name:"需要登录"})).toBeInTheDocument();
-    expect(screen.queryByRole("region", {name:"虚拟 3D 图书馆"})).not.toBeInTheDocument();
+    expect(await screen.findByRole("heading", {name:"书楼漫游未启用"})).toBeInTheDocument();
+    expect(books).not.toHaveBeenCalled(); expect(revision).not.toHaveBeenCalled();
   });
 
   it("keeps the explicit public discovery route available anonymously", async () => {

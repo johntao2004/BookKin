@@ -11,8 +11,9 @@ import markdownProseCss from "../../features/content/markdown-prose.css?inline";
 import { useBookKinTheme } from "../../theme/BookKinThemeProvider";
 import { bookKinThemeOptions } from "../../theme/theme";
 import ePub, { type Book, type Contents, type NavItem, type Rendition } from "epubjs";
-import { useCallback, useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useEffectEvent, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { api } from "../../api/client";
+import { persistenceUserId, registerSessionSaver } from "../../auth/session-save";
 import type { Annotation } from "../../domain/types";
 import { tokens } from "../../theme/generated-tokens";
 import { readerWidthSx } from "../PageHeader";
@@ -59,7 +60,22 @@ export default function EpubDocumentReader({ bookId, annotations, onAnnotationAc
   const annotationBindingsRef = useRef({ annotations, onAnnotationActivate, onAnnotationDismiss });
   const annotationActivationCleanupsRef = useRef(new Map<Document, () => void>());
   useEffect(() => { annotationBindingsRef.current = { annotations, onAnnotationActivate, onAnnotationDismiss }; }, [annotations, onAnnotationActivate, onAnnotationDismiss]);
+  const activeReadOnlyRef = useRef(readOnly);
+  const pendingPositionRef = useRef<{ bookId: string; locator: string; progress: number; persistenceUser: string | null } | null>(null);
   const saveTimer = useRef<number | undefined>(undefined);
+  useLayoutEffect(() => { activeReadOnlyRef.current = readOnly; }, [readOnly]);
+  const flushPosition = useCallback(() => {
+    if (saveTimer.current !== undefined) {
+      window.clearTimeout(saveTimer.current);
+      saveTimer.current = undefined;
+    }
+    const pending = pendingPositionRef.current;
+    if (!pending) return Promise.resolve();
+    pendingPositionRef.current = null;
+    if (activeReadOnlyRef.current || pending.persistenceUser !== persistenceUserId()) return Promise.resolve();
+    return api.saveReadingPosition(pending.bookId, pending.locator, pending.progress).catch(() => undefined);
+  }, []);
+  useEffect(() => registerSessionSaver(flushPosition), [flushPosition]);
   const [loading, setLoading] = useState(true);
   const [renditionReady, setRenditionReady] = useState(false);
   const [renderedViewRevision, setRenderedViewRevision] = useState(0);
@@ -105,8 +121,7 @@ export default function EpubDocumentReader({ bookId, annotations, onAnnotationAc
     style.dataset.pageReaderFont = "true";
     const familyName = fontFamily.match(/^"([^"]+)"/u)?.[1] ?? fontFamily.split(",")[0].trim();
     style.textContent = [
-      '@import url("/fonts/noto-fonts.css");',
-      '@font-face { font-family: "Source Han Serif SC"; src: url("/fonts/source-han-serif-sc-regular.woff2") format("woff2"); font-display: swap; }',
+      '@import url("/assets/fonts/bookkin-serif.css");',
       '@font-face { font-family: "Source Han Sans SC"; src: url("/fonts/source-han-sans-sc-regular.woff2") format("woff2"); font-display: swap; }',
       '@font-face { font-family: "Alibaba PuHuiTi"; src: url("/fonts/alibaba-puhuiti-regular.woff2") format("woff2"); font-display: swap; }',
       fontSourceUrl ? `@font-face { font-family: "${familyName}"; src: url("${fontSourceUrl}"); font-display: swap; }` : "",
@@ -246,6 +261,7 @@ export default function EpubDocumentReader({ bookId, annotations, onAnnotationAc
       });
       rendition.on("rendered", () => setRenderedViewRevision((revision) => revision + 1));
       rendition.on("relocated", (location: { start: { cfi: string; percentage?: number }; end?: { cfi: string } }) => {
+        if (disposed) return;
         currentLocatorRef.current = location.start.cfi;
         let measuredProgress = location.start.percentage ?? 0;
         try {
@@ -260,10 +276,16 @@ export default function EpubDocumentReader({ bookId, annotations, onAnnotationAc
         else onPosition(location.start.cfi, progress);
         // 位置写入防抖 350 毫秒；readOnly 只报告界面位置，不保存服务端进度。
         // Debounce position writes by 350 ms; readOnly reports UI position without persisting server progress.
-        window.clearTimeout(saveTimer.current);
-        saveTimer.current = window.setTimeout(() => {
-          if (!readOnly) void api.saveReadingPosition(bookId, location.start.cfi, progress).catch(() => undefined);
-        }, 350);
+        if (!readOnly) {
+          if (saveTimer.current !== undefined) window.clearTimeout(saveTimer.current);
+          const pending = { bookId, locator: location.start.cfi, progress, persistenceUser: persistenceUserId() };
+          pendingPositionRef.current = pending;
+          const timer = window.setTimeout(() => {
+            if (saveTimer.current === timer) saveTimer.current = undefined;
+            if (pendingPositionRef.current === pending) void flushPosition();
+          }, 350);
+          saveTimer.current = timer;
+        }
       });
 
       void book.loaded.navigation.then(async (navigation) => {
@@ -336,7 +358,7 @@ export default function EpubDocumentReader({ bookId, annotations, onAnnotationAc
     return () => {
       disposed = true;
       controller.abort();
-      window.clearTimeout(saveTimer.current);
+      void flushPosition();
       gestureCleanupsRef.current.forEach((cleanup) => cleanup());
       gestureCleanupsRef.current.clear();
       annotationActivationCleanupsRef.current.forEach(cleanup => cleanup());
@@ -345,7 +367,7 @@ export default function EpubDocumentReader({ bookId, annotations, onAnnotationAc
       rendition?.destroy();
       book?.destroy();
     };
-  }, [bookId, contentUrl, onNavigation, onPosition, onSelect, readOnly, contentLabel, flow]);
+  }, [bookId, contentUrl, onNavigation, onPosition, onSelect, readOnly, contentLabel, flow, flushPosition]);
 
   useEffect(() => {
     if (scrolled) return;
