@@ -1,38 +1,42 @@
 <div align="center">
 
+<img src="apps/web/public/assets/brand/app-icon-1024.png" width="96" alt="BookKin 图标" />
+
 # BookKin
 
-**Our books, together.**
+**让好书相聚，让阅读归于自己。**
 
-An open-source, self-hosted family library and personal book collection manager for EPUB and PDF.
+Self-hosted family library · EPUB & PDF · Private reading notes
 
 开源、自托管的家庭电子书库与个人藏书管理平台，让家人的书籍、阅读进度与私人笔记各得其所。
 
-[![Docker](https://github.com/elexvx/BookKin/actions/workflows/docker.yml/badge.svg)](https://github.com/elexvx/BookKin/actions/workflows/docker.yml)
+[![Docker](https://github.com/johntao2004/BookKin/actions/workflows/docker.yml/badge.svg)](https://github.com/johntao2004/BookKin/actions/workflows/docker.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-C86B56.svg)](LICENSE)
 [![Java 21](https://img.shields.io/badge/Java-21-3B2F2F.svg)](apps/server/pom.xml)
 [![React 19](https://img.shields.io/badge/React-19-5D7D87.svg)](apps/web/package.json)
-[![EPUB + PDF](https://img.shields.io/badge/Formats-EPUB%20%2B%20PDF-7B5B45.svg)](#what-bookkin-does)
+[![EPUB + PDF](https://img.shields.io/badge/Formats-EPUB%20%2B%20PDF-7B5B45.svg)](#产品功能)
+
+[产品功能](#产品功能) · [快速开始](#快速开始) · [目录导航](#目录导航) · [开发验证](#开发验证)
 
 </div>
 
-BookKin turns a NAS folder into a private digital bookshelf for a household. It combines book cataloging, browser-based reading, multi-user privacy, and carefully controlled file operations in one deployable system. The name joins **Book + Kin**: books shared with the people closest to you.
+BookKin 将 NAS 上的 EPUB 与 PDF 整理成家人的数字书架：共享藏书，分别保存阅读进度与私人笔记。Book + Kin，书与家人相聚。
 
-## What BookKin does
+## 产品功能
 
-| Area | Capabilities |
+| 场景 | 能力 |
 | --- | --- |
-| Library | EPUB/PDF catalog, metadata and cover management, categories, booklists, search, cursor pagination, large-catalog tooling |
-| Virtual library | Reference-guided two-storey timber library, losslessly streamed architecture, real catalog books, shelf inspection, search and twin spiral stairs |
-| Reading | EPUB.js and PDF.js readers, reading positions, bookmarks, highlights, underlines, bold marks, notes, custom fonts and whole-site themes |
-| Family accounts | Owner, administrator and member roles; private per-user progress and annotations; controlled public discovery |
-| NAS safety | Incremental scans, path validation, fingerprints, previews, idempotency keys, file leases, recycle bin and audited recovery paths |
-| Ingestion | Streaming uploads, duplicate SHA-256 checks, local metadata extraction, optional online enrichment and manual review before placement |
-| Deployment | React 19 web app, Java 21 modular monolith, separate API/Worker profiles, PostgreSQL 18 and Docker Compose |
+| 整理藏书 | 书籍检索、分类、书单、元数据校对与自定义封面 |
+| 沉浸阅读 | EPUB / PDF 在线阅读、阅读位置、书签、划线与笔记 |
+| 家庭共享 | 主人、管理员与成员角色；阅读数据按用户隔离 |
+| 安全入库 | 流式上传、SHA-256 去重、解析与人工确认 |
+| NAS 管理 | 扫描、文件指纹、操作预览、回收站与审计 |
+| 虚拟书楼 | 在三维书楼中探索书架与真实馆藏 |
+| 自主部署 | React 前端、Java API / Worker、PostgreSQL 与 Docker Compose |
 
-BookKin V1 intentionally focuses on EPUB and PDF. It does not include open registration, email, OAuth, MFA, OCR, audiobooks or comics.
+BookKin V1 仅支持 EPUB 与 PDF。注册默认关闭，主人可在安全设置开启；自行注册仅创建成员账户。邮件仅用于找回邮箱验证、密码重置和主人 SMTP 配置测试。禁书区使用身份验证器 TOTP 二次验证，普通登录保持现状。当前不支持 OAuth、有声书、漫画或 OCR。
 
-## Architecture
+## 系统架构
 
 ```mermaid
 flowchart LR
@@ -46,7 +50,7 @@ flowchart LR
 
 The API and Worker come from the same modular-monolith artifact. Long-running scans and file transactions stay outside HTTP request threads, while PostgreSQL stores accounts and catalog state and the NAS remains the source of truth for book files.
 
-## Quick start
+## 快速开始
 
 ### Requirements
 
@@ -105,7 +109,7 @@ For production, expose BookKin only through a trusted LAN or VPN and mount the i
 - Reading positions, bookmarks, highlights and notes are isolated by user and are not visible to owners or administrators by default.
 - Members cannot modify original NAS files. Owner/admin writes require a preview, expected fingerprint and idempotency key; permanent cleanup is owner-only.
 - Uploads stream into `.bookkin-staging/uploads` and enter the formal library only after parsing and confirmation.
-- Cross-root moves use staging, fsync, SHA-256 verification, parse validation and recoverable source placement.
+- 普通书籍暂不支持新增书库或跨书库移动；扫描不会自动改写 NAS 原文件。
 - Book files, upload staging data and cover binaries stay on disk rather than in PostgreSQL.
 
 ### Optional Zhipu AI provider
@@ -121,7 +125,7 @@ BOOKKIN_AI_ZHIPU_MODEL=glm-4.7-flash
 
 The owner can also configure the endpoint, model and key in 管理设置 → 外部服务 → AI. A blank key keeps the saved key; the UI never returns a saved key in settings responses.
 
-## Repository map
+## 目录导航
 
 ```text
 apps/web/       前端：React、TypeScript、Vite、Ant Design
@@ -134,9 +138,9 @@ scripts/        开发脚本：本地启动、演示数据、Token 生成
 scripts/benchmark/  性能测试脚本与专用 SQL
 ```
 
-完整代码位置及文件存放规则见 [目录导航](docs/repository-layout.md)。
+本地验证记录存放于 `.local/`，构建快照存放于 `.artifacts/`；两者均不纳入 Git 同步。
 
-## Quality gates
+## 开发验证
 
 ```bash
 pnpm lint
@@ -150,22 +154,17 @@ cd apps/server
 
 The design-token source of truth is [`design/tokens.json`](design/tokens.json). After changing it, run `pnpm generate:tokens` and review the corresponding Figma variables.
 
-## Documentation
+## 文档
 
-- [Repository layout](docs/repository-layout.md)
-- [Virtual library](docs/virtual-library.md)
-- [Documentation audit](docs/documentation-audit.md)
-- [Technical architecture](docs/technical-architecture.md)
-- [Design system](docs/design-system.md)
-- [Implementation status](docs/implementation-status.md)
-- [Operations runbook](docs/operations-runbook.md)
-- [OpenAPI contract](docs/openapi/bookkin-api.yaml)
-- [Architecture decisions](docs/adr)
-- [Multi-root Compose example](docker/compose.multi-root.example.yaml)
+- [OpenAPI 接口定义](docs/openapi/bookkin-api.yaml)
+- [数据库运维文档](ops/database/README.md)
+- [发布运维文档](ops/release/README.md)
+- [多书库 Compose 示例](docker/compose.multi-root.example.yaml)
+- [虚拟书楼说明](scripts/hogwarts-library/README.md)
 
 ## License
 
-BookKin source code is available under the [MIT License](LICENSE). Bundled fonts, artwork and models retain their own licenses and source notices in `apps/web/public/`; see [font sources](apps/web/public/fonts/FONT_SOURCES.md) and [virtual-library assets](docs/virtual-library.md#资源与许可).
+BookKin source code is available under the [MIT License](LICENSE). Bundled fonts, artwork and models retain their own licenses and source notices in `apps/web/public/`; see [font sources](apps/web/public/fonts/FONT_SOURCES.md) and [虚拟书楼资源说明](scripts/hogwarts-library/README.md).
 
 ### 邮件与密码找回
 
