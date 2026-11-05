@@ -3,6 +3,7 @@
 .vscode
 .local
 .env
+data
 node_modules
 **/node_modules
 **/target

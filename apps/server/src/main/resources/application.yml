@@ -25,6 +25,7 @@ spring:
       enabled: false
 
 server:
+  port: ${SILVAE_API_PORT:8080}
   shutdown: graceful
   # Directly exposed deployments must use the socket peer for setup and rate limits.
   # Forwarded / X-Forwarded-* are client input unless a trusted proxy boundary is configured.

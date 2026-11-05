@@ -9,6 +9,7 @@ target/
 .env
 .local/
 .artifacts/
+data/
 coverage/
 *.tsbuildinfo
 design/.figma-state.json

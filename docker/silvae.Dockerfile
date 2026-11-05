@@ -24,10 +24,14 @@ RUN cd apps/server && ./mvnw -q -DskipTests package
 
 FROM eclipse-temurin:21-jre-noble
 RUN apt-get update \
-    && apt-get install --yes --no-install-recommends curl ca-certificates \
-    && rm -rf /var/lib/apt/lists/*
+    && apt-get install --yes --no-install-recommends curl ca-certificates openssl \
+    && rm -rf /var/lib/apt/lists/* \
+    && mkdir -p /app /library/main /var/lib/silvae/fonts /var/lib/silvae/content/articles /var/lib/silvae/content/vault /var/lib/silvae/keys /tmp/silvae \
+    && chown -R 1000:1000 /app /library /var/lib/silvae /tmp/silvae \
+    && chmod -R 0775 /library /var/lib/silvae /tmp/silvae
 WORKDIR /app
+COPY --chmod=0755 docker/entrypoint.sh /app/entrypoint.sh
 COPY --chmod=0644 --from=server-build /workspace/apps/server/target/silvae-0.1.0-SNAPSHOT.jar /app/silvae.jar
 EXPOSE 8080
 ENV JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=75 -Djava.io.tmpdir=/tmp/silvae"
-ENTRYPOINT ["java", "-jar", "/app/silvae.jar"]
+ENTRYPOINT ["/app/entrypoint.sh"]

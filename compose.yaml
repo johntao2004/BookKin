@@ -1,7 +1,8 @@
 name: silvae
 
 x-silvae-common: &silvae-common
-  image: ${SILVAE_IMAGE:-silvae:local}
+  image: ${SILVAE_IMAGE:-ghcr.io/johntao2004/silvae:latest}
+  pull_policy: ${SILVAE_PULL_POLICY:-missing}
   build:
     context: .
     dockerfile: docker/silvae.Dockerfile
@@ -10,29 +11,20 @@ x-silvae-common: &silvae-common
   environment: &silvae-environment
     SILVAE_DATABASE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-silvae}
     SILVAE_DATABASE_USER: ${POSTGRES_USER:-silvae}
-    SILVAE_DATABASE_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    SILVAE_DATABASE_PASSWORD: ${POSTGRES_PASSWORD:-silvae-docker-prod}
     SILVAE_COOKIE_SECURE: ${SILVAE_SESSION_COOKIE_SECURE:-false}
     SILVAE_PUBLIC_BASE_URL: ${SILVAE_PUBLIC_BASE_URL:-http://localhost:8080}
-    # No insecure default. Leave empty only while AI is disabled; enabling or
-    # saving a provider key requires a stable instance-specific value.
     SILVAE_AI_SETTINGS_ENCRYPTION_KEY: ${SILVAE_AI_SETTINGS_ENCRYPTION_KEY:-}
+    SILVAE_TWO_FACTOR_ENCRYPTION_KEY: ${SILVAE_TWO_FACTOR_ENCRYPTION_KEY:-}
     SILVAE_STORAGE_ROOTS_0_NAME: ${SILVAE_LIBRARY_NAME:-主书库}
     SILVAE_STORAGE_ROOTS_0_PATH: /library/main
+    SILVAE_FONT_STORAGE_PATH: /var/lib/silvae/fonts
     SILVAE_CONTENT_STORAGE_PATH: /var/lib/silvae/content
+    SILVAE_KEY_STORAGE_PATH: /var/lib/silvae/keys
     TZ: ${TZ:-Asia/Shanghai}
   volumes:
-    - type: bind
-      source: ${SILVAE_LIBRARY_MAIN:-./.local/library}
-      target: /library/main
-    - type: bind
-      source: ${SILVAE_FONT_STORAGE:-./.local/fonts}
-      target: /var/lib/silvae/fonts
-    - type: bind
-      source: ${SILVAE_ARTICLE_STORAGE:-./.local/content/articles}
-      target: /var/lib/silvae/content/articles
-    - type: bind
-      source: ${SILVAE_VAULT_STORAGE:-./.local/content/vault}
-      target: /var/lib/silvae/content/vault
+    - ${SILVAE_LIBRARY_MAIN:-./data/library}:/library/main
+    - silvae-data:/var/lib/silvae
   tmpfs:
     - /tmp/silvae:size=512m,mode=1777
   security_opt:
@@ -47,7 +39,6 @@ services:
     environment:
       <<: *silvae-environment
       SPRING_PROFILES_ACTIVE: api
-      SILVAE_TWO_FACTOR_ENCRYPTION_KEY: ${SILVAE_TWO_FACTOR_ENCRYPTION_KEY:-}
       SILVAE_API_PORT: 8080
     ports:
       - "${SILVAE_HTTP_PORT:-8080}:8080"
@@ -72,7 +63,7 @@ services:
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-silvae}
       POSTGRES_USER: ${POSTGRES_USER:-silvae}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-silvae-docker-prod}
       TZ: ${TZ:-Asia/Shanghai}
     volumes:
       - silvae-postgres:/var/lib/postgresql
@@ -85,4 +76,5 @@ services:
       - no-new-privileges:true
 
 volumes:
+  silvae-data:
   silvae-postgres:

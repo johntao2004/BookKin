@@ -7,6 +7,10 @@
     "node": ">=22.0.0"
   },
   "scripts": {
+    "docker:up": "bash docker/deploy.sh",
+    "docker:build": "bash docker/deploy.sh --build",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f",
     "dev": "pnpm build:ming-library && pnpm --filter @silvae/web dev",
     "build": "pnpm generate:tokens && pnpm build:ming-library && pnpm --filter @silvae/web build",
     "build:ming-library": "pnpm --filter @silvae/ming-library build",
