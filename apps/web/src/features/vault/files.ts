@@ -124,16 +124,17 @@ export async function decryptChunk(
   );
   if (!response.ok) {
     if (response.status === 403 || response.status === 409)
-      window.dispatchEvent(new Event("bookkin:vault-access-required"));
+      window.dispatchEvent(new Event("silvae:vault-access-required"));
     if (response.status === 401)
-      window.dispatchEvent(new Event("bookkin:session-expired"));
+      window.dispatchEvent(new Event("silvae:session-expired"));
     throw new Error("无法读取密文分块，请重新登录或重新导入。");
   }
+  const encryptedBytes = new Uint8Array(await response.arrayBuffer());
   const derived = await fileKey(master, item.id);
   try {
     const plain = await open(
       derived,
-      new Uint8Array(await response.arrayBuffer()),
+      encryptedBytes,
       chunkAad(item.id, index, item.metadata.chunks, item.metadata.size),
     );
     const expected = Math.min(

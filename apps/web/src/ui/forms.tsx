@@ -56,9 +56,10 @@ export function TextField({ label, helperText, error, multiline, resizable = tru
     className: "bk-field-control",
     size: "middle",
   };
+  const canAutoSize = !resizable;
   const control = multiline
-    ? <AntInput.TextArea {...(common as any)} autoSize={resizable ? false : { minRows, maxRows }}
-        rows={resizable ? minRows : undefined} style={resizable ? { resize: props.disabled ? "none" : "vertical", height: minRows === 1 ? "var(--layout-control-height)" : undefined, maxWidth: "100%" } : undefined} />
+    ? <AntInput.TextArea {...(common as any)} autoSize={canAutoSize ? { minRows, maxRows } : false}
+        rows={canAutoSize ? undefined : minRows} style={resizable ? { resize: props.disabled ? "none" : "vertical", height: minRows === 1 ? "var(--layout-control-height)" : undefined, maxWidth: "100%" } : { resize: "none", maxWidth: "100%" }} />
     : type === "password"
       ? <AntInput.Password {...(common as any)} visibilityToggle={suffix ? false : undefined} />
       : <AntInput {...(common as any)} />;

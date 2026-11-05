@@ -16,7 +16,7 @@ function ReturnedLibrary() {
 }
 
 it('returns a 3D-library reading session to its previous camera without changing the book identity', async () => {
-  sessionStorage.setItem('bookkin-demo-session', JSON.stringify({
+  sessionStorage.setItem('silvae-demo-session', JSON.stringify({
     id: 'user-owner', username: 'owner', displayName: '林', role: 'OWNER', mustChangePassword: false,
   }));
   render(<TestProviders><Routes>

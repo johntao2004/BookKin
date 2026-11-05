@@ -10,9 +10,9 @@
   </parent>
 
   <groupId>com.elexvx</groupId>
-  <artifactId>bookkin</artifactId>
+  <artifactId>silvae</artifactId>
   <version>0.1.0-SNAPSHOT</version>
-  <name>BookKin</name>
+  <name>Silvae</name>
   <description>Self-hosted NAS ebook library</description>
 
   <properties>
@@ -175,9 +175,9 @@
               <execution>
                 <goals><goal>generate</goal></goals>
                 <configuration>
-                  <inputSpec>${project.basedir}/../../docs/openapi/bookkin-api.yaml</inputSpec>
+                  <inputSpec>${project.basedir}/../../docs/openapi/silvae-api.yaml</inputSpec>
                   <generatorName>typescript-fetch</generatorName>
-                  <output>${project.basedir}/../web/src/generated/bookkin-api</output>
+                  <output>${project.basedir}/../web/src/generated/silvae-api</output>
                   <skipValidateSpec>false</skipValidateSpec>
                   <configOptions>
                     <supportsES6>true</supportsES6>

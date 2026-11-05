@@ -197,7 +197,7 @@ it("opens saved book details after metadata saves and preserves the catalog filt
   const book = demoBooks[0];
   const metadata: BookMetadata = {
     id: book.id, title: book.title, authors: [book.author], translators: [], description: book.description,
-    language: "zh-CN", publisher: "BookKin", publishedDate: "2026", isbn: "", series: "", tags: book.tags,
+    language: "zh-CN", publisher: "Silvae", publishedDate: "2026", isbn: "", series: "", tags: book.tags,
     subjectCodes: [], publiclyVisible: true, sources: {},
   };
   vi.spyOn(api, "getBook").mockResolvedValue(book);

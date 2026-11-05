@@ -24,6 +24,7 @@ import type { Annotation, AnnotationBookSummary, AnnotationStyle } from "../doma
 import { tokens } from "../theme/generated-tokens";
 import { EMPTY_READING_NOTES_TITLE } from "../ui/empty-state-copy";
 import { useAuth } from "../auth/AuthContext";
+import { AnnotationNoteMarkdown } from "../components/AnnotationNoteMarkdown";
 
 /** Preserve existing reader/export links while moving source categories to independent routes. */
 export function AnnotationsPage() {
@@ -175,7 +176,7 @@ function AnnotationEntry({ annotation, index }: { annotation: Annotation; index:
           </Typography>
         </Stack>
       )}
-      {annotation.note && <Box sx={{ mt: 2.5, ml: { xs: 0, sm: 5 }, p: 2, bgcolor: "background.default", borderRadius: 2 }}><Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 0.5 }}>我的阅读札记</Typography><Typography>{annotation.note}</Typography></Box>}
+      {annotation.note && <Box sx={{ mt: 2.5, ml: { xs: 0, sm: 5 }, p: 2, bgcolor: "background.default", borderRadius: 2 }}><Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 0.5 }}>我的阅读札记</Typography><AnnotationNoteMarkdown markdown={annotation.note} sx={{ overflowWrap: "anywhere" }} /></Box>}
       <Button component={Link} to={`/reader/${encodeURIComponent(annotation.bookId)}${annotation.locator ? `?locator=${encodeURIComponent(annotation.locator)}` : ""}`} sx={{ mt: `${tokens.spacing[4]}px` }}>返回原文</Button>
     </Box>
   );

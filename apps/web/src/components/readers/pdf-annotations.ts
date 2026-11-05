@@ -15,7 +15,15 @@ export function applyPdfTextAnnotations(
   annotations: Annotation[],
   options: { overlaysCanvasText?: boolean; theme?: AnnotationTextTheme } = {},
 ) {
-  const spans = Array.from(layer.querySelectorAll<HTMLSpanElement>("span"));
+  const allSpans = Array.from(layer.querySelectorAll<HTMLSpanElement>("span"));
+  const hasSourcePageSpans = allSpans.some((span) => span.dataset.pdfSourcePage !== undefined);
+  const spans = allSpans.filter((span) => hasSourcePageSpans
+    ? Number(span.dataset.pdfSourcePage) === pageNumber
+    : true);
+  spans.forEach((span) => {
+    if (span.dataset.pdfOriginalText === undefined) span.dataset.pdfOriginalText = span.textContent ?? "";
+    else if (span.querySelector("mark") || span.textContent !== span.dataset.pdfOriginalText) span.textContent = span.dataset.pdfOriginalText;
+  });
   const characters: Array<{ span: HTMLSpanElement; offset: number; value: string }> = [];
   spans.forEach((span) => {
     const text = span.textContent ?? "";

@@ -64,7 +64,7 @@ async function responseError(response: Response): Promise<ApiRequestError> {
   const code = typeof problem.code === "string" && /^[A-Z0-9_]{1,100}$/.test(problem.code) ? problem.code : `HTTP_${response.status}`;
   const trace = problem.traceId ?? response.headers.get("X-Request-ID");
   const traceId = typeof trace === "string" && /^[a-z0-9_-]{8,128}$/i.test(trace) ? trace : undefined;
-  const knownProblem = typeof problem.type === "string" && problem.type.startsWith("urn:bookkin:error:");
+  const knownProblem = typeof problem.type === "string" && problem.type.startsWith("urn:silvae:error:");
   const detail = response.status < 500 || knownProblem ? problem.detail ?? problem.title : undefined;
   return new ApiRequestError(typeof detail === "string" ? detail
     : response.status >= 500 ? "书库服务暂时不可用，请稍后重试。"
@@ -138,7 +138,7 @@ export async function request<T>(path: string, init: RequestInit = {}, options: 
     }
     if (!response.ok) {
       if (response.status === 401 && !["/auth/login", "/auth/session"].includes(path) && await confirmSessionExpired()) {
-        window.dispatchEvent(new Event("bookkin:session-expired"));
+        window.dispatchEvent(new Event("silvae:session-expired"));
       }
       throw await responseError(response);
     }
@@ -232,7 +232,7 @@ function displayBook(book: Book, sortOrder: number): DisplayBook {
 
 function demoSessionUser(): SessionUser | null {
   try {
-    const value = sessionStorage.getItem("bookkin-demo-session");
+    const value = sessionStorage.getItem("silvae-demo-session");
     return value ? JSON.parse(value) as SessionUser : null;
   } catch {
     return null;
@@ -387,7 +387,7 @@ const libraryRoots: LibraryRoot[] = [
 ];
 
 export interface SiteSettings { name: string; tagline: string; description: string; keywords: string; publicUrl: string; allowIndexing: boolean; virtualLibraryEnabled: boolean; icpNumber: string; policeNumber: string; copyright: string; contactEmail: string; }
-export const DEFAULT_SITE_SETTINGS: SiteSettings = {name:"BookKin",tagline:"电子图书馆",description:"你的 NAS 私人电子图书馆",keywords:"",publicUrl:"",allowIndexing:false,virtualLibraryEnabled:true,icpNumber:"",policeNumber:"",copyright:"",contactEmail:""};
+export const DEFAULT_SITE_SETTINGS: SiteSettings = {name:"Silvae",tagline:"电子图书馆",description:"你的 NAS 私人电子图书馆",keywords:"",publicUrl:"",allowIndexing:false,virtualLibraryEnabled:true,icpNumber:"",policeNumber:"",copyright:"",contactEmail:""};
 let demoSiteSettings = {...DEFAULT_SITE_SETTINGS};
 
 export interface PasswordPolicy { minLength: number; requireUppercase: boolean; requireLowercase: boolean; requireDigit: boolean; requireSpecial: boolean; }
@@ -856,7 +856,7 @@ export const api = {
     const book = books.find(candidate => candidate.id === bookId);
     if (!book) throw new Error("未找到这本书");
     const metadata: PublicBookMetadata = { id: book.id, title: book.title, authors: [book.author], translators: [],
-      description: book.description, language: "zh-CN", publisher: "BookKin典藏", publishedDate: "2026",
+      description: book.description, language: "zh-CN", publisher: "Silvae典藏", publishedDate: "2026",
       isbn: "", series: "灯火集", tags: book.tags, subjectCodes: book.subjectCodes ?? [], sources: {} };
     return {
       id: metadata.id, title: metadata.title, subtitle: metadata.subtitle, authors: metadata.authors,
@@ -985,7 +985,7 @@ export const api = {
       translators: [],
       description: book.description,
       language: "zh-CN",
-      publisher: "BookKin典藏",
+      publisher: "Silvae典藏",
       publishedDate: "2026",
       isbn: "",
       series: "灯火集",
@@ -1047,7 +1047,7 @@ export const api = {
       createdAt: new Date().toISOString(),
     };
     users = [user, ...users];
-    return { user, temporaryPassword: "BookKin-Temp-7M2K!" };
+    return { user, temporaryPassword: "Silvae-Temp-7M2K!" };
   },
 
   async toggleUser(userId: string): Promise<ManagedUser> {
@@ -1066,7 +1066,7 @@ export const api = {
     const user = users.find((candidate) => candidate.id === userId);
     if (!user || user.role === "OWNER") throw new Error("不能重置主人账户");
     users = users.map((candidate) => candidate.id === userId ? { ...candidate, mustChangePassword: true } : candidate);
-    return { username: user.username, temporaryPassword: "BookKin-Reset-8Q4N!" };
+    return { username: user.username, temporaryPassword: "Silvae-Reset-8Q4N!" };
   },
 
   async revokeUserSessions(userId: string): Promise<void> {
@@ -1092,7 +1092,7 @@ export const api = {
       requiredBytes: 0,
       expectedFingerprint: book.fingerprint,
       expiresAt: new Date(Date.now() + 5 * 60_000).toISOString(),
-      conflicts: normalizedTarget?.includes("已存在") ? [{ code: "TARGET_EXISTS", message: "目标路径已有文件，BookKin不会覆盖它。", path: normalizedTarget }] : [],
+      conflicts: normalizedTarget?.includes("已存在") ? [{ code: "TARGET_EXISTS", message: "目标路径已有文件，Silvae不会覆盖它。", path: normalizedTarget }] : [],
       warnings: type === "TRASH"
         ? ["文件将保留 30 天；阅读记录和笔记不会删除。"]
         : type === "WRITE_METADATA"
@@ -1118,7 +1118,7 @@ export const api = {
       conflicts: [],
       warnings: type === "RESTORE"
         ? ["恢复会把文件移回原路径；如果路径已有新文件，操作将被阻止。"]
-        : ["永久清理会从 NAS 删除回收文件，且无法通过BookKin恢复。"],
+        : ["永久清理会从 NAS 删除回收文件，且无法通过Silvae恢复。"],
     };
   },
 
@@ -1146,7 +1146,7 @@ export const api = {
         format: book.format,
         coverUrl: book.coverUrl,
         originalPath: preview.sourcePath,
-        trashPath: `.bookkin-trash/${randomId()}/${book.relativePath.split("/").at(-1)}`,
+        trashPath: `.silvae-trash/${randomId()}/${book.relativePath.split("/").at(-1)}`,
         sizeBytes: 8_842_122,
         deletedBy: "林",
         deletedAt: new Date().toISOString(),

@@ -20,7 +20,7 @@ import { AuthFrame } from "../components/AuthFrame";
 
 export function getLoginDefaults(isDemo: boolean) {
   return isDemo
-    ? { username: "owner", password: "bookkin-demo", hint: "内存演示模式：owner / bookkin-demo" }
+    ? { username: "owner", password: "silvae-demo", hint: "内存演示模式：owner / silvae-demo" }
     : { username: "", password: "", hint: "" };
 }
 

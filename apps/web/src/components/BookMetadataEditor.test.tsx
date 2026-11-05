@@ -45,7 +45,7 @@ function MutableBookMetadataEditor({ capture }: { capture: (updateBook: (book: B
 }
 
 describe("BookMetadataEditor", () => {
-  beforeEach(() => sessionStorage.setItem("bookkin-demo-session", JSON.stringify({ id: "owner", username: "owner", displayName: "主人", role: "OWNER", mustChangePassword: false })));
+  beforeEach(() => sessionStorage.setItem("silvae-demo-session", JSON.stringify({ id: "owner", username: "owner", displayName: "主人", role: "OWNER", mustChangePassword: false })));
   afterEach(() => vi.restoreAllMocks());
 
   it("uses the shared detail form with actions at the bottom of the form", async () => {
@@ -59,7 +59,7 @@ describe("BookMetadataEditor", () => {
     expect(title).toHaveValue(demoBooks[0].title);
     expect(title.tagName).toBe("TEXTAREA");
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-    expect(screen.queryByText("不勾选时只修改BookKin的展示信息。写回会先生成安全预览，确认后直接覆盖当前原文件，不保留历史版本。")).not.toBeInTheDocument();
+    expect(screen.queryByText("不勾选时只修改Silvae的展示信息。写回会先生成安全预览，确认后直接覆盖当前原文件，不保留历史版本。")).not.toBeInTheDocument();
     const cover = screen.getByRole("img", { name: "当前书籍封面" });
     expect(Boolean(cover.compareDocumentPosition(title) & Node.DOCUMENT_POSITION_FOLLOWING)).toBe(true);
     const authors = screen.getByRole("textbox", { name: "作者" });
@@ -254,7 +254,7 @@ describe("BookMetadataEditor", () => {
   });
 
   it("hides original-file rename from users without the file permission", async () => {
-    sessionStorage.setItem("bookkin-demo-session", JSON.stringify({ id: "member", username: "member", displayName: "成员", role: "MEMBER", mustChangePassword: false }));
+    sessionStorage.setItem("silvae-demo-session", JSON.stringify({ id: "member", username: "member", displayName: "成员", role: "MEMBER", mustChangePassword: false }));
     render(
       <TestProviders>
         <BookMetadataEditor book={demoBooks[0]} onClose={vi.fn()} onCompleted={vi.fn()} onSavedImmediately={vi.fn()} onSaveFailed={vi.fn()} />
@@ -324,7 +324,7 @@ describe("BookMetadataEditor", () => {
   });
 
   it("reports failed rename tasks through the persistent error callback", async () => {
-    vi.spyOn(api, "previewFileOperation").mockResolvedValue({
+    const previewRequest = vi.spyOn(api, "previewFileOperation").mockResolvedValue({
       previewToken: "rename-preview-failed",
       type: "RENAME",
       sourcePath: `${demoBooks[0].libraryRoot}/${demoBooks[0].relativePath}`,
@@ -353,7 +353,8 @@ describe("BookMetadataEditor", () => {
     await screen.findByDisplayValue(demoBooks[0].title);
     fireEvent.click(screen.getByRole("button", { name: "重命名原文件" }));
     fireEvent.change(screen.getByRole("textbox", { name: "新书名" }), { target: { value: "新书名" } });
-    await waitFor(() => expect(screen.getByRole("button", { name: "确认重命名" })).toBeEnabled());
+    await waitFor(() => expect(previewRequest).toHaveBeenCalledWith(demoBooks[0], "RENAME", "新书名"), { timeout: 5000 });
+    await waitFor(() => expect(screen.getByRole("button", { name: "确认重命名" })).toBeEnabled(), { timeout: 5000 });
     fireEvent.click(screen.getByRole("button", { name: "确认重命名" }));
 
     await waitFor(() => expect(failed).toHaveBeenCalledWith("重命名任务未完成，可在文件任务页查看结果"));

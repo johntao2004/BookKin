@@ -122,7 +122,7 @@ export function ReaderFontsPage() {
               <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ alignItems: { sm: "center" } }}>
                 <Box sx={{ minWidth: 0, flex: 1 }}>
                   <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap", gap: 0.75 }}><Typography variant="h5" sx={{ fontFamily: readerFontFamily(font) }}>{font.displayName}</Typography><Chip size="small" label={font.kind === "SERIF" ? "衬线" : "无衬线"} /><Chip size="small" variant="outlined" label={font.source === "PRESET" ? "预设" : "自定义"} color={font.status === "ENABLED" ? "success" : "default"} /></Stack>
-                  <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, fontFamily: readerFontFamily(font) }}>BookKin阅读正文预览：山高水长，文字应当顺着视线自然延续。</Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, fontFamily: readerFontFamily(font) }}>Silvae阅读正文预览：山高水长，文字应当顺着视线自然延续。</Typography>
                   {font.licenseNote && <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.5 }}>{font.licenseNote}</Typography>}
                 </Box>
                 <Switch

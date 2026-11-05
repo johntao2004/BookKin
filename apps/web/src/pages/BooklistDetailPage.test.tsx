@@ -18,7 +18,7 @@ const owner = {
 describe("BooklistDetailPage", () => {
   beforeEach(() => {
     sessionStorage.clear();
-    sessionStorage.setItem("bookkin-demo-session", JSON.stringify(owner));
+    sessionStorage.setItem("silvae-demo-session", JSON.stringify(owner));
   });
 
   it("创建者可编辑资料，排序列表保留拖动并移除重复的上下按钮", async () => {

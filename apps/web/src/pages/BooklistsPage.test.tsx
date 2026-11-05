@@ -49,7 +49,7 @@ describe("BooklistsPage", () => {
   });
 
   it.each(["/booklists", "/booklists?q=not-found"]) ("空书目列表仍保留各分区空态（%s）", async (initialPath) => {
-    sessionStorage.setItem("bookkin-demo-session", JSON.stringify(owner));
+    sessionStorage.setItem("silvae-demo-session", JSON.stringify(owner));
     vi.spyOn(api, "listBooklists").mockResolvedValue({ items: [] });
     render(<TestProviders initialPath={initialPath}><BooklistsPage /></TestProviders>);
 
@@ -71,7 +71,7 @@ describe("BooklistsPage", () => {
     { emptyGroup: "我的书目", items: [createBooklist("official", "OFFICIAL", false), createBooklist("shared", "PERSONAL", false)] },
     { emptyGroup: "家庭共享", items: [createBooklist("mine", "PERSONAL", true)] },
   ]) ("空的$emptyGroup分组显示持续的统一文案", async ({ emptyGroup, items }) => {
-    sessionStorage.setItem("bookkin-demo-session", JSON.stringify(owner));
+    sessionStorage.setItem("silvae-demo-session", JSON.stringify(owner));
     vi.spyOn(api, "listBooklists").mockResolvedValue({ items });
     render(<TestProviders initialPath="/booklists"><BooklistsPage /></TestProviders>);
 
@@ -82,7 +82,7 @@ describe("BooklistsPage", () => {
   });
 
   it("登录后按个人、家庭、公开顺序分组书目", async () => {
-    sessionStorage.setItem("bookkin-demo-session", JSON.stringify(owner));
+    sessionStorage.setItem("silvae-demo-session", JSON.stringify(owner));
     const mine = createBooklist("仅自己可见", "PERSONAL", true);
     const privateOther = { ...createBooklist("他人的私人书目", "PERSONAL", false), visibility: "PRIVATE" as const };
     const family = { ...createBooklist("我的家庭书目", "PERSONAL", true), visibility: "MEMBERS" as const };
@@ -112,7 +112,7 @@ describe("BooklistsPage", () => {
   });
 
   it("登录后按个人、家庭、公开的顺序展示，且不再提供官方类型", async () => {
-    sessionStorage.setItem("bookkin-demo-session", JSON.stringify(owner));
+    sessionStorage.setItem("silvae-demo-session", JSON.stringify(owner));
     render(<TestProviders initialPath="/booklists"><BooklistsPage /></TestProviders>);
 
     expect(await screen.findByRole("heading", { name: "我的书目" })).toBeInTheDocument();

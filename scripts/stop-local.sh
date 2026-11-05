@@ -19,7 +19,7 @@ stop_profile() {
   if [[ -n "$pid" ]] && kill -0 "$pid" 2>/dev/null; then
     local command
     command="$(ps -p "$pid" -o command= 2>/dev/null || true)"
-    if [[ "$command" != *"$RUN_DIR/bookkin-"*".jar"*"--spring.profiles.active=$profile"* ]]; then
+    if [[ "$command" != *"$RUN_DIR/silvae-"*".jar"*"--spring.profiles.active=$profile"* ]]; then
       echo "Refusing to stop PID $pid because it is not a managed $profile process." >&2
       exit 1
     fi

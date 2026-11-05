@@ -19,7 +19,7 @@ export async function prepareSessionExit() {
 let persistenceUser: string | null = null;
 let chain: Promise<unknown> = Promise.resolve();
 type Checkpoint = { bookId: string; locator: string; progress: number; revision: string };
-function key(user: string) { return `bookkin-pending-progress:${user}`; }
+function key(user: string) { return `silvae-pending-progress:${user}`; }
 function read(user: string): Record<string, Checkpoint> { try { return JSON.parse(localStorage.getItem(key(user)) ?? "{}"); } catch { return {}; } }
 function write(user: string, records: Record<string, Checkpoint>) {
   try {

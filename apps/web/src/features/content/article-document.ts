@@ -136,7 +136,7 @@ function prepareArticleBody(article: Pick<Article, "title" | "html">) {
     if (!paragraph.id) paragraph.id = uniqueId(parsed, `p-${index + 1}`);
   });
 
-  const titleId = uniqueId(parsed, "bookkin-article-title");
+  const titleId = uniqueId(parsed, "silvae-article-title");
   const headings = Array.from(body.querySelectorAll("h1, h2, h3, h4, h5, h6"));
   headings.forEach((heading, index) => {
     if (!heading.id) heading.id = uniqueId(parsed, `article-heading-${index + 1}`);
@@ -194,9 +194,9 @@ function navigationXhtml(title: string, toc: Array<{ id: string; label: string }
 function packageOpf(article: Pick<Article, "id" | "title" | "author">) {
   const modified = new Date().toISOString().replace(/\.\d{3}Z$/u, "Z");
   return `<?xml version="1.0" encoding="utf-8"?>
-<package xmlns="http://www.idpf.org/2007/opf" xmlns:dc="http://purl.org/dc/elements/1.1/" version="3.0" unique-identifier="bookkin-article-id" xml:lang="zh-CN">
+<package xmlns="http://www.idpf.org/2007/opf" xmlns:dc="http://purl.org/dc/elements/1.1/" version="3.0" unique-identifier="silvae-article-id" xml:lang="zh-CN">
   <metadata>
-    <dc:identifier id="bookkin-article-id">urn:bookkin:article:${escapeXml(article.id)}</dc:identifier>
+    <dc:identifier id="silvae-article-id">urn:silvae:article:${escapeXml(article.id)}</dc:identifier>
     <dc:title>${escapeXml(article.title)}</dc:title>
     <dc:creator>${escapeXml(article.author)}</dc:creator>
     <dc:language>zh-CN</dc:language>

@@ -73,7 +73,7 @@ describe("VirtualLibraryPage responsive scene sizing", () => {
 
 describe("VirtualLibraryPage", () => {
   beforeEach(() => {
-    sessionStorage.setItem("bookkin-demo-session", JSON.stringify({
+    sessionStorage.setItem("silvae-demo-session", JSON.stringify({
       id: "user-owner", username: "owner", displayName: "林", role: "OWNER", mustChangePassword: false,
     }));
   });

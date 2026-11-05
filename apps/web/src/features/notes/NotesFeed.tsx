@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "../../auth/AuthContext";
+import { AnnotationNoteMarkdown, annotationNotePlainText } from "../../components/AnnotationNoteMarkdown";
 import { BookCatalogEmptyState } from "../../components/BookCatalogEmptyState";
 import { tokens } from "../../theme/generated-tokens";
 import { DataTable, Skeleton } from "../../ui/antd";
@@ -67,7 +68,7 @@ export function NotesFeed({ kind }: { kind: PostFilter }) {
         : view === "table" ? <>
           <DataTable<NoteRecord> key={`${kind}:${search}:${source}:${tag}:${sort}`} aria-label="阅读札记表格" rowKey={note => `${note.kind}:${note.sourceId}:${note.id}`} dataSource={filtered} scroll={{ x: tokens.layout.annotationCardMinWidth * 2 }} columns={[
             { title: "来源", key: "source", width: tokens.spacing[24] * 2, render: (_, note) => <Button onClick={() => openSource(note)}>{note.sourceTitle}</Button> },
-            { title: "摘录", dataIndex: "quote", ellipsis: true }, { title: "笔记", dataIndex: "note", ellipsis: true },
+            { title: "摘录", dataIndex: "quote", ellipsis: true }, { title: "笔记", dataIndex: "note", ellipsis: true, render: (value?: string) => value ? annotationNotePlainText(value) : "" },
             { title: "日期", dataIndex: "updatedAt", width: tokens.spacing[24], render: value => new Date(value).toLocaleDateString("zh-CN") },
             { title: "原文", key: "location", width: tokens.spacing[24], render: (_, note) => <Button component={Link} to={noteSourceHref(note)}>原文</Button> },
           ]} />
@@ -82,7 +83,7 @@ function NoteCard({ note, onOpen }: { note: NoteRecord; onOpen: () => void }) {
     <Typography variant="caption" color="primary.main">{postLabels[note.kind]} · {note.note ? "阅读札记" : "摘录"}</Typography>
     <Typography component="h2" variant="h5" sx={{ mt: `${tokens.spacing[2]}px`, mb: `${tokens.spacing[4]}px` }}><Box component="button" type="button" onClick={onOpen} sx={{ appearance: "none", border: 0, bgcolor: "transparent", p: 0, font: "inherit", color: "inherit", textAlign: "left", cursor: "pointer" }} aria-label={`查看《${note.sourceTitle}》的${note.kind === "BOOK" ? "阅读札记" : "阅文札记"}`}>{note.sourceTitle}</Box></Typography>
     {note.quote && <Typography component="blockquote" sx={{ m: 0, pl: `${tokens.spacing[3]}px`, borderLeft: "2px solid var(--color-primary)", color: "text.secondary", display: "-webkit-box", WebkitLineClamp: 6, WebkitBoxOrient: "vertical", overflow: "hidden", whiteSpace: "pre-wrap" }}>{note.quote}</Typography>}
-    {note.note && <Typography sx={{ mt: `${tokens.spacing[4]}px`, whiteSpace: "pre-wrap", display: "-webkit-box", WebkitLineClamp: 10, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{note.note}</Typography>}
+    {note.note && <Box sx={{ mt: `${tokens.spacing[4]}px`, maxHeight: "18em", overflow: "hidden" }}><AnnotationNoteMarkdown markdown={note.note} sx={{ overflowWrap: "anywhere" }} /></Box>}
     <Typography component="time" variant="caption" color="text.secondary" dateTime={note.updatedAt} sx={{ display: "block", mt: `${tokens.spacing[5]}px` }}>{new Date(note.updatedAt).toLocaleDateString("zh-CN")}</Typography>
   </Box>;
 }

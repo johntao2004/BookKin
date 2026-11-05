@@ -22,7 +22,7 @@ function RouteProbe() {
 }
 
 beforeEach(() => {
-  sessionStorage.setItem("bookkin-demo-session", JSON.stringify({id: "review-owner", username: "owner", displayName: "主人", role: "OWNER", mustChangePassword: false}));
+  sessionStorage.setItem("silvae-demo-session", JSON.stringify({id: "review-owner", username: "owner", displayName: "主人", role: "OWNER", mustChangePassword: false}));
   vi.spyOn(api, "listAnnotations").mockResolvedValue(recent);
 });
 afterEach(() => { vi.restoreAllMocks(); sessionStorage.clear(); });
@@ -71,6 +71,13 @@ it("does not turn legacy missing positions into misleading original-text links",
   expect(await screen.findByText("原文位置缺失")).toBeInTheDocument();
   expect(screen.getByText("河面先暗了一层。")).toBeInTheDocument();
   expect(screen.queryByRole("link")).not.toBeInTheDocument();
+});
+
+it("renders a plain text Markdown excerpt without leaking Markdown syntax", async () => {
+  vi.mocked(api.listAnnotations).mockResolvedValue([{ ...recent[2], note: "**加粗笔记** [链接](javascript:alert(1)) ![私图](/api/v1/articles/assets/00000000-0000-0000-0000-000000000000)" }]);
+  render(<TestProviders><RecentAnnotationsPanel embedded /></TestProviders>);
+  expect(await screen.findByText("笔记：加粗笔记 链接 私图")).toBeInTheDocument();
+  expect(screen.queryByText(/\*\*|javascript:|articles\/assets/)).not.toBeInTheDocument();
 });
 
 it("keeps loading and failures distinct from confirmed empty annotations", async () => {

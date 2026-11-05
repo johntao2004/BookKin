@@ -1705,7 +1705,7 @@ function addWindowLightShafts(root: THREE.Group) {
 
 export function buildLibraryScene(): BuiltLibrary {
   const root = new THREE.Group();
-  root.name = "BookKin collegiate Gothic library";
+  root.name = "Silvae collegiate Gothic library";
   const interactiveObjects: THREE.Object3D[] = [];
   const shelfSections: ExpandableShelfSection[] = [];
   const materials = createLibraryMaterials();

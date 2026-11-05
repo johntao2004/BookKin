@@ -1,4 +1,4 @@
-# BookKin阅读字体
+# Silvae阅读字体
 
 本目录包含本地阅读字体；部分也用于界面排版。预设列表以 `src/components/readers/reader-fonts.ts` 为准。
 

@@ -6,7 +6,7 @@ import { TestProviders } from "../test/TestProviders";
 import { api } from "../api/client";
 import { SessionPolicySettings } from "./SessionPolicySettings";
 afterEach(()=>vi.restoreAllMocks());
-function identity(role:string){sessionStorage.setItem("bookkin-demo-session",JSON.stringify({id:"manager",username:"manager",role,displayName:"管理者",mustChangePassword:false}));}
+function identity(role:string){sessionStorage.setItem("silvae-demo-session",JSON.stringify({id:"manager",username:"manager",role,displayName:"管理者",mustChangePassword:false}));}
 it("validates maximum duration and persists an owner change",async()=>{
  identity("OWNER");vi.spyOn(api,"sessionPolicy").mockResolvedValue({maxMinutes:1440});const save=vi.spyOn(api,"saveSessionPolicy").mockResolvedValue({maxMinutes:60});
  render(<TestProviders><SessionPolicySettings/></TestProviders>);

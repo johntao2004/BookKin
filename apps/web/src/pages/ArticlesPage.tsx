@@ -37,7 +37,7 @@ const blank = (): Draft => ({
   author: "",
   sourceUrl: "",
   publishedAt: "",
-  visibility: "PUBLIC",
+  visibility: "PRIVATE",
   tags: "",
   html: "",
   coverUrl: "",
@@ -220,80 +220,51 @@ export function ArticlesPage() {
       <Drawer
         anchor="right"
         slotProps={{ paper: { sx: { width: `min(100vw, ${tokens.layout.touchTarget * 16}px)` } } }}
-        title="新增文章"
-        open={captureOpen}
+        title={draft ? (editId ? "编辑文章" : "导入文章") : "新增文章"}
+        open={captureOpen || draft !== null}
         destroyOnHidden
-        onClose={() => !busy && setCaptureOpen(false)}
+        onClose={() => {
+          if (busy) return;
+          setCaptureOpen(false);
+          setDraft(null);
+        }}
         footer={
-          <ActionToolbar>
-            <Button onClick={() => { setCaptureOpen(false); open(blank()); }} disabled={busy}>手动导入</Button>
-            <Button onClick={() => setCaptureOpen(false)} disabled={busy}>取消</Button>
-            <Button type="submit" form="article-capture-form" variant="contained" loading={busy}>抓取预览</Button>
-          </ActionToolbar>
+          draft ? (
+            <ActionToolbar>
+              <Button
+                variant="contained"
+                aria-label="保存"
+                loading={busy}
+                onClick={() =>
+                  void run(async () => {
+                    if (!draft) return;
+                    const html = !bodyDirty ? draft.html : await prepareBody(articleMarkdownToHtml(markdown), draft.sourceUrl);
+                    await articles.save(
+                      {
+                        ...draft,
+                        html,
+                      },
+                      editId,
+                    );
+                    await refreshCollections();
+                    setDraft(null);
+                    await load();
+                  })
+                }
+              >
+                保存
+              </Button>
+            </ActionToolbar>
+          ) : (
+            <ActionToolbar>
+              <Button onClick={() => { setCaptureOpen(false); open(blank()); }} disabled={busy}>手动导入</Button>
+              <Button onClick={() => setCaptureOpen(false)} disabled={busy}>取消</Button>
+              <Button type="submit" form="article-capture-form" variant="contained" loading={busy}>抓取预览</Button>
+            </ActionToolbar>
+          )
         }
       >
-        <form
-          id="article-capture-form"
-          className="bk-article-editor-form bk-content-stack"
-          onSubmit={(event) => {
-            event.preventDefault();
-            void run(async () => {
-              const captured = await articles.fetch(url.trim());
-              setCaptureOpen(false);
-              open(captured);
-            });
-          }}
-        >
-          {error && <Alert type="error" title={error} />}
-          <label htmlFor="article-capture-url">网页链接</label>
-          <Input
-            id="article-capture-url"
-            type="url"
-            required
-            pattern="https://.*"
-            autoFocus
-            placeholder="微信公众号或普通公开网页 HTTPS 链接"
-            value={url}
-            onChange={(event) => setUrl(event.target.value)}
-          />
-        </form>
-      </Drawer>
-      <Drawer
-        anchor="right"
-        slotProps={{ paper: { sx: { width: `min(100vw, ${tokens.layout.touchTarget * 16}px)` } } }}
-        title={editId ? "编辑文章" : "导入文章"}
-        open={draft !== null}
-        destroyOnHidden
-        onClose={() => !busy && setDraft(null)}
-        footer={
-          <ActionToolbar>
-            <Button
-              variant="contained"
-              aria-label="保存"
-              loading={busy}
-              onClick={() =>
-                void run(async () => {
-                  if (!draft) return;
-                  const html = !bodyDirty ? draft.html : await prepareBody(articleMarkdownToHtml(markdown), draft.sourceUrl);
-                  await articles.save(
-                    {
-                      ...draft,
-                      html,
-                    },
-                    editId,
-                  );
-                  await refreshCollections();
-                  setDraft(null);
-                  await load();
-                })
-              }
-            >
-              保存
-            </Button>
-          </ActionToolbar>
-        }
-      >
-        {draft && (
+        {draft ? (
           <div className="bk-article-editor-form bk-content-stack">
             {error && <Alert type="error" title={error} />}
             <TextField fullWidth disabled={busy} label="文章标题"
@@ -364,6 +335,32 @@ export function ArticlesPage() {
               onImportImages={importBodyImages}
             />
           </div>
+        ) : (
+          <form
+            id="article-capture-form"
+            className="bk-article-editor-form bk-content-stack"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void run(async () => {
+                const captured = await articles.fetch(url.trim());
+                setCaptureOpen(false);
+                open(captured);
+              });
+            }}
+          >
+            {error && <Alert type="error" title={error} />}
+            <label htmlFor="article-capture-url">网页链接</label>
+            <Input
+              id="article-capture-url"
+              type="url"
+              required
+              pattern="https://.*"
+              autoFocus
+              placeholder="微信公众号或普通公开网页 HTTPS 链接"
+              value={url}
+              onChange={(event) => setUrl(event.target.value)}
+            />
+          </form>
         )}
       </Drawer>
       {collectionArticle && <Suspense fallback={null}><AddToArticleCollectionDialog open articleId={collectionArticle.id} articleTitle={collectionArticle.title} articleVisibility={collectionArticle.visibility} onClose={() => setCollectionArticle(null)} /></Suspense>}

@@ -5,12 +5,12 @@ import type { ReaderTheme } from "../components/readers/reader-fonts";
 import type { UiTheme } from "../ui/primitives";
 import { tokens } from "./generated-tokens";
 
-type BookKinThemeColors = { [Key in keyof typeof tokens.color.semantic]: string };
+type SilvaeThemeColors = { [Key in keyof typeof tokens.color.semantic]: string };
 
-export interface BookKinThemeOption {
+export interface SilvaeThemeOption {
   label: string;
   reader: { background: string; foreground: string; muted: string };
-  colors: BookKinThemeColors;
+  colors: SilvaeThemeColors;
 }
 
 const semantic = tokens.color.semantic;
@@ -22,7 +22,7 @@ const breakpointValues: Record<string, number> = {
   xl: tokens.layout.breakpointWide,
 };
 
-export const bookKinThemeOptions: Record<ReaderTheme, BookKinThemeOption> = {
+export const silvaeThemeOptions: Record<ReaderTheme, SilvaeThemeOption> = {
   PAPER: {
     label: "纸张",
     reader: { background: semantic.canvas, foreground: semantic.textPrimary, muted: semantic.textMuted },
@@ -69,8 +69,8 @@ export const bookKinThemeOptions: Record<ReaderTheme, BookKinThemeOption> = {
   },
 };
 
-export function createBookKinTheme(mode: ReaderTheme): UiTheme {
-  const colors = bookKinThemeOptions[mode].colors;
+export function createSilvaeTheme(mode: ReaderTheme): UiTheme {
+  const colors = silvaeThemeOptions[mode].colors;
   return {
     palette: {
       mode: mode === "NIGHT" ? "dark" : "light",
@@ -97,7 +97,7 @@ export function createBookKinTheme(mode: ReaderTheme): UiTheme {
 }
 
 export function createAntdTheme(mode: ReaderTheme) {
-  const colors = bookKinThemeOptions[mode].colors;
+  const colors = silvaeThemeOptions[mode].colors;
   return {
     algorithm: mode === "NIGHT" ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
     components: {
@@ -306,4 +306,4 @@ export function createAntdTheme(mode: ReaderTheme) {
   };
 }
 
-export const theme = createBookKinTheme("PAPER");
+export const theme = createSilvaeTheme("PAPER");

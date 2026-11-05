@@ -37,7 +37,7 @@ describe("article EPUB adapter", () => {
     const dc = "http://purl.org/dc/elements/1.1/";
     expect(opf.getElementsByTagNameNS(dc, "title")[0]?.textContent).toBe("知 & <书>");
     expect(opf.getElementsByTagNameNS(dc, "creator")[0]?.textContent).toBe('作者 "A" & B');
-    expect(opf.getElementsByTagNameNS(dc, "identifier")[0]?.textContent).toBe("urn:bookkin:article:article&1");
+    expect(opf.getElementsByTagNameNS(dc, "identifier")[0]?.textContent).toBe("urn:silvae:article:article&1");
 
     const { parsed: article } = await xmlFile(zip, "EPUB/article.xhtml");
     expect(article.querySelector('[id="p-9"]')?.textContent).toBe("旧段落");
@@ -102,7 +102,7 @@ describe("article EPUB adapter", () => {
     const { zip } = await generatedZip(`<section><h1 id="p-2">一次 <strong>OOMKilled</strong> 背后的 28 万个幽灵协程</h1><p id="p-4">正文</p><h2 id="p-5">下一节</h2></section>`, title);
     const { parsed } = await xmlFile(zip, "EPUB/article.xhtml");
     const main = parsed.querySelector("main")!;
-    expect(main.children[0].id).toBe("bookkin-article-title");
+    expect(main.children[0].id).toBe("silvae-article-title");
     expect(main.children[0].getAttribute("hidden")).toBe("hidden");
     expect(main.children[0].getAttribute("aria-hidden")).toBe("true");
     expect(main.children[1].querySelector("h1")?.id).toBe("p-2");

@@ -1,7 +1,7 @@
 // 覆盖中英文断行、缩进、列表与空白处理，保留真实段落结构而非机械拼接每行。
 // Covers Chinese/Latin lines, indentation, lists and whitespace while preserving actual paragraph structure.
 import { describe, expect, it } from "vitest";
-import { pdfTextToParagraphs, pdfTextToReadingBlocks, splitPdfInlineFootnoteReferences } from "./pdf-reading-text";
+import { pdfPageBoundarySeparator, pdfTextToParagraphs, pdfTextToReadingBlocks, shouldJoinPdfPageBoundaryParagraphs, splitPdfInlineFootnoteReferences } from "./pdf-reading-text";
 
 const item = (str: string, x: number, y: number, options: { width?: number; height?: number; hasEOL?: boolean } = {}) => ({
   str,
@@ -128,5 +128,36 @@ describe("pdfTextToParagraphs", () => {
       { kind: "text", text: "、" },
       { kind: "footnote-reference", marker: "[2]" },
     ]);
+  });
+});
+
+describe("PDF page-boundary paragraph joining", () => {
+  it("joins unfinished paragraph fragments while retaining punctuation and title boundaries", () => {
+    expect(shouldJoinPdfPageBoundaryParagraphs(
+      { kind: "paragraph", text: "诸位代表先生们：我们有一个共同的感觉，这就是我们" },
+      { kind: "paragraph", text: "的工作将写在人类的历史上。" },
+    )).toBe(true);
+    expect(shouldJoinPdfPageBoundaryParagraphs(
+      { kind: "paragraph", text: "上一句已经结束。" },
+      { kind: "paragraph", text: "下一段另起。" },
+    )).toBe(false);
+    expect(shouldJoinPdfPageBoundaryParagraphs(
+      { kind: "paragraph", text: "第一章" },
+      { kind: "paragraph", text: "接下来是正文内容。" },
+    )).toBe(false);
+    expect(shouldJoinPdfPageBoundaryParagraphs(
+      { kind: "paragraph", text: "前文尚未结束" },
+      { kind: "paragraph", text: "一、下一节标题" },
+    )).toBe(false);
+    expect(shouldJoinPdfPageBoundaryParagraphs(
+      { kind: "heading", text: "注释" },
+      { kind: "paragraph", text: "正文内容继续。" },
+    )).toBe(false);
+  });
+
+  it("adds a separator only when adjacent source fragments split an English word boundary", () => {
+    expect(pdfPageBoundarySeparator("the long-", "term continues")).toBe("");
+    expect(pdfPageBoundarySeparator("history", "continues")).toBe(" ");
+    expect(pdfPageBoundarySeparator("这是", "同一句话")).toBe("");
   });
 });

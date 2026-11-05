@@ -29,7 +29,7 @@ const settings = {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  sessionStorage.setItem("bookkin-demo-session", JSON.stringify({ id: "admin", username: "admin", displayName: "管理员", role: "ADMIN", mustChangePassword: false }));
+  sessionStorage.setItem("silvae-demo-session", JSON.stringify({ id: "admin", username: "admin", displayName: "管理员", role: "ADMIN", mustChangePassword: false }));
   vi.mocked(api.getAiSettings).mockResolvedValue(settings);
   vi.mocked(api.updateAiSettings).mockResolvedValue(settings);
   vi.mocked(request).mockReset();

@@ -13,8 +13,8 @@ For the 2026-10-23 transition, the exact old V1–V30 SQL and their SHA-256 mani
 Preflight (use the correct container/user and private legacy artifact):
 
 ```sh
-python3 consolidate.py --container bookkin-postgres-1 --user bookkin \
-  --database bookkin --legacy-dir /private-release/legacy \
+python3 consolidate.py --container silvae-postgres-1 --user silvae \
+  --database silvae --legacy-dir /private-release/legacy \
   --baseline /private-release/V1__initial_schema.sql --backup-dir /private-backups
 ```
 

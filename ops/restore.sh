@@ -1,8 +1,8 @@
 #!/bin/sh
 # 校验恢复清单、归档路径和校验和，支持只校验模式，并将确认的恢复点导入配置的文件根目录与数据库。
 # Validates recovery metadata, archive paths and checksums, supports a dry run, and restores a selected recovery point to configured roots and the database.
-# 恢复完整的 BookKin 恢复点。仅可在隔离的 Compose 项目中运行，或在确认破坏性的数据库替换后运行。
-# Restore a complete BookKin recovery point. Run only against an isolated
+# 恢复完整的 Silvae 恢复点。仅可在隔离的 Compose 项目中运行，或在确认破坏性的数据库替换后运行。
+# Restore a complete Silvae recovery point. Run only against an isolated
 # Compose project or after confirming the destructive database replacement.
 set -eu
 
@@ -22,12 +22,12 @@ test -f "$SOURCE/manifest.txt"
 test -f "$SOURCE/database.dump"
 test -f "$SOURCE/SHA256SUMS"
 
-grep -Eq '^format=bookkin-backup-v[23]$' "$SOURCE/manifest.txt" || {
+grep -Eq '^format=silvae-backup-v[23]$' "$SOURCE/manifest.txt" || {
   echo "Unsupported or incomplete backup manifest" >&2
   exit 1
 }
 HAS_CONTENT=false
-if grep -qx 'format=bookkin-backup-v3' "$SOURCE/manifest.txt"; then
+if grep -Eq '^format=silvae-backup-v3$' "$SOURCE/manifest.txt"; then
   HAS_CONTENT=true
   grep -qx 'article-archive=articles.tar.gz' "$SOURCE/manifest.txt"
   grep -qx 'vault-archive=vault.tar.gz' "$SOURCE/manifest.txt"
@@ -86,8 +86,8 @@ if [ "$HAS_CONTENT" = true ]; then
   validate_archive "$SOURCE/vault.tar.gz" || { echo "Unsafe vault archive" >&2; exit 1; }
 fi
 
-LIBRARY_ROOTS=${BOOKKIN_LIBRARY_BACKUP_ROOTS:-${BOOKKIN_LIBRARY_MAIN:-./.local/library}}
-ROOTS_FILE=$(mktemp "${TMPDIR:-/tmp}/bookkin-restore-roots.XXXXXX")
+LIBRARY_ROOTS=${SILVAE_LIBRARY_BACKUP_ROOTS:-${SILVAE_LIBRARY_MAIN:-./.local/library}}
+ROOTS_FILE=$(mktemp "${TMPDIR:-/tmp}/silvae-restore-roots.XXXXXX")
 cleanup() { rm -f "$ROOTS_FILE"; }
 trap cleanup EXIT INT TERM
 OLD_IFS=$IFS
@@ -103,9 +103,9 @@ test "$CONFIGURED_COUNT" -eq "$ROOT_COUNT" || {
   exit 1
 }
 
-FONT_ROOT=${BOOKKIN_FONT_BACKUP_ROOT:-${BOOKKIN_FONT_STORAGE:-./.local/fonts}}
-ARTICLE_ROOT=${BOOKKIN_ARTICLE_STORAGE:-./.local/content/articles}
-VAULT_ROOT=${BOOKKIN_VAULT_STORAGE:-./.local/content/vault}
+FONT_ROOT=${SILVAE_FONT_BACKUP_ROOT:-${SILVAE_FONT_STORAGE:-./.local/fonts}}
+ARTICLE_ROOT=${SILVAE_ARTICLE_STORAGE:-./.local/content/articles}
+VAULT_ROOT=${SILVAE_VAULT_STORAGE:-./.local/content/vault}
 if [ "$DRY_RUN" = true ]; then
   if [ "$HAS_CONTENT" = true ]; then
     printf 'DRY RUN: would restore articles to %s and vault to %s\n' "$ARTICLE_ROOT" "$VAULT_ROOT"
@@ -145,9 +145,9 @@ trap 'restart_services; cleanup' EXIT INT TERM
 
 docker compose stop app worker
 SERVICES_STOPPED=true
-docker compose exec -T postgres dropdb --if-exists --username "${POSTGRES_USER:-bookkin}" "${POSTGRES_DB:-bookkin}"
-docker compose exec -T postgres createdb --username "${POSTGRES_USER:-bookkin}" "${POSTGRES_DB:-bookkin}"
-docker compose exec -T postgres pg_restore --username "${POSTGRES_USER:-bookkin}" --dbname "${POSTGRES_DB:-bookkin}" --clean --if-exists < "$SOURCE/database.dump"
+docker compose exec -T postgres dropdb --if-exists --username "${POSTGRES_USER:-silvae}" "${POSTGRES_DB:-silvae}"
+docker compose exec -T postgres createdb --username "${POSTGRES_USER:-silvae}" "${POSTGRES_DB:-silvae}"
+docker compose exec -T postgres pg_restore --username "${POSTGRES_USER:-silvae}" --dbname "${POSTGRES_DB:-silvae}" --clean --if-exists < "$SOURCE/database.dump"
 
 ROOT_INDEX=0
 while IFS= read -r LIBRARY_ROOT; do

@@ -25,7 +25,7 @@ function detail(items: ArticleSummary[] = [], overrides: Partial<ArticleCollecti
 }
 function asMember() {
   sessionStorage.clear();
-  sessionStorage.setItem("bookkin-demo-session", JSON.stringify(member));
+  sessionStorage.setItem("silvae-demo-session", JSON.stringify(member));
 }
 
 describe("article collection interactions", () => {

@@ -50,11 +50,11 @@ print('Validated 4 books / 14 sourced points / 9 distinct concepts; provider=' +
 if '--apply' not in sys.argv:
     print('Dry run. Pass --apply to insert into the local development database.')
     sys.exit(0)
-host = os.getenv('BOOKKIN_DATABASE_HOST', '127.0.0.1')
+host = os.getenv('SILVAE_DATABASE_HOST', '127.0.0.1')
 if host not in ('127.0.0.1', 'localhost', '::1'):
     raise SystemExit('Only loopback development database hosts are allowed.')
-env = dict(os.environ, PGPASSWORD=os.getenv('BOOKKIN_DATABASE_PASSWORD', 'bookkin-local-dev'))
-command = ['psql', '-X', '-h', host, '-p', os.getenv('BOOKKIN_DATABASE_PORT', '5432'), '-U', os.getenv('BOOKKIN_DATABASE_USER', 'bookkin'), '-d', os.getenv('BOOKKIN_DATABASE_NAME', 'bookkin'), '-v', 'ON_ERROR_STOP=1']
+env = dict(os.environ, PGPASSWORD=os.getenv('SILVAE_DATABASE_PASSWORD', 'silvae-local-dev'))
+command = ['psql', '-X', '-h', host, '-p', os.getenv('SILVAE_DATABASE_PORT', '5432'), '-U', os.getenv('SILVAE_DATABASE_USER', 'silvae'), '-d', os.getenv('SILVAE_DATABASE_NAME', 'silvae'), '-v', 'ON_ERROR_STOP=1']
 statements = ['BEGIN;', 'SET LOCAL lock_timeout = \'5s\';', 'SET LOCAL statement_timeout = \'15s\';']
 for fixture in fixtures:
     title, fingerprint = map(literal, [fixture['title'], fixture['fingerprint']])

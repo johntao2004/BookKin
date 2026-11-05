@@ -12,7 +12,7 @@ const emptyOverview = (): ReadingOverview => ({
     days: Array.from({length: 7}, (_, index) => ({date: `2026-10-${19 + index}`, seconds: 0}))},
 });
 beforeEach(() => {
-  sessionStorage.setItem("bookkin-demo-session", JSON.stringify({ id: "user-owner", username: "owner", displayName: "林", role: "OWNER", mustChangePassword: false }));
+  sessionStorage.setItem("silvae-demo-session", JSON.stringify({ id: "user-owner", username: "owner", displayName: "林", role: "OWNER", mustChangePassword: false }));
   vi.spyOn(api, "getReadingOverview").mockResolvedValue(emptyOverview());
 });
 afterEach(() => vi.restoreAllMocks());
@@ -27,14 +27,14 @@ it("preserves all four overview cards and empty states on its own page", async (
   expect(screen.queryByRole("button", { name: "上传书籍" })).not.toBeInTheDocument();
 });
 it("ignores catalog filters and the retired overview-hidden preference", async () => {
-  localStorage.setItem("bookkin-library-overview:user-owner", "hidden");
+  localStorage.setItem("silvae-library-overview:user-owner", "hidden");
   const list = vi.spyOn(api, "listBooks");
   render(<TestProviders initialPath="/library/overview?q=missing&format=PDF"><LibraryOverviewPage /></TestProviders>);
   expect(await screen.findByRole("heading", { name: "本周暂无新书" })).toBeInTheDocument();
   expect(list).not.toHaveBeenCalled();
   expect(api.getReadingOverview).toHaveBeenCalledWith(expect.any(AbortSignal));
   expect(screen.queryByRole("button", { name: "显示概览" })).not.toBeInTheDocument();
-  localStorage.removeItem("bookkin-library-overview:user-owner");
+  localStorage.removeItem("silvae-library-overview:user-owner");
 });
 it("retains zero-progress guidance and aligned private-annotation empty state", async () => {
   vi.mocked(api.getReadingOverview).mockResolvedValue({...emptyOverview(), featuredBook: {...demoBooks[0], progress: 50}});

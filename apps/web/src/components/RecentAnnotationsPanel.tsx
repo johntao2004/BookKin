@@ -14,6 +14,7 @@ import { tokens } from "../theme/generated-tokens";
 import { EMPTY_ANNOTATIONS_TITLE } from "../ui/empty-state-copy";
 import { OverviewCardHeader } from "./OverviewCardHeader";
 import { OverviewEmptyState } from "./OverviewEmptyState";
+import { annotationNotePlainText } from "./AnnotationNoteMarkdown";
 
 const annotationTimestamp = (annotation: Annotation) => Date.parse(annotation.updatedAt || annotation.createdAt);
 
@@ -46,7 +47,7 @@ export function RecentAnnotationsPanel({ embedded = false }: { embedded?: boolea
         {recentAnnotations.map(annotation => {
           const bookTitle = annotation.bookTitle?.trim() || "藏书";
           const quote = annotation.quote?.trim();
-          const note = annotation.note?.trim();
+          const note = annotation.note?.trim() ? annotationNotePlainText(annotation.note) : "";
           const locator = annotation.locator?.trim();
           const href = locator ? `/reader/${encodeURIComponent(annotation.bookId)}?locator=${encodeURIComponent(locator)}` : undefined;
           return <Box component="li" key={annotation.id} sx={{ minWidth: 0, "&:not(:first-child)": { pt: `${tokens.spacing[1]}px`, borderTop: 1, borderColor: "divider" } }}>

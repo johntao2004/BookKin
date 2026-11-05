@@ -1,9 +1,9 @@
-@import url("/assets/fonts/bookkin-serif.css");
+@import url("/assets/fonts/silvae-serif.css");
     @font-face{font-family:BookCJK;src:url('./assets/BookCJK.woff2') format('woff2');font-weight:100 900;font-display:swap}
     :root{
       --paper:var(--ming-library-paper);--paper-solid:var(--ming-library-paper-solid);--ink:var(--ming-library-ink);--muted:var(--ming-library-muted);--red:var(--ming-library-red);--gold:var(--ming-library-gold);
       --line:var(--ming-library-line);--light-line:var(--ming-library-light-line);--shadow:var(--ming-library-shadow);
-      --serif:"BookKin Serif","Noto Serif SC",serif;--sans:-apple-system,BlinkMacSystemFont,'Segoe UI',BookCJK,'Microsoft YaHei',sans-serif;
+      --serif:"Silvae Serif","Noto Serif SC",serif;--sans:-apple-system,BlinkMacSystemFont,'Segoe UI',BookCJK,'Microsoft YaHei',sans-serif;
       --edge:var(--ming-library-edge);--dock-bottom:var(--ming-library-dock-bottom);--panel-bottom:var(--ming-library-panel-bottom);--panel-top:var(--ming-library-panel-top);
     }
     *{box-sizing:border-box}

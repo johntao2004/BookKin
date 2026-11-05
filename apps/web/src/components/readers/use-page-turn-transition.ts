@@ -26,6 +26,8 @@ type CachedPageSnapshot = {
 export type PageTurnTransitionOptions = {
   spread?: boolean;
   snapshotKey?: string;
+  /** Avoid cloning very large reflowed documents for a page-turn texture. */
+  snapshot?: boolean;
 };
 
 const afterNextPaint = () => new Promise<void>((resolve) => {
@@ -220,7 +222,7 @@ async function runFallbackTurn({
 export function usePageTurnTransition(
   targetRef: RefObject<HTMLElement | null>,
   enabled = true,
-  { spread = false, snapshotKey = "page" }: PageTurnTransitionOptions = {},
+  { spread = false, snapshotKey = "page", snapshot = true }: PageTurnTransitionOptions = {},
 ) {
   const mobileViewport = useMediaQuery(PAGE_TURN_MOBILE_QUERY);
   const effectiveEnabled = enabled && mobileViewport;
@@ -256,7 +258,7 @@ export function usePageTurnTransition(
 
   useEffect(() => {
     snapshotCacheRef.current = null;
-    if (!effectiveEnabled || typeof window.requestIdleCallback !== "function") return;
+    if (!effectiveEnabled || !snapshot || typeof window.requestIdleCallback !== "function") return;
     let cancelled = false;
     const idleHandle = window.requestIdleCallback(() => {
       const target = targetRef.current;
@@ -278,7 +280,7 @@ export function usePageTurnTransition(
       cancelled = true;
       window.cancelIdleCallback(idleHandle);
     };
-  }, [effectiveEnabled, snapshotKey, targetRef]);
+  }, [effectiveEnabled, snapshot, snapshotKey, targetRef]);
 
   const animateCurl = useCallback((curl: PageCurlRenderer) => new Promise<void>((resolve) => {
     const startedAt = performance.now();
@@ -310,6 +312,15 @@ export function usePageTurnTransition(
     runningRef.current = true;
     setTurning(true);
     const shade = target.querySelector<HTMLElement>("[data-page-turn-shade]");
+    if (!snapshot) {
+      try {
+        await runFallbackTurn({ target, shade, direction, changePage, mountedRef });
+      } finally {
+        runningRef.current = false;
+        if (mountedRef.current) setTurning(false);
+      }
+      return;
+    }
     const overlay = target.querySelector<HTMLCanvasElement>("[data-page-turn-overlay]");
     let pageChanged = false;
     try {
@@ -376,7 +387,7 @@ export function usePageTurnTransition(
       runningRef.current = false;
       if (mountedRef.current) setTurning(false);
     }
-  }, [animateCurl, cleanupCurl, effectiveEnabled, snapshotKey, spread, targetRef]);
+  }, [animateCurl, cleanupCurl, effectiveEnabled, snapshot, snapshotKey, spread, targetRef]);
 
   return { turnPage, turning };
 }

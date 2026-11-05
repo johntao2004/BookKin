@@ -76,4 +76,44 @@ describe("usePageTurnTransition", () => {
     expect(animate).not.toHaveBeenCalled();
     expect(result.current.turning).toBe(false);
   });
+
+  it("uses the animated fallback without cloning a large reflowed page", async () => {
+    const target = document.createElement("div");
+    const animations: Array<{ cancel: ReturnType<typeof vi.fn> }> = [];
+    Object.defineProperty(target, "animate", {
+      configurable: true,
+      value: vi.fn(() => {
+        const animation = { finished: Promise.resolve(), cancel: vi.fn() };
+        animations.push(animation);
+        return animation;
+      }),
+    });
+    vi.spyOn(window, "matchMedia").mockImplementation((query) => ({
+      matches: query === PAGE_TURN_MOBILE_QUERY,
+      media: query,
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    }));
+    vi.stubGlobal("requestAnimationFrame", (callback: FrameRequestCallback) => window.setTimeout(() => callback(0), 0));
+    vi.stubGlobal("cancelAnimationFrame", (id: number) => window.clearTimeout(id));
+    const changePage = vi.fn();
+    const { result } = renderHook(() => usePageTurnTransition(
+      { current: target },
+      true,
+      { snapshot: false },
+    ));
+
+    await act(async () => {
+      await result.current.turnPage("NEXT", changePage);
+    });
+
+    expect(changePage).toHaveBeenCalledOnce();
+    expect(target.animate).toHaveBeenCalledTimes(2);
+    expect(animations.every((animation) => animation.cancel.mock.calls.length === 1)).toBe(true);
+    expect(result.current.turning).toBe(false);
+  });
 });

@@ -15,10 +15,12 @@ export interface DeviceKeyStore {
 
 // Only encrypted key material and a non-exportable device key are persisted, never a visit grant.
 class IndexedDbDeviceKeyStore implements DeviceKeyStore {
+  private static readonly DB_NAME = "silvae-vault-device";
+
   private async database() {
     if (typeof indexedDB === "undefined") throw new Error("当前浏览器无法保存本机授权，请允许站点存储后重试。");
     return new Promise<IDBDatabase>((resolve, reject) => {
-      const request = indexedDB.open("bookkin-vault-device", 1);
+      const request = indexedDB.open(IndexedDbDeviceKeyStore.DB_NAME, 1);
       request.onupgradeneeded = () => {
         const store = request.result.createObjectStore("keys", { keyPath: "id" });
         store.createIndex("userId", "userId");
@@ -83,7 +85,7 @@ export function createDeviceKeyAccess(store: DeviceKeyStore) {
       const iv = crypto.getRandomValues(new Uint8Array(12));
       const plain = new TextEncoder().encode(JSON.stringify({ master: b64(master), recovery }));
       try {
-        const ciphertext = await crypto.subtle.encrypt({ name: "AES-GCM", iv, additionalData: new TextEncoder().encode(`bookkin:vault:device:v1:${id}`) }, wrappingKey, plain);
+        const ciphertext = await crypto.subtle.encrypt({ name: "AES-GCM", iv, additionalData: new TextEncoder().encode(`silvae:vault:device:v1:${id}`) }, wrappingKey, plain);
         signal?.throwIfAborted();
         await store.write({ id, userId, wrappingKey, iv, ciphertext });
       } finally { plain.fill(0); }
@@ -94,7 +96,9 @@ export function createDeviceKeyAccess(store: DeviceKeyStore) {
       if (!record) return null;
       if (record.userId !== userId || record.id !== id || record.wrappingKey.extractable) throw new Error("本机授权格式无效，请重新授权。");
       let plain: Uint8Array;
-      try { plain = new Uint8Array(await crypto.subtle.decrypt({ name: "AES-GCM", iv: new Uint8Array(record.iv), additionalData: new TextEncoder().encode(`bookkin:vault:device:v1:${id}`) }, record.wrappingKey, record.ciphertext)); }
+      try {
+        plain = new Uint8Array(await crypto.subtle.decrypt({ name: "AES-GCM", iv: new Uint8Array(record.iv), additionalData: new TextEncoder().encode(`silvae:vault:device:v1:${id}`) }, record.wrappingKey, record.ciphertext));
+      }
       catch { throw new Error("本机授权已损坏，请使用原加密密码或解密恢复密钥重新授权。"); }
       try {
         signal?.throwIfAborted();

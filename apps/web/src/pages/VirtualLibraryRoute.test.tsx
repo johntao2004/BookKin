@@ -4,7 +4,7 @@ import { Suspense } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { api, DEFAULT_SITE_SETTINGS, type SiteSettings } from '../api/client';
 import { AuthProvider } from '../auth/AuthContext';
-import { BookKinThemeProvider } from '../theme/BookKinThemeProvider';
+import { SilvaeThemeProvider } from '../theme/SilvaeThemeProvider';
 import { VirtualLibraryRoute } from './VirtualLibraryRoute';
 
 const scene = vi.hoisted(() => ({imported: vi.fn(), mounted: vi.fn(), stopped: vi.fn()}));
@@ -21,7 +21,7 @@ function renderRoute(cached?: SiteSettings) {
   const client = new QueryClient({defaultOptions:{queries:{retry:false}}});
   if (cached) client.setQueryData(['site-settings'], cached);
   const view = render(<QueryClientProvider client={client}><MemoryRouter initialEntries={['/virtual-library']}>
-    <AuthProvider><BookKinThemeProvider><Suspense fallback={<div>Loading scene</div>}><VirtualLibraryRoute /></Suspense></BookKinThemeProvider></AuthProvider>
+    <AuthProvider><SilvaeThemeProvider><Suspense fallback={<div>Loading scene</div>}><VirtualLibraryRoute /></Suspense></SilvaeThemeProvider></AuthProvider>
   </MemoryRouter></QueryClientProvider>);
   return {...view, client};
 }

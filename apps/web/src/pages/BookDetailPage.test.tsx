@@ -40,7 +40,7 @@ function metadataForBook(book: (typeof demoBooks)[number]): BookMetadata {
     translators: [],
     description: book.description,
     language: "zh-CN",
-    publisher: "BookKin典藏",
+    publisher: "Silvae典藏",
     publishedDate: "2026",
     isbn: "",
     series: "灯火集",
@@ -52,7 +52,7 @@ function metadataForBook(book: (typeof demoBooks)[number]): BookMetadata {
 }
 
 function renderDetail(initialPath: string, user = owner) {
-  sessionStorage.setItem("bookkin-demo-session", JSON.stringify(user));
+  sessionStorage.setItem("silvae-demo-session", JSON.stringify(user));
   return render(
     <TestProviders initialPath={initialPath}>
       <>
@@ -435,7 +435,7 @@ describe("BookDetailPage", () => {
     fireEvent.click(retryMetadata);
 
     const loadedBibliography = await screen.findByRole("region", { name: "书目资料" });
-    expect(await within(loadedBibliography).findByText("BookKin典藏")).toBeInTheDocument();
+    expect(await within(loadedBibliography).findByText("Silvae典藏")).toBeInTheDocument();
     await waitFor(() => expect(getBookMetadata).toHaveBeenCalledTimes(2));
     expect(getBook).toHaveBeenCalledTimes(1);
   });
@@ -444,7 +444,7 @@ describe("BookDetailPage", () => {
     const book = demoBooks[1];
     vi.spyOn(api, "listBooks").mockResolvedValue({ items: [book] });
     vi.spyOn(api, "getBook").mockResolvedValue(book);
-    sessionStorage.setItem("bookkin-demo-session", JSON.stringify(owner));
+    sessionStorage.setItem("silvae-demo-session", JSON.stringify(owner));
     render(
       <TestProviders initialPath="/library/all?q=夜航&format=PDF&sort=title">
         <>

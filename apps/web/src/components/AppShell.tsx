@@ -34,8 +34,8 @@ import { useAuth } from "../auth/AuthContext";
 import { DEFAULT_SITE_SETTINGS } from "../api/client";
 import type { ReaderTheme } from "./readers/reader-fonts";
 import { tokens } from "../theme/generated-tokens";
-import { useBookKinTheme } from "../theme/BookKinThemeProvider";
-import { bookKinThemeOptions } from "../theme/theme";
+import { useSilvaeTheme } from "../theme/SilvaeThemeProvider";
+import { silvaeThemeOptions } from "../theme/theme";
 import { useOrdinaryPageScale } from "../theme/useOrdinaryPageScale";
 import { articlesNavigationSections, libraryNavigationSections, notesNavigationSections } from "./app-navigation-sections";
 import { useVaultNavigationStatus } from "../features/vault/use-vault-navigation-status";
@@ -73,7 +73,7 @@ export function AppShell({ children }: PropsWithChildren) {
   const { canVisit } = usePermissions();
   const vaultEnabled = useVaultNavigationStatus(user?.id, Boolean(user && canVisit("/vault")));
   const [logoutError, setLogoutError] = useState("");
-  const { mode: bookKinTheme, setMode: setBookKinTheme } = useBookKinTheme();
+  const { mode: silvaeTheme, setMode: setSilvaeTheme } = useSilvaeTheme();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -278,15 +278,15 @@ export function AppShell({ children }: PropsWithChildren) {
                 placement="bottomRight"
                 menu={{
                   selectable: true,
-                  selectedKeys: [bookKinTheme],
-                  items: (Object.keys(bookKinThemeOptions) as ReaderTheme[]).map((mode) => ({
+                  selectedKeys: [silvaeTheme],
+                  items: (Object.keys(silvaeThemeOptions) as ReaderTheme[]).map((mode) => ({
                     key: mode,
-                    label: bookKinThemeOptions[mode].label,
-                    icon: <Box sx={{ width: tokens.spacing[5], height: tokens.spacing[5], borderRadius: `${tokens.radius.pill}px`, bgcolor: bookKinThemeOptions[mode].reader.background, border: 1, borderColor: "divider" }} />,
+                    label: silvaeThemeOptions[mode].label,
+                    icon: <Box sx={{ width: tokens.spacing[5], height: tokens.spacing[5], borderRadius: `${tokens.radius.pill}px`, bgcolor: silvaeThemeOptions[mode].reader.background, border: 1, borderColor: "divider" }} />,
                   })),
                   onClick: ({ key }) => {
                     themeMenuSelectionRef.current = true;
-                    setBookKinTheme(key as ReaderTheme);
+                    setSilvaeTheme(key as ReaderTheme);
                     setThemeMenuOpen(false);
                     globalThis.setTimeout(() => { themeMenuSelectionRef.current = false; }, 400);
                   },

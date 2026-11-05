@@ -23,7 +23,7 @@ interface AuthContextValue {
   changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
 }
 
-const storageKey = "bookkin-demo-session";
+const storageKey = "silvae-demo-session";
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 function readStoredUser(): SessionUser | null {
@@ -104,8 +104,8 @@ export function AuthProvider({ children }: PropsWithChildren) {
         setReady(true);
       });
     };
-    window.addEventListener("bookkin:session-expired", expire);
-    return () => { active=false; window.removeEventListener("bookkin:session-expired", expire); };
+    window.addEventListener("silvae:session-expired", expire);
+    return () => { active=false; window.removeEventListener("silvae:session-expired", expire); };
   }, [persist,user?.id]);
 
   useEffect(() => {

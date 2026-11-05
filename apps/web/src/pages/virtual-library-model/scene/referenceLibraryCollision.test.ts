@@ -21,7 +21,7 @@ const stairObstacles = colliders.filter(c => !isGuidedStairSupport(c));
 const metrics: Record<string, number> = {descriptorCount: config.colliders.length, runtimeColliderCount: colliders.length,
   maximumStairDrift: 0, maximumOffsetStairDrift: 0, maximumClearGalleryDrift: 0};
 afterAll(() => {
-  if (process.env.BOOKKIN_COLLISION_REPORT) writeFileSync(process.env.BOOKKIN_COLLISION_REPORT,
+  if (process.env.SILVAE_COLLISION_REPORT) writeFileSync(process.env.SILVAE_COLLISION_REPORT,
     `${JSON.stringify({revision: REFERENCE_LIBRARY_ASSET_REVISION, evidence: 'CPU geometry/collision regression; not browser or GPU acceptance',
       body: WALKING_CAMERA_CLEARANCE, eyeHeight: WALKING_EYE_HEIGHT, ...metrics}, null, 2)}\n`);
 });

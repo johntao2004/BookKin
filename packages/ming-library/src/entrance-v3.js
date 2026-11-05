@@ -96,7 +96,7 @@ function signTexture(){
     c.strokeStyle='#e5b746';c.lineWidth=16;c.strokeRect(37,37,w-74,h-74);
     c.lineWidth=5;c.strokeRect(66,66,w-132,h-132);
     c.fillStyle='#f4cb5d';c.textAlign='center';c.textBaseline='middle';
-    c.font='600 608px BookKin Serif, Noto Serif SC, serif';
+    c.font='600 608px Silvae Serif, Noto Serif SC, serif';
     [...'文華殿'].forEach((ch,i)=>c.fillText(ch,w/2,430+i*722));
   });
   if(map){map.name='ArchitecturalDetail_Wenhuadian_Traditional_Plaque_1024x2304';map.anisotropy=16;map.magFilter=THREE.LinearFilter;}

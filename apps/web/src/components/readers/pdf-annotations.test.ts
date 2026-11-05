@@ -3,7 +3,7 @@
 import { applyPdfTextAnnotations } from "./pdf-annotations";
 import type { Annotation } from "../../domain/types";
 import { readerHighlightStyle } from "../../domain/annotation-colors";
-import { bookKinThemeOptions } from "../../theme/theme";
+import { silvaeThemeOptions } from "../../theme/theme";
 
 describe("applyPdfTextAnnotations", () => {
   it("refreshes reading highlights and explicit text colors when the theme changes", () => {
@@ -13,7 +13,7 @@ describe("applyPdfTextAnnotations", () => {
       id: "themed-highlight", bookId: "book-pdf", type: "HIGHLIGHT", style: "HIGHLIGHT",
       color: "YELLOW", locator: "pdf:page=1", quote: "高亮仍然清晰", createdAt: "2026-10-21",
     };
-    for (const { reader: theme } of Object.values(bookKinThemeOptions)) {
+    for (const { reader: theme } of Object.values(silvaeThemeOptions)) {
       applyPdfTextAnnotations(layer, 1, [annotation], { theme });
       const expected = document.createElement("span");
       Object.assign(expected.style, readerHighlightStyle(annotation.color, theme));
@@ -124,5 +124,29 @@ describe("applyPdfTextAnnotations", () => {
     applyPdfTextAnnotations(layer, 1, [annotation]);
 
     expect(layer.querySelector("[data-annotation-id='live-highlight']")).toHaveTextContent("立即在正文中显示高亮");
+  });
+
+  it("matches and clears annotations only within their original page in a continuous flow", () => {
+    const layer = document.createElement("article");
+    layer.innerHTML = '<p><span data-pdf-source-page="17">前页末段。</span></p><p><span data-pdf-source-page="18">下一页开头。</span></p>';
+    const annotation: Annotation = {
+      id: "source-page-18",
+      bookId: "book-pdf",
+      type: "HIGHLIGHT",
+      locator: "pdf:page=18&offset=0",
+      quote: "下一页开头",
+      style: "HIGHLIGHT",
+      color: "YELLOW",
+      createdAt: "2026-08-21T00:00:00Z",
+    };
+
+    applyPdfTextAnnotations(layer, 17, [annotation]);
+    expect(layer.querySelector("mark")).toBeNull();
+    applyPdfTextAnnotations(layer, 18, [annotation]);
+    expect(layer.querySelectorAll("mark")).toHaveLength(1);
+    expect(layer.querySelector('[data-pdf-source-page="17"] mark')).toBeNull();
+    applyPdfTextAnnotations(layer, 18, []);
+    expect(layer.querySelector("mark")).toBeNull();
+    expect(layer.textContent).toBe("前页末段。下一页开头。");
   });
 });

@@ -18,7 +18,7 @@ afterEach(() => { vi.unstubAllGlobals(); vi.unstubAllEnvs(); vi.useRealTimers();
 describe('real authentication transport', () => {
   it('preserves structured 500 diagnostics but does not expose an arbitrary proxy response', async () => {
     const { request } = await import('./client');
-    fetchMock.mockResolvedValueOnce(json({type:'urn:bookkin:error:internal_error', code:'INTERNAL_ERROR', detail:'请管理员凭请求标识查询服务日志。', traceId:'b91b190b-411b-47ad-90af-a71c14def482'},500));
+    fetchMock.mockResolvedValueOnce(json({type:'urn:silvae:error:internal_error', code:'INTERNAL_ERROR', detail:'请管理员凭请求标识查询服务日志。', traceId:'b91b190b-411b-47ad-90af-a71c14def482'},500));
     await expect(request('/auth/permissions')).rejects.toMatchObject({status:500, code:'INTERNAL_ERROR', traceId:'b91b190b-411b-47ad-90af-a71c14def482', message:'请管理员凭请求标识查询服务日志。'});
     fetchMock.mockResolvedValueOnce(new Response('private proxy paths and secret', {status:502, headers:{'X-Request-ID':'proxy-request-12345'}}));
     await expect(request('/auth/permissions')).rejects.toMatchObject({status:502, code:'HTTP_502', traceId:'proxy-request-12345', message:'书库服务暂时不可用，请稍后重试。'});
@@ -40,7 +40,7 @@ describe('real authentication transport', () => {
     const dispatch = vi.spyOn(window, 'dispatchEvent');
     fetchMock.mockResolvedValueOnce(json({}, 401)).mockResolvedValueOnce(json({}, 401));
     await expect(api.listBookKnowledge()).rejects.toThrow();
-    expect(dispatch).toHaveBeenCalledWith(expect.objectContaining({ type: 'bookkin:session-expired' }));
+    expect(dispatch).toHaveBeenCalledWith(expect.objectContaining({ type: 'silvae:session-expired' }));
   });
   it('keeps the session when expiry confirmation is unavailable', async () => {
     const dispatch = vi.spyOn(window, 'dispatchEvent');

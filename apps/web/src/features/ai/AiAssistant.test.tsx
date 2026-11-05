@@ -2,7 +2,7 @@ import { act, StrictMode } from "react";
 import { MemoryRouter } from "react-router-dom";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, expect, it, vi } from "vitest";
-import { BookKinThemeProvider } from "../../theme/BookKinThemeProvider";
+import { SilvaeThemeProvider } from "../../theme/SilvaeThemeProvider";
 import { api, request } from "../../api/client";
 import { AiAssistantButton, type AiResult, type AiSource } from "./AiAssistant";
 import { InputActionGroup, TextField } from "../../ui/forms";
@@ -15,12 +15,12 @@ vi.mock("../../api/client", () => ({ request: vi.fn(), api: { getAiServiceAvaila
 const value: AiResult = { text: "润色后的原文", evidence: [{ locator: "page:1", quote: "这是一段真实的原文依据。" }], provider: "DeepSeek", model: "model", sourceTitle: "当前草稿", included: 1, total: 3, coverage: "仅采样 1/3 页，不代表全文分析。" };
 const ready = { enabled: true, hasConfiguredProvider: true, hasEnabledProvider: true };
 const unconfigured = { enabled: true, hasConfiguredProvider: false, hasEnabledProvider: false };
-const view = (draft = "原来的私人草稿", onApply = vi.fn()) => <MemoryRouter><BookKinThemeProvider><AiAssistantButton source="NOTE_DRAFT" draft={draft} onApply={onApply} /></BookKinThemeProvider></MemoryRouter>;
+const view = (draft = "原来的私人草稿", onApply = vi.fn()) => <MemoryRouter><SilvaeThemeProvider><AiAssistantButton source="NOTE_DRAFT" draft={draft} onApply={onApply} /></SilvaeThemeProvider></MemoryRouter>;
 const open = async () => { await act(async () => { fireEvent.click(screen.getByRole("button", { name: "AI 助读" })); }); };
 beforeEach(() => { identity.user = { id: "reader-one" }; access.canConfigure = true; vi.mocked(api.getAiServiceAvailability).mockReset().mockResolvedValue(ready); vi.mocked(request).mockReset().mockResolvedValue(value); });
 
 it.each<AiSource>(["NOTE_DRAFT", "METADATA_DRAFT"])("keeps %s results inside the dialog and removes them when closed", async source => {
-  const { container } = render(<BookKinThemeProvider><AiAssistantButton source={source} id="source-id" draft="待整理草稿" /></BookKinThemeProvider>);
+  const { container } = render(<SilvaeThemeProvider><AiAssistantButton source={source} id="source-id" draft="待整理草稿" /></SilvaeThemeProvider>);
   await open();
   fireEvent.click(screen.getByRole("button", { name: "生成建议" }));
   const result = await screen.findByLabelText("AI 生成结果");
@@ -31,7 +31,7 @@ it.each<AiSource>(["NOTE_DRAFT", "METADATA_DRAFT"])("keeps %s results inside the
 });
 
 it.each<AiSource>(["ARTICLE", "COLLECTION", "ARTICLE_DRAFT"])("has no AI entry or request for retired %s assistance", source => {
-  render(<BookKinThemeProvider><AiAssistantButton source={source} id="source-id" draft="文章草稿" /></BookKinThemeProvider>);
+  render(<SilvaeThemeProvider><AiAssistantButton source={source} id="source-id" draft="文章草稿" /></SilvaeThemeProvider>);
   expect(screen.queryByRole("button", { name: "AI 助读" })).not.toBeInTheDocument();
   expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   expect(request).not.toHaveBeenCalled();
@@ -139,7 +139,7 @@ it("uses the shared configuration prompt if service readiness changes before gen
   expect(screen.getByRole("link", { name: "前往 AI 服务配置" })).toBeInTheDocument();
 });
 it("does not expose removed book assistance or call AI", () => {
-  render(<BookKinThemeProvider><AiAssistantButton source="BOOK" id="book-id" /></BookKinThemeProvider>);
+  render(<SilvaeThemeProvider><AiAssistantButton source="BOOK" id="book-id" /></SilvaeThemeProvider>);
   expect(screen.queryByRole("button", { name: "AI 助读" })).not.toBeInTheDocument();
   expect(request).not.toHaveBeenCalled();
   expect(api.getAiServiceAvailability).not.toHaveBeenCalled();
@@ -157,8 +157,8 @@ it("renders readable Markdown without executing HTML or loading model-selected i
 
 it.each<"DESCRIPTION" | "TAGS" | "AUTHOR_BIOGRAPHY">(["DESCRIPTION", "TAGS", "AUTHOR_BIOGRAPHY"])("directly generates the selected metadata action (%s) once", async action => {
   const apply = vi.fn();
-  render(<StrictMode><BookKinThemeProvider><InputActionGroup><TextField aria-label="资料" /><AiAssistantButton source="METADATA_DRAFT" id="book-id" label="字段建议" directAction={action}
-    draft='{"title":"书名","authors":"作者"}' applyActions={[action]} onApply={apply} /></InputActionGroup></BookKinThemeProvider></StrictMode>);
+  render(<StrictMode><SilvaeThemeProvider><InputActionGroup><TextField aria-label="资料" /><AiAssistantButton source="METADATA_DRAFT" id="book-id" label="字段建议" directAction={action}
+    draft='{"title":"书名","authors":"作者"}' applyActions={[action]} onApply={apply} /></InputActionGroup></SilvaeThemeProvider></StrictMode>);
   fireEvent.click(screen.getByRole("button", { name: "字段建议" }));
 
   const title = { DESCRIPTION: "AI 简介建议", TAGS: "AI 标签建议", AUTHOR_BIOGRAPHY: "AI 作者介绍建议" }[action];
@@ -186,7 +186,7 @@ it.each<"DESCRIPTION" | "TAGS" | "AUTHOR_BIOGRAPHY">(["DESCRIPTION", "TAGS", "AU
 
 it("aborts a direct request on close and automatically generates again when reopened", async () => {
   vi.mocked(request).mockReturnValueOnce(new Promise<AiResult>(() => {})).mockResolvedValueOnce(value);
-  render(<BookKinThemeProvider><AiAssistantButton source="METADATA_DRAFT" label="字段建议" directAction="TAGS" draft="草稿" /></BookKinThemeProvider>);
+  render(<SilvaeThemeProvider><AiAssistantButton source="METADATA_DRAFT" label="字段建议" directAction="TAGS" draft="草稿" /></SilvaeThemeProvider>);
   const opener = () => fireEvent.click(screen.getByRole("button", { name: "字段建议" }));
   opener();
   await waitFor(() => expect(request).toHaveBeenCalledTimes(1));
@@ -203,7 +203,7 @@ it("aborts a direct request on close and automatically generates again when reop
 
 it("keeps the direct metadata action available for retry after automatic generation fails", async () => {
   vi.mocked(request).mockRejectedValueOnce(new Error("AI 平台暂不可用"));
-  render(<BookKinThemeProvider><AiAssistantButton source="METADATA_DRAFT" label="字段建议" directAction="DESCRIPTION" draft="草稿" /></BookKinThemeProvider>);
+  render(<SilvaeThemeProvider><AiAssistantButton source="METADATA_DRAFT" label="字段建议" directAction="DESCRIPTION" draft="草稿" /></SilvaeThemeProvider>);
   fireEvent.click(screen.getByRole("button", { name: "字段建议" }));
   expect(await screen.findByText("AI 平台暂不可用")).toBeInTheDocument();
   fireEvent.click(screen.getByRole("button", { name: "生成建议" }));

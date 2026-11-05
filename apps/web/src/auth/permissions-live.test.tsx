@@ -4,13 +4,13 @@ import { MemoryRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { request } from "../api/client";
-import { BookKinThemeProvider } from "../theme/BookKinThemeProvider";
+import { SilvaeThemeProvider } from "../theme/SilvaeThemeProvider";
 import { PermissionBoundary, usePermissions } from "./permissions";
 vi.mock("./AuthContext", () => ({ useAuth: () => ({ user: { id: "admin", username: "admin", role: "ADMIN" }, ready: true }) }));
 vi.mock("../api/client", () => ({ api: { isDemo: false }, request: vi.fn() }));
 function setup(children: React.ReactNode) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  render(<QueryClientProvider client={client}><MemoryRouter initialEntries={["/articles"]}><BookKinThemeProvider><PermissionBoundary>{children}</PermissionBoundary></BookKinThemeProvider></MemoryRouter></QueryClientProvider>);
+  render(<QueryClientProvider client={client}><MemoryRouter initialEntries={["/articles"]}><SilvaeThemeProvider><PermissionBoundary>{children}</PermissionBoundary></SilvaeThemeProvider></MemoryRouter></QueryClientProvider>);
   return client;
 }
 beforeEach(() => { vi.mocked(request).mockReset(); });

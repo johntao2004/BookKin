@@ -1,11 +1,13 @@
 // 覆盖重排页裁切、单双页布局及跨原始页回退；上一页尚未测量时应返回等待状态。
 // Covers reflow clipping, single/spread layout and cross-original-page back navigation, returning a pending state when the previous page is not measured.
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { createRef } from "react";
 import { getDocument } from "pdfjs-dist";
 import { vi } from "vitest";
 import type { Annotation } from "../../domain/types";
+import { api } from "../../api/client";
 import { tokens } from "../../theme/generated-tokens";
-import PdfDocumentReader, { PdfReadingClipFrame, previousPdfLocation } from "./PdfDocumentReader";
+import PdfDocumentReader, { PdfPagedText, PdfReadingClipFrame, groupPdfSourceBlocks, pdfSourcePositionAt, pdfSourceVirtualPageIndex, pdfTurnPositionAt, remapPdfSourceTarget } from "./PdfDocumentReader";
 
 vi.mock("pdfjs-dist", () => ({
   getDocument: vi.fn(),
@@ -116,11 +118,14 @@ describe("PdfReadingClipFrame", () => {
       }),
     };
     vi.mocked(getDocument).mockReturnValue({
-      promise: Promise.resolve({ numPages: 8, getPage: vi.fn().mockResolvedValue(page) }),
+      promise: Promise.resolve({ numPages: 8, getPage: vi.fn().mockImplementation(async (pageNumber: number) => pageNumber === 1 ? page : ({
+        getTextContent: vi.fn().mockResolvedValue({ items: [{ str: `下一原页继续排版${pageNumber}`, transform: [1, 0, 0, 12, 36, 720], width: 120, height: 12, hasEOL: true }] }),
+      })) }),
       destroy: vi.fn(),
     } as unknown as ReturnType<typeof getDocument>);
 
-    render(
+    const onSelect = vi.fn();
+    const { container } = render(
       <PdfDocumentReader
         bookId="book-pdf"
         annotations={[]}
@@ -128,15 +133,53 @@ describe("PdfReadingClipFrame", () => {
         fontSize={19}
         fontFamily="serif"
         readOnly
-        onSelect={vi.fn()}
+        onSelect={onSelect}
         onPosition={vi.fn()}
       />,
     );
 
     expect(await screen.findByText("这是一段正文。")).toBeInTheDocument();
+    const nextPageText = screen.getByText("下一原页继续排版2");
+    expect(nextPageText).toHaveAttribute("data-pdf-source-page", "2");
+    const selectionRange = document.createRange();
+    selectionRange.selectNodeContents(nextPageText);
+    Object.defineProperty(selectionRange, "getBoundingClientRect", { value: () => new DOMRect(1, 2, 20, 10) });
+    const selection = window.getSelection();
+    selection?.removeAllRanges();
+    selection?.addRange(selectionRange);
+    fireEvent.mouseUp(container.querySelector("article")!);
+    expect(onSelect).toHaveBeenCalledWith(expect.objectContaining({ locator: "pdf:page=2&offset=0" }));
+    selection?.removeAllRanges();
     expect(screen.getByRole("navigation", { name: "PDF 翻页" })).toHaveTextContent("第 1 页 · 共 8 页");
     expect(screen.queryByText(/^第 1 页$/u)).not.toBeInTheDocument();
   });
+});
+
+it("pauses PDF source geometry measurement during page-turn transforms and measures after", async () => {
+  vi.stubGlobal("requestAnimationFrame", (callback: FrameRequestCallback) => window.setTimeout(() => callback(0), 0));
+  vi.stubGlobal("cancelAnimationFrame", (id: number) => window.clearTimeout(id));
+  const onPageCountChange = vi.fn();
+  const props = {
+    textRef: createRef<HTMLDivElement>(),
+    document: {} as never,
+    blocks: [{ pageNumber: 1, block: { kind: "paragraph" as const, text: "动画期间不读取变换后的坐标。" } }],
+    sourcePageStarts: new Map<number, number>(),
+    pageNumber: 1,
+    theme: { background: "white", foreground: "black", muted: "gray" },
+    fontFamily: "serif",
+    fontSize: 19,
+    layout: { surfaceWidth: 400, contentWidth: 400, spread: false, visibleColumns: 1, pagePadding: 24, columnWidth: 300, columnGap: 40, pageStride: 340, articleWidth: 348 },
+    pageIndex: 0,
+    onPageCountChange,
+    onOpenFootnote: vi.fn(),
+    onReturnToReference: vi.fn(),
+    onCaptureSelection: vi.fn(),
+  };
+  const view = render(<PdfPagedText {...props} turning />);
+  expect(onPageCountChange).not.toHaveBeenCalled();
+
+  view.rerender(<PdfPagedText {...props} turning={false} />);
+  await waitFor(() => expect(onPageCountChange).toHaveBeenCalledOnce());
 });
 
 describe("PdfDocumentReader annotation activation", () => {
@@ -215,21 +258,188 @@ describe("PdfDocumentReader annotation activation", () => {
   });
 });
 
-describe("previousPdfLocation", () => {
-  it("moves to the preceding virtual page inside one PDF page", () => {
-    expect(previousPdfLocation({ pageNumber: 3, virtualPageIndex: 1, previousVirtualPageCount: 2 }))
-      .toEqual({ pageNumber: 3, virtualPageIndex: 0, waitForPageCount: false });
+describe("pdfTurnPositionAt", () => {
+  it("advances from the latest virtual cursor after a layout reflow", () => {
+    const cursorAfterResize = {
+      pageNumber: 54,
+      virtualPageIndex: 1912,
+      virtualPageCount: 2500,
+    };
+    const starts = new Map([[54, 1912], [55, 1915]]);
+    expect(pdfTurnPositionAt(cursorAfterResize, "NEXT", starts))
+      .toEqual({ pageNumber: 54, virtualPageIndex: 1913 });
+    expect(pdfTurnPositionAt(cursorAfterResize, "PREVIOUS", starts))
+      .toEqual({ pageNumber: 54, virtualPageIndex: 1911 });
+  });
+});
+
+describe("pdfTurnPositionAt on a screen shared by two source pages", () => {
+  it("returns to the first source page when paging back onto the shared first screen", () => {
+    // Pages 1 and 2 both start on screen 0; the reader is on page 2, offset 1 (screen 1).
+    const starts = new Map([[1, 0], [2, 0], [3, 2]]);
+    const cursor = { pageNumber: 2, virtualPageIndex: 1, virtualPageCount: 6 };
+    expect(pdfTurnPositionAt(cursor, "PREVIOUS", starts)).toEqual({ pageNumber: 1, virtualPageIndex: 0 });
   });
 
-  it("returns to the final virtual page of the preceding PDF page", () => {
-    expect(previousPdfLocation({ pageNumber: 3, virtualPageIndex: 0, previousVirtualPageCount: 2 }))
-      .toEqual({ pageNumber: 2, virtualPageIndex: 1, waitForPageCount: false });
+  it("still continues the current page when advancing past a shared screen", () => {
+    const starts = new Map([[1, 0], [2, 0], [3, 2]]);
+    expect(pdfTurnPositionAt({ pageNumber: 1, virtualPageIndex: 0, virtualPageCount: 6 }, "NEXT", starts))
+      .toEqual({ pageNumber: 2, virtualPageIndex: 1 });
+  });
+});
+
+describe("remapPdfSourceTarget", () => {
+  it("keeps the requested source page when later layout measurement changes its virtual index", () => {
+    const target = { pageNumber: 18, offset: 0, virtualPageIndex: 37 };
+    expect(remapPdfSourceTarget(target, new Map([[18, 1912]]), 2500))
+      .toEqual({ pageNumber: 18, offset: 0, virtualPageIndex: 1912 });
+    expect(remapPdfSourceTarget(target, new Map(), 2500)).toBeNull();
+  });
+});
+
+describe("pdfSourcePositionAt", () => {
+  it("keeps same-screen source pages anchored to the first page and advances at the next screen start", () => {
+    const starts = new Map([[17, 0], [18, 0], [19, 1]]);
+    expect(pdfSourcePositionAt(starts, 0, 17)).toEqual({ pageNumber: 17, offset: 0 });
+    expect(pdfSourcePositionAt(starts, 1, 0)).toEqual({ pageNumber: 19, offset: 0 });
+    expect(pdfSourcePositionAt(starts, 2, 19)).toEqual({ pageNumber: 19, offset: 1 });
   });
 
-  it("waits for pagination when the preceding PDF page has not been measured", () => {
-    expect(previousPdfLocation({ pageNumber: 3, virtualPageIndex: 0 }))
-      .toEqual({ pageNumber: 2, virtualPageIndex: 0, waitForPageCount: true });
+  it("round-trips a locator for a source page sharing a screen with the preceding page", () => {
+    const sourcePage = 18;
+    const offset = 0;
+    const starts = new Map([[17, 0], [18, 0]]);
+    const destinationIndex = starts.get(sourcePage)! + offset;
+    expect(pdfSourcePositionAt(starts, destinationIndex, sourcePage)).toEqual({ pageNumber: 18, offset: 0 });
   });
+});
+
+describe("groupPdfSourceBlocks", () => {
+  it("joins a paragraph across consecutive source pages without dropping each page segment", () => {
+    const groups = groupPdfSourceBlocks([
+      { pageNumber: 17, block: { kind: "paragraph", text: "诸位代表先生们：我们有一个共同的感觉，这就是我们" } },
+      { pageNumber: 18, block: { kind: "paragraph", text: "的工作将写在人类的历史上继续前进" } },
+      { pageNumber: 19, block: { kind: "paragraph", text: "，并且继续推动人类社会向前发展。" } },
+    ]);
+
+    expect(groups).toHaveLength(1);
+    expect(groups[0]?.map(({ source }) => source.pageNumber)).toEqual([17, 18, 19]);
+    expect(groups[0]?.map(({ source }) => source.block?.text).join("")).toContain("这就是我们的工作将写在人类的历史上继续前进，并且继续推动人类社会向前发展。");
+  });
+
+  it("does not merge across sentence endings, headings or image pages", () => {
+    expect(groupPdfSourceBlocks([
+      { pageNumber: 1, block: { kind: "paragraph", text: "上一句结束。" } },
+      { pageNumber: 2, block: { kind: "paragraph", text: "下一句开始。" } },
+    ])).toHaveLength(2);
+    expect(groupPdfSourceBlocks([
+      { pageNumber: 1, block: { kind: "paragraph", text: "前文尚未结束" } },
+      { pageNumber: 2, block: { kind: "heading", text: "下一章" } },
+    ])).toHaveLength(2);
+    expect(groupPdfSourceBlocks([
+      { pageNumber: 1, block: { kind: "paragraph", text: "前文尚未结束" } },
+      { pageNumber: 2, imagePage: true },
+      { pageNumber: 3, block: { kind: "paragraph", text: "后文继续" } },
+    ])).toHaveLength(3);
+  });
+});
+
+it("maps first-character source positions with floor, including the within-column case", () => {
+  expect(pdfSourceVirtualPageIndex(48 + 500, 48, 760, 120, 1)).toBe(0);
+  expect(pdfSourceVirtualPageIndex(48 + 760 + 120 + 12, 48, 760, 120, 1)).toBe(1);
+  expect(pdfSourceVirtualPageIndex(48 + 760 + 120 + 12, 48, 760, 120, 2)).toBe(0);
+});
+
+it("flows short paragraphs from adjacent original PDF pages in one reading stream", async () => {
+  vi.mocked(getDocument).mockReturnValue({
+    promise: Promise.resolve({
+      numPages: 3,
+      getPage: vi.fn(async (pageNumber: number) => ({
+        getTextContent: async () => ({ items: [{ str: `第${pageNumber}页短段。`, transform: [1, 0, 0, 12, 36, 720], width: 88, height: 12, hasEOL: true }] }),
+      })),
+    }),
+    destroy: vi.fn(),
+  } as unknown as ReturnType<typeof getDocument>);
+
+  const { container } = render(<PdfDocumentReader bookId="pdf-continuous-pages" annotations={[]} theme={{ background: "white", foreground: "black", muted: "gray" }} fontSize={19} fontFamily="serif" readOnly onSelect={vi.fn()} onPosition={vi.fn()} />);
+  expect(await screen.findByText("第3页短段。")).toBeInTheDocument();
+  const article = container.querySelector("article")!;
+  expect(article).toContainElement(screen.getByText("第1页短段。"));
+  expect(article).toContainElement(screen.getByText("第2页短段。"));
+  expect(article).toContainElement(screen.getByText("第3页短段。"));
+  expect(article?.querySelectorAll("[data-pdf-source-marker]")).toHaveLength(3);
+});
+
+it("renders a continued paragraph as one node while retaining selectable source-page spans", async () => {
+  const firstSegment = "诸位代表先生们：我们有一个共同的感觉，这就是我们";
+  const secondSegment = "的工作将写在人类的历史上并且继续进行下去。";
+  vi.mocked(getDocument).mockReturnValue({
+    promise: Promise.resolve({
+      numPages: 2,
+      getPage: vi.fn(async (pageNumber: number) => ({
+        getTextContent: async () => ({ items: [{ str: pageNumber === 1 ? firstSegment : secondSegment, transform: [1, 0, 0, 12, 36, 720], width: 250, height: 12, hasEOL: true }] }),
+      })),
+    }),
+    destroy: vi.fn(),
+  } as unknown as ReturnType<typeof getDocument>);
+  const onSelect = vi.fn();
+  const { container } = render(<PdfDocumentReader bookId="pdf-continued-paragraph" annotations={[]} theme={{ background: "white", foreground: "black", muted: "gray" }} fontSize={19} fontFamily="serif" readOnly onSelect={onSelect} onPosition={vi.fn()} />);
+
+  expect(await screen.findByText(firstSegment)).toBeInTheDocument();
+  const firstSpan = screen.getByText(firstSegment);
+  const secondSpan = screen.getByText(secondSegment);
+  expect(firstSpan.closest("p")).toBe(secondSpan.closest("p"));
+  expect(firstSpan).toHaveAttribute("data-pdf-source-page", "1");
+  expect(secondSpan).toHaveAttribute("data-pdf-source-page", "2");
+  expect(firstSpan).toHaveAttribute("data-pdf-source-marker");
+  expect(secondSpan).toHaveAttribute("data-pdf-source-marker");
+
+  const selectionRange = document.createRange();
+  selectionRange.selectNodeContents(secondSpan);
+  Object.defineProperty(selectionRange, "getBoundingClientRect", { value: () => new DOMRect(1, 2, 20, 10) });
+  const selection = window.getSelection();
+  selection?.removeAllRanges();
+  selection?.addRange(selectionRange);
+  fireEvent.mouseUp(container.querySelector("article")!);
+  expect(onSelect).toHaveBeenCalledWith(expect.objectContaining({ locator: "pdf:page=2&offset=0" }));
+  selection?.removeAllRanges();
+});
+
+it("appends later extraction batches, restores page 13 without saving page 1, and retains an image-page placeholder", async () => {
+  const widthDescriptor = Object.getOwnPropertyDescriptor(HTMLElement.prototype, "clientWidth");
+  Object.defineProperty(HTMLElement.prototype, "clientWidth", {
+    configurable: true,
+    get() { return this.classList?.contains("reader-page-turn-surface") ? tokens.layout.breakpointTablet : 0; },
+  });
+  const canvasContext = vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue({ drawImage: vi.fn() } as unknown as CanvasRenderingContext2D);
+  const getPosition = vi.spyOn(api, "getReadingPosition").mockResolvedValue({ locator: "pdf:page=13&offset=0" } as never);
+  const savePosition = vi.spyOn(api, "saveReadingPosition").mockResolvedValue({} as never);
+  vi.mocked(getDocument).mockReturnValue({
+    promise: Promise.resolve({
+      numPages: 13,
+      getPage: vi.fn(async (pageNumber: number) => ({
+        getTextContent: async () => ({ items: pageNumber === 2 ? [] : [{ str: `第${pageNumber}页批次正文。`, transform: [1, 0, 0, 12, 36, 720], width: 120, height: 12, hasEOL: true }] }),
+        getViewport: ({ scale }: { scale: number }) => ({ width: 200 * scale, height: 300 * scale }),
+        render: () => ({ promise: Promise.resolve(), cancel: vi.fn() }),
+      })),
+    }),
+    destroy: vi.fn(),
+  } as unknown as ReturnType<typeof getDocument>);
+
+  try {
+    const { container } = render(<PdfDocumentReader bookId="pdf-batched-target" annotations={[]} theme={{ background: "white", foreground: "black", muted: "gray" }} fontSize={19} fontFamily="serif" target="pdf:page=13&offset=0" targetRevision={1} onSelect={vi.fn()} onPosition={vi.fn()} />);
+    expect(await screen.findByText("第13页批次正文。")).toBeInTheDocument();
+    expect(container.querySelector("article")).toContainElement(screen.getByText("第1页批次正文。"));
+    expect(container.querySelector("[data-pdf-source-page='2'][data-pdf-source-marker]")).not.toBeNull();
+    await waitFor(() => expect(savePosition).toHaveBeenCalledWith("pdf-batched-target", "pdf:page=13&offset=0", expect.any(Number)));
+    expect(savePosition).not.toHaveBeenCalledWith("pdf-batched-target", "pdf:page=1&offset=0", expect.any(Number));
+  } finally {
+    getPosition.mockRestore();
+    savePosition.mockRestore();
+    canvasContext.mockRestore();
+    if (widthDescriptor) Object.defineProperty(HTMLElement.prototype, "clientWidth", widthDescriptor);
+    else Reflect.deleteProperty(HTMLElement.prototype, "clientWidth");
+  }
 });
 
 it("shows two scanned pages on wide screens and advances without skipping pages", async () => {

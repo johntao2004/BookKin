@@ -1,0 +1,11 @@
+/* Shared serif face: the same Noto Serif SC subset used by the library loading screen.
+   The bundled Noto Serif SC unicode subsets provide coverage for other book and user text. */
+@import url("/fonts/noto-fonts.css");
+
+@font-face {
+  font-family: "Silvae Serif";
+  src: url("/assets/ming-library/assets/MingLibrarySerif.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+}

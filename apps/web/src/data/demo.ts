@@ -86,7 +86,7 @@ export const demoRecycleBin: RecycleBinEntry[] = [
     format: "EPUB",
     coverUrl: covers[3],
     originalPath: "主书库/顾安安/声之来信.epub",
-    trashPath: ".bookkin-trash/4fa12d/声之来信.epub",
+    trashPath: ".silvae-trash/4fa12d/声之来信.epub",
     sizeBytes: 4_821_938,
     deletedBy: "书库管理员",
     deletedAt: "2026-08-19T04:20:00Z",

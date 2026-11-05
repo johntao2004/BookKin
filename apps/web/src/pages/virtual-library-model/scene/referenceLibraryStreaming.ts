@@ -97,10 +97,10 @@ interface ChunkRecord {
 }
 
 function assetUrl(path: string, base: string = REFERENCE_LIBRARY_MANIFEST_URL) {
-  const url = new URL(path, new URL(base, 'https://bookkin.invalid'));
+  const url = new URL(path, new URL(base, 'https://silvae.invalid'));
   // 生成的模块和纹理必须位于此本地资产命名空间内。
   // Generated modules and textures must stay in this local asset namespace.
-  if (url.origin !== 'https://bookkin.invalid' || !url.pathname.startsWith('/assets/hogwarts-library/')
+  if (url.origin !== 'https://silvae.invalid' || !url.pathname.startsWith('/assets/hogwarts-library/')
     || url.hash || [...url.searchParams.keys()].some(key => key !== 'v')
     || url.searchParams.getAll('v').length > 1
     || (url.searchParams.has('v') && !/^[A-Za-z\d-]{1,80}$/.test(url.searchParams.get('v')!))) {
@@ -425,7 +425,7 @@ export async function createReferenceLibraryStreaming(options: ReferenceLibraryS
           return job;
         };
         parser.assignFinalMaterial = mesh => bank.assignFinalMaterial(mesh);
-        return {name: 'BOOKKIN_shared_material_bank', loadMaterial: index => bank.loadMaterial(index)};
+        return {name: 'SILVAE_shared_material_bank', loadMaterial: index => bank.loadMaterial(index)};
       });
       const decodeStarted = performance.now();
       const gltf = await loader.parseAsync(bytes, url.slice(0, url.lastIndexOf('/') + 1));

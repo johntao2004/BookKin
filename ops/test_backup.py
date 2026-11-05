@@ -15,9 +15,9 @@ class BackupTest(unittest.TestCase):
         library = directory / "library"
         fonts = directory / "fonts"
         (library / "books").mkdir(parents=True)
-        (library / ".bookkin-assets" / "covers").mkdir(parents=True)
-        (library / ".bookkin-trash").mkdir(parents=True)
-        (library / ".bookkin-cache").mkdir(parents=True)
+        (library / ".silvae-assets" / "covers").mkdir(parents=True)
+        (library / ".silvae-trash").mkdir(parents=True)
+        (library / ".silvae-cache").mkdir(parents=True)
         fonts.mkdir()
         articles = directory / "articles"
         vault = directory / "vault"
@@ -26,9 +26,9 @@ class BackupTest(unittest.TestCase):
         (articles / "image.png").write_text("article-image", encoding="utf-8")
         (vault / "encrypted-chunk").write_bytes(b"ciphertext")
         (library / "books" / "sample.epub").write_text("book", encoding="utf-8")
-        (library / ".bookkin-assets" / "covers" / "sample.jpg").write_text("cover", encoding="utf-8")
-        (library / ".bookkin-trash" / "removed.epub").write_text("trash", encoding="utf-8")
-        (library / ".bookkin-cache" / "derived.jpg").write_text("cache", encoding="utf-8")
+        (library / ".silvae-assets" / "covers" / "sample.jpg").write_text("cover", encoding="utf-8")
+        (library / ".silvae-trash" / "removed.epub").write_text("trash", encoding="utf-8")
+        (library / ".silvae-cache" / "derived.jpg").write_text("cache", encoding="utf-8")
         (fonts / "sample.woff2").write_text("font", encoding="utf-8")
 
         fake_bin = directory / "bin"
@@ -39,11 +39,11 @@ class BackupTest(unittest.TestCase):
 
         env = os.environ | {
             "PATH": f"{fake_bin}:{os.environ['PATH']}",
-            "BOOKKIN_BACKUP_DIR": str(directory / "backups"),
-            "BOOKKIN_LIBRARY_BACKUP_ROOTS": str(library),
-            "BOOKKIN_FONT_BACKUP_ROOT": str(fonts),
-            "BOOKKIN_ARTICLE_STORAGE": str(articles),
-            "BOOKKIN_VAULT_STORAGE": str(vault),
+            "SILVAE_BACKUP_DIR": str(directory / "backups"),
+            "SILVAE_LIBRARY_BACKUP_ROOTS": str(library),
+            "SILVAE_FONT_BACKUP_ROOT": str(fonts),
+            "SILVAE_ARTICLE_STORAGE": str(articles),
+            "SILVAE_VAULT_STORAGE": str(vault),
         }
         result = subprocess.run([str(ROOT / "ops/backup.sh")], cwd=ROOT, env=env, capture_output=True, text=True, check=True)
         backup = pathlib.Path(result.stdout.strip().split("Backup written to ", 1)[1])
@@ -54,9 +54,9 @@ class BackupTest(unittest.TestCase):
             backup, env, _, _ = self.run_backup(pathlib.Path(temporary))
             entries = subprocess.check_output(["tar", "-tzf", str(backup / "recoverable-root-0.tar.gz")], text=True)
             self.assertIn("books/sample.epub", entries)
-            self.assertIn(".bookkin-assets/covers/sample.jpg", entries)
-            self.assertIn(".bookkin-trash/removed.epub", entries)
-            self.assertNotIn(".bookkin-cache/derived.jpg", entries)
+            self.assertIn(".silvae-assets/covers/sample.jpg", entries)
+            self.assertIn(".silvae-trash/removed.epub", entries)
+            self.assertNotIn(".silvae-cache/derived.jpg", entries)
             self.assertTrue((backup / "fonts.tar.gz").is_file())
             self.assertIn("image.png", subprocess.check_output(["tar", "-tzf", str(backup / "articles.tar.gz")], text=True))
             self.assertIn("encrypted-chunk", subprocess.check_output(["tar", "-tzf", str(backup / "vault.tar.gz")], text=True))
@@ -73,9 +73,9 @@ class BackupTest(unittest.TestCase):
             library = directory / "library"
             library.mkdir()
             env = os.environ | {
-                "BOOKKIN_BACKUP_DIR": str(directory / "backups"),
-                "BOOKKIN_LIBRARY_BACKUP_ROOTS": str(library),
-                "BOOKKIN_FONT_BACKUP_ROOT": str(directory / "missing-fonts"),
+                "SILVAE_BACKUP_DIR": str(directory / "backups"),
+                "SILVAE_LIBRARY_BACKUP_ROOTS": str(library),
+                "SILVAE_FONT_BACKUP_ROOT": str(directory / "missing-fonts"),
             }
             result = subprocess.run([str(ROOT / "ops/backup.sh")], cwd=ROOT, env=env, capture_output=True, text=True)
             self.assertNotEqual(result.returncode, 0)
@@ -89,10 +89,10 @@ class BackupTest(unittest.TestCase):
             for area in ("books", "articles", "vault"):
                 (targets / area).mkdir(parents=True, exist_ok=True)
             env.update({
-                "BOOKKIN_LIBRARY_BACKUP_ROOTS": str(targets / "books"),
-                "BOOKKIN_FONT_BACKUP_ROOT": str(targets / "fonts"),
-                "BOOKKIN_ARTICLE_STORAGE": str(targets / "articles"),
-                "BOOKKIN_VAULT_STORAGE": str(targets / "vault"),
+                "SILVAE_LIBRARY_BACKUP_ROOTS": str(targets / "books"),
+                "SILVAE_FONT_BACKUP_ROOT": str(targets / "fonts"),
+                "SILVAE_ARTICLE_STORAGE": str(targets / "articles"),
+                "SILVAE_VAULT_STORAGE": str(targets / "vault"),
             })
             subprocess.run([str(ROOT / "ops/restore.sh"), str(backup)], cwd=ROOT, env=env, check=True, capture_output=True)
             self.assertEqual((targets / "articles/image.png").read_text(), "article-image")

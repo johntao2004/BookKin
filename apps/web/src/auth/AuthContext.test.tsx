@@ -56,7 +56,7 @@ describe("RequireAuth", () => {
   });
 
   it("shows an explicit 403 page instead of silently redirecting a member", () => {
-    sessionStorage.setItem("bookkin-demo-session", JSON.stringify(member));
+    sessionStorage.setItem("silvae-demo-session", JSON.stringify(member));
     renderProtectedRoute("/admin/users", ["OWNER", "ADMIN"]);
 
     expect(screen.getByRole("heading", { name: "权限受限" })).toBeInTheDocument();
@@ -66,7 +66,7 @@ describe("RequireAuth", () => {
   });
 
   it("renders the route for an allowed role", () => {
-    sessionStorage.setItem("bookkin-demo-session", JSON.stringify(owner));
+    sessionStorage.setItem("silvae-demo-session", JSON.stringify(owner));
     renderProtectedRoute("/admin/users", ["OWNER", "ADMIN"]);
 
     expect(screen.getByText("用户管理私密内容")).toBeInTheDocument();

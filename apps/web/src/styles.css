@@ -1,6 +1,6 @@
 @import "antd/dist/reset.css";
 @import "./theme/generated-tokens.css";
-@import url("/assets/fonts/bookkin-serif.css");
+@import url("/assets/fonts/silvae-serif.css");
 
 @font-face {
   font-family: "Source Han Sans SC";
@@ -694,7 +694,7 @@ html:has(.ant-drawer-open) {
 }
 
 /* -------------------------------------------------------------------------
-   BookKin editorial control layer
+   Silvae editorial control layer
 
    Ant Design supplies behavior and accessibility; these shared rules keep
    every screen on the same cream/coral/navy system. Page components should

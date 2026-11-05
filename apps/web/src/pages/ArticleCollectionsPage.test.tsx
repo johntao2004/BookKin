@@ -26,7 +26,7 @@ describe("ArticleCollectionsPage routes and visibility", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
     sessionStorage.clear();
-    sessionStorage.setItem("bookkin-demo-session", JSON.stringify(member));
+    sessionStorage.setItem("silvae-demo-session", JSON.stringify(member));
     permissionGrants.clear();
     ["articles.collections.view", "articles.collections.details.view", "articles.collections.edit"].forEach(code => permissionGrants.add(code));
   });

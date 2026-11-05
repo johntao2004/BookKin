@@ -10,6 +10,14 @@ import { TestProviders } from "../test/TestProviders";
 
 vi.mock("../auth/permissions", () => ({ usePermissions: () => ({ can: () => true }) }));
 const readerBindings = vi.hoisted(() => ({ onSelect: undefined as ((selection: ReaderSelection) => void) | undefined }));
+const markdownEditorBindings = vi.hoisted(() => ({ props: undefined as { mode: string; maxLength?: number; disabled?: boolean; autoFocus?: boolean } | undefined }));
+
+vi.mock("../features/content/MarkdownEditor", () => ({
+  MarkdownEditor: ({ value, onChange, label, disabled, mode, maxLength, autoFocus }: { value: string; onChange: (value: string) => void; label: string; disabled?: boolean; mode: string; maxLength?: number; autoFocus?: boolean }) => {
+    markdownEditorBindings.props = { mode, maxLength, disabled, autoFocus };
+    return <textarea aria-label={label} value={value} disabled={disabled} data-mode={mode} data-max-length={maxLength} onChange={event => onChange(event.target.value)} />;
+  },
+}));
 
 vi.mock("../components/readers/EpubDocumentReader", () => ({
   default: (props: { annotations?: { id: string }[]; onAnnotationActivate?: (id: string) => void; onAnnotationDismiss?: () => void; contentUrl?: string; flow?: string; readOnly?: boolean; target?: string; onNavigation: (items: TocItem[]) => void; onSelect: (selection: ReaderSelection) => void; onPosition: (locator: string, progress: number) => void }) => { readerBindings.onSelect = props.onSelect; return <section aria-label="共享正文" data-annotation-count={props.annotations?.length} data-content-url={props.contentUrl} data-flow={props.flow} data-read-only={String(props.readOnly)} data-target={props.target} data-target-revision={(props as { targetRevision?: number }).targetRevision}>
@@ -38,7 +46,7 @@ function independentSource(): IndependentReaderSource {
 describe("ReaderWorkspace independent source", () => {
   beforeEach(() => {
     localStorage.clear();
-    sessionStorage.setItem("bookkin-demo-session", JSON.stringify({ id: "owner", username: "owner", displayName: "主人", role: "OWNER", mustChangePassword: false }));
+    sessionStorage.setItem("silvae-demo-session", JSON.stringify({ id: "owner", username: "owner", displayName: "主人", role: "OWNER", mustChangePassword: false }));
   });
   afterEach(() => vi.restoreAllMocks());
 
@@ -156,7 +164,8 @@ describe("ReaderWorkspace independent source", () => {
     expect(screen.queryByText(/仅你可见/)).not.toBeInTheDocument();
     expect(screen.getAllByText("“只展示一次的原文”")).toHaveLength(1);
     expect(screen.getByText("高亮笔记")).toBeInTheDocument();
-    expect(screen.getByText(/第一条想法\s+第二条想法/)).toBeInTheDocument();
+    expect(screen.getByText("第一条想法")).toBeInTheDocument();
+    expect(screen.getByText("第二条想法")).toBeInTheDocument();
     expect(screen.getAllByRole("button", { name: "返回原文" })).toHaveLength(1);
     fireEvent.click(screen.getByRole("button", { name: "删除批注" }));
     await waitFor(() => expect(source.deleteAnnotation).toHaveBeenCalledTimes(3));
@@ -173,10 +182,37 @@ describe("ReaderWorkspace independent source", () => {
     expect(await screen.findByRole("dialog", { name: "编辑笔记" })).toBeInTheDocument();
     const field = screen.getByRole("textbox", { name: "写下这段文字带来的想法" });
     expect(field).toHaveValue("已有笔记");
+    expect(field).toHaveAttribute("data-mode", "note");
+    expect(field).toHaveAttribute("data-max-length", "20000");
+    expect(markdownEditorBindings.props?.autoFocus).toBe(true);
+    expect(source.createAnnotation).not.toHaveBeenCalled();
     expect(screen.getByRole("button", { name: "选择绿色荧光笔" })).toHaveAttribute("aria-pressed", "true");
-    fireEvent.change(field, { target: { value: "更新后的笔记" } });
+    const markdown = "# 更新后的笔记\n\n- [x] 留下原始 Markdown";
+    fireEvent.change(field, { target: { value: markdown } });
     fireEvent.click(screen.getByRole("button", { name: "保存笔记" }));
-    await waitFor(() => expect(source.createAnnotation).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ type: "NOTE", locator: "article.xhtml#p-1", note: "更新后的笔记", color: "GREEN" })));
+    await waitFor(() => expect(source.createAnnotation).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ type: "NOTE", locator: "article.xhtml#p-1", note: markdown, color: "GREEN" })));
+  });
+
+  it("disables the note editor while saving and keeps Markdown draft after a failed save", async () => {
+    const source = independentSource();
+    source.resolveAnnotationLocator = vi.fn(() => "article.xhtml#p-1");
+    source.annotations = [{ id: "existing", bookId: source.id, type: "NOTE", style: "HIGHLIGHT", quote: "文章中的一句话", locator: "article.xhtml#p-1", note: "已有笔记", createdAt: "2026-10-20T00:00:00Z" }];
+    let rejectSave: (reason: Error) => void = () => {};
+    vi.mocked(source.createAnnotation).mockImplementation(() => new Promise((_, reject) => { rejectSave = reject; }));
+    render(<TestProviders><ReaderWorkspace source={source} /></TestProviders>);
+    fireEvent.click(await screen.findByRole("button", { name: "选择文章文字" }));
+    fireEvent.click(screen.getByRole("button", { name: "高亮＋笔记" }));
+    const field = screen.getByRole("textbox", { name: "写下这段文字带来的想法" });
+    const markdown = "**待保存**\n\n[原始链接](https://example.com)";
+    fireEvent.change(field, { target: { value: markdown } });
+    fireEvent.click(screen.getByRole("button", { name: "保存笔记" }));
+    await waitFor(() => expect(source.createAnnotation).toHaveBeenCalledWith(expect.objectContaining({ note: markdown })));
+    expect(field).toBeDisabled();
+    expect(markdownEditorBindings.props).toMatchObject({ mode: "note", maxLength: 20_000, disabled: true });
+    rejectSave(new Error("同步失败"));
+    expect(await screen.findByText("同步失败")).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "写下这段文字带来的想法" })).toHaveValue(markdown);
+    expect(screen.getAllByRole("dialog").some(dialog => dialog.textContent?.includes("编辑笔记"))).toBe(true);
   });
 
   it("keeps reader selection callbacks stable while using the latest saved note", async () => {
@@ -318,7 +354,7 @@ describe("ReaderWorkspace independent source", () => {
   });
 
   it("keeps article information and private note actions out of the guest notes drawer", async () => {
-    sessionStorage.removeItem("bookkin-demo-session");
+    sessionStorage.removeItem("silvae-demo-session");
     const source = independentSource();
     render(<TestProviders><ReaderWorkspace source={source} /></TestProviders>);
     fireEvent.click(await screen.findByRole("button", { name: "选择文章文字" }));

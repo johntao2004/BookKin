@@ -1,0 +1,105 @@
+package com.elexvx.silvae.filemanagement;
+
+import com.elexvx.silvae.common.ApiException;
+import java.io.IOException;
+import java.text.Normalizer;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.Path;
+import java.util.Locale;
+import java.util.Set;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Component;
+
+// 集中校验相对路径与真实根边界；路径检查本身不提供文件锁。
+// Centralizes relative-path and real-root checks; path validation itself does not lock files.
+@Component
+public class PathPolicy {
+    private static final Set<String> WINDOWS_RESERVED = Set.of(
+            "CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9",
+            "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9");
+    private static final Set<String> INTERNAL_DIRECTORIES = Set.of(
+            ".silvae-trash", ".silvae-staging", ".silvae-versions", ".silvae-cache", ".silvae-assets");
+
+    public String normalizeRelative(String raw) {
+        if (raw == null || raw.isBlank() || raw.indexOf('\0') >= 0) reject("路径不能为空或包含空字符。");
+        String portable = Normalizer.normalize(raw, Normalizer.Form.NFC).replace('\\', '/').strip();
+        if (portable.startsWith("/") || portable.matches("^[A-Za-z]:.*")) reject("目标路径必须是书库内的相对路径。");
+        Path path = Path.of(portable).normalize();
+        if (path.isAbsolute() || path.startsWith("..")) reject("路径不能越过书库根目录。");
+        for (Path segment : path) {
+            String value = segment.toString();
+            if (value.equals(".") || value.equals("..") || value.endsWith(".") || value.endsWith(" ")) reject("路径包含不安全的名称。");
+            String stem = value.contains(".") ? value.substring(0, value.indexOf('.')) : value;
+            if (WINDOWS_RESERVED.contains(stem.toUpperCase(Locale.ROOT))) reject("路径包含系统保留文件名。");
+        }
+        if (path.getNameCount() == 0 || INTERNAL_DIRECTORIES.contains(path.getName(0).toString())) reject("该目录由Silvae内部管理。");
+        return path.toString().replace('\\', '/');
+    }
+
+    // 通过真实路径阻止链接逃出书库；书库内解析到的链接与全面禁止软链接并不等同。
+    // Real-path containment rejects links escaping the root; this is not a blanket ban on all in-root symlinks.
+    public Path resolveExisting(Path root, String relative) throws IOException {
+        Path canonicalRoot = root.toRealPath();
+        Path candidate = canonicalRoot.resolve(normalizeRelative(relative)).normalize();
+        Path real = candidate.toRealPath();
+        ensureInside(canonicalRoot, real);
+        return real;
+    }
+
+    // 目标可能尚不存在，因此检查最近已存在父目录的真实路径。
+    // The destination may not exist yet, so validate the nearest existing parent through its real path.
+    public Path resolveTarget(Path root, String relative) throws IOException {
+        Path canonicalRoot = root.toRealPath();
+        Path candidate = canonicalRoot.resolve(normalizeRelative(relative)).normalize();
+        ensureInside(canonicalRoot, candidate);
+        Path parent = candidate.getParent();
+        while (parent != null && !Files.exists(parent, LinkOption.NOFOLLOW_LINKS)) parent = parent.getParent();
+        if (parent == null) reject("无法确认目标目录边界。");
+        ensureInside(canonicalRoot, parent.toRealPath());
+        return candidate;
+    }
+
+    public void requireNoSymbolicLinks(Path root, String relative) throws IOException {
+        Path current = root.toRealPath();
+        for (Path segment : Path.of(normalizeRelative(relative))) {
+            current = current.resolve(segment);
+            if (Files.isSymbolicLink(current)) reject("文件路径不能包含软链接。");
+        }
+    }
+
+    public boolean hasCaseInsensitiveConflict(Path target) throws IOException {
+        return hasCaseInsensitiveConflict(target, null);
+    }
+
+    public boolean hasCaseInsensitiveConflict(Path target, Path ignoredSource) throws IOException {
+        Path parent = target.getParent();
+        if (parent == null || !Files.isDirectory(parent)) return false;
+        String wanted = target.getFileName().toString();
+        try (var stream = Files.list(parent)) {
+            return stream.anyMatch(path -> !path.equals(ignoredSource) && path.getFileName().toString().equalsIgnoreCase(wanted)
+                    && !path.getFileName().toString().equals(wanted));
+        }
+    }
+
+    public boolean isCaseOnlyRename(Path source, Path target) {
+        return source.getParent().equals(target.getParent())
+                && !source.getFileName().equals(target.getFileName())
+                && source.getFileName().toString().equalsIgnoreCase(target.getFileName().toString());
+    }
+
+    public boolean targetConflict(Path source, Path target) throws IOException {
+        boolean ownCaseRename = isCaseOnlyRename(source, target);
+        boolean occupied = Files.exists(target, LinkOption.NOFOLLOW_LINKS)
+                && !(ownCaseRename && !Files.isSymbolicLink(target) && Files.isSameFile(source, target));
+        return occupied || hasCaseInsensitiveConflict(target, ownCaseRename ? source : null);
+    }
+
+    private void ensureInside(Path canonicalRoot, Path candidate) {
+        if (!candidate.normalize().startsWith(canonicalRoot)) reject("解析后的路径越过书库根目录。");
+    }
+
+    private void reject(String message) {
+        throw new ApiException(HttpStatus.BAD_REQUEST, "UNSAFE_PATH", message);
+    }
+}

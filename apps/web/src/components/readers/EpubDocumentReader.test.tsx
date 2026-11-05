@@ -6,8 +6,8 @@ import { api } from "../../api/client";
 import { prepareSessionExit, setPersistenceUser } from "../../auth/session-save";
 import { TestProviders } from "../../test/TestProviders";
 import { tokens } from "../../theme/generated-tokens";
-import { useBookKinTheme } from "../../theme/BookKinThemeProvider";
-import { bookKinThemeOptions } from "../../theme/theme";
+import { useSilvaeTheme } from "../../theme/SilvaeThemeProvider";
+import { silvaeThemeOptions } from "../../theme/theme";
 
 vi.mock("epubjs", () => ({ default: vi.fn() }));
 
@@ -91,7 +91,7 @@ describe("EpubDocumentReader flow", () => {
 
   afterEach(() => {
     setPersistenceUser(null);
-    localStorage.removeItem("bookkin-site-theme");
+    localStorage.removeItem("silvae-site-theme");
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
   });
@@ -152,20 +152,20 @@ describe("EpubDocumentReader flow", () => {
     const paragraph = mocks.contentsDocument.getElementById("saved-paragraph");
     const props = baseProps();
     function ThemeReader() {
-      const { mode, setMode } = useBookKinTheme();
+      const { mode, setMode } = useSilvaeTheme();
       return <>
         <button onClick={() => setMode(mode === "NIGHT" ? "PAPER" : "NIGHT")}>Change theme</button>
-        <EpubDocumentReader {...props} theme={bookKinThemeOptions[mode].reader} flow="scrolled-doc" />
+        <EpubDocumentReader {...props} theme={silvaeThemeOptions[mode].reader} flow="scrolled-doc" />
       </>;
     }
     render(<TestProviders><ThemeReader /></TestProviders>);
     await waitFor(() => expect(mocks.contentsDocument.querySelector("style[data-article-prose]")).not.toBeNull());
     const currentCss = () => mocks.contentsDocument.querySelector("style[data-article-prose]")?.textContent;
-    expect(currentCss()).toContain(`--color-primary-soft: ${bookKinThemeOptions.PAPER.colors.primarySoft};`);
+    expect(currentCss()).toContain(`--color-primary-soft: ${silvaeThemeOptions.PAPER.colors.primarySoft};`);
     fireEvent.click(screen.getByRole("button", { name: "Change theme" }));
-    await waitFor(() => expect(currentCss()).toContain(`--color-primary-soft: ${bookKinThemeOptions.NIGHT.colors.primarySoft};`));
+    await waitFor(() => expect(currentCss()).toContain(`--color-primary-soft: ${silvaeThemeOptions.NIGHT.colors.primarySoft};`));
     fireEvent.click(screen.getByRole("button", { name: "Change theme" }));
-    await waitFor(() => expect(currentCss()).toContain(`--color-primary-soft: ${bookKinThemeOptions.PAPER.colors.primarySoft};`));
+    await waitFor(() => expect(currentCss()).toContain(`--color-primary-soft: ${silvaeThemeOptions.PAPER.colors.primarySoft};`));
     expect(mocks.contentsDocument.querySelectorAll("style[data-article-prose]")).toHaveLength(1);
     expect(mocks.contentsDocument.getElementById("saved-paragraph")).toBe(paragraph);
     expect(mocks.book.renderTo).toHaveBeenCalledOnce();

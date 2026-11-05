@@ -14,7 +14,7 @@ import {
 } from './virtual-library-query';
 import './ming-library.css';
 
-export const MING_LIBRARY_CHANNEL = 'bookkin:ming-library';
+export const MING_LIBRARY_CHANNEL = 'silvae:ming-library';
 
 /** Keep the imported scene local and connect its documented catalog API to the visible catalog. */
 export function MingLibraryExperience() {

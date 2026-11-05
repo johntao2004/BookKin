@@ -8,6 +8,7 @@ export type MarkdownEditorProps = {
   disabled?: boolean;
   maxLength?: number;
   placeholder?: string;
+  autoFocus?: boolean;
   onImportFiles?: (files: File[]) => Promise<string | undefined>;
 };
 

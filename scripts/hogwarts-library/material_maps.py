@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # 使用固定随机种子与周期噪声生成可重复平铺的 PBR 纹理；颜色、粗糙度和切线法线按各自数据语义保存。
 # Generates repeatable tiled PBR textures with seeded periodic noise, preserving the distinct semantics of color, roughness and tangent-normal data.
-"""Original deterministic, periodic PBR tiles for BookKin's library.
+"""Original deterministic, periodic PBR tiles for Silvae's library.
 
 Uses only NumPy/Pillow and seeded mathematical fields: no scans, downloaded
 textures, screenshots, protected assets, baked lighting or painted geometry.
@@ -153,7 +153,7 @@ def main():
     OUT.mkdir(parents=True, exist_ok=True)
     manifest = {
         'version': 2, 'seed': SEED,
-        'provenance': 'Original offline procedural NumPy/Pillow fields by BookKin; no scans, external images, screenshot copying, game textures or logos.',
+        'provenance': 'Original offline procedural NumPy/Pillow fields by Silvae; no scans, external images, screenshot copying, game textures or logos.',
         'limitations': 'Stylized procedural microdetail; not scanned materials or measured PBR. Architecture, edge wear and joinery remain modeled geometry.',
         'tiling': 'Periodic random fields and wrapped central differences; repeat both U and V. Opposite edge texels are consecutive samples rather than duplicated borders.',
         'orientation': 'Wood fibers predominantly follow texture V; UV orientation must follow each timber member. Normal maps use OpenGL +Y and neutral [128,128,255].',

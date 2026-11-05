@@ -15,8 +15,8 @@ const category = { id: "topic", name: "文学", bookCount: 2, previewBooks: [], 
 
 describe("catalog advanced filters", () => {
   beforeEach(() => {
-    sessionStorage.setItem("bookkin-demo-session", JSON.stringify({ id: "owner", username: "owner", displayName: "主人", role: "OWNER", mustChangePassword: false }));
-    localStorage.setItem("bookkin-library-overview:owner", "hidden");
+    sessionStorage.setItem("silvae-demo-session", JSON.stringify({ id: "owner", username: "owner", displayName: "主人", role: "OWNER", mustChangePassword: false }));
+    localStorage.setItem("silvae-library-overview:owner", "hidden");
     vi.spyOn(api, "listCategories").mockResolvedValue({ items: [category], editable: true });
     vi.spyOn(api, "listBooks").mockResolvedValue({ items: [] });
     vi.spyOn(api, "listDisplayBooks").mockResolvedValue({ items: [], revision: 1 });

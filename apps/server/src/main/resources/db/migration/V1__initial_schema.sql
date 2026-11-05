@@ -1,4 +1,4 @@
--- Consolidated BookKin schema. New installations are empty; legacy upgrades require ops/database.
+-- Consolidated Silvae schema. New installations are empty; legacy upgrades require ops/database.
 CREATE EXTENSION IF NOT EXISTS pg_trgm WITH SCHEMA public;
 
 COMMENT ON EXTENSION pg_trgm IS 'text similarity measurement and index searching based on trigrams';
@@ -7,7 +7,7 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA public;
 
 COMMENT ON EXTENSION pgcrypto IS 'cryptographic functions';
 
-CREATE FUNCTION bookkin_bump_catalog_revision() RETURNS trigger
+CREATE FUNCTION silvae_bump_catalog_revision() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 BEGIN
@@ -32,7 +32,7 @@ BEGIN
 END;
 $$;
 
-CREATE FUNCTION bookkin_claim_book_content() RETURNS trigger
+CREATE FUNCTION silvae_claim_book_content() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 BEGIN
@@ -1193,23 +1193,23 @@ CREATE UNIQUE INDEX ux_single_owner ON app_users USING btree (role) WHERE ((role
 
 CREATE UNIQUE INDEX ux_tags_name_lower ON tags USING btree (lower(name));
 
-CREATE TRIGGER bookkin_claim_book_content_trigger BEFORE INSERT OR UPDATE OF fingerprint, book_id, status ON book_files FOR EACH ROW EXECUTE FUNCTION bookkin_claim_book_content();
+CREATE TRIGGER silvae_claim_book_content_trigger BEFORE INSERT OR UPDATE OF fingerprint, book_id, status ON book_files FOR EACH ROW EXECUTE FUNCTION silvae_claim_book_content();
 
-CREATE TRIGGER catalog_revision_book_authors AFTER INSERT OR DELETE OR UPDATE ON book_authors FOR EACH ROW EXECUTE FUNCTION bookkin_bump_catalog_revision();
+CREATE TRIGGER catalog_revision_book_authors AFTER INSERT OR DELETE OR UPDATE ON book_authors FOR EACH ROW EXECUTE FUNCTION silvae_bump_catalog_revision();
 
-CREATE TRIGGER catalog_revision_book_files AFTER INSERT OR DELETE ON book_files FOR EACH ROW EXECUTE FUNCTION bookkin_bump_catalog_revision();
+CREATE TRIGGER catalog_revision_book_files AFTER INSERT OR DELETE ON book_files FOR EACH ROW EXECUTE FUNCTION silvae_bump_catalog_revision();
 
-CREATE TRIGGER catalog_revision_book_files_update AFTER UPDATE OF book_id, library_root_id, relative_path, normalized_path, format, status, fingerprint, page_count, word_count, encrypted, drm_protected, digitally_signed ON book_files FOR EACH ROW EXECUTE FUNCTION bookkin_bump_catalog_revision();
+CREATE TRIGGER catalog_revision_book_files_update AFTER UPDATE OF book_id, library_root_id, relative_path, normalized_path, format, status, fingerprint, page_count, word_count, encrypted, drm_protected, digitally_signed ON book_files FOR EACH ROW EXECUTE FUNCTION silvae_bump_catalog_revision();
 
-CREATE TRIGGER catalog_revision_book_tags AFTER INSERT OR DELETE OR UPDATE ON book_tags FOR EACH ROW EXECUTE FUNCTION bookkin_bump_catalog_revision();
+CREATE TRIGGER catalog_revision_book_tags AFTER INSERT OR DELETE OR UPDATE ON book_tags FOR EACH ROW EXECUTE FUNCTION silvae_bump_catalog_revision();
 
-CREATE TRIGGER catalog_revision_books AFTER INSERT OR DELETE OR UPDATE ON books FOR EACH ROW EXECUTE FUNCTION bookkin_bump_catalog_revision();
+CREATE TRIGGER catalog_revision_books AFTER INSERT OR DELETE OR UPDATE ON books FOR EACH ROW EXECUTE FUNCTION silvae_bump_catalog_revision();
 
-CREATE TRIGGER catalog_revision_cover_assets AFTER INSERT OR DELETE OR UPDATE ON book_cover_assets FOR EACH ROW EXECUTE FUNCTION bookkin_bump_catalog_revision();
+CREATE TRIGGER catalog_revision_cover_assets AFTER INSERT OR DELETE OR UPDATE ON book_cover_assets FOR EACH ROW EXECUTE FUNCTION silvae_bump_catalog_revision();
 
-CREATE TRIGGER catalog_revision_library_roots AFTER UPDATE OF name ON library_roots FOR EACH ROW EXECUTE FUNCTION bookkin_bump_catalog_revision();
+CREATE TRIGGER catalog_revision_library_roots AFTER UPDATE OF name ON library_roots FOR EACH ROW EXECUTE FUNCTION silvae_bump_catalog_revision();
 
-CREATE TRIGGER catalog_revision_series AFTER INSERT OR DELETE OR UPDATE ON series FOR EACH ROW EXECUTE FUNCTION bookkin_bump_catalog_revision();
+CREATE TRIGGER catalog_revision_series AFTER INSERT OR DELETE OR UPDATE ON series FOR EACH ROW EXECUTE FUNCTION silvae_bump_catalog_revision();
 
 ALTER TABLE ONLY ai_provider_settings
     ADD CONSTRAINT ai_provider_settings_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES app_users(id);
@@ -1452,7 +1452,7 @@ INSERT INTO security_settings(id, registration_enabled) VALUES (1, false);
 INSERT INTO password_policy VALUES (1,12,false,false,false,false);
 INSERT INTO role_permission_policy(id) VALUES (1);
 INSERT INTO vault_policy(id) VALUES (1);
-INSERT INTO site_settings(id, settings) VALUES (1, '{"name": "BookKin", "tagline": "电子图书馆", "keywords": "", "copyright": "", "icpNumber": "", "publicUrl": "", "description": "你的 NAS 私人电子图书馆", "contactEmail": "", "policeNumber": "", "allowIndexing": false, "virtualLibraryEnabled": true}'::jsonb);
+INSERT INTO site_settings(id, settings) VALUES (1, '{"name": "Silvae", "tagline": "电子图书馆", "keywords": "", "copyright": "", "icpNumber": "", "publicUrl": "", "description": "你的 NAS 私人电子图书馆", "contactEmail": "", "policeNumber": "", "allowIndexing": false, "virtualLibraryEnabled": true}'::jsonb);
 
 ALTER TABLE books
     ALTER COLUMN language TYPE character varying(1024);

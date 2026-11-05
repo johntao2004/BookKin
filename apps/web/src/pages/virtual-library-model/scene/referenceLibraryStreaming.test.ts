@@ -391,13 +391,13 @@ describe('canonical reference material ownership', () => {
     const variants = new Map<string, THREE.Material>();
     let primitiveCount = 0;
     for (const chunk of manifest.chunks) {
-      const path = new URL(chunk.url, 'https://bookkin.invalid/assets/hogwarts-library/').pathname;
+      const path = new URL(chunk.url, 'https://silvae.invalid/assets/hogwarts-library/').pathname;
       const source = readFileSync('public' + path);
       const data = new ArrayBuffer(source.byteLength); new Uint8Array(data).set(source);
       const loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
       loader.register(parser => {
         parser.assignFinalMaterial = mesh => pool.assignFinalMaterial(mesh);
-        return {name: 'BOOKKIN_shared_material_bank', loadMaterial: index => pool.loadMaterial(index)};
+        return {name: 'SILVAE_shared_material_bank', loadMaterial: index => pool.loadMaterial(index)};
       });
       const module = await loader.parseAsync(data, '/assets/hogwarts-library/modules/');
       const geometries = new Set<THREE.BufferGeometry>();

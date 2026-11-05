@@ -7,7 +7,7 @@ import { BrowserRouter } from "react-router-dom";
 import App from "./App";
 import { AppErrorBoundary } from "./components/AppErrorBoundary";
 import { AuthProvider } from "./auth/AuthContext";
-import { BookKinThemeProvider } from "./theme/BookKinThemeProvider";
+import { SilvaeThemeProvider } from "./theme/SilvaeThemeProvider";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -21,7 +21,7 @@ createRoot(document.getElementById("root")!).render(
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <AuthProvider>
-          <BookKinThemeProvider><AppErrorBoundary><App /></AppErrorBoundary></BookKinThemeProvider>
+          <SilvaeThemeProvider><AppErrorBoundary><App /></AppErrorBoundary></SilvaeThemeProvider>
         </AuthProvider>
       </BrowserRouter>
     </QueryClientProvider>

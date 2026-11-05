@@ -1,10 +1,16 @@
 import DOMPurify from "dompurify";
-import { marked } from "marked";
+import { marked, Renderer } from "marked";
 import { highlightSanitizedCodeHtml } from "../content/code-highlighting";
 
 /** Render prose without scripts, embedded documents or cross-content asset requests. */
 export function reviewMarkdownToHtml(markdown: string): string {
-  const html = DOMPurify.sanitize(marked.parse(markdown, { async: false, gfm: true }), {
+  const renderer = new Renderer();
+  renderer.checkbox = ({ checked }) => checked ? '<span aria-label="已完成">☑</span> ' : '<span aria-label="未完成">☐</span> ';
+  const html = DOMPurify.sanitize(marked.parse(markdown, {
+    async: false,
+    gfm: true,
+    renderer,
+  }), {
     FORBID_TAGS: ["style", "iframe", "form", "input", "button", "textarea", "select", "video", "audio", "svg", "object", "embed", "link", "meta", "base"],
     FORBID_ATTR: ["style", "srcset"],
     ALLOW_DATA_ATTR: false,

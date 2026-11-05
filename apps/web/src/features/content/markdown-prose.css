@@ -23,6 +23,12 @@
 .bk-content-prose.bk-markdown-prose ul > li::marker {
   color: color-mix(in srgb, var(--color-accent-teal) 70%, var(--color-text-primary));
 }
+.bk-content-prose.bk-markdown-prose ul:has(> li > :is([aria-label="已完成"], [aria-label="未完成"]), > li > p > :is([aria-label="已完成"], [aria-label="未完成"])) {
+  padding-inline-start: var(--spacing-5);
+}
+.bk-content-prose.bk-markdown-prose ul > li:has(> :is([aria-label="已完成"], [aria-label="未完成"]), > p > :is([aria-label="已完成"], [aria-label="未完成"])) {
+  list-style: none;
+}
 .bk-content-prose.bk-markdown-prose li + li { margin-block-start: var(--spacing-2); }
 .bk-content-prose.bk-markdown-prose li > :is(ol, ul) {
   margin-block: var(--spacing-2);
@@ -115,13 +121,13 @@
 .bk-content-prose.bk-markdown-prose hr { border: 0; border-top: 1px solid var(--color-border); margin-block: var(--spacing-6); }
 
 @media (max-width: 767px) {
-  .bk-content-prose.bk-markdown-prose table {
+  .bk-content-prose.bk-markdown-prose table:has(tr > :nth-child(3)) {
     display: block;
     table-layout: auto;
     overflow-x: auto;
     overscroll-behavior-inline: contain;
   }
-  .bk-content-prose.bk-markdown-prose :is(th, td) { min-width: calc(var(--spacing-10) * 3); }
+  .bk-content-prose.bk-markdown-prose table:has(tr > :nth-child(3)) :is(th, td) { min-width: calc(var(--spacing-10) * 3); }
 }
 
 /* Shared token colors for Markdown spans and DOM-preserving reader highlights. */

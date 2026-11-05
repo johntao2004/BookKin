@@ -1,40 +1,40 @@
-name: bookkin
+name: silvae
 
-x-bookkin-common: &bookkin-common
-  image: ${BOOKKIN_IMAGE:-bookkin:local}
+x-silvae-common: &silvae-common
+  image: ${SILVAE_IMAGE:-silvae:local}
   build:
     context: .
-    dockerfile: docker/bookkin.Dockerfile
+    dockerfile: docker/silvae.Dockerfile
   restart: unless-stopped
-  user: "${BOOKKIN_UID:-1000}:${BOOKKIN_GID:-1000}"
-  environment: &bookkin-environment
-    BOOKKIN_DATABASE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-bookkin}
-    BOOKKIN_DATABASE_USER: ${POSTGRES_USER:-bookkin}
-    BOOKKIN_DATABASE_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
-    BOOKKIN_COOKIE_SECURE: ${BOOKKIN_SESSION_COOKIE_SECURE:-false}
-    BOOKKIN_PUBLIC_BASE_URL: ${BOOKKIN_PUBLIC_BASE_URL:-http://localhost:8080}
+  user: "${SILVAE_UID:-1000}:${SILVAE_GID:-1000}"
+  environment: &silvae-environment
+    SILVAE_DATABASE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-silvae}
+    SILVAE_DATABASE_USER: ${POSTGRES_USER:-silvae}
+    SILVAE_DATABASE_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    SILVAE_COOKIE_SECURE: ${SILVAE_SESSION_COOKIE_SECURE:-false}
+    SILVAE_PUBLIC_BASE_URL: ${SILVAE_PUBLIC_BASE_URL:-http://localhost:8080}
     # No insecure default. Leave empty only while AI is disabled; enabling or
     # saving a provider key requires a stable instance-specific value.
-    BOOKKIN_AI_SETTINGS_ENCRYPTION_KEY: ${BOOKKIN_AI_SETTINGS_ENCRYPTION_KEY:-}
-    BOOKKIN_STORAGE_ROOTS_0_NAME: ${BOOKKIN_LIBRARY_NAME:-主书库}
-    BOOKKIN_STORAGE_ROOTS_0_PATH: /library/main
-    BOOKKIN_CONTENT_STORAGE_PATH: /var/lib/bookkin/content
+    SILVAE_AI_SETTINGS_ENCRYPTION_KEY: ${SILVAE_AI_SETTINGS_ENCRYPTION_KEY:-}
+    SILVAE_STORAGE_ROOTS_0_NAME: ${SILVAE_LIBRARY_NAME:-主书库}
+    SILVAE_STORAGE_ROOTS_0_PATH: /library/main
+    SILVAE_CONTENT_STORAGE_PATH: /var/lib/silvae/content
     TZ: ${TZ:-Asia/Shanghai}
   volumes:
     - type: bind
-      source: ${BOOKKIN_LIBRARY_MAIN:-./.local/library}
+      source: ${SILVAE_LIBRARY_MAIN:-./.local/library}
       target: /library/main
     - type: bind
-      source: ${BOOKKIN_FONT_STORAGE:-./.local/fonts}
-      target: /var/lib/bookkin/fonts
+      source: ${SILVAE_FONT_STORAGE:-./.local/fonts}
+      target: /var/lib/silvae/fonts
     - type: bind
-      source: ${BOOKKIN_ARTICLE_STORAGE:-./.local/content/articles}
-      target: /var/lib/bookkin/content/articles
+      source: ${SILVAE_ARTICLE_STORAGE:-./.local/content/articles}
+      target: /var/lib/silvae/content/articles
     - type: bind
-      source: ${BOOKKIN_VAULT_STORAGE:-./.local/content/vault}
-      target: /var/lib/bookkin/content/vault
+      source: ${SILVAE_VAULT_STORAGE:-./.local/content/vault}
+      target: /var/lib/silvae/content/vault
   tmpfs:
-    - /tmp/bookkin:size=512m,mode=1777
+    - /tmp/silvae:size=512m,mode=1777
   security_opt:
     - no-new-privileges:true
   depends_on:
@@ -43,14 +43,14 @@ x-bookkin-common: &bookkin-common
 
 services:
   app:
-    <<: *bookkin-common
+    <<: *silvae-common
     environment:
-      <<: *bookkin-environment
+      <<: *silvae-environment
       SPRING_PROFILES_ACTIVE: api
-      BOOKKIN_TWO_FACTOR_ENCRYPTION_KEY: ${BOOKKIN_TWO_FACTOR_ENCRYPTION_KEY:-}
-      BOOKKIN_API_PORT: 8080
+      SILVAE_TWO_FACTOR_ENCRYPTION_KEY: ${SILVAE_TWO_FACTOR_ENCRYPTION_KEY:-}
+      SILVAE_API_PORT: 8080
     ports:
-      - "${BOOKKIN_HTTP_PORT:-8080}:8080"
+      - "${SILVAE_HTTP_PORT:-8080}:8080"
     healthcheck:
       test: ["CMD", "curl", "--fail", "--silent", "http://localhost:8080/actuator/health/readiness"]
       interval: 15s
@@ -59,9 +59,9 @@ services:
       start_period: 45s
 
   worker:
-    <<: *bookkin-common
+    <<: *silvae-common
     environment:
-      <<: *bookkin-environment
+      <<: *silvae-environment
       SPRING_PROFILES_ACTIVE: worker
     healthcheck:
       disable: true
@@ -70,14 +70,14 @@ services:
     image: postgres:18-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-bookkin}
-      POSTGRES_USER: ${POSTGRES_USER:-bookkin}
+      POSTGRES_DB: ${POSTGRES_DB:-silvae}
+      POSTGRES_USER: ${POSTGRES_USER:-silvae}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
       TZ: ${TZ:-Asia/Shanghai}
     volumes:
-      - bookkin-postgres:/var/lib/postgresql
+      - silvae-postgres:/var/lib/postgresql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-bookkin} -d ${POSTGRES_DB:-bookkin}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-silvae} -d ${POSTGRES_DB:-silvae}"]
       interval: 5s
       timeout: 5s
       retries: 20
@@ -85,4 +85,4 @@ services:
       - no-new-privileges:true
 
 volumes:
-  bookkin-postgres:
+  silvae-postgres:

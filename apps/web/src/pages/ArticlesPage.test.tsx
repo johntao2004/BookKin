@@ -28,14 +28,14 @@ const article: ArticleSummary = {
 
 describe("ArticlesPage shared catalog", () => {
   beforeEach(() => {
-    sessionStorage.setItem("bookkin-demo-session", JSON.stringify({
+    sessionStorage.setItem("silvae-demo-session", JSON.stringify({
       id: "user-owner", username: "owner", displayName: "林", role: "OWNER", mustChangePassword: false,
     }));
     vi.spyOn(articles, "list").mockResolvedValue([article]);
   });
   afterEach(() => {
     vi.restoreAllMocks();
-    sessionStorage.removeItem("bookkin-demo-session");
+    sessionStorage.removeItem("silvae-demo-session");
   });
 
   it("shows load failures as a diagnostic error page and restores the list after retry", async () => {
@@ -265,7 +265,7 @@ describe("ArticlesPage shared catalog", () => {
   });
 
   it("filters the catalog and hides management actions for a member", async () => {
-    sessionStorage.setItem("bookkin-demo-session", JSON.stringify({
+    sessionStorage.setItem("silvae-demo-session", JSON.stringify({
       id: "user-member", username: "member", displayName: "成员", role: "MEMBER", mustChangePassword: false,
     }));
     render(<TestProviders><ArticlesPage /></TestProviders>);

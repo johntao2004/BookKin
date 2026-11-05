@@ -11,16 +11,24 @@ import sys
 import tempfile
 
 
-def initialize(path, encrypted=False, key="BOOKKIN_AI_SETTINGS_ENCRYPTION_KEY"):
+def _read_nonempty(text, key):
+    pattern = r'^' + re.escape(key) + r'\s*=(.*)$'
+    for raw in re.findall(pattern, text, re.M):
+        cleaned = raw.strip().strip('"\'')
+        if cleaned:
+            return cleaned
+    return None
+
+
+def initialize(path, encrypted=False, key="SILVAE_AI_SETTINGS_ENCRYPTION_KEY"):
     path = Path(path)
     text = path.read_text() if path.exists() else ''
-    pattern = r'^' + re.escape(key) + r'\s*=(.*)$'
-    entries = re.findall(pattern, text, re.M)
-    if any(value.strip().strip('\"\'') for value in entries):
+    if _read_nonempty(text, key):
         os.chmod(path, 0o600)
         return False
     if encrypted:
         raise RuntimeError('Existing encrypted AI credentials require restoring the original encryption key.')
+    pattern = r'^' + re.escape(key) + r'\s*=(.*)$'
     text = re.sub(pattern, '', text, flags=re.M).rstrip() + '\n'
     text += key + '=' + secrets.token_hex(32) + '\n'
     fd, temporary = tempfile.mkstemp(dir=path.parent, prefix='.env-')
@@ -29,6 +37,7 @@ def initialize(path, encrypted=False, key="BOOKKIN_AI_SETTINGS_ENCRYPTION_KEY"):
             output.write(text)
             output.flush()
             os.fsync(output.fileno())
+        os.chmod(temporary, 0o600)
         os.replace(temporary, path)
     finally:
         if os.path.exists(temporary):
@@ -39,5 +48,5 @@ def initialize(path, encrypted=False, key="BOOKKIN_AI_SETTINGS_ENCRYPTION_KEY"):
 if __name__ == '__main__':
     initialize(sys.argv[1], len(sys.argv) > 2 and sys.argv[2] != '0')
     if len(sys.argv) > 3:
-        initialize(sys.argv[1], sys.argv[3] != '0', 'BOOKKIN_TWO_FACTOR_ENCRYPTION_KEY')
+        initialize(sys.argv[1], sys.argv[3] != '0', 'SILVAE_TWO_FACTOR_ENCRYPTION_KEY')
     print('Persistent encryption keys ready; existing values preserved.')

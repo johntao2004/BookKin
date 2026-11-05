@@ -9,13 +9,13 @@ const root = fileURLToPath(new URL('..', import.meta.url));
 const run = path.join(root, '.local/run');
 const logs = path.join(root, '.local/logs');
 const savedWebPort = await readFile(path.join(root, '.local/preview-port'), 'utf8').catch(() => '4173');
-const webPort = process.env.BOOKKIN_WEB_PORT ?? savedWebPort.trim();
-if (!/^\d+$/.test(webPort) || Number(webPort) < 1 || Number(webPort) > 65535) throw new Error('Invalid BOOKKIN_WEB_PORT');
-process.env.BOOKKIN_WEB_PORT = webPort;
+const webPort = process.env.SILVAE_WEB_PORT ?? savedWebPort.trim();
+if (!/^\d+$/.test(webPort) || Number(webPort) < 1 || Number(webPort) > 65535) throw new Error('Invalid SILVAE_WEB_PORT');
+process.env.SILVAE_WEB_PORT = webPort;
 const savedApiPort = await readFile(path.join(root, '.local/api-port'), 'utf8').catch(() => '8080');
-const apiPort = process.env.BOOKKIN_API_PORT ?? savedApiPort.trim();
-if (!/^\d+$/.test(apiPort) || Number(apiPort) < 1 || Number(apiPort) > 65535) throw new Error('Invalid BOOKKIN_API_PORT');
-process.env.BOOKKIN_API_PORT = apiPort;
+const apiPort = process.env.SILVAE_API_PORT ?? savedApiPort.trim();
+if (!/^\d+$/.test(apiPort) || Number(apiPort) < 1 || Number(apiPort) > 65535) throw new Error('Invalid SILVAE_API_PORT');
+process.env.SILVAE_API_PORT = apiPort;
 const services = [
   { name: 'backend-supervisor', args: ['start:local'], url: `http://127.0.0.1:${apiPort}/actuator/health`, identity: 'start:local' },
   { name: 'web-supervisor', args: ['dev'], url: `http://127.0.0.1:${webPort}/api/v1/auth/csrf`, identity: 'dev' },
@@ -73,7 +73,7 @@ if (command === 'stop') {
       // 不得替换占用前端端口的其他服务，因为它可能连接着不同的后端。
       // An occupied frontend port is not ours to replace (it may point to a different backend).
       if (service.name === 'web-supervisor' && await fetch(`http://127.0.0.1:${webPort}/login`, {signal: AbortSignal.timeout(5000)}).then(() => true).catch(() => false)) {
-        throw new Error(`Port ${webPort} is occupied. Choose BOOKKIN_WEB_PORT or check BOOKKIN_API_PROXY_TARGET.`);
+        throw new Error(`Port ${webPort} is occupied. Choose SILVAE_WEB_PORT or check SILVAE_API_PROXY_TARGET.`);
       }
       const output = await open(path.join(logs, `${service.name}.log`), 'a', 0o600);
       const child = spawn('pnpm', ['--dir', root, ...service.args], { cwd: root, detached: true, stdio: ['ignore', output.fd, output.fd], env: process.env });

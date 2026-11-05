@@ -9,7 +9,7 @@ import { api, DEFAULT_SITE_SETTINGS } from "../api/client";
 import { vaultAccessApi } from "../features/vault/access-api";
 import { VaultPolicySettings } from "../pages/VaultPolicySettings";
 import { AppShell } from "./AppShell";
-import { BookKinThemeProvider } from "../theme/BookKinThemeProvider";
+import { SilvaeThemeProvider } from "../theme/SilvaeThemeProvider";
 
 const authState = vi.hoisted(() => ({ signedIn: true, role: "OWNER" as "OWNER" | "MEMBER" }));
 
@@ -40,9 +40,9 @@ function renderShell(initialPath: string, virtualLibraryEnabled = true, extraCon
   const view = render(
     <QueryClientProvider client={queryClient}>
       <MemoryRouter initialEntries={[initialPath]}>
-        <BookKinThemeProvider>
+        <SilvaeThemeProvider>
           <AppShell><div>正文</div><RouteProbe />{extraContent}</AppShell>
-        </BookKinThemeProvider>
+        </SilvaeThemeProvider>
       </MemoryRouter>
     </QueryClientProvider>,
   );
@@ -149,7 +149,7 @@ describe("AppShell", () => {
 
     expect(screen.getByRole("banner")).toBeInTheDocument();
     expect(screen.getByRole("navigation", { name: "全站导航" })).toHaveStyle({ width: "100%", maxWidth: "none" });
-    expect(screen.getByRole("link", { name: "BookKin" })).toHaveAttribute("href", "/library");
+    expect(screen.getByRole("link", { name: "Silvae" })).toHaveAttribute("href", "/library");
     expect(screen.getByRole("main")).toHaveTextContent("正文");
   });
 
@@ -158,7 +158,7 @@ describe("AppShell", () => {
 
     expect(screen.getByRole("banner")).toBeInTheDocument();
     expect(screen.getByRole("navigation", { name: "全站导航" })).toBeInTheDocument();
-    const wordmark = screen.getByRole("link", { name: "BookKin" });
+    const wordmark = screen.getByRole("link", { name: "Silvae" });
     expect(wordmark).toBeInTheDocument();
     expect(wordmark.previousElementSibling).toHaveAccessibleName("打开导航");
     expect(screen.queryByRole("link", { name: "分类" })).not.toBeInTheDocument();
@@ -230,7 +230,7 @@ describe("AppShell", () => {
     expect(screen.queryByRole("link", { name: "秘阁" })).not.toBeInTheDocument();
     failed.unmount();
     authState.role = "MEMBER";
-    sessionStorage.setItem("bookkin-demo-role-permissions", JSON.stringify({ revision: 0, grants: { OWNER: [], ADMIN: [], MEMBER: [] } }));
+    sessionStorage.setItem("silvae-demo-role-permissions", JSON.stringify({ revision: 0, grants: { OWNER: [], ADMIN: [], MEMBER: [] } }));
     vi.mocked(vaultAccessApi.status).mockClear();
     const denied = renderShell("/library");
     expect(vaultAccessApi.status).not.toHaveBeenCalled();
@@ -264,7 +264,7 @@ describe("AppShell", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "打开导航" }));
     const drawer = screen.getByRole("navigation", { name: "移动端导航" });
-    expect(within(screen.getByRole("dialog", { name: "BookKin" })).getByRole("heading", { name: "BookKin" })).toBeInTheDocument();
+    expect(within(screen.getByRole("dialog", { name: "Silvae" })).getByRole("heading", { name: "Silvae" })).toBeInTheDocument();
     for (const label of managementLabels) expect(within(drawer).queryByText(label)).not.toBeInTheDocument();
     expect(within(drawer).queryByText("展示书目设置")).not.toBeInTheDocument();
     for (const name of ["藏书楼", "文钞馆", "书目", "读书录", "秘阁"]) expect(within(drawer).getByRole("button", { name })).toBeInTheDocument();
@@ -406,10 +406,10 @@ describe("AppShell", () => {
     fireEvent.click(screen.getByRole("menuitem", { name: "夜间" }));
 
     await waitFor(() => {
-      expect(document.documentElement).toHaveAttribute("data-bookkin-theme", "night");
+      expect(document.documentElement).toHaveAttribute("data-silvae-theme", "night");
       expect(screen.getByRole("button", { name: "切换全站主题" })).toHaveAttribute("aria-expanded", "false");
     });
-    expect(localStorage.getItem("bookkin-site-theme")).toBe("NIGHT");
+    expect(localStorage.getItem("silvae-site-theme")).toBe("NIGHT");
   });
 
   it("switches back to the bright theme and closes the menu after selection", async () => {
@@ -419,9 +419,9 @@ describe("AppShell", () => {
     fireEvent.click(screen.getByRole("menuitem", { name: "明亮" }));
 
     await waitFor(() => {
-      expect(document.documentElement).toHaveAttribute("data-bookkin-theme", "white");
+      expect(document.documentElement).toHaveAttribute("data-silvae-theme", "white");
       expect(screen.getByRole("button", { name: "切换全站主题" })).toHaveAttribute("aria-expanded", "false");
     });
-    expect(localStorage.getItem("bookkin-site-theme")).toBe("WHITE");
+    expect(localStorage.getItem("silvae-site-theme")).toBe("WHITE");
   });
 });

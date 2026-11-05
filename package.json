@@ -1,5 +1,5 @@
 {
-  "name": "bookkin",
+  "name": "silvae",
   "version": "0.1.0",
   "private": true,
   "packageManager": "pnpm@10.33.0",
@@ -7,12 +7,12 @@
     "node": ">=22.0.0"
   },
   "scripts": {
-    "dev": "pnpm build:ming-library && pnpm --filter @bookkin/web dev",
-    "build": "pnpm generate:tokens && pnpm build:ming-library && pnpm --filter @bookkin/web build",
-    "build:ming-library": "pnpm --filter @bookkin/ming-library build",
-    "test": "pnpm --filter @bookkin/web test",
-    "lint": "pnpm --filter @bookkin/web lint",
-    "typecheck": "pnpm --filter @bookkin/web typecheck",
+    "dev": "pnpm build:ming-library && pnpm --filter @silvae/web dev",
+    "build": "pnpm generate:tokens && pnpm build:ming-library && pnpm --filter @silvae/web build",
+    "build:ming-library": "pnpm --filter @silvae/ming-library build",
+    "test": "pnpm --filter @silvae/web test",
+    "lint": "pnpm --filter @silvae/web lint",
+    "typecheck": "pnpm --filter @silvae/web typecheck",
     "generate:tokens": "node scripts/generate-design-tokens.mjs",
     "generate:client": "./apps/server/mvnw -f apps/server/pom.xml -Pgenerate-client generate-sources",
     "check:tokens": "node scripts/generate-design-tokens.mjs --check",

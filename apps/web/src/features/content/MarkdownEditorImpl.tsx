@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
-import { DOMSerializer } from "@tiptap/pm/model";
-import { Plugin } from "@tiptap/pm/state";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { DOMSerializer, Fragment } from "@tiptap/pm/model";
+import { Plugin, TextSelection } from "@tiptap/pm/state";
 import { EditorContent, useEditor, type Editor } from "@tiptap/react";
 import { Extension } from "@tiptap/core";
 import { Markdown, type MarkdownManager } from "@tiptap/markdown";
+import { closeHistory } from "@tiptap/pm/history";
 import { Schema } from "@tiptap/pm/model";
 import Image from "@tiptap/extension-image";
 import { renderTableToMarkdown, Table, TableCell, TableHeader, TableRow } from "@tiptap/extension-table";
@@ -67,19 +68,140 @@ function mergedTableExtension(inertSchemaRef: { current: Schema | null }) {
   }).configure({ resizable: false });
 }
 
-export default function MarkdownEditorImpl({ value, onChange, label, mode, disabled = false, maxLength, placeholder, onImportFiles }: MarkdownEditorProps) {
+export function markdownTableInputExtension() {
+  return Extension.create({
+    name: "silvaeMarkdownTableInput",
+    addProseMirrorPlugins() {
+      return [new Plugin({
+        props: {
+          handleTextInput: (view, from, to, text) => {
+            if (view.composing || text !== " ") return false;
+            const $from = view.state.doc.resolve(from);
+            if (from !== to || !$from.parent.isTextblock || $from.parent.type.spec.code || $from.parentOffset !== $from.parent.content.size || $from.parent.textContent !== "[ ]" && $from.parent.textContent !== "[x]" && $from.parent.textContent !== "[X]") return false;
+            const paragraphDepth = $from.depth;
+            const itemDepth = paragraphDepth - 1;
+            const listDepth = itemDepth - 1;
+            const list = $from.node(listDepth);
+            if (list.type.name !== "bulletList" || $from.index(itemDepth) !== 0) return false;
+            const itemIndex = $from.index(listDepth);
+            const currentItem = $from.node(itemDepth);
+            const taskListType = view.state.schema.nodes.taskList;
+            const taskItemType = view.state.schema.nodes.taskItem;
+            // 只把当前项变成任务项；其余普通列表项保持原样，分别留在任务列表前后的两段列表里。
+            // Convert only the current item; sibling plain items stay plain in lists before and after the task list.
+            const siblings = list.content.content;
+            const content = currentItem.content.content.map((child, childIndex) => childIndex === 0 ? $from.parent.copy(Fragment.empty) : child);
+            const taskList = taskListType.create(null, taskItemType.create({ checked: $from.parent.textContent.toLowerCase() === "[x]" }, content));
+            const before = siblings.slice(0, itemIndex);
+            const after = siblings.slice(itemIndex + 1);
+            const beforeList = before.length ? list.type.create(list.attrs, before) : null;
+            const afterList = after.length ? list.type.create(list.attrs, after) : null;
+            const listStart = $from.before(listDepth);
+            view.dispatch(closeHistory(view.state.tr));
+            const replacement = [beforeList, taskList, afterList].filter((node): node is NonNullable<typeof node> => node !== null);
+            const transaction = view.state.tr.replaceWith(listStart, listStart + list.nodeSize, replacement);
+            const taskListStart = listStart + (beforeList?.nodeSize ?? 0);
+            transaction.setSelection(TextSelection.near(transaction.doc.resolve(taskListStart + 3)));
+            view.dispatch(transaction);
+            return true;
+          },
+        },
+      })];
+    },
+    addKeyboardShortcuts() {
+      return {
+        Enter: () => {
+          const { state, view } = this.editor;
+          const { $from } = state.selection;
+          if (view.composing) return false;
+          if (!$from.parent.isTextblock || $from.parent.type.name !== "paragraph" || $from.parentOffset !== $from.parent.content.size) return false;
+          const rowText = $from.parent.textContent;
+          const rowStart = $from.before();
+          const previous = state.doc.resolve(rowStart).nodeBefore;
+          if (!previous || previous.type.name !== "paragraph") return false;
+          const headerDoc = state.schema.nodes.doc.create(null, previous);
+          const headerText = this.editor.markdown?.serialize(headerDoc.toJSON()).trim() ?? previous.textContent;
+          const parsed = this.editor.markdown?.parse(`${headerText}\n${rowText}\n`).content?.[0];
+          if (!parsed || parsed.type !== "table" || !Array.isArray(parsed.content) || !parsed.content.length) return false;
+          const parsedHeader = parsed.content[0];
+          const bodyCells = parsedHeader.content?.map(cell => state.schema.nodes.tableCell.create(
+            { align: cell.attrs?.align ?? null }, state.schema.nodes.paragraph.create(),
+          ));
+          if (!bodyCells?.length) return false;
+          const bodyRow = state.schema.nodes.tableRow.create(null, bodyCells);
+          const table = state.schema.nodeFromJSON({ ...parsed, content: [...parsed.content, bodyRow.toJSON()] });
+          const from = rowStart - previous.nodeSize;
+          const to = rowStart + $from.parent.nodeSize;
+          view.dispatch(closeHistory(state.tr));
+          let transaction = view.state.tr.replaceWith(from, to, table);
+          const firstBodyCellPos = from + 1 + table.child(0).nodeSize + 3;
+          transaction = transaction.setSelection(TextSelection.near(transaction.doc.resolve(firstBodyCellPos))).scrollIntoView();
+          view.dispatch(transaction);
+          return true;
+        },
+      };
+    },
+  });
+}
+
+export function handleMarkdownPaste(editor: Editor, event: ClipboardEvent, importImages?: (files: File[]) => Promise<void>) {
+  const images = Array.from(event.clipboardData?.files ?? []).filter(file => file.type.startsWith("image/"));
+  if (images.length && importImages) {
+    event.preventDefault();
+    void importImages(images);
+    return true;
+  }
+  if (!event.clipboardData || event.clipboardData.getData("text/html").trim() || editor.view.composing) return false;
+  const text = event.clipboardData.getData("text/plain");
+  if (!text) return false;
+  const { $from } = editor.state.selection;
+  if ($from.parent.type.spec.code || ($from.nodeBefore ?? $from.nodeAfter)?.marks.some(mark => mark.type.spec.code)) return false;
+  event.preventDefault();
+  editor.commands.insertContent(text, { contentType: "markdown" });
+  return true;
+}
+
+export function mapMarkdownSelectionBookmark(
+  bookmark: ReturnType<Editor["state"]["selection"]["getBookmark"]> | null,
+  mapping: Parameters<ReturnType<Editor["state"]["selection"]["getBookmark"]>["map"]>[0],
+) {
+  return bookmark?.map(mapping) ?? null;
+}
+
+export function markdownLengthLimitExtension(
+  maxLength: number | undefined,
+  markdownManagerRef: { current: MarkdownManager | null },
+  inertSchemaRef: { current: Schema | null },
+) {
+  return Extension.create({
+    name: "silvaeMarkdownLengthLimit",
+    addProseMirrorPlugins() {
+      const schema = inertSchemaRef.current;
+      return [new Plugin({
+        props: schema ? { clipboardSerializer: DOMSerializer.fromSchema(schema) } : {},
+        filterTransaction: (transaction, state) => {
+          if (!transaction.docChanged || !markdownManagerRef.current || maxLength === undefined) return true;
+          if (transaction.getMeta("preventUpdate")) return true;
+          const nextLength = markdownManagerRef.current.serialize(transaction.doc.toJSON()).length;
+          const currentLength = markdownManagerRef.current.serialize(state.doc.toJSON()).length;
+          return nextLength <= maxLength || nextLength <= currentLength;
+        },
+      })];
+    },
+  });
+}
+
+export default function MarkdownEditorImpl({ value, onChange, label, mode, disabled = false, maxLength, placeholder, autoFocus = false, onImportFiles }: MarkdownEditorProps) {
   const uploadInput = useRef<HTMLInputElement>(null);
   const importFilesRef = useRef<((files: File[], position?: number) => Promise<void>) | null>(null);
   const onChangeRef = useRef(onChange);
   const onImportFilesRef = useRef(onImportFiles);
   const lastSynced = useRef(value);
-  const lastPublished = useRef<string | null>(null);
+  const publishedValues = useRef<string[]>([]);
   const initialized = useRef(false);
   const pendingBookmark = useRef<ReturnType<Editor["state"]["selection"]["getBookmark"]> | null>(null);
   const pendingUpload = useRef(false);
   const [uploading, setUploading] = useState(false);
-  const [linkHref, setLinkHref] = useState("");
-  const [codeLanguage, setCodeLanguage] = useState("");
   const inertSchemaRef = useRef<Schema | null>(null);
   const editorRef = useRef<Editor | null>(null);
   const markdownManagerRef = useRef<MarkdownManager | null>(null);
@@ -88,7 +210,7 @@ export default function MarkdownEditorImpl({ value, onChange, label, mode, disab
   onImportFilesRef.current = onImportFiles;
 
   const extensions = useMemo(() => [
-    StarterKit.configure({ link: { openOnClick: false } }),
+    StarterKit.configure({ link: { openOnClick: false, markdownLinks: true } }),
     mergedTableExtension(inertSchemaRef),
     TableRow,
     TableHeader,
@@ -96,28 +218,16 @@ export default function MarkdownEditorImpl({ value, onChange, label, mode, disab
     TaskList,
     TaskItem.configure({ nested: true }),
     markdownImageExtension(mode),
+    markdownTableInputExtension(),
     Markdown.configure({ markedOptions: { gfm: true } }),
-    Extension.create({
-      name: "bookkinMarkdownLengthLimit",
-      addProseMirrorPlugins() {
-        const schema = inertSchemaRef.current;
-        return [new Plugin({
-          props: schema ? { clipboardSerializer: DOMSerializer.fromSchema(schema) } : {},
-          filterTransaction: (transaction, state) => {
-          if (!transaction.docChanged || !markdownManagerRef.current || maxLength === undefined) return true;
-          if (transaction.getMeta("preventUpdate")) return true;
-          const nextLength = markdownManagerRef.current.serialize(transaction.doc.toJSON()).length;
-          const currentLength = markdownManagerRef.current.serialize(state.doc.toJSON()).length;
-          return nextLength <= maxLength || nextLength <= currentLength;
-        } })];
-      },
-    }),
+    markdownLengthLimitExtension(maxLength, markdownManagerRef, inertSchemaRef),
   ], [mode, maxLength]);
 
   const editor = useEditor({
     extensions,
     content: value,
     contentType: "markdown",
+    autofocus: autoFocus,
     editable: !disabled,
     shouldRerenderOnTransaction: false,
     editorProps: {
@@ -131,11 +241,9 @@ export default function MarkdownEditorImpl({ value, onChange, label, mode, disab
       },
       transformPastedHTML: safeHtml,
       handlePaste: (_view, event) => {
-        const images = Array.from(event.clipboardData?.files ?? []).filter(file => file.type.startsWith("image/"));
-        if (!images.length) return false;
-        event.preventDefault();
-        void importFilesRef.current?.(images);
-        return true;
+        const current = editorRef.current;
+        const importer = importFilesRef.current;
+        return current ? handleMarkdownPaste(current, event, importer ? files => importer(files) : undefined) : false;
       },
       handleDrop: (view, event) => {
         const images = Array.from(event.dataTransfer?.files ?? []).filter(file => file.type.startsWith("image/"));
@@ -158,30 +266,33 @@ export default function MarkdownEditorImpl({ value, onChange, label, mode, disab
       markdownManagerRef.current = null;
     },
     onTransaction: ({ transaction }) => {
-      if (pendingBookmark.current && transaction.docChanged) pendingBookmark.current = pendingBookmark.current.map(transaction.mapping);
+      if (pendingBookmark.current && transaction.docChanged) pendingBookmark.current = mapMarkdownSelectionBookmark(pendingBookmark.current, transaction.mapping);
     },
     onUpdate: ({ editor: current }) => {
       if (!initialized.current) return;
       const markdown = current.getMarkdown();
       if (markdown === lastSynced.current) return;
       lastSynced.current = markdown;
-      lastPublished.current = markdown;
+      publishedValues.current.push(markdown);
+      if (publishedValues.current.length > 64) publishedValues.current.shift();
       onChangeRef.current(markdown);
     },
   }, [extensions]);
 
   useEffect(() => {
     if (!editor) return;
-    if (lastPublished.current === value) {
-      lastPublished.current = null;
-      lastSynced.current = value;
+    const publishedIndex = publishedValues.current.indexOf(value);
+    if (publishedIndex !== -1) {
+      publishedValues.current.splice(0, publishedIndex + 1);
       return;
     }
-    if (value !== lastSynced.current) {
-      editor.commands.setContent(value, { contentType: "markdown", emitUpdate: false });
-      lastSynced.current = value;
-      lastPublished.current = null;
+    if (value === lastSynced.current) {
+      publishedValues.current = [];
+      return;
     }
+    editor.commands.setContent(value, { contentType: "markdown", emitUpdate: false });
+    lastSynced.current = value;
+    publishedValues.current = [];
   }, [editor, value]);
 
   useEffect(() => { editor?.setEditable(!disabled); }, [disabled, editor]);
@@ -209,50 +320,12 @@ export default function MarkdownEditorImpl({ value, onChange, label, mode, disab
   }, [disabled]);
   importFilesRef.current = importImages;
 
-  const run = (action: (instance: Editor) => void) => (event: MouseEvent<HTMLButtonElement>) => {
-    event.preventDefault();
-    if (!disabled && editor) action(editor);
-  };
-
-  const applyLink = run(instance => {
-    const href = linkHref.trim();
-    if (!href) instance.chain().focus().extendMarkRange("link").unsetLink().run();
-    else if (/^(?:https?:\/\/|mailto:|\/|#)/iu.test(href)) instance.chain().focus().extendMarkRange("link").setLink({ href }).run();
-  });
-
   if (!editor) return <div className="bk-markdown-editor-loading" role="status" aria-label="正在加载编辑器" />;
 
   return <section className={`bk-markdown-editor bk-markdown-editor--${mode}`} aria-label={`${label}编辑区`}>
-    <div className="bk-markdown-editor__toolbar" role="toolbar" aria-label="Markdown格式工具">
-      <Button size="small" disabled={disabled} aria-label="一级标题" title="一级标题" onMouseDown={(event: MouseEvent<HTMLButtonElement>) => event.preventDefault()} onClick={run(instance => instance.chain().focus().toggleHeading({ level: 1 }).run())}>H1</Button>
-      <Button size="small" disabled={disabled} aria-label="二级标题" title="二级标题" onMouseDown={(event: MouseEvent<HTMLButtonElement>) => event.preventDefault()} onClick={run(instance => instance.chain().focus().toggleHeading({ level: 2 }).run())}>H2</Button>
-      <Button size="small" disabled={disabled} aria-label="加粗" title="加粗" onMouseDown={(event: MouseEvent<HTMLButtonElement>) => event.preventDefault()} onClick={run(instance => instance.chain().focus().toggleBold().run())}><strong>B</strong></Button>
-      <Button size="small" disabled={disabled} aria-label="斜体" title="斜体" onMouseDown={(event: MouseEvent<HTMLButtonElement>) => event.preventDefault()} onClick={run(instance => instance.chain().focus().toggleItalic().run())}><em>I</em></Button>
-      <Button size="small" disabled={disabled} aria-label="无序列表" title="无序列表" onMouseDown={(event: MouseEvent<HTMLButtonElement>) => event.preventDefault()} onClick={run(instance => instance.chain().focus().toggleBulletList().run())}>• 列表</Button>
-      <Button size="small" disabled={disabled} aria-label="有序列表" title="有序列表" onMouseDown={(event: MouseEvent<HTMLButtonElement>) => event.preventDefault()} onClick={run(instance => instance.chain().focus().toggleOrderedList().run())}>1. 列表</Button>
-      <Button size="small" disabled={disabled} aria-label="任务列表" title="任务列表" onMouseDown={(event: MouseEvent<HTMLButtonElement>) => event.preventDefault()} onClick={run(instance => instance.chain().focus().toggleTaskList().run())}>☑ 任务</Button>
-      <Button size="small" disabled={disabled} aria-label="引用" title="引用" onMouseDown={(event: MouseEvent<HTMLButtonElement>) => event.preventDefault()} onClick={run(instance => instance.chain().focus().toggleBlockquote().run())}>引用</Button>
-      <Button size="small" disabled={disabled} aria-label="代码块" title="代码块" onMouseDown={(event: MouseEvent<HTMLButtonElement>) => event.preventDefault()} onClick={run(instance => instance.chain().focus().toggleCodeBlock().run())}>{"</>"}</Button>
-      <input className="bk-markdown-editor__control-input" aria-label="代码语言" value={codeLanguage} disabled={disabled} placeholder="语言" onChange={event => setCodeLanguage(event.target.value)} />
-      <Button size="small" disabled={disabled} aria-label="设置代码语言" onMouseDown={(event: MouseEvent<HTMLButtonElement>) => event.preventDefault()} onClick={run(instance => instance.chain().focus().updateAttributes("codeBlock", { language: codeLanguage.trim() || null }).run())}>代码语言</Button>
-      <input className="bk-markdown-editor__link-input" aria-label="链接地址" value={linkHref} disabled={disabled} placeholder="https:// 或 /路径" onChange={event => setLinkHref(event.target.value)} />
-      <Button size="small" disabled={disabled} aria-label="插入或编辑链接" onMouseDown={(event: MouseEvent<HTMLButtonElement>) => event.preventDefault()} onClick={applyLink}>链接</Button>
-      <Button size="small" disabled={disabled} aria-label="插入表格" title="插入 2 × 2 表格" onMouseDown={(event: MouseEvent<HTMLButtonElement>) => event.preventDefault()} onClick={run(instance => instance.chain().focus().insertTable({ rows: 2, cols: 2, withHeaderRow: true }).run())}>表格</Button>
-      <Button size="small" disabled={disabled} aria-label="上方插入行" onMouseDown={(event: MouseEvent<HTMLButtonElement>) => event.preventDefault()} onClick={run(instance => instance.chain().focus().addRowBefore().run())}>+ 行↑</Button>
-      <Button size="small" disabled={disabled} aria-label="下方插入行" onMouseDown={(event: MouseEvent<HTMLButtonElement>) => event.preventDefault()} onClick={run(instance => instance.chain().focus().addRowAfter().run())}>+ 行↓</Button>
-      <Button size="small" disabled={disabled} aria-label="删除表格行" onMouseDown={(event: MouseEvent<HTMLButtonElement>) => event.preventDefault()} onClick={run(instance => instance.chain().focus().deleteRow().run())}>删行</Button>
-      <Button size="small" disabled={disabled} aria-label="左侧插入列" onMouseDown={(event: MouseEvent<HTMLButtonElement>) => event.preventDefault()} onClick={run(instance => instance.chain().focus().addColumnBefore().run())}>+ 列←</Button>
-      <Button size="small" disabled={disabled} aria-label="右侧插入列" onMouseDown={(event: MouseEvent<HTMLButtonElement>) => event.preventDefault()} onClick={run(instance => instance.chain().focus().addColumnAfter().run())}>+ 列→</Button>
-      <Button size="small" disabled={disabled} aria-label="删除表格列" onMouseDown={(event: MouseEvent<HTMLButtonElement>) => event.preventDefault()} onClick={run(instance => instance.chain().focus().deleteColumn().run())}>删列</Button>
-      <Button size="small" disabled={disabled} aria-label="合并单元格" onMouseDown={(event: MouseEvent<HTMLButtonElement>) => event.preventDefault()} onClick={run(instance => instance.chain().focus().mergeCells().run())}>合并单元格</Button>
-      <Button size="small" disabled={disabled} aria-label="拆分单元格" onMouseDown={(event: MouseEvent<HTMLButtonElement>) => event.preventDefault()} onClick={run(instance => instance.chain().focus().splitCell().run())}>拆分单元格</Button>
-      <Button size="small" disabled={disabled} aria-label="撤销" title="撤销" onMouseDown={(event: MouseEvent<HTMLButtonElement>) => event.preventDefault()} onClick={run(instance => instance.chain().focus().undo().run())}>撤销</Button>
-      <Button size="small" disabled={disabled} aria-label="重做" title="重做" onMouseDown={(event: MouseEvent<HTMLButtonElement>) => event.preventDefault()} onClick={run(instance => instance.chain().focus().redo().run())}>重做</Button>
-      {mode === "article" && onImportFiles && <Button size="small" disabled={disabled || uploading} aria-label="上传正文图片" onMouseDown={(event: MouseEvent<HTMLButtonElement>) => event.preventDefault()} onClick={() => uploadInput.current?.click()}>上传图片</Button>}
-    </div>
+    {mode === "article" && onImportFiles && <Button size="small" disabled={disabled || uploading} aria-label="上传正文图片" onClick={() => uploadInput.current?.click()}>上传图片</Button>}
     {mode === "article" && onImportFiles && <input ref={uploadInput} type="file" hidden multiple accept="image/jpeg,image/png,image/webp" aria-label="选择正文图片" disabled={disabled}
       onChange={event => { const files = Array.from(event.target.files ?? []); event.target.value = ""; void importImages(files); }} />}
     <EditorContent editor={editor} />
-    {mode === "note" && <span className="bk-field-helper">支持粘贴 Markdown；常见标题、列表和代码块也可直接输入格式标记。</span>}
   </section>;
 }

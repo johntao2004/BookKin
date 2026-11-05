@@ -14,7 +14,7 @@ const settings: MetadataProviderSettings = { providers: [
 ] };
 beforeEach(() => {
   vi.clearAllMocks();
-  sessionStorage.setItem("bookkin-demo-session", JSON.stringify({ id: "owner", username: "owner", displayName: "主人", role: "OWNER", mustChangePassword: false }));
+  sessionStorage.setItem("silvae-demo-session", JSON.stringify({ id: "owner", username: "owner", displayName: "主人", role: "OWNER", mustChangePassword: false }));
   vi.mocked(api.getMetadataProviderSettings).mockResolvedValue(structuredClone(settings));
   vi.mocked(api.updateMetadataProviderSettings).mockImplementation(async input => ({ providers: settings.providers.map(provider => ({ ...provider, enabled: input.providers.find(item => item.id === provider.id)?.enabled ?? provider.enabled })) }));
 });
@@ -31,8 +31,8 @@ it("persists source switches without sending source URLs or API credentials", as
 });
 it("keeps metadata viewing separate from editing", async () => {
   const adminGrants = defaultGrants("ADMIN").filter(code => code !== "settings.metadata.edit");
-  sessionStorage.setItem("bookkin-demo-session", JSON.stringify({ id: "admin", username: "admin", displayName: "管理员", role: "ADMIN", mustChangePassword: false }));
-  sessionStorage.setItem("bookkin-demo-role-permissions", JSON.stringify({ revision: 1, grants: {
+  sessionStorage.setItem("silvae-demo-session", JSON.stringify({ id: "admin", username: "admin", displayName: "管理员", role: "ADMIN", mustChangePassword: false }));
+  sessionStorage.setItem("silvae-demo-role-permissions", JSON.stringify({ revision: 1, grants: {
     OWNER: defaultGrants("OWNER"), ADMIN: adminGrants, MEMBER: defaultGrants("MEMBER"),
   } }));
   render(<TestProviders><MetadataProviderSettingsPage /></TestProviders>);

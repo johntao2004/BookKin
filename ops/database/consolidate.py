@@ -44,7 +44,7 @@ class Database:
         # Parse every schema once before comparing; never discard constraint text.
         args = ['--schema-only', '--no-owner', '--no-privileges', '--exclude-table=public.flyway_schema_history']
         raw = self.run('pg_dump', ['-d', db] + args)
-        canonical = 'bookkin_schema_' + uuid.uuid4().hex[:12]
+        canonical = 'silvae_schema_' + uuid.uuid4().hex[:12]
         self.run('createdb', [canonical])
         try:
             self.run('psql', ['-X', '-q', '-1', '-v', 'ON_ERROR_STOP=1', '-d', canonical], raw)
@@ -82,7 +82,7 @@ def conversion_sql(history, files):
         parts += [sql, "INSERT INTO flyway_schema_history(installed_rank,version,description,type,script,checksum,installed_by,execution_time,success) "
                   f"VALUES ({rank},{quote(rank)},{quote(description)},'SQL',{quote(path.name)},{checksum(sql)},current_user,0,true);"]
     # The final metadata marker skips V1 on this verified, already populated schema.
-    marker = ["DELETE FROM flyway_schema_history;", "INSERT INTO flyway_schema_history(installed_rank,version,description,type,script,installed_by,execution_time,success) VALUES (1,'1','Consolidated BookKin schema','BASELINE','<< Flyway Baseline >>',current_user,0,true);"]
+    marker = ["DELETE FROM flyway_schema_history;", "INSERT INTO flyway_schema_history(installed_rank,version,description,type,script,installed_by,execution_time,success) VALUES (1,'1','Consolidated Silvae schema','BASELINE','<< Flyway Baseline >>',current_user,0,true);"]
     return '\n'.join(parts), '\n'.join(marker)
 
 
@@ -113,8 +113,8 @@ def main():
     backup.write_bytes(db.run('pg_dump', ['-d', args.database, '-Fc', '--no-owner', '--no-privileges']))
     rollback_history = db.run('pg_dump', ['-d', args.database, '--data-only', '--column-inserts', '--table=public.flyway_schema_history', '--no-owner', '--no-privileges'])
     (args.backup_dir / f'history-{stamp}.sql').write_bytes(rollback_history)
-    clone = 'bookkin_check_' + uuid.uuid4().hex[:12]
-    fresh = 'bookkin_fresh_' + uuid.uuid4().hex[:12]
+    clone = 'silvae_check_' + uuid.uuid4().hex[:12]
+    fresh = 'silvae_fresh_' + uuid.uuid4().hex[:12]
     created = []
     try:
         for name in (clone, fresh):

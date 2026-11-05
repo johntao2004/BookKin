@@ -3,7 +3,7 @@ import { usePermissions } from "../auth/permissions";
 // The library graph contains book evidence only; analysis starts explicitly on user action.
 import { type NetworkGraphOptions } from '@ant-design/graphs';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useMemo, useRef, useState } from 'react';
+import { lazy, Suspense, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { _AntAlert as Alert, _AntButton as Button, Empty, Pagination, Skeleton, Tag } from '@/ui/antd';
 import { Typography } from '@/ui/primitives';
@@ -17,11 +17,12 @@ import { useAiAvailability } from '../features/ai/useAiAvailability';
 import { PageContainer, PageHeader } from '../components/PageHeader';
 import type { BookKnowledge } from '../domain/types';
 import { tokens } from '../theme/generated-tokens';
-import { useBookKinTheme } from '../theme/BookKinThemeProvider';
+import { useSilvaeTheme } from '../theme/SilvaeThemeProvider';
 import { buildKnowledgeGraph, filterBooksByNode, knowledgeKey, searchKnowledgeBooks } from './knowledge-graph-model';
 import { fetchVirtualLibraryBooks } from './virtual-library-query';
-import { KnowledgeNetwork } from './KnowledgeNetwork';
 import './knowledge-graph.css';
+
+const KnowledgeNetwork = lazy(() => import('./KnowledgeNetwork').then(module => ({ default: module.KnowledgeNetwork })));
 
 type GraphInstance = Parameters<NonNullable<NetworkGraphOptions['onReady']>>[0];
 const PAGE_SIZE = 24;
@@ -31,7 +32,7 @@ const NO_KNOWLEDGE: BookKnowledge[] = [];
 export function KnowledgeGraphPage() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const { mode } = useBookKinTheme();
+  const { mode } = useSilvaeTheme();
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
   const [drawer, setDrawer] = useState<'analysis' | null>(null);
@@ -143,7 +144,7 @@ export function KnowledgeGraphPage() {
           {error ? <Alert type="error" showIcon title="暂时无法加载学脉图" action={<Button onClick={() => { void catalog.refetch(); void knowledgeQuery.refetch(); }}>重试</Button>} />
             : pending ? <Skeleton active paragraph={{ rows: 10 }} />
             : !data.nodes.length ? <div className="bk-knowledge-empty"><Empty description={query ? '没有匹配的正文知识点' : '还没有正文知识点'} />{query ? <Button onClick={() => setQuery('')}>清除搜索</Button> : null}</div>
-            : <><KnowledgeNetwork key={mode} options={options} /><div className="bk-knowledge-zoom"><Button aria-label="放大图谱" onClick={() => void graphRef.current?.zoomBy(1.25)}>＋</Button><Button aria-label="缩小图谱" onClick={() => void graphRef.current?.zoomBy(0.8)}>−</Button><Button onClick={() => void graphRef.current?.fitView()}>适应</Button></div></>}
+            : <><Suspense fallback={<Skeleton active paragraph={{ rows: 10 }} />}><KnowledgeNetwork key={mode} options={options} /></Suspense><div className="bk-knowledge-zoom"><Button aria-label="放大图谱" onClick={() => void graphRef.current?.zoomBy(1.25)}>＋</Button><Button aria-label="缩小图谱" onClick={() => void graphRef.current?.zoomBy(0.8)}>−</Button><Button onClick={() => void graphRef.current?.fitView()}>适应</Button></div></>}
         </div>
         {selected && <aside className="bk-knowledge-details" aria-label="知识点筛选">
           <div className="bk-knowledge-selection"><Typography component="h2">{selected.data.label}</Typography><Button onClick={() => { setSelectedId(null); setPage(1); }}>清除筛选</Button></div>

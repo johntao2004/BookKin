@@ -2,7 +2,7 @@
 export const tokens = {
   "$schema": "https://design-tokens.github.io/community-group/format/",
   "meta": {
-    "name": "BookKin设计 Token",
+    "name": "Silvae设计 Token",
     "version": "1.0.0",
     "baseUnit": 4
   },
@@ -109,9 +109,9 @@ export const tokens = {
   },
   "typography": {
     "fontFamily": {
-      "display": "BookKin Serif, Noto Serif SC, serif",
+      "display": "Silvae Serif, Noto Serif SC, serif",
       "body": "Source Han Sans SC, sans-serif",
-      "readerSerif": "BookKin Serif, Noto Serif SC, serif",
+      "readerSerif": "Silvae Serif, Noto Serif SC, serif",
       "readerSans": "Source Han Sans SC, sans-serif",
       "mono": "JetBrains Mono, SFMono-Regular, monospace"
     },

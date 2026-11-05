@@ -19,7 +19,7 @@ vi.mock("../content/MarkdownEditor", async () => {
 const saved: ReadingPost = { id: "post-1", kind: "BOOK", sourceId: demoBooks[0].id, sourceTitle: demoBooks[0].title, userId: "user-owner", authorName: "林", title: "书页之后", markdown: "## 思考\n\n- 延伸阅读\n\n| 要点 | 记录 |\n| --- | --- |\n| 一 | 二 |", excerpt: "阅读后的思考", visibility: "PRIVATE", revision: 2, createdAt: "2026-10-22T03:00:00Z", updatedAt: "2026-10-22T03:00:00Z" };
 
 beforeEach(() => {
-  sessionStorage.setItem("bookkin-demo-session", JSON.stringify({ id: "user-owner", username: "owner", displayName: "林", role: "OWNER", mustChangePassword: false }));
+  sessionStorage.setItem("silvae-demo-session", JSON.stringify({ id: "user-owner", username: "owner", displayName: "林", role: "OWNER", mustChangePassword: false }));
   vi.spyOn(readingPosts, "list").mockResolvedValue({ items: [saved], nextCursor: null });
   vi.spyOn(readingPosts, "get").mockResolvedValue(saved);
   vi.spyOn(readingPosts, "create").mockResolvedValue(saved);

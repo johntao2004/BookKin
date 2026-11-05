@@ -90,7 +90,7 @@ describe("ArticleReaderPage shared reader integration", () => {
   beforeEach(() => {
     readerMock.source = null;
     sessionStorage.setItem(
-      "bookkin-demo-session",
+      "silvae-demo-session",
       JSON.stringify({
         id: "user-owner",
         username: "owner",
@@ -140,7 +140,7 @@ describe("ArticleReaderPage shared reader integration", () => {
   afterEach(() => {
     cleanup();
     vi.restoreAllMocks();
-    sessionStorage.removeItem("bookkin-demo-session");
+    sessionStorage.removeItem("silvae-demo-session");
   });
 
   it("maps stored article locators and preserves annotation style and color", async () => {
@@ -589,7 +589,7 @@ describe("ArticleReaderPage shared reader integration", () => {
   });
 
   it("does not read or save article state for an anonymous reader", async () => {
-    sessionStorage.removeItem("bookkin-demo-session");
+    sessionStorage.removeItem("silvae-demo-session");
     renderReader();
     await waitFor(() => expect(readerMock.source).not.toBeNull());
     expect(reading).not.toHaveBeenCalled();

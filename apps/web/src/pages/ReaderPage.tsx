@@ -42,7 +42,8 @@ import { Slider } from "@/ui/forms";
 import { Snackbar } from "@/ui/primitives";
 import { Stack } from "@/ui/primitives";
 import { Switch } from "@/ui/forms";
-import { TextField } from "@/ui/forms";
+import { MarkdownEditor } from "../features/content/MarkdownEditor";
+import { AnnotationNoteMarkdown } from "../components/AnnotationNoteMarkdown";
 import { Tooltip } from "@/ui/feedback";
 import { Typography } from "@/ui/primitives";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -64,8 +65,8 @@ import { demoChapter } from "../data/demo";
 import { annotationColorHex, highlightColorPresets, readerHighlightStyle, type AnnotationTextTheme } from "../domain/annotation-colors";
 import type { Annotation, AnnotationStyle, Book, DisplayBook, HighlightColor } from "../domain/types";
 import { tokens } from "../theme/generated-tokens";
-import { useBookKinTheme } from "../theme/BookKinThemeProvider";
-import { bookKinThemeOptions } from "../theme/theme";
+import { useSilvaeTheme } from "../theme/SilvaeThemeProvider";
+import { silvaeThemeOptions } from "../theme/theme";
 import { DEFAULT_READER_SETTINGS, PRESET_READER_FONTS, readReaderSettings, readerFontFamily, type ReaderSettings, type ReaderTheme } from "../components/readers/reader-fonts";
 
 const EpubDocumentReader = lazy(() => import("../components/readers/EpubDocumentReader"));
@@ -88,7 +89,7 @@ export function ReaderWorkspace({ source }: { source?: IndependentReaderSource }
   const { user } = useAuth();
   const { can } = usePermissions();
   const canAnnotate = can(source?.annotationPermission ?? "reader.annotate");
-  const { mode: readerTheme, setMode: setBookKinTheme } = useBookKinTheme();
+  const { mode: readerTheme, setMode: setSilvaeTheme } = useSilvaeTheme();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const readerLocation = useLocation();
@@ -104,7 +105,7 @@ export function ReaderWorkspace({ source }: { source?: IndependentReaderSource }
   const bookQuery = useQuery<Book | DisplayBook>({ queryKey: ["reader-book", bookId, guest], queryFn: async () => guest ? api.getDisplayBook(bookId) : api.getBook(bookId), enabled: Boolean(bookId) && !source });
   const annotationQueryKey = ["annotations", bookId] as const;
   const annotationsQuery = useQuery({ queryKey: annotationQueryKey, queryFn: () => api.listAnnotations(bookId), enabled: Boolean(user) && !source });
-  const readerSettingsKey = `bookkin-reader-settings:${user?.id ?? "anonymous"}`;
+  const readerSettingsKey = `silvae-reader-settings:${user?.id ?? "anonymous"}`;
   const readerFontsQuery = useQuery({ queryKey: ["reader-fonts"], queryFn: api.listReaderFonts, staleTime: 5 * 60_000, enabled: Boolean(user) });
   const availableFonts = readerFontsQuery.data ?? PRESET_READER_FONTS;
   const [readerSettings, setReaderSettings] = useState<ReaderSettings>(() => readReaderSettings(readerSettingsKey));
@@ -141,7 +142,7 @@ export function ReaderWorkspace({ source }: { source?: IndependentReaderSource }
   const [readerProgress, setReaderProgress] = useState<number | null>(null);
   const visibleHeight = useReaderVisibleHeight();
   const currentFont = availableFonts.find((font) => font.id === readerSettings.fontId && font.status === "ENABLED") ?? PRESET_READER_FONTS[0];
-  const currentTheme = bookKinThemeOptions[readerTheme].reader;
+  const currentTheme = silvaeThemeOptions[readerTheme].reader;
   const fontSize = readerSettings.fontSize;
   const fontFamily = readerFontFamily(currentFont);
   const bookAnnotations = useMemo(() => user ? (source?.annotations ?? annotationsQuery.data ?? []).filter((item) => item.bookId === bookId) : [], [source?.annotations, annotationsQuery.data, bookId, user]);
@@ -157,7 +158,7 @@ export function ReaderWorkspace({ source }: { source?: IndependentReaderSource }
   const demo = !source && api.isDemo;
   const notesTitle = source ? "阅文札记" : "本书笔记";
   const selectedAnnotationGroup = useMemo(() => selection ? annotationGroups.find(group => sameAnnotationSelection(group.annotation, { ...selection, bookId })) : undefined, [annotationGroups, bookId, selection]);
-  const noteDraftKey = user && bookId ? `bookkin-${source ? "article-note-draft" : "note-draft"}:${user.id}:${bookId}` : undefined;
+  const noteDraftKey = user && bookId ? `silvae-${source ? "article-note-draft" : "note-draft"}:${user.id}:${bookId}` : undefined;
 
   useEffect(() => {
     if (!readerFontsQuery.isSuccess) return;
@@ -392,7 +393,7 @@ export function ReaderWorkspace({ source }: { source?: IndependentReaderSource }
           <Typography component="div" variant="body2" sx={{ mb: 2, color: currentTheme.foreground, fontFamily: tokens.typography.fontFamily.display, maxHeight: 86, overflow: "auto" }}><Box component="span" sx={{ ...readerHighlightStyle(highlightColor, currentTheme), borderRadius: "var(--radius-md)", boxDecorationBreak: "clone" }}>“{selection?.quote}”</Box></Typography>
           <Typography variant="caption" color="text.secondary">高亮颜色</Typography>
           <AnnotationColorSwatches value={highlightColor} onChange={setHighlightColor} disabled={annotationBusy} compact />
-          <TextField label="写下这段文字带来的想法" multiline minRows={3} fullWidth value={note} onChange={(event: any) => setNote(event.target.value)} autoFocus />
+          <MarkdownEditor label="写下这段文字带来的想法" mode="note" value={note} onChange={setNote} disabled={annotationBusy} maxLength={20_000} autoFocus />
           {!source && noteComposerOpen && can("notes.edit") && <AiAssistantButton source="NOTE_DRAFT" label="AI 整理笔记" draft={note} disabled={annotationBusy} onApply={setNote} />}
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2.5, justifyContent: "space-between" }}><Button color="inherit" disabled={annotationBusy} onClick={closeSelection}>取消</Button><Button variant="contained" disabled={!note.trim() || annotationBusy} onClick={() => void saveAnnotation(selectedAnnotationGroup?.annotation.style ?? "HIGHLIGHT", true)}>保存笔记</Button></DialogActions>
@@ -428,7 +429,7 @@ export function ReaderWorkspace({ source }: { source?: IndependentReaderSource }
         </Box>
         <Divider />
         <Typography variant="caption" color="text.secondary" sx={{ px: 2, pt: 1.5, display: "block" }}>阅读主题</Typography>
-        {(Object.keys(bookKinThemeOptions) as ReaderTheme[]).map((key) => <MenuItem key={key} selected={readerTheme === key} onClick={() => setBookKinTheme(key)}><Box sx={{ width: 24, height: 24, borderRadius: "50%", bgcolor: bookKinThemeOptions[key].reader.background, border: 1, borderColor: "divider", mr: 1.5 }} />{bookKinThemeOptions[key].label}{readerTheme === key && <CheckRounded sx={{ ml: "auto" }} />}</MenuItem>)}
+        {(Object.keys(silvaeThemeOptions) as ReaderTheme[]).map((key) => <MenuItem key={key} selected={readerTheme === key} onClick={() => setSilvaeTheme(key)}><Box sx={{ width: 24, height: 24, borderRadius: "50%", bgcolor: silvaeThemeOptions[key].reader.background, border: 1, borderColor: "divider", mr: 1.5 }} />{silvaeThemeOptions[key].label}{readerTheme === key && <CheckRounded sx={{ ml: "auto" }} />}</MenuItem>)}
       </Menu>
 
       <Drawer anchor="right" title={notesTitle} closeLabel={`关闭${notesTitle}`} open={notesOpen} onClose={() => setNotesOpen(false)} afterOpenChange={(opened: boolean) => { if (opened) focusCurrentNote(); }} slotProps={{ paper: { sx: { width: { xs: `calc(100vw - ${tokens.spacing[6]}px)`, sm: 390 }, maxWidth: "100vw" } } }}>
@@ -439,7 +440,7 @@ export function ReaderWorkspace({ source }: { source?: IndependentReaderSource }
               <Chip size="small" label={annotationLabel(item)} sx={{ mb: `${tokens.spacing[3]}px` }} />
               <Box role="region" aria-label={`${annotationLabel(item)}内容`} tabIndex={0} sx={{ maxHeight: `min(40dvh, ${tokens.spacing[24] * 2}px)`, overflowY: "auto", overscrollBehavior: "contain", overflowWrap: "anywhere", minWidth: 0 }}>
               {item.quote && <Typography sx={{ fontFamily: tokens.typography.fontFamily.display }}><Box component="span" sx={{ ...(item.style === "HIGHLIGHT" ? readerHighlightStyle(item.color, currentTheme) : {}), borderRadius: "var(--radius-md)", boxDecorationBreak: "clone" }}>“{item.quote}”</Box></Typography>}
-              {notes.length > 0 && <Typography variant="body2" color="text.secondary" sx={{ mt: 1, whiteSpace: "pre-wrap" }}>{notes.join("\n\n")}</Typography>}
+              {notes.length > 0 && <AnnotationNoteMarkdown markdown={notes.join("\n\n")} sx={{ mt: 1, color: "text.secondary", overflowWrap: "anywhere" }} />}
               </Box>
               <Divider sx={{ mt: `${tokens.spacing[2]}px` }} />
               <Stack direction="row" sx={{ mt: `${tokens.spacing[2]}px`, gap: `${tokens.spacing[2]}px`, flexWrap: "wrap" }}>

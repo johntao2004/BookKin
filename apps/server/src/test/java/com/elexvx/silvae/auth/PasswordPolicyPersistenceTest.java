@@ -1,0 +1,34 @@
+// 验证密码策略真实持久化和重新加载，测试使用隔离状态，不把修改线上配置作为测试前提。
+// Checks actual policy persistence/reload with isolated state rather than requiring live configuration changes.
+package com.elexvx.silvae.auth;
+import com.elexvx.silvae.users.*;
+import com.elexvx.silvae.audit.AuditService;
+import java.sql.DriverManager;
+import java.util.Optional;
+import java.util.UUID;
+import org.jooq.impl.DSL;
+import org.jooq.SQLDialect;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+@EnabledIfEnvironmentVariable(named="SILVAE_MAIL_TEST_DATABASE_URL", matches=".+")
+class PasswordPolicyPersistenceTest {
+ static class Rollback extends RuntimeException {}
+ @Test void persistsRulesAndValidatesReloadedPolicyWithoutChangingLiveConfiguration() throws Exception {
+  try(var connection=DriverManager.getConnection(System.getenv("SILVAE_MAIL_TEST_DATABASE_URL"),System.getenv().getOrDefault("SILVAE_DATABASE_USER","silvae"),System.getenv().getOrDefault("SILVAE_DATABASE_PASSWORD","silvae-local-dev"))) {
+   var db=DSL.using(connection,SQLDialect.POSTGRES);
+   assertThrows(Rollback.class,()->db.transaction(config->{
+    var users=mock(UserRepository.class);var actor=mock(SilvaeUser.class);
+    when(actor.role()).thenReturn(UserRole.OWNER);when(actor.id()).thenReturn(UUID.randomUUID());when(users.findByUsername("owner")).thenReturn(Optional.of(actor));
+    var service=new PasswordPolicyService(DSL.using(config),users,mock(AuditService.class));
+    var strict=new PasswordPolicyService.Policy(16,true,true,true,true);
+    assertEquals(strict,service.save("owner",strict));
+    assertEquals(strict,service.policy());
+    assertThrows(RuntimeException.class,()->service.validate("abcdefghijklmnop"));
+    assertDoesNotThrow(()->service.validate("Strong-password1!"));
+    throw new Rollback();
+   }));
+  }
+ }
+}

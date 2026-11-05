@@ -7,6 +7,15 @@ import { TestProviders } from "../test/TestProviders";
 import { ReaderPage } from "./ReaderPage";
 import { readerSelectionFromRect } from "../components/readers/types";
 
+const markdownEditorBindings = vi.hoisted(() => ({ props: undefined as { mode: string; maxLength?: number; disabled?: boolean; autoFocus?: boolean } | undefined }));
+
+vi.mock("../features/content/MarkdownEditor", () => ({
+  MarkdownEditor: ({ value, onChange, label, disabled, mode, maxLength, autoFocus }: { value: string; onChange: (value: string) => void; label: string; disabled?: boolean; mode: string; maxLength?: number; autoFocus?: boolean }) => {
+    markdownEditorBindings.props = { mode, maxLength, disabled, autoFocus };
+    return <textarea aria-label={label} value={value} disabled={disabled} data-mode={mode} data-max-length={maxLength} onChange={event => onChange(event.target.value)} />;
+  },
+}));
+
 function openNotesDrawer() {
   fireEvent.click(screen.getByRole("button", { name: "更多阅读操作" }));
   fireEvent.click(screen.getByRole("menuitem", { name: "本书笔记" }));
@@ -15,7 +24,7 @@ function openNotesDrawer() {
 describe("ReaderPage", () => {
   beforeEach(() => {
     localStorage.clear();
-    sessionStorage.setItem("bookkin-demo-session", JSON.stringify({
+    sessionStorage.setItem("silvae-demo-session", JSON.stringify({
       id: "user-owner", username: "owner", displayName: "林", role: "OWNER", mustChangePassword: false,
     }));
   });
@@ -84,9 +93,13 @@ describe("ReaderPage", () => {
     expect(screen.getByRole("button", { name: "加粗" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "高亮＋笔记" }));
     expect(screen.getByRole("button", { name: "选择黄色荧光笔" })).toHaveAttribute("aria-pressed", "true");
+    const editor = screen.getByRole("textbox", { name: "写下这段文字带来的想法" });
+    expect(editor).toHaveAttribute("data-mode", "note");
+    expect(editor).toHaveAttribute("data-max-length", "20000");
+    expect(markdownEditorBindings.props?.autoFocus).toBe(true);
     fireEvent.click(screen.getByRole("button", { name: "选择粉色荧光笔" }));
     expect(screen.getByRole("button", { name: "选择粉色荧光笔" })).toHaveAttribute("aria-pressed", "true");
-    fireEvent.change(screen.getByLabelText("写下这段文字带来的想法"), { target: { value: "记住这层暮色。" } });
+    fireEvent.change(editor, { target: { value: "记住这层暮色。" } });
     fireEvent.click(screen.getByRole("button", { name: "保存笔记" }));
 
     await waitFor(() => expect(screen.getByText("河面先暗了一层", { selector: "mark" })).toHaveAttribute("data-highlight-color", "PINK"));
@@ -145,8 +158,8 @@ describe("ReaderPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "阅读设置" }));
     fireEvent.click(screen.getByRole("menuitem", { name: "夜间" }));
 
-    await waitFor(() => expect(document.documentElement).toHaveAttribute("data-bookkin-theme", "night"));
-    expect(localStorage.getItem("bookkin-site-theme")).toBe("NIGHT");
+    await waitFor(() => expect(document.documentElement).toHaveAttribute("data-silvae-theme", "night"));
+    expect(localStorage.getItem("silvae-site-theme")).toBe("NIGHT");
   });
 
   it("persists the page-turn effect switch in reader settings", async () => {
@@ -159,7 +172,7 @@ describe("ReaderPage", () => {
     fireEvent.click(toggle);
 
     expect(toggle).not.toBeChecked();
-    await waitFor(() => expect(JSON.parse(localStorage.getItem("bookkin-reader-settings:user-owner") ?? "null")).toMatchObject({
+    await waitFor(() => expect(JSON.parse(localStorage.getItem("silvae-reader-settings:user-owner") ?? "null")).toMatchObject({
       pageTurnEnabled: false,
     }));
     expect(screen.getByText("关闭后直接切换页面")).toBeInTheDocument();

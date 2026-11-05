@@ -1,4 +1,4 @@
-import { bookKinThemeOptions } from "../theme/theme";
+import { silvaeThemeOptions } from "../theme/theme";
 import { tokens } from "../theme/generated-tokens";
 import { highlightColorPresets, readerHighlightStyle } from "./annotation-colors";
 
@@ -34,7 +34,7 @@ function compositeHighlight(highlight: string, page: string) {
 }
 
 describe("reader annotation contrast", () => {
-  for (const [themeName, themeOption] of Object.entries(bookKinThemeOptions)) {
+  for (const [themeName, themeOption] of Object.entries(silvaeThemeOptions)) {
     for (const preset of highlightColorPresets) {
       it(`${themeName} ${preset.value} keeps reader text at WCAG AA contrast`, () => {
         const style = readerHighlightStyle(preset.value, themeOption.reader);
@@ -52,7 +52,7 @@ describe("reader annotation contrast", () => {
   });
 
   it("keeps unhighlighted theme-aware EPUB links above WCAG AA", () => {
-    for (const [themeName, themeOption] of Object.entries(bookKinThemeOptions)) {
+    for (const [themeName, themeOption] of Object.entries(silvaeThemeOptions)) {
       const foreground = themeName === "NIGHT"
         ? tokens.color.primitive.coral600
         : tokens.color.primitive.coral700;

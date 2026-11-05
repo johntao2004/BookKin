@@ -44,7 +44,7 @@ function MailForm({initial}: {initial: MailSettings}) {
       <TextField disabled={busy} label="SMTP 用户名" autoComplete="off" value={form.username} onChange={(e: React.ChangeEvent<HTMLInputElement>) => update({username:e.target.value})} />
       <TextField disabled={busy} label="SMTP 密码或授权码" type="password" autoComplete="new-password" helperText={form.passwordConfigured ? "已保存，留空保留原授权码。" : "填写邮件服务商提供的密码或授权码。"} value={form.password} onChange={(e: React.ChangeEvent<HTMLInputElement>) => update({password:e.target.value})} />
       <TextField disabled={busy} label="发件邮箱" type="email" required value={form.sender} onChange={(e: React.ChangeEvent<HTMLInputElement>) => update({sender:e.target.value})} />
-      <TextField disabled={busy} label="BookKin 站点地址" type="url" required helperText="邮件链接将使用此地址。正式使用请填写可访问的 HTTPS 地址。" value={form.publicUrl} onChange={(e: React.ChangeEvent<HTMLInputElement>) => update({publicUrl:e.target.value})} />
+      <TextField disabled={busy} label="Silvae 站点地址" type="url" required helperText="邮件链接将使用此地址。正式使用请填写可访问的 HTTPS 地址。" value={form.publicUrl} onChange={(e: React.ChangeEvent<HTMLInputElement>) => update({publicUrl:e.target.value})} />
     </Stack>
     <Stack className="bk-form-section" component="form" spacing={2} onSubmit={(e: FormEvent) => {e.preventDefault(); void run(async () => {await api.testMail(recipient); setMessage("测试邮件已提交，请检查收件箱和垃圾邮件。");});}}>
       <SectionHeader title="发送测试邮件" action={<Button type="submit" disabled={busy || dirty || !form.enabled}>发送测试</Button>} />

@@ -6,7 +6,7 @@ import { TestProviders } from "../test/TestProviders";
 import { api } from "../api/client";
 import { ActiveSessionsPage } from "./ActiveSessionsPage";
 it("lists each active session without exposing its cookie identifier",async()=>{
- sessionStorage.setItem("bookkin-demo-session",JSON.stringify({id:"owner",role:"OWNER",username:"owner",displayName:"主人",mustChangePassword:false}));
+ sessionStorage.setItem("silvae-demo-session",JSON.stringify({id:"owner",role:"OWNER",username:"owner",displayName:"主人",mustChangePassword:false}));
  const sessions=vi.spyOn(api,"activeSessions").mockResolvedValue([{id:"internal-id",userId:"reader",username:"reader",displayName:"成员",role:"MEMBER",createdAt:"2026-10-20T00:00:00Z",lastAccessAt:"2026-10-20T00:01:00Z",expiresAt:"2026-10-21T00:00:00Z",current:false,ending:false}]);
  const revoke=vi.spyOn(api,"revokeUserSessions").mockResolvedValue();
  render(<TestProviders><ActiveSessionsPage/></TestProviders>);

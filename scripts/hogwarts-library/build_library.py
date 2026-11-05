@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # 构建可编辑 Blender 场景、碰撞与书架契约并导出 GLB；建筑缩放与人尺度物件的刚性位移分开处理。
 # Builds the editable Blender scene, collision/shelf contracts and GLB export, separating architectural scaling from rigid human-scale feature translations.
-"""BookKin reference reconstruction. Blender 4.3.2; project-scale estimates.
+"""Silvae reference reconstruction. Blender 4.3.2; project-scale estimates.
 Run: blender -b -t 2 --python scripts/hogwarts-library/build_library.py -- --stage full
 Architectural coordinates are Three.js (x, y up, z). Blender uses (x, -z, y).
 No game meshes/textures, screenshot planes or synthetic shelf books are used.

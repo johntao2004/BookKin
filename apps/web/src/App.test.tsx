@@ -48,7 +48,7 @@ describe("App route permissions", () => {
     ["/annotations", "/annotations"],
     ["/annotations/all?view=cards#notes", "/annotations?view=cards#notes"],
   ])("uses the parent notes page as the overview for %s", async (initialPath, expectedPath) => {
-    sessionStorage.setItem("bookkin-demo-session", JSON.stringify(member));
+    sessionStorage.setItem("silvae-demo-session", JSON.stringify(member));
     vi.spyOn(api, "listAnnotationBooks").mockResolvedValue({ items: [] });
     vi.spyOn(articleNotesApi, "list").mockResolvedValue([]);
     vi.spyOn(articles, "list").mockResolvedValue([]);
@@ -74,7 +74,7 @@ describe("App route permissions", () => {
   });
 
   it.each(["MEMBER", "ADMIN", "OWNER"])("opens the merged library for %s and retains management permissions", async role => {
-    sessionStorage.setItem("bookkin-demo-session", JSON.stringify({ ...member, role }));
+    sessionStorage.setItem("silvae-demo-session", JSON.stringify({ ...member, role }));
     vi.spyOn(api, "listBooks").mockResolvedValue({ items: [] });
     render(<TestProviders initialPath="/library"><App /></TestProviders>);
     expect(await screen.findByRole("heading", { name: "全部藏书" })).toBeInTheDocument();
@@ -96,7 +96,7 @@ describe("App route permissions", () => {
   });
 
   it.each(["MEMBER", "ADMIN", "OWNER"])("opens the standalone overview for %s", async role => {
-    sessionStorage.setItem("bookkin-demo-session", JSON.stringify({ ...member, role }));
+    sessionStorage.setItem("silvae-demo-session", JSON.stringify({ ...member, role }));
     vi.spyOn(api, "listBooks").mockResolvedValue({ items: [] });
     render(<TestProviders initialPath="/library/overview"><App /></TestProviders>);
     expect(await screen.findByRole("heading", { name: "楼中一览", level: 1 })).toBeInTheDocument();
@@ -105,13 +105,13 @@ describe("App route permissions", () => {
   });
 
   it("keeps filters, hash and return state when normalizing the old private library address", async () => {
-    sessionStorage.setItem("bookkin-demo-session", JSON.stringify(member));
+    sessionStorage.setItem("silvae-demo-session", JSON.stringify(member));
     render(<TestProviders initialPath="/library/all?q=river&format=PDF&sort=title#books"><><App /><RouteLocationProbe /></></TestProviders>);
     await waitFor(() => expect(screen.getByTestId("route-location")).toHaveTextContent("/library?q=river&format=PDF&sort=title#books"));
   });
 
   it.each(["/recycle-bin", "/admin/recycle-bin"])("keeps members out of the regrouped recycle bin through %s", async path => {
-    sessionStorage.setItem("bookkin-demo-session", JSON.stringify(member));
+    sessionStorage.setItem("silvae-demo-session", JSON.stringify(member));
     render(<TestProviders initialPath={path}><App /></TestProviders>);
     expect(await screen.findByRole("heading", { name: "权限受限" })).toBeInTheDocument();
   });
@@ -131,7 +131,7 @@ describe("App route permissions", () => {
   });
 
   it.each(["MEMBER", "ADMIN", "OWNER"])("allows a signed-in %s to view article collections", async (role) => {
-    sessionStorage.setItem("bookkin-demo-session", JSON.stringify({ ...member, role }));
+    sessionStorage.setItem("silvae-demo-session", JSON.stringify({ ...member, role }));
     const list = vi.spyOn(articles, "list").mockResolvedValue([]);
     render(<TestProviders initialPath="/articles"><App /></TestProviders>);
 
@@ -162,8 +162,8 @@ describe("App route permissions", () => {
   });
 
   it("retains the details permission for signed-in accounts before private requests mount", async () => {
-    sessionStorage.setItem("bookkin-demo-session", JSON.stringify(member));
-    sessionStorage.setItem("bookkin-demo-role-permissions", JSON.stringify({ revision: 1, grants: { MEMBER: [], ADMIN: [], OWNER: [] } }));
+    sessionStorage.setItem("silvae-demo-session", JSON.stringify(member));
+    sessionStorage.setItem("silvae-demo-role-permissions", JSON.stringify({ revision: 1, grants: { MEMBER: [], ADMIN: [], OWNER: [] } }));
     const privateBook = vi.spyOn(api, "getBook");
     const publicBook = vi.spyOn(api, "getDisplayBook");
     const metadata = vi.spyOn(api, "getBookMetadata");
@@ -191,7 +191,7 @@ describe("App route permissions", () => {
   });
 
   it("redirects legacy category routes into the signed-in library and preserves filters", async () => {
-    sessionStorage.setItem("bookkin-demo-session", JSON.stringify(member));
+    sessionStorage.setItem("silvae-demo-session", JSON.stringify(member));
     render(<TestProviders initialPath="/categories/path-category?category=query-category&manage=1&q=lamp&format=PDF&sort=title#results"><><App /><RouteLocationProbe /></></TestProviders>);
 
     await waitFor(() => expect(screen.getByTestId("route-location")).toHaveTextContent("/library?"));
@@ -233,7 +233,7 @@ describe("App route permissions", () => {
   });
 
   it("does not reuse category-name search text as a signed-in book filter", async () => {
-    sessionStorage.setItem("bookkin-demo-session", JSON.stringify(member));
+    sessionStorage.setItem("silvae-demo-session", JSON.stringify(member));
     render(<TestProviders initialPath="/search?q=文学"><App /></TestProviders>);
 
     const categoryLink = await screen.findByRole("link", { name: "文学与叙事" }, { timeout: 5_000 });
@@ -245,7 +245,7 @@ describe("App route permissions", () => {
   });
 
   it("shows the 403 route page for an authenticated member on administration routes", async () => {
-    sessionStorage.setItem("bookkin-demo-session", JSON.stringify(member));
+    sessionStorage.setItem("silvae-demo-session", JSON.stringify(member));
     render(<TestProviders initialPath="/admin/users"><App /></TestProviders>);
 
     expect(await screen.findByRole("heading", { name: "权限受限" })).toBeInTheDocument();

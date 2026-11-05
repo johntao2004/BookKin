@@ -14,7 +14,7 @@ import { Typography } from "@/ui/primitives";
 import { getDocument, GlobalWorkerOptions, TextLayer, type PDFDocumentProxy, type PDFDataRangeTransport, type RenderTask } from "pdfjs-dist";
 import pdfWorker from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 import "pdfjs-dist/web/pdf_viewer.css";
-import { useCallback, useEffect, useEffectEvent, useMemo, useRef, useState, type ReactNode, type RefObject, type TouchEvent } from "react";
+import { Fragment, useCallback, useEffect, useEffectEvent, useMemo, useRef, useState, type ReactNode, type RefObject, type TouchEvent } from "react";
 import { api } from "../../api/client";
 import type { Annotation } from "../../domain/types";
 import { tokens } from "../../theme/generated-tokens";
@@ -23,7 +23,7 @@ import { bindAnnotationNoteActivation } from "./annotation-activation";
 import { applyPdfTextAnnotations } from "./pdf-annotations";
 import { pdfNavigation } from "./pdf-navigation";
 import { PdfImageSpread } from "./PdfImageSpread";
-import { pdfTextToReadingBlocks, splitPdfInlineFootnoteReferences, type PdfReadingBlock } from "./pdf-reading-text";
+import { pdfPageBoundarySeparator, pdfTextToReadingBlocks, shouldJoinPdfPageBoundaryParagraphs, splitPdfInlineFootnoteReferences, type PdfReadingBlock } from "./pdf-reading-text";
 import type { ReaderPageLayout } from "./reader-layout";
 import { isEditableReaderTarget, isReaderSwipe } from "./reader-navigation";
 import { PageTurnShade } from "./PageTurnShade";
@@ -48,26 +48,94 @@ interface PdfFootnoteResult {
   pageNumber: number;
 }
 
-export function previousPdfLocation({
-  pageNumber,
-  virtualPageIndex,
-  previousVirtualPageCount,
-}: {
+export interface PdfSourceBlock {
+  block?: PdfReadingBlock;
   pageNumber: number;
-  virtualPageIndex: number;
-  previousVirtualPageCount?: number;
-}) {
-  if (virtualPageIndex > 0) {
-    return { pageNumber, virtualPageIndex: virtualPageIndex - 1, waitForPageCount: false };
+  imagePage?: boolean;
+}
+
+interface IndexedPdfSourceBlock {
+  source: PdfSourceBlock;
+  index: number;
+  sourceStart: boolean;
+}
+
+export function groupPdfSourceBlocks(blocks: PdfSourceBlock[]) {
+  const indexed = blocks.map((source, index) => ({
+    source,
+    index,
+    sourceStart: index === 0 || blocks[index - 1]?.pageNumber !== source.pageNumber,
+  }));
+  const groups: IndexedPdfSourceBlock[][] = [];
+  for (let index = 0; index < indexed.length; index += 1) {
+    const current = indexed[index];
+    if (!current) continue;
+    const group = [current];
+    let cursor = index;
+    while (indexed[cursor] && indexed[cursor + 1]) {
+      const previous = indexed[cursor]!;
+      const next = indexed[cursor + 1]!;
+      if (previous.source.pageNumber + 1 !== next.source.pageNumber
+        || !previous.source.block || !next.source.block
+        || !shouldJoinPdfPageBoundaryParagraphs(previous.source.block, next.source.block)) break;
+      group.push(next);
+      cursor += 1;
+    }
+    groups.push(group);
+    index = cursor;
   }
-  if (pageNumber <= 1) {
-    return { pageNumber, virtualPageIndex: 0, waitForPageCount: false };
-  }
-  return {
-    pageNumber: pageNumber - 1,
-    virtualPageIndex: Math.max(0, (previousVirtualPageCount ?? 1) - 1),
-    waitForPageCount: previousVirtualPageCount === undefined,
-  };
+  return groups;
+}
+
+export function pdfSourcePositionAt(
+  sourcePageStarts: ReadonlyMap<number, number>,
+  virtualPageIndex: number,
+  fallbackPageNumber: number,
+  // 翻页时同屏多个源页起点并存，应锚定到最先开始的源页，而不是沿用当前页，否则翻回第一屏会显示第 2 页。
+  // When turning, anchor to the first source page starting on a shared screen instead of keeping the current one; otherwise paging back to the first screen reports page 2.
+  options: { preferFirstOnSharedScreen?: boolean } = {},
+) {
+  const starts = [...sourcePageStarts.entries()];
+  const currentScreenStart = starts.filter(([, start]) => start === virtualPageIndex).sort((left, right) => left[0] - right[0])[0];
+  const previousScreenStart = starts.filter(([, start]) => start < virtualPageIndex).sort((left, right) => right[1] - left[1] || right[0] - left[0])[0];
+  const fallbackStart = sourcePageStarts.get(fallbackPageNumber);
+  const source = fallbackStart === virtualPageIndex && !options.preferFirstOnSharedScreen
+    ? [fallbackPageNumber, fallbackStart] as const
+    : currentScreenStart ?? previousScreenStart;
+  return source
+    ? { pageNumber: source[0], offset: Math.max(0, virtualPageIndex - source[1]) }
+    : { pageNumber: fallbackPageNumber, offset: Math.max(0, virtualPageIndex - (sourcePageStarts.get(fallbackPageNumber) ?? 0)) };
+}
+
+export function pdfSourceVirtualPageIndex(localX: number, pagePadding: number, columnWidth: number, columnGap: number, visibleColumns: number) {
+  const sourceColumn = Math.floor(Math.max(0, localX - pagePadding) / (columnWidth + columnGap));
+  return Math.floor(sourceColumn / Math.max(1, visibleColumns));
+}
+
+function pdfSourcePageVirtualCount(sourcePageStarts: ReadonlyMap<number, number>, sourcePage: number, totalCount: number) {
+  const start = sourcePageStarts.get(sourcePage) ?? 0;
+  return Math.max(1, (sourcePageStarts.get(sourcePage + 1) ?? totalCount) - start);
+}
+
+export function pdfTurnPositionAt(
+  cursor: { pageNumber: number; virtualPageIndex: number; virtualPageCount: number },
+  direction: "PREVIOUS" | "NEXT",
+  sourcePageStarts: ReadonlyMap<number, number>,
+) {
+  const nextIndex = cursor.virtualPageIndex + (direction === "NEXT" ? 1 : -1);
+  if (nextIndex < 0 || nextIndex >= cursor.virtualPageCount) return null;
+  return { pageNumber: pdfSourcePositionAt(sourcePageStarts, nextIndex, cursor.pageNumber, { preferFirstOnSharedScreen: true }).pageNumber, virtualPageIndex: nextIndex };
+}
+
+export function remapPdfSourceTarget(
+  target: { pageNumber: number; offset: number; virtualPageIndex: number },
+  sourcePageStarts: ReadonlyMap<number, number>,
+  totalCount: number,
+) {
+  const start = sourcePageStarts.get(target.pageNumber);
+  return start === undefined
+    ? null
+    : { ...target, virtualPageIndex: Math.min(Math.max(0, totalCount - 1), start + target.offset) };
 }
 
 export default function PdfDocumentReader({ bookId, annotations, theme, fontSize, fontFamily, pageTurnEnabled = true, fontSourceUrl, contentUrl, dataRange, readOnly = false, target, targetRevision, onNavigation, onAnnotationActivate, onSelect, onPosition }: {
@@ -91,6 +159,7 @@ export default function PdfDocumentReader({ bookId, annotations, theme, fontSize
   const annotationActivationRootRef = useRef<HTMLDivElement | null>(null);
   const annotationsRef = useRef(annotations);
   const annotationCallbackRef = useRef(onAnnotationActivate);
+  const annotatedSourcePagesRef = useRef(new Set<number>());
   annotationsRef.current = annotations;
   annotationCallbackRef.current = onAnnotationActivate;
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -101,19 +170,23 @@ export default function PdfDocumentReader({ bookId, annotations, theme, fontSize
   // Track original PDF pages separately from reflowed virtual pages; locator offset identifies pagination within an original page.
   const [virtualPageIndex, setVirtualPageIndex] = useState(0);
   const [virtualPageCount, setVirtualPageCount] = useState(1);
+  const [sourcePageStartRevision, setSourcePageStartRevision] = useState(0);
   const [scale, setScale] = useState(1.25);
   const [viewMode] = useState<PdfViewMode>("READING");
-  const [readingBlocks, setReadingBlocks] = useState<PdfReadingBlock[]>([]);
+  const [readingBlocks, setReadingBlocks] = useState<PdfSourceBlock[]>([]);
   const [textLoading, setTextLoading] = useState(true);
+  const [textError, setTextError] = useState("");
   const [error, setError] = useState("");
   const [rendering, setRendering] = useState(true);
   const readingTextRef = useRef<HTMLDivElement | null>(null);
   const textCacheRef = useRef(new Map<number, PdfReadingBlock[]>());
+  const initialTargetPageRef = useRef(1);
+  const parsedThroughRef = useRef(0);
+  const hasDisplayedTextRef = useRef(false);
   const footnoteCacheRef = useRef(new Map<string, PdfFootnoteResult | null>());
   const footnoteRequestRef = useRef(0);
   const footnoteOriginRef = useRef(new Map<string, string>());
   const [activeFootnote, setActiveFootnote] = useState<ActivePdfFootnote | null>(null);
-  const [pendingPreviousPageNumber, setPendingPreviousPageNumber] = useState<number | null>(null);
   const [displayedPosition, setDisplayedPosition] = useState({
     pageNumber: 1,
     virtualPageIndex: 0,
@@ -124,10 +197,20 @@ export default function PdfDocumentReader({ bookId, annotations, theme, fontSize
   const readingSurfaceRef = useRef<HTMLDivElement | null>(null);
   const pageLayout = useReaderPageLayout(readingSurfaceRef);
   const wideSpread = pageLayout?.spread ?? false;
-  const imageSpread = wideSpread && !textLoading && readingBlocks.length === 0;
-  const virtualPageCountsRef = useRef(new Map<number, number>());
-  const pendingPreviousPageNumberRef = useRef<number | null>(null);
-  const previousPageReadyResolverRef = useRef<(() => void) | null>(null);
+  const hasTextBlocks = useMemo(() => readingBlocks.some((item) => !item.imagePage), [readingBlocks]);
+  const latestCursorRef = useRef({
+    pageNumber,
+    virtualPageIndex,
+    virtualPageCount,
+  });
+  latestCursorRef.current = {
+    pageNumber,
+    virtualPageIndex,
+    virtualPageCount,
+  };
+  const sourcePageStartsRef = useRef(new Map<number, number>());
+  const pendingSourceTargetRef = useRef<{ pageNumber: number; offset: number } | null>(null);
+  const restoredSourceTargetRef = useRef<{ pageNumber: number; offset: number; virtualPageIndex: number } | null>(null);
   const annotationRevision = useMemo(
     () => annotations.map((annotation) => `${annotation.id}:${annotation.updatedAt ?? annotation.createdAt}:${annotation.style}:${annotation.color ?? ""}`).join(","),
     [annotations],
@@ -136,7 +219,7 @@ export default function PdfDocumentReader({ bookId, annotations, theme, fontSize
   const { turnPage, turning } = usePageTurnTransition(
     readingSurfaceRef,
     pageTurnEnabled,
-    { spread: wideSpread, snapshotKey: pageSnapshotKey },
+    { spread: wideSpread, snapshotKey: pageSnapshotKey, snapshot: !hasTextBlocks },
   );
 
   useEffect(() => {
@@ -155,27 +238,38 @@ export default function PdfDocumentReader({ bookId, annotations, theme, fontSize
 
   useEffect(() => {
     if (turning) return;
-    setDisplayedPosition({ pageNumber, virtualPageIndex, virtualPageCount });
-  }, [pageNumber, turning, virtualPageCount, virtualPageIndex]);
+    const sourcePosition = pdfSourcePositionAt(sourcePageStartsRef.current, virtualPageIndex, pageNumber);
+    const restoredTarget = restoredSourceTargetRef.current;
+    const displayPosition = restoredTarget?.virtualPageIndex === virtualPageIndex
+      ? { pageNumber: restoredTarget.pageNumber, offset: restoredTarget.offset }
+      : sourcePosition;
+    setDisplayedPosition({ pageNumber: displayPosition.pageNumber, virtualPageIndex: displayPosition.offset, virtualPageCount });
+  }, [pageNumber, sourcePageStartRevision, turning, virtualPageCount, virtualPageIndex]);
 
   useEffect(() => {
     let disposed = false;
     textCacheRef.current.clear();
-    virtualPageCountsRef.current.clear();
-    pendingPreviousPageNumberRef.current = null;
-    previousPageReadyResolverRef.current?.();
-    previousPageReadyResolverRef.current = null;
+    sourcePageStartsRef.current.clear();
+    pendingSourceTargetRef.current = null;
+    restoredSourceTargetRef.current = null;
+    initialTargetPageRef.current = 1;
+    parsedThroughRef.current = 0;
+    hasDisplayedTextRef.current = false;
+    restoredSourceTargetRef.current = null;
+    setSourcePageStartRevision((revision) => revision + 1);
+    pendingSourceTargetRef.current = null;
     footnoteCacheRef.current.clear();
     footnoteOriginRef.current.clear();
+    annotatedSourcePagesRef.current.clear();
     setActiveFootnote(null);
     setDocument(null);
     setPageNumber(1);
     setVirtualPageIndex(0);
     setVirtualPageCount(1);
-    setPendingPreviousPageNumber(null);
     setReadingBlocks([]);
     setTextLoading(true);
     setError("");
+    setTextError("");
     // 每本书独立拥有 PDF 加载任务；切换或卸载时销毁任务并忽略迟到响应。
     // Each book owns its PDF loading task; switching or unmounting destroys it and ignores late responses.
     const task = getDocument(dataRange ? { range: dataRange, disableAutoFetch: true, disableStream: true, rangeChunkSize: 1024 * 1024 } : { url: contentUrl ?? `/api/v1/books/${bookId}/content`, withCredentials: true, rangeChunkSize: 1024 * 1024 });
@@ -185,15 +279,14 @@ export default function PdfDocumentReader({ bookId, annotations, theme, fontSize
       const locator = initialTargetRef.current ?? position?.locator;
       const match = locator?.match(/^pdf:page=(\d+)(?:&offset=(\d+))?/);
       if (match) {
-        setPageNumber(Math.min(loaded.numPages, Math.max(1, Number(match[1]))));
-        setVirtualPageIndex(Math.max(0, Number(match[2] ?? 0)));
+        const sourcePage = Math.min(loaded.numPages, Math.max(1, Number(match[1])));
+        setPageNumber(sourcePage);
+        initialTargetPageRef.current = sourcePage;
+        pendingSourceTargetRef.current = { pageNumber: sourcePage, offset: Math.max(0, Number(match[2] ?? 0)) };
       }
     }).catch((reason) => { if (!disposed) setError(reason instanceof Error ? reason.message : "无法打开 PDF"); });
     return () => {
       disposed = true;
-      pendingPreviousPageNumberRef.current = null;
-      previousPageReadyResolverRef.current?.();
-      previousPageReadyResolverRef.current = null;
       void task.destroy();
     };
   }, [bookId, contentUrl, dataRange, readOnly]);
@@ -202,12 +295,22 @@ export default function PdfDocumentReader({ bookId, annotations, theme, fontSize
     const match = /^pdf:page=(\d+)(?:&offset=(\d+))?/u.exec(locator);
     if (!match) return;
     const nextPage = Math.min(loaded.numPages, Math.max(1, Number(match[1])));
+    const offset = Math.max(0, Number(match[2] ?? 0));
+    pendingSourceTargetRef.current = null;
+    restoredSourceTargetRef.current = null;
     // Unmount the old text layout before it can clamp the destination's virtual offset.
-    if (nextPage !== pageNumber) setTextLoading(true);
-    pendingPreviousPageNumberRef.current = null;
-    setPendingPreviousPageNumber(null);
     setPageNumber(nextPage);
-    setVirtualPageIndex(Math.max(0, Number(match[2] ?? 0)));
+    const sourceStart = sourcePageStartsRef.current.get(nextPage);
+    if (sourceStart === undefined && parsedThroughRef.current < nextPage) pendingSourceTargetRef.current = { pageNumber: nextPage, offset };
+    else if (sourceStart === undefined) {
+      pendingSourceTargetRef.current = null;
+      setVirtualPageIndex(0);
+    }
+    else {
+      const targetIndex = sourceStart + offset;
+      restoredSourceTargetRef.current = { pageNumber: nextPage, offset, virtualPageIndex: targetIndex };
+      setVirtualPageIndex(targetIndex);
+    }
   });
   useEffect(() => {
     if (document && target) navigateToTarget(document, target);
@@ -259,46 +362,95 @@ export default function PdfDocumentReader({ bookId, annotations, theme, fontSize
   useEffect(() => {
     if (viewMode !== "READING" || !document) return;
     let disposed = false;
-    setTextLoading(true);
-    void Promise.all([pageNumber].map(async (visiblePageNumber) => {
-      const cached = textCacheRef.current.get(visiblePageNumber);
-      if (cached) return cached;
-      const page = await document.getPage(visiblePageNumber);
-      const content = await page.getTextContent();
-      const blocks = pdfTextToReadingBlocks(content.items);
-      textCacheRef.current.set(visiblePageNumber, blocks);
-      return blocks;
-    })).then((pages) => {
+    const allBlocks: PdfSourceBlock[] = [];
+    const initialBatchSize = 12;
+    const backgroundBatchSize = 36;
+    void (async () => {
+      for (let firstPage = 1; firstPage <= document.numPages;) {
+        const step = hasDisplayedTextRef.current ? backgroundBatchSize : initialBatchSize;
+        const lastPage = Math.min(document.numPages, firstPage + step - 1);
+        for (let sourcePage = firstPage; sourcePage <= lastPage; sourcePage += 1) {
+          let blocks = textCacheRef.current.get(sourcePage);
+          if (!blocks) {
+            const page = await document.getPage(sourcePage);
+            if (disposed) return;
+            const content = await page.getTextContent();
+            if (disposed) return;
+            blocks = pdfTextToReadingBlocks(content.items);
+            textCacheRef.current.set(sourcePage, blocks);
+          }
+          allBlocks.push(...(blocks.length
+            ? blocks.map((block) => ({ block, pageNumber: sourcePage }))
+            : [{ pageNumber: sourcePage, imagePage: true }]));
+        }
+        if (disposed) return;
+        parsedThroughRef.current = lastPage;
+        if (lastPage >= initialTargetPageRef.current || lastPage === document.numPages) {
+          hasDisplayedTextRef.current = true;
+          setReadingBlocks([...allBlocks]);
+          setTextLoading(false);
+        }
+        firstPage = lastPage + 1;
+      }
+      if (!disposed) setTextLoading(false);
+    })().catch((reason) => {
       if (disposed) return;
-      setReadingBlocks(pages[0] ?? []);
-      setTextLoading(false);
-    }).catch((reason) => {
-      if (!disposed) setError(reason instanceof Error ? reason.message : "PDF 文字解析失败");
+      const message = reason instanceof Error ? reason.message : "PDF 文字解析失败";
+      if (!hasDisplayedTextRef.current) setError(message);
+      else setTextError(message);
     });
     return () => { disposed = true; };
-  }, [document, pageNumber, viewMode]);
+  }, [document, viewMode]);
 
   useEffect(() => {
     if (viewMode !== "READING" || textLoading) return;
-    if (readingTextRef.current) applyPdfTextAnnotations(readingTextRef.current, pageNumber, annotations, { theme });
+    if (readingTextRef.current) {
+      const sourcePages = new Set(readingBlocks.map(({ pageNumber: sourcePage }) => sourcePage));
+      const activeAnnotationPages = new Set(annotations
+        .filter((annotation) => annotation.type !== "BOOKMARK")
+        .map((annotation) => Number(annotation.locator?.match(/^pdf:page=(\d+)/u)?.[1]))
+        .filter((pageNumber) => Number.isFinite(pageNumber)));
+      const pagesToRefresh = new Set([...activeAnnotationPages, ...annotatedSourcePagesRef.current]);
+      pagesToRefresh.forEach((sourcePage) => {
+        if (sourcePages.has(sourcePage)) applyPdfTextAnnotations(readingTextRef.current!, sourcePage, annotations, { theme });
+      });
+      annotatedSourcePagesRef.current = activeAnnotationPages;
+    }
   }, [annotations, document, pageNumber, readingBlocks, textLoading, viewMode, theme.background, theme.foreground]);
 
   useEffect(() => {
-    if (!document || pendingPreviousPageNumber !== null) return;
-    // 跨原始页的上一页布局未确定时不写进度，避免把临时 offset 当成最终位置。
-    // Do not save progress before the previous original page layout resolves, avoiding persistence of a provisional offset.
-    const locator = `pdf:page=${pageNumber}&offset=${virtualPageIndex}`;
-    const progress = Math.max(0, Math.min(1, (pageNumber - 1 + (virtualPageIndex + 0.5) / Math.max(1, virtualPageCount)) / document.numPages));
+    if (!document) return;
+    if (turning) return;
+    const unresolvedTarget = pendingSourceTargetRef.current;
+    if (unresolvedTarget) {
+      const locator = `pdf:page=${unresolvedTarget.pageNumber}&offset=${unresolvedTarget.offset}`;
+      const sourceCount = pdfSourcePageVirtualCount(sourcePageStartsRef.current, unresolvedTarget.pageNumber, virtualPageCount);
+      const progress = Math.max(0, Math.min(1, (unresolvedTarget.pageNumber - 1 + (unresolvedTarget.offset + 0.5) / sourceCount) / document.numPages));
+      onPosition(locator, progress);
+      return;
+    }
+    const sourcePosition = pdfSourcePositionAt(sourcePageStartsRef.current, virtualPageIndex, pageNumber);
+    const restoredTarget = restoredSourceTargetRef.current;
+    const position = restoredTarget?.virtualPageIndex === virtualPageIndex
+      ? { pageNumber: restoredTarget.pageNumber, offset: restoredTarget.offset }
+      : sourcePosition;
+    const locator = `pdf:page=${position.pageNumber}&offset=${position.offset}`;
+    const sourceCount = pdfSourcePageVirtualCount(sourcePageStartsRef.current, position.pageNumber, virtualPageCount);
+    const progress = Math.max(0, Math.min(1, (position.pageNumber - 1 + (position.offset + 0.5) / sourceCount) / document.numPages));
     onPosition(locator, progress);
     if (!readOnly) void api.saveReadingPosition(bookId, locator, progress).catch(() => undefined);
-  }, [bookId, document, onPosition, pageNumber, pendingPreviousPageNumber, readOnly, virtualPageCount, virtualPageIndex]);
+  }, [bookId, document, onPosition, pageNumber, readOnly, sourcePageStartRevision, turning, virtualPageCount, virtualPageIndex]);
 
-  const captureSelection = (sourcePageNumber = pageNumber) => {
+  const captureSelection = (fallbackPageNumber = pageNumber) => {
     const nativeSelection = window.getSelection();
     const quote = nativeSelection?.toString().trim() ?? "";
     if (!quote || quote.length > 600 || !nativeSelection?.rangeCount) return;
     const rect = nativeSelection.getRangeAt(0).getBoundingClientRect();
-    onSelect(readerSelectionFromRect({ quote, locator: `pdf:page=${sourcePageNumber}&offset=${virtualPageIndex}`, rect }));
+    const selectedNode = nativeSelection.getRangeAt(0).startContainer;
+    const sourcePageNumber = (selectedNode instanceof HTMLElement ? selectedNode : selectedNode.parentElement)?.closest<HTMLElement>("[data-pdf-source-page]")?.dataset.pdfSourcePage;
+    const sourcePage = Number(sourcePageNumber) || fallbackPageNumber;
+    const sourceOffset = Math.max(0, virtualPageIndex - (sourcePageStartsRef.current.get(sourcePage) ?? 0));
+    onSelect(readerSelectionFromRect({ quote, locator: `pdf:page=${sourcePage}&offset=${sourceOffset}`, rect }));
   };
 
   const openFootnote = (marker: string, anchor: HTMLElement, originId: string, sourcePageNumber: number, sourceBlocks: PdfReadingBlock[]) => {
@@ -334,74 +486,64 @@ export default function PdfDocumentReader({ bookId, annotations, theme, fontSize
     reference?.focus({ preventScroll: true });
   };
 
-  useEffect(() => {
-    if (pendingPreviousPageNumber !== null || !previousPageReadyResolverRef.current) return;
-    let secondFrame = 0;
-    const firstFrame = window.requestAnimationFrame(() => {
-      secondFrame = window.requestAnimationFrame(() => {
-        const resolve = previousPageReadyResolverRef.current;
-        previousPageReadyResolverRef.current = null;
-        resolve?.();
-      });
-    });
-    return () => {
-      window.cancelAnimationFrame(firstFrame);
-      window.cancelAnimationFrame(secondFrame);
-    };
-  }, [pendingPreviousPageNumber, virtualPageIndex]);
-
-  const handleVirtualPageCountChange = useCallback((count: number) => {
+  const handleVirtualPageCountChange = useCallback((count: number, sourcePageStarts: Array<[number, number]>) => {
     const nextCount = Math.max(1, count);
-    virtualPageCountsRef.current.set(pageNumber, nextCount);
+    const previousStart = sourcePageStartsRef.current.get(pageNumber);
+    const previousOffset = previousStart === undefined ? null : Math.max(0, virtualPageIndex - previousStart);
+    const nextStarts = new Map(sourcePageStarts);
+    const currentStarts = sourcePageStartsRef.current;
+    const startsChanged = currentStarts.size !== nextStarts.size
+      || [...nextStarts].some(([sourcePage, start]) => currentStarts.get(sourcePage) !== start);
+    sourcePageStartsRef.current = nextStarts;
+    // 仅在分页起点真实变化时刷新依赖项，避免每次重新测量都重复保存阅读进度。
+    // Only bump the revision when page starts really change, so re-measuring does not re-save reading progress.
+    if (startsChanged) setSourcePageStartRevision((revision) => revision + 1);
+    const pendingSourceTarget = pendingSourceTargetRef.current;
+    if (pendingSourceTarget) {
+      const targetStart = nextStarts.get(pendingSourceTarget.pageNumber);
+      if (targetStart !== undefined) {
+        pendingSourceTargetRef.current = null;
+        setPageNumber(pendingSourceTarget.pageNumber);
+        const targetIndex = Math.min(nextCount - 1, targetStart + pendingSourceTarget.offset);
+        restoredSourceTargetRef.current = { ...pendingSourceTarget, virtualPageIndex: targetIndex };
+        setVirtualPageIndex(targetIndex);
+      }
+    } else {
+      const restoredTarget = restoredSourceTargetRef.current;
+      if (restoredTarget) {
+        const remappedTarget = remapPdfSourceTarget(restoredTarget, nextStarts, nextCount);
+        if (remappedTarget) {
+          restoredSourceTargetRef.current = remappedTarget;
+          setPageNumber(remappedTarget.pageNumber);
+          setVirtualPageIndex(remappedTarget.virtualPageIndex);
+        }
+      } else {
+        const nextStart = nextStarts.get(pageNumber);
+        if (nextStart !== undefined && previousOffset !== null) setVirtualPageIndex(Math.min(nextCount - 1, nextStart + previousOffset));
+      }
+    }
     setVirtualPageCount(nextCount);
-    if (pendingPreviousPageNumberRef.current === pageNumber) {
-      pendingPreviousPageNumberRef.current = null;
-      setVirtualPageIndex(nextCount - 1);
-      setPendingPreviousPageNumber(null);
-      return;
-    }
     setVirtualPageIndex((current) => Math.min(current, nextCount - 1));
-  }, [pageNumber]);
+  }, [pageNumber, virtualPageIndex]);
 
-  const canPrevious = virtualPageIndex > 0 || pageNumber > 1;
-  const canNext = Boolean(document) && (virtualPageIndex < virtualPageCount - 1 || pageNumber + (imageSpread ? 1 : 0) < (document?.numPages ?? pageNumber));
+  const canPrevious = virtualPageIndex > 0;
+  const canNext = Boolean(document) && virtualPageIndex < virtualPageCount - 1;
   const changeToPreviousPage = useCallback(() => {
-    const previousPageNumber = Math.max(1, pageNumber - (imageSpread ? 2 : 1));
-    if (imageSpread) { setPageNumber(previousPageNumber); setVirtualPageIndex(0); return; }
-    const destination = previousPdfLocation({
-      pageNumber,
-      virtualPageIndex,
-      previousVirtualPageCount: virtualPageCountsRef.current.get(previousPageNumber),
-    });
-    if (destination.pageNumber === pageNumber) {
-      setVirtualPageIndex(destination.virtualPageIndex);
-      return;
-    }
-
-    setPageNumber(destination.pageNumber);
-    setVirtualPageIndex(destination.virtualPageIndex);
-    const knownPageCount = virtualPageCountsRef.current.get(destination.pageNumber);
-    setVirtualPageCount(knownPageCount ?? 1);
-    if (!destination.waitForPageCount) {
-      pendingPreviousPageNumberRef.current = null;
-      return;
-    }
-
-    pendingPreviousPageNumberRef.current = destination.pageNumber;
-    setPendingPreviousPageNumber(destination.pageNumber);
-    return new Promise<void>((resolve) => {
-      previousPageReadyResolverRef.current = resolve;
-    });
-  }, [pageNumber, virtualPageIndex, imageSpread]);
+    const cursor = latestCursorRef.current;
+    restoredSourceTargetRef.current = null;
+    const position = pdfTurnPositionAt(cursor, "PREVIOUS", sourcePageStartsRef.current);
+    if (!position) return;
+    setVirtualPageIndex(position.virtualPageIndex);
+    setPageNumber(position.pageNumber);
+  }, []);
   const changeToNextPage = useCallback(() => {
-    if (virtualPageIndex < virtualPageCount - 1) setVirtualPageIndex((value) => value + 1);
-    else if (document && pageNumber < document.numPages) {
-      const nextPageNumber = Math.min(document.numPages, pageNumber + (imageSpread ? 2 : 1));
-      setPageNumber(nextPageNumber);
-      setVirtualPageIndex(0);
-      setVirtualPageCount(virtualPageCountsRef.current.get(nextPageNumber) ?? 1);
-    }
-  }, [document, pageNumber, virtualPageCount, virtualPageIndex, imageSpread]);
+    const cursor = latestCursorRef.current;
+    restoredSourceTargetRef.current = null;
+    const position = pdfTurnPositionAt(cursor, "NEXT", sourcePageStartsRef.current);
+    if (!position) return;
+    setVirtualPageIndex(position.virtualPageIndex);
+    setPageNumber(position.pageNumber);
+  }, []);
   const goPrevious = useCallback(() => {
     if (canPrevious) void turnPage("PREVIOUS", changeToPreviousPage);
   }, [canPrevious, changeToPreviousPage, turnPage]);
@@ -441,14 +583,13 @@ export default function PdfDocumentReader({ bookId, annotations, theme, fontSize
   return (
     <Stack ref={annotationActivationRootRef} className="reader-viewport" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} sx={{ height: "100%", minHeight: 0, overflow: "hidden", bgcolor: viewMode === "ORIGINAL" ? theme.foreground : theme.background, color: viewMode === "ORIGINAL" ? theme.background : theme.foreground }}>
       {fontSourceUrl && <style>{`@font-face { font-family: ${fontFamily.split(",")[0]}; src: url("${fontSourceUrl}"); font-display: swap; }`}</style>}
+      {textError && <Alert severity="warning">{textError}</Alert>}
       {viewMode === "READING" ? (
-        <Box ref={readingSurfaceRef} className="reader-page-turn-surface" data-reader-spread={wideSpread} sx={{ position: "relative", ...readerWidthSx, px: !textLoading && readingBlocks.length === 0 ? 0 : readerWidthSx.px, flex: "1 1 auto", minHeight: 0, overflow: "hidden", bgcolor: theme.background, backfaceVisibility: "hidden", transformStyle: "preserve-3d", willChange: turning ? "transform, opacity, filter, clip-path" : "auto" }}>
+        <Box ref={readingSurfaceRef} className="reader-page-turn-surface" data-reader-spread={wideSpread} sx={{ position: "relative", ...readerWidthSx, flex: "1 1 auto", minHeight: 0, overflow: "hidden", bgcolor: theme.background, backfaceVisibility: "hidden", transformStyle: "preserve-3d", willChange: turning ? "transform, opacity, filter, clip-path" : "auto" }}>
           <PdfReadingClipFrame width={readingBlocks.length === 0 ? undefined : pageLayout?.articleWidth}>
             {textLoading
               ? <Stack spacing={1.5} sx={{ height: "100%", alignItems: "center", justifyContent: "center" }}><CircularProgress size={30} /><Typography sx={{ color: theme.muted }}>正在解析第 {pageNumber} 页文字…</Typography></Stack>
-              : readingBlocks.length === 0 && document
-                ? <PdfImageSpread document={document} pageNumber={pageNumber} spread={imageSpread} muted={theme.muted} />
-                : <PdfPagedText textRef={readingTextRef} blocks={readingBlocks} pageNumber={pageNumber} theme={theme} fontFamily={fontFamily} fontSize={fontSize} layout={pageLayout} pageIndex={virtualPageIndex} onPageCountChange={handleVirtualPageCountChange} onOpenFootnote={openFootnote} onReturnToReference={returnToFootnoteReference} onCaptureSelection={() => captureSelection(pageNumber)} />}
+              : <PdfPagedText textRef={readingTextRef} document={document!} blocks={readingBlocks} sourcePageStarts={sourcePageStartsRef.current} pageNumber={pageNumber} theme={theme} fontFamily={fontFamily} fontSize={fontSize} layout={pageLayout} pageIndex={virtualPageIndex} turning={turning} onPageCountChange={handleVirtualPageCountChange} onOpenFootnote={openFootnote} onReturnToReference={returnToFootnoteReference} onCaptureSelection={() => captureSelection(pageNumber)} />}
           </PdfReadingClipFrame>
           <PageTurnShade />
         </Box>
@@ -461,7 +602,7 @@ export default function PdfDocumentReader({ bookId, annotations, theme, fontSize
       )}
       <Stack component="nav" aria-label="PDF 翻页" className="pdf-reader-pagination" direction="row" spacing={1} sx={{ ...readerWidthSx, flex: `0 0 ${tokens.layout.readerControlHeight}px`, minHeight: tokens.layout.readerControlHeight, alignItems: "center", justifyContent: "center", overflowX: "auto", py: 0.75, bgcolor: theme.background, color: theme.foreground, borderTop: "1px solid", borderColor: "divider" }}>
         <IconButton color="inherit" aria-label="PDF 上一页" disabled={turning || !canPrevious} onClick={goPrevious} sx={{ width: tokens.layout.touchTarget, height: tokens.layout.touchTarget }}><NavigateBeforeRounded /></IconButton>
-        <Typography variant="body2" sx={{ minWidth: 0, flex: "1 1 auto", textAlign: "center", whiteSpace: "nowrap", color: theme.muted }}>{document ? `第 ${displayedPosition.pageNumber}${imageSpread && displayedPosition.pageNumber < document.numPages ? `–${displayedPosition.pageNumber + 1}` : ""} 页 · 共 ${document.numPages} 页` : "正在打开 PDF…"}</Typography>
+        <Typography variant="body2" sx={{ minWidth: 0, flex: "1 1 auto", textAlign: "center", whiteSpace: "nowrap", color: theme.muted }}>{document ? `第 ${displayedPosition.pageNumber} 页 · 共 ${document.numPages} 页` : "正在打开 PDF…"}</Typography>
         <IconButton color="inherit" aria-label="PDF 下一页" disabled={turning || !canNext} onClick={goNext} sx={{ width: tokens.layout.touchTarget, height: tokens.layout.touchTarget }}><NavigateNextRounded /></IconButton>
         {viewMode === "ORIGINAL" && <>
           <Box sx={{ width: { xs: 0, sm: 8 } }} />
@@ -500,16 +641,19 @@ export function PdfReadingClipFrame({ children, width }: { children: ReactNode; 
   return <Box className="pdf-reading-clip-frame" sx={{ height: "100%", minHeight: 0, width: width ? `${width}px` : "100%", maxWidth: "100%", mx: "auto", overflow: "hidden" }}>{children}</Box>;
 }
 
-function PdfPagedText({ textRef, blocks, pageNumber, theme, fontFamily, fontSize, layout, pageIndex, onPageCountChange, onOpenFootnote, onReturnToReference, onCaptureSelection }: {
+export function PdfPagedText({ textRef, document, blocks, sourcePageStarts, pageNumber, theme, fontFamily, fontSize, layout, pageIndex, turning, onPageCountChange, onOpenFootnote, onReturnToReference, onCaptureSelection }: {
   textRef: RefObject<HTMLDivElement | null>;
-  blocks: PdfReadingBlock[];
+  document: PDFDocumentProxy;
+  blocks: PdfSourceBlock[];
+  sourcePageStarts: ReadonlyMap<number, number>;
   pageNumber: number;
   theme: { background: string; foreground: string; muted: string };
   fontFamily: string;
   fontSize: number;
   layout: ReaderPageLayout | null;
   pageIndex: number;
-  onPageCountChange: (count: number) => void;
+  turning: boolean;
+  onPageCountChange: (count: number, sourcePageStarts: Array<[number, number]>) => void;
   onOpenFootnote: (marker: string, anchor: HTMLElement, originId: string, sourcePageNumber: number, sourceBlocks: PdfReadingBlock[]) => void;
   onReturnToReference: (marker: string) => void;
   onCaptureSelection: () => void;
@@ -519,8 +663,20 @@ function PdfPagedText({ textRef, blocks, pageNumber, theme, fontFamily, fontSize
   const columnWidth = layout?.columnWidth ?? null;
   const columnGap = layout?.columnGap ?? tokens.layout.readerPageGap;
   const pagePadding = layout?.pagePadding ?? tokens.spacing[5];
+  const blocksBySourcePage = useMemo(() => {
+    const grouped = new Map<number, PdfReadingBlock[]>();
+    blocks.forEach(({ block, pageNumber: sourcePage }) => {
+      if (!block) return;
+      const sourceBlocks = grouped.get(sourcePage) ?? [];
+      sourceBlocks.push(block);
+      grouped.set(sourcePage, sourceBlocks);
+    });
+    return grouped;
+  }, [blocks]);
+  const renderGroups = useMemo(() => groupPdfSourceBlocks(blocks), [blocks]);
 
   useEffect(() => {
+    if (turning) return;
     const frame = frameRef.current;
     if (!frame || columnWidth === null) return;
     let animationFrame = 0;
@@ -528,7 +684,25 @@ function PdfPagedText({ textRef, blocks, pageNumber, theme, fontFamily, fontSize
       window.cancelAnimationFrame(animationFrame);
       animationFrame = window.requestAnimationFrame(() => {
         const totalColumns = Math.max(1, Math.round((frame.scrollWidth + columnGap) / (columnWidth + columnGap)));
-        onPageCountChange(Math.max(1, Math.ceil(totalColumns / visibleColumns)));
+        const sourcePageStarts = new Map<number, number>();
+        frame.querySelectorAll<HTMLElement>("[data-pdf-source-marker]").forEach((span) => {
+          const sourcePage = Number(span.dataset.pdfSourcePage);
+          if (!Number.isFinite(sourcePage) || sourcePageStarts.has(sourcePage)) return;
+          let firstRect = span.getBoundingClientRect();
+          if (!span.hasAttribute("data-pdf-image-page")) {
+            const textWalker = window.document.createTreeWalker(span, NodeFilter.SHOW_TEXT);
+            const firstText = textWalker.nextNode();
+            if (firstText?.textContent) {
+              const firstCharacter = window.document.createRange();
+              firstCharacter.setStart(firstText, 0);
+              firstCharacter.setEnd(firstText, Math.min(1, firstText.textContent.length));
+              if (typeof firstCharacter.getBoundingClientRect === "function") firstRect = firstCharacter.getBoundingClientRect();
+            }
+          }
+          const localX = firstRect.left - frame.getBoundingClientRect().left;
+          sourcePageStarts.set(sourcePage, pdfSourceVirtualPageIndex(localX, pagePadding, columnWidth, columnGap, visibleColumns));
+        });
+        onPageCountChange(Math.max(1, Math.ceil(totalColumns / visibleColumns)), [...sourcePageStarts.entries()]);
       });
     };
     measure();
@@ -536,7 +710,7 @@ function PdfPagedText({ textRef, blocks, pageNumber, theme, fontFamily, fontSize
     const observer = new ResizeObserver(measure);
     observer.observe(frame);
     return () => { observer.disconnect(); window.cancelAnimationFrame(animationFrame); };
-  }, [blocks, columnGap, columnWidth, fontFamily, fontSize, layout?.articleWidth, onPageCountChange, visibleColumns]);
+  }, [blocks, columnGap, columnWidth, fontFamily, fontSize, layout?.articleWidth, onPageCountChange, turning, visibleColumns]);
 
   const pageStride = layout?.pageStride ?? 0;
 
@@ -584,20 +758,48 @@ function PdfPagedText({ textRef, blocks, pageNumber, theme, fontFamily, fontSize
         "& h2, & aside": { breakInside: "avoid" },
       }}
     >
-      {blocks.map((block, index) => <PdfReadingBlockView block={block} index={index} pageNumber={pageNumber} readingBlocks={blocks} onOpenFootnote={onOpenFootnote} onReturnToReference={onReturnToReference} key={`${pageNumber}-${index}`} />)}
+      {renderGroups.map((group) => {
+        if (group.length > 1) {
+          const first = group[0]!;
+          const firstSource = first.source;
+          const firstPage = firstSource.pageNumber;
+          const last = group[group.length - 1]!;
+          return <Typography key={`${firstPage}-${first.index}-${last.source.pageNumber}-${last.index}`} component="p" data-pdf-source-page={firstPage} sx={{ m: 0, mb: `${tokens.spacing[5]}px`, color: "inherit", fontFamily: "inherit", fontSize: "inherit", lineHeight: tokens.typography.lineHeight.body, textAlign: "justify", textIndent: first.index === 0 ? 0 : "2em" }}>
+            {group.map((part, partIndex) => {
+              const sourcePage = part.source.pageNumber;
+              const text = part.source.block!.text;
+              return <Fragment key={`${sourcePage}-${part.index}`}>
+                <PdfInlineText text={text} pageNumber={sourcePage} blockIndex={part.index} sourceStart={part.sourceStart} onOpenFootnote={(marker, anchor, originId) => onOpenFootnote(marker, anchor, originId, sourcePage, blocksBySourcePage.get(sourcePage) ?? [])} />
+                {partIndex < group.length - 1 && pdfPageBoundarySeparator(text, group[partIndex + 1]!.source.block!.text)}
+              </Fragment>;
+            })}
+          </Typography>;
+        }
+        const { source, index, sourceStart } = group[0]!;
+        const { block, pageNumber: sourcePageNumber, imagePage } = source;
+        const imageStart = sourcePageStarts.get(sourcePageNumber);
+        const imageIsNearViewport = imageStart === undefined
+          ? Math.abs(sourcePageNumber - pageNumber) <= visibleColumns + 1
+          : imageStart >= pageIndex - 1 && imageStart <= pageIndex + visibleColumns;
+        return <Fragment key={`${sourcePageNumber}-${index}`}>
+          {imagePage
+            ? <Box data-pdf-source-page={sourcePageNumber} data-pdf-image-page="" data-pdf-source-marker={sourceStart ? "" : undefined} sx={{ height: "100%", minHeight: "100%", breakInside: "avoid" }}>{imageIsNearViewport && <PdfImageSpread document={document} pageNumber={sourcePageNumber} spread={false} muted={theme.muted} />}</Box>
+            : <PdfReadingBlockView block={block!} index={index} pageNumber={sourcePageNumber} sourceStart={sourceStart} readingBlocks={blocksBySourcePage.get(sourcePageNumber) ?? []} onOpenFootnote={onOpenFootnote} onReturnToReference={onReturnToReference} />}
+        </Fragment>;
+      })}
     </Box>
   );
 }
 
-function PdfReadingBlockView({ block, index, pageNumber, readingBlocks, onOpenFootnote, onReturnToReference }: { block: PdfReadingBlock; index: number; pageNumber: number; readingBlocks: PdfReadingBlock[]; onOpenFootnote: (marker: string, anchor: HTMLElement, originId: string, sourcePageNumber: number, sourceBlocks: PdfReadingBlock[]) => void; onReturnToReference: (marker: string) => void }) {
-  const inlineText = (text: string) => <PdfInlineText text={text} pageNumber={pageNumber} blockIndex={index} onOpenFootnote={(marker, anchor, originId) => onOpenFootnote(marker, anchor, originId, pageNumber, readingBlocks)} />;
+function PdfReadingBlockView({ block, index, pageNumber, sourceStart, readingBlocks, onOpenFootnote, onReturnToReference }: { block: PdfReadingBlock; index: number; pageNumber: number; sourceStart: boolean; readingBlocks: PdfReadingBlock[]; onOpenFootnote: (marker: string, anchor: HTMLElement, originId: string, sourcePageNumber: number, sourceBlocks: PdfReadingBlock[]) => void; onReturnToReference: (marker: string) => void }) {
+  const inlineText = (text: string) => <PdfInlineText text={text} pageNumber={pageNumber} blockIndex={index} sourceStart={sourceStart} onOpenFootnote={(marker, anchor, originId) => onOpenFootnote(marker, anchor, originId, pageNumber, readingBlocks)} />;
   if (block.kind === "heading") {
-    return <Typography component="h2" sx={{ m: 0, mb: `${tokens.spacing[8]}px`, color: "inherit", fontFamily: "inherit", fontSize: "inherit", fontWeight: tokens.typography.fontWeight.semibold, lineHeight: tokens.typography.lineHeight.heading, textAlign: "center" }}>{inlineText(block.text)}</Typography>;
+    return <Typography component="h2" data-pdf-source-page={pageNumber} sx={{ m: 0, mb: `${tokens.spacing[8]}px`, color: "inherit", fontFamily: "inherit", fontSize: "inherit", fontWeight: tokens.typography.fontWeight.semibold, lineHeight: tokens.typography.lineHeight.heading, textAlign: "center" }}>{inlineText(block.text)}</Typography>;
   }
   if (block.kind === "toc-entry") {
     return (
-      <Box component="p" sx={{ m: 0, mb: `${tokens.spacing[4]}px`, display: "flex", alignItems: "baseline", color: "inherit", fontFamily: "inherit", fontSize: "inherit", lineHeight: tokens.typography.lineHeight.body, textAlign: "left" }}>
-        <Box component="span" sx={{ minWidth: 0 }}>{block.text}</Box>
+      <Box component="p" data-pdf-source-page={pageNumber} sx={{ m: 0, mb: `${tokens.spacing[4]}px`, display: "flex", alignItems: "baseline", color: "inherit", fontFamily: "inherit", fontSize: "inherit", lineHeight: tokens.typography.lineHeight.body, textAlign: "left" }}>
+        <Box component="span" data-pdf-source-page={pageNumber} data-pdf-source-marker={sourceStart ? "" : undefined} sx={{ minWidth: 0 }}>{block.text}</Box>
         <Box component="span" aria-hidden sx={{ minWidth: tokens.spacing[6], flex: 1, borderBottom: 1, borderColor: "currentColor", borderStyle: "dotted", opacity: 0.38 }} />
         <Box component="span" sx={{ flexShrink: 0, fontVariantNumeric: "tabular-nums" }}>{block.pageLabel}</Box>
       </Box>
@@ -605,7 +807,7 @@ function PdfReadingBlockView({ block, index, pageNumber, readingBlocks, onOpenFo
   }
   if (block.kind === "footnote") {
     return (
-      <Box component="aside" role="note" id={`pdf-footnote-${pageNumber}-${footnoteMarkerKey(block.marker)}`} sx={{ mt: `${tokens.spacing[6]}px`, pt: `${tokens.spacing[4]}px`, borderTop: 1, borderColor: "divider" }}>
+      <Box component="aside" role="note" id={`pdf-footnote-${pageNumber}-${footnoteMarkerKey(block.marker)}`} data-pdf-source-page={pageNumber} sx={{ mt: `${tokens.spacing[6]}px`, pt: `${tokens.spacing[4]}px`, borderTop: 1, borderColor: "divider" }}>
         <Stack direction="row" sx={{ alignItems: "flex-start", gap: `${tokens.spacing[3]}px` }}>
           <ButtonBase aria-label={`返回文中注释 ${block.marker}`} onClick={() => onReturnToReference(block.marker)} sx={{ flexShrink: 0, color: "primary.main", fontSize: tokens.typography.fontSize.bodySm, fontWeight: tokens.typography.fontWeight.semibold, lineHeight: tokens.typography.lineHeight.body }}>{block.marker}</ButtonBase>
           <Typography component="p" sx={{ m: 0, color: "text.secondary", fontFamily: "inherit", fontSize: tokens.typography.fontSize.bodySm, lineHeight: tokens.typography.lineHeight.body }}>{inlineText(block.text)}</Typography>
@@ -613,16 +815,18 @@ function PdfReadingBlockView({ block, index, pageNumber, readingBlocks, onOpenFo
       </Box>
     );
   }
-  return <Typography component="p" sx={{ m: 0, mb: `${tokens.spacing[5]}px`, color: "inherit", fontFamily: "inherit", fontSize: "inherit", lineHeight: tokens.typography.lineHeight.body, textAlign: "justify", textIndent: index === 0 ? 0 : "2em" }}>{inlineText(block.text)}</Typography>;
+  return <Typography component="p" data-pdf-source-page={pageNumber} sx={{ m: 0, mb: `${tokens.spacing[5]}px`, color: "inherit", fontFamily: "inherit", fontSize: "inherit", lineHeight: tokens.typography.lineHeight.body, textAlign: "justify", textIndent: index === 0 ? 0 : "2em" }}>{inlineText(block.text)}</Typography>;
 }
 
-function PdfInlineText({ text, pageNumber, blockIndex, onOpenFootnote }: { text: string; pageNumber: number; blockIndex: number; onOpenFootnote: (marker: string, anchor: HTMLElement, originId: string) => void }) {
+function PdfInlineText({ text, pageNumber, blockIndex, sourceStart = false, onOpenFootnote }: { text: string; pageNumber: number; blockIndex: number; sourceStart?: boolean; onOpenFootnote: (marker: string, anchor: HTMLElement, originId: string) => void }) {
   return splitPdfInlineFootnoteReferences(text).map((part, partIndex) => {
-    if (part.kind === "text") return <Box component="span" data-pdf-text key={`${partIndex}-${part.text}`}>{part.text}</Box>;
+    if (part.kind === "text") return <Box component="span" data-pdf-text data-pdf-source-page={pageNumber} data-pdf-source-marker={sourceStart && partIndex === 0 ? "" : undefined} key={`${partIndex}-${part.text}`}>{part.text}</Box>;
     const id = `pdf-footnote-ref-${pageNumber}-${footnoteMarkerKey(part.marker)}-${blockIndex}-${partIndex}`;
     return (
       <ButtonBase
         component="button"
+        data-pdf-source-page={pageNumber}
+        data-pdf-source-marker={sourceStart && partIndex === 0 ? "" : undefined}
         id={id}
         aria-label={`查看文中注释 ${part.marker}`}
         onClick={(event: any) => onOpenFootnote(part.marker, event.currentTarget, id)}

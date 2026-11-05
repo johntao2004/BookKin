@@ -12,7 +12,7 @@ vi.mock("../api/client", () => ({ api: { isDemo: true, listLiveLibraryRoots: vi.
 ]), checkLibraryRoots: vi.fn().mockResolvedValue([]) } }));
 describe("library registration", () => {
  it("keeps capability rechecks without library registration controls", async () => {
-  sessionStorage.setItem("bookkin-demo-session", JSON.stringify({ id: "admin", username: "admin", displayName: "管理员", role: "ADMIN", mustChangePassword: false }));
+  sessionStorage.setItem("silvae-demo-session", JSON.stringify({ id: "admin", username: "admin", displayName: "管理员", role: "ADMIN", mustChangePassword: false }));
   render(<TestProviders><LibraryRootsPage /></TestProviders>);
   await screen.findByRole("heading", {name:"书籍书库"});
   expect(screen.queryByRole("button", {name:/新增/})).not.toBeInTheDocument();
@@ -21,7 +21,7 @@ describe("library registration", () => {
   await waitFor(() => expect(api.checkLibraryRoots).toHaveBeenCalledTimes(1));
  });
  it("shows separate managed article and encrypted vault storage without mixing them into book directories", async () => {
-  sessionStorage.setItem("bookkin-demo-session", JSON.stringify({ id: "admin", username: "admin", displayName: "管理员", role: "ADMIN", mustChangePassword: false }));
+  sessionStorage.setItem("silvae-demo-session", JSON.stringify({ id: "admin", username: "admin", displayName: "管理员", role: "ADMIN", mustChangePassword: false }));
   render(<TestProviders><LibraryRootsPage /></TestProviders>);
   expect(await screen.findByRole("heading", {name:"文章书库"})).toBeVisible();
   expect(await screen.findByRole("heading", {name:"禁书区书库"})).toBeVisible();

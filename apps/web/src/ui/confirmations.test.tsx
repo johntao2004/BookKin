@@ -3,7 +3,7 @@ import ConfigProvider from "antd/es/config-provider";
 import antdTheme from "antd/es/theme";
 import zhCN from "antd/locale/zh_CN";
 import { vi } from "vitest";
-import { bookKinThemeOptions, createAntdTheme } from "../theme/theme";
+import { silvaeThemeOptions, createAntdTheme } from "../theme/theme";
 import type { ReaderTheme } from "../components/readers/reader-fonts";
 import { ConfirmationProvider, useConfirmation } from "./confirmations";
 
@@ -33,7 +33,7 @@ describe("theme-bound confirmations", () => {
     const sample = await screen.findByLabelText("确认框主题");
     const { primary, surface, radius } = JSON.parse(sample.textContent!);
     expect(primary).toBe(JSON.parse(screen.getByLabelText("页面主题").textContent!).primary);
-    expect(surface.toLowerCase()).toBe(bookKinThemeOptions[mode].colors.surfaceCard.toLowerCase());
+    expect(surface.toLowerCase()).toBe(silvaeThemeOptions[mode].colors.surfaceCard.toLowerCase());
     expect(radius).toBe(createAntdTheme(mode).token.borderRadius);
     expect(screen.getByRole("button", { name: /删\s*除/ })).toHaveClass("ant-btn-dangerous");
     fireEvent.click(screen.getByRole("button", { name: /取\s*消/ }));
@@ -48,7 +48,7 @@ describe("theme-bound confirmations", () => {
     await screen.findByLabelText("确认框主题");
     rerender(view("NIGHT", onOk));
     await waitFor(() => expect(JSON.parse(screen.getByLabelText("确认框主题").textContent!).surface.toLowerCase())
-      .toBe(bookKinThemeOptions.NIGHT.colors.surfaceCard.toLowerCase()));
+      .toBe(silvaeThemeOptions.NIGHT.colors.surfaceCard.toLowerCase()));
     fireEvent.click(screen.getByRole("button", { name: /取\s*消/ }));
     expect(onOk).not.toHaveBeenCalled();
   });

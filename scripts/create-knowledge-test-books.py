@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Create four original, deterministic EPUB fixtures outside the managed library.
-Import through BookKin's upload/review flow; never insert knowledge results directly.
+Import through Silvae's upload/review flow; never insert knowledge results directly.
 """
 import hashlib
 import json
@@ -42,7 +42,7 @@ for number, (subject, cover, chapters) in enumerate(BOOKS, 1):
     files['META-INF/container.xml'] = b'<?xml version="1.0"?><container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container"><rootfiles><rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/></rootfiles></container>'
     items = ''.join(f'<item id="c{i}" href="c{i}.xhtml" media-type="application/xhtml+xml"/>' for i in range(1, 4))
     spine = ''.join(f'<itemref idref="c{i}"/>' for i in range(1, 4))
-    files['OEBPS/content.opf'] = f'''<?xml version="1.0" encoding="UTF-8"?><package xmlns="http://www.idpf.org/2007/opf" unique-identifier="id" version="3.0"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:identifier id="id">urn:bookkin:knowledge-test:v1:{number}</dc:identifier><dc:title>{title}</dc:title><dc:creator>BookKin 图谱测试</dc:creator><dc:language>zh-CN</dc:language><dc:description>原创知识图谱验收样本；仅供功能测试，共三章，不预置分析结果或阅读数据。</dc:description><dc:subject>图谱测试</dc:subject><meta property="dcterms:modified">2026-10-22T00:00:00Z</meta><meta name="cover" content="cover"/></metadata><manifest><item id="cover" href="cover.jpg" media-type="image/jpeg" properties="cover-image"/><item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>{items}</manifest><spine>{spine}</spine></package>'''.encode()
+    files['OEBPS/content.opf'] = f'''<?xml version="1.0" encoding="UTF-8"?><package xmlns="http://www.idpf.org/2007/opf" unique-identifier="id" version="3.0"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:identifier id="id">urn:silvae:knowledge-test:v1:{number}</dc:identifier><dc:title>{title}</dc:title><dc:creator>Silvae 图谱测试</dc:creator><dc:language>zh-CN</dc:language><dc:description>原创知识图谱验收样本；仅供功能测试，共三章，不预置分析结果或阅读数据。</dc:description><dc:subject>图谱测试</dc:subject><meta property="dcterms:modified">2026-10-22T00:00:00Z</meta><meta name="cover" content="cover"/></metadata><manifest><item id="cover" href="cover.jpg" media-type="image/jpeg" properties="cover-image"/><item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>{items}</manifest><spine>{spine}</spine></package>'''.encode()
     nav = ''.join(f'<li><a href="c{i}.xhtml">{escape(name)}</a></li>' for i, (name, _) in enumerate(chapters, 1))
     files['OEBPS/nav.xhtml'] = f'<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops"><head><title>目录</title></head><body><nav epub:type="toc"><ol>{nav}</ol></nav></body></html>'.encode()
     for i, (name, body) in enumerate(chapters, 1):

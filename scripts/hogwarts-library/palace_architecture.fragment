@@ -177,10 +177,10 @@ box(PALACE_RED,(0,16.4,-19.72),(7.6,2.15,.28),.07)
 box(DARK,(0,16.4,-19.54),(7.15,1.8,.12),.035)
 for yy in (15.42,17.38):box(PALACE_GOLD,(0,yy,-19.50),(7.35,.08,.07))
 for x in (-3.64,3.64):box(PALACE_GOLD,(x,16.4,-19.50),(.08,1.96,.07))
-font_candidates=[os.environ.get('BOOKKIN_CJK_FONT',''),'/System/Library/Fonts/STHeiti Medium.ttc',
+font_candidates=[os.environ.get('SILVAE_CJK_FONT',''),'/System/Library/Fonts/STHeiti Medium.ttc',
  '/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc']
 font_path=next((p for p in font_candidates if p and Path(p).exists()),None)
-if not font_path:raise FileNotFoundError('Set BOOKKIN_CJK_FONT to a font containing 藏书楼')
+if not font_path:raise FileNotFoundError('Set SILVAE_CJK_FONT to a font containing 藏书楼')
 curve=bpy.data.curves.new('Palace tablet lettering','FONT');curve.body='藏书楼'
 curve.font=bpy.data.fonts.load(font_path);curve.align_x='CENTER';curve.align_y='CENTER'
 curve.size=1.35;curve.space_character=1.25;curve.extrude=.012;curve.resolution_u=8

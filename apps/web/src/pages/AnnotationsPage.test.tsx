@@ -34,7 +34,7 @@ const entries: Annotation[] = [{
 
 describe("AnnotationsPage", () => {
   beforeEach(() => {
-    sessionStorage.setItem("bookkin-demo-session", JSON.stringify({ id: "user-owner", username: "owner", displayName: "林", role: "OWNER", mustChangePassword: false }));
+    sessionStorage.setItem("silvae-demo-session", JSON.stringify({ id: "user-owner", username: "owner", displayName: "林", role: "OWNER", mustChangePassword: false }));
     vi.spyOn(api, "listAnnotationBooks").mockResolvedValue({ items: [{
       bookId,
       bookTitle: demoBooks[0].title,
@@ -168,8 +168,8 @@ describe("AnnotationsPage", () => {
   it("hides the posts tab when its independent page permission is disabled", () => {
     const memberGrants = defaultGrants("MEMBER").filter(code => code !== "notes.posts.view");
     expect(memberGrants).toContain("notes.edit");
-    sessionStorage.setItem("bookkin-demo-session", JSON.stringify({ id: "member", username: "member", displayName: "成员", role: "MEMBER", mustChangePassword: false }));
-    sessionStorage.setItem("bookkin-demo-role-permissions", JSON.stringify({ revision: 1, grants: {
+    sessionStorage.setItem("silvae-demo-session", JSON.stringify({ id: "member", username: "member", displayName: "成员", role: "MEMBER", mustChangePassword: false }));
+    sessionStorage.setItem("silvae-demo-role-permissions", JSON.stringify({ revision: 1, grants: {
       OWNER: defaultGrants("OWNER"), ADMIN: defaultGrants("ADMIN"), MEMBER: memberGrants,
     } }));
     render(<TestProviders initialPath="/annotations/books?view=posts"><NotesRoutes /></TestProviders>);

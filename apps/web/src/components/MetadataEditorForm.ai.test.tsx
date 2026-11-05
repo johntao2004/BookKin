@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { api, request } from "../api/client";
-import { BookKinThemeProvider } from "../theme/BookKinThemeProvider";
+import { SilvaeThemeProvider } from "../theme/SilvaeThemeProvider";
 import { MetadataEditorForm, type MetadataEditorValues } from "./MetadataEditorForm";
 
 vi.mock("../auth/AuthContext", () => ({ useAuth: () => ({ user: { id: "metadata-editor" } }) }));
@@ -17,7 +17,7 @@ it("adopts author biography only into its own field", async () => {
   };
   vi.mocked(api.getAiServiceAvailability).mockResolvedValue({ enabled: true, hasConfiguredProvider: true, hasEnabledProvider: true });
   vi.mocked(request).mockReset().mockResolvedValue({ text: "整理后的作者介绍", evidence: [], provider: "provider", model: "model", sourceTitle: "草稿", included: 1, total: 1, coverage: "草稿" });
-  render(<QueryClientProvider client={new QueryClient()}><BookKinThemeProvider><MetadataEditorForm value={value} onChange={onChange} coverAlt="封面" coverActions={null} aiEnabled /></BookKinThemeProvider></QueryClientProvider>);
+  render(<QueryClientProvider client={new QueryClient()}><SilvaeThemeProvider><MetadataEditorForm value={value} onChange={onChange} coverAlt="封面" coverActions={null} aiEnabled /></SilvaeThemeProvider></QueryClientProvider>);
 
   expect(screen.getByRole("textbox", { name: "内容简介" })).toHaveValue("现有简介");
   const button = screen.getByRole("button", { name: "AI 生成作者介绍" });

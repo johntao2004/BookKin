@@ -2,7 +2,7 @@
 // Checks highlight, underline and bold on actual EPUB text with cleanup, not only save responses.
 import { applyEpubInlineAnnotation, clearEpubInlineAnnotations, findEpubArticleParagraphRange, findEpubTextRange } from "./epub-annotations";
 import type { Annotation } from "../../domain/types";
-import { bookKinThemeOptions } from "../../theme/theme";
+import { silvaeThemeOptions } from "../../theme/theme";
 import { readerHighlightStyle } from "../../domain/annotation-colors";
 
 function opaqueHex(cssColor: string | undefined) {
@@ -31,7 +31,7 @@ describe("EPUB inline annotations", () => {
   it("places an opaque theme-colored highlight behind EPUB text", () => {
     document.body.innerHTML = "<p>黄昏从山脊落下，河面先暗了一层，渡船归岸。</p>";
     const range = findEpubTextRange(document, "河面先暗了一层");
-    const theme = bookKinThemeOptions.PAPER.reader;
+    const theme = silvaeThemeOptions.PAPER.reader;
 
     expect(applyEpubInlineAnnotation(range!, annotation("HIGHLIGHT", "highlight-1"))).toBe(1);
     const wrapper = document.querySelector<HTMLElement>("[data-annotation-style='HIGHLIGHT']");
@@ -45,7 +45,7 @@ describe("EPUB inline annotations", () => {
 
   it("keeps nested two- and three-layer highlights opaque with foreground over linked text", () => {
     document.body.innerHTML = "<p><a id='source-link' style='color: #CC785C !important'>甲乙丙丁戊己</a></p>";
-    const theme = bookKinThemeOptions.NIGHT.reader;
+    const theme = silvaeThemeOptions.NIGHT.reader;
     const layers = [
       { id: "outer", quote: "甲乙丙丁戊己", color: "YELLOW" as const },
       { id: "middle", quote: "丙丁戊己", color: "PINK" as const },
@@ -74,8 +74,8 @@ describe("EPUB inline annotations", () => {
 
   it("cleans and rebuilds highlights with the newly selected theme", () => {
     document.body.innerHTML = "<p><a id='source-link' style='color: #CC785C !important'>主题切换文字</a></p>";
-    const nightTheme = bookKinThemeOptions.NIGHT.reader;
-    const paperTheme = bookKinThemeOptions.PAPER.reader;
+    const nightTheme = silvaeThemeOptions.NIGHT.reader;
+    const paperTheme = silvaeThemeOptions.PAPER.reader;
     const initialRange = findEpubTextRange(document, "主题切换文字");
     expect(applyEpubInlineAnnotation(initialRange!, annotation("HIGHLIGHT", "night-highlight", "GREEN", "主题切换文字"), nightTheme)).toBe(1);
     expect(opaqueHex(document.querySelector<HTMLElement>("[data-annotation-id='night-highlight']")?.style.color))

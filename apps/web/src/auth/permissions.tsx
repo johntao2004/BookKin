@@ -15,7 +15,7 @@ export const permissionCatalog = catalog as PermissionDefinition[];
 export interface RolePolicy { revision: number; grants: Record<UserRole, string[]> }
 interface PermissionSnapshot { role: UserRole; revision: number; grants: string[] }
 export const defaultGrants = (role: UserRole) => permissionCatalog.filter(p => p.roles.includes(role)).map(p => p.code);
-const demoKey = "bookkin-demo-role-permissions";
+const demoKey = "silvae-demo-role-permissions";
 export function demoRolePolicy(): RolePolicy {
   try { const stored = sessionStorage.getItem(demoKey); if (stored) return JSON.parse(stored); } catch { /* A blocked store retains built-in defaults. */ }
   return { revision: 0, grants: { OWNER: defaultGrants("OWNER"), ADMIN: defaultGrants("ADMIN"), MEMBER: defaultGrants("MEMBER") } };

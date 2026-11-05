@@ -7,7 +7,7 @@ import { AppShell } from "../components/AppShell";
 import { articlesNavigationSections, libraryNavigationSections, notesNavigationSections } from "../components/app-navigation-sections";
 import { permissionPageModel, rolePermissionGroups, rolePermissionPages } from "../pages/role-permission-groups";
 
-const login = (role: "OWNER" | "ADMIN" | "MEMBER") => sessionStorage.setItem("bookkin-demo-session", JSON.stringify({ id: role, username: role.toLowerCase(), displayName: role, role, mustChangePassword: false }));
+const login = (role: "OWNER" | "ADMIN" | "MEMBER") => sessionStorage.setItem("silvae-demo-session", JSON.stringify({ id: role, username: role.toLowerCase(), displayName: role, role, mustChangePassword: false }));
 beforeEach(() => sessionStorage.clear());
 it("keeps owner authority fixed and member NAS/administration ceilings explicit", () => {
   expect(defaultGrants("OWNER")).toHaveLength(permissionCatalog.length);
@@ -30,14 +30,14 @@ it("does not mount private queries through a denied direct page route", () => {
 });
 it("removes revoked page links and denies a bookmarked page", () => {
   login("MEMBER");
-  sessionStorage.setItem("bookkin-demo-role-permissions", JSON.stringify({ revision: 1, grants: { OWNER: defaultGrants("OWNER"), ADMIN: defaultGrants("ADMIN"), MEMBER: defaultGrants("MEMBER").filter(p => !["articles.view", "articles.read", "articles.collections.view", "articles.collections.details.view"].includes(p)) } }));
+  sessionStorage.setItem("silvae-demo-role-permissions", JSON.stringify({ revision: 1, grants: { OWNER: defaultGrants("OWNER"), ADMIN: defaultGrants("ADMIN"), MEMBER: defaultGrants("MEMBER").filter(p => !["articles.view", "articles.read", "articles.collections.view", "articles.collections.details.view"].includes(p)) } }));
   render(<TestProviders initialPath="/articles"><AppShell><p>文章数据</p></AppShell></TestProviders>);
   expect(screen.queryByRole("link", { name: "文钞馆" })).not.toBeInTheDocument();
   expect(screen.queryByText("文章数据")).not.toBeInTheDocument(); expect(screen.getByRole("heading", {level: 1, name: "403"})).toBeInTheDocument();
 });
 it("keeps the articles navigation group available when only the collections page is granted", () => {
   login("MEMBER");
-  sessionStorage.setItem("bookkin-demo-role-permissions", JSON.stringify({ revision: 1, grants: {
+  sessionStorage.setItem("silvae-demo-role-permissions", JSON.stringify({ revision: 1, grants: {
     OWNER: defaultGrants("OWNER"), ADMIN: defaultGrants("ADMIN"),
     MEMBER: defaultGrants("MEMBER").filter(permission => permission !== "articles.view"),
   } }));
@@ -46,7 +46,7 @@ it("keeps the articles navigation group available when only the collections page
   expect(screen.getByRole("link", { name: "文钞馆" })).toHaveAttribute("href", "/article-collections");
 });
 it("allows a page while separately denying its write action", () => {
-  login("ADMIN"); sessionStorage.setItem("bookkin-demo-role-permissions", JSON.stringify({ revision: 1, grants: { OWNER: defaultGrants("OWNER"), ADMIN: defaultGrants("ADMIN").filter(p => p !== "knowledge.generate"), MEMBER: defaultGrants("MEMBER") } }));
+  login("ADMIN"); sessionStorage.setItem("silvae-demo-role-permissions", JSON.stringify({ revision: 1, grants: { OWNER: defaultGrants("OWNER"), ADMIN: defaultGrants("ADMIN").filter(p => p !== "knowledge.generate"), MEMBER: defaultGrants("MEMBER") } }));
   function Probe() { const { can } = usePermissions(); return <><p>{String(can("knowledge.view"))}</p>{can("knowledge.generate") && <button>分析书籍</button>}</>; }
   render(<TestProviders initialPath="/knowledge-graph"><PermissionBoundary><Probe /></PermissionBoundary></TestProviders>);
   expect(screen.getByText("true")).toBeInTheDocument(); expect(screen.queryByRole("button", { name: "分析书籍" })).not.toBeInTheDocument();

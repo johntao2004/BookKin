@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter, useLocation } from 'react-router-dom';
-import { BookKinThemeProvider } from '../theme/BookKinThemeProvider';
+import { SilvaeThemeProvider } from '../theme/SilvaeThemeProvider';
 import { AuthProvider, useAuth } from '../auth/AuthContext';
 import type { Book } from '../domain/types';
 import { MingLibraryExperience, MING_LIBRARY_CHANNEL } from './MingLibraryExperience';
@@ -18,7 +18,7 @@ function Logout() { const { logout } = useAuth(); return <button onClick={() => 
 function renderScene() {
   const client = new QueryClient({defaultOptions: {queries: {retry: false}}});
   const view = render(<QueryClientProvider client={client}><MemoryRouter initialEntries={['/virtual-library']}>
-    <AuthProvider><BookKinThemeProvider><MingLibraryExperience /><Location /><Logout /></BookKinThemeProvider></AuthProvider>
+    <AuthProvider><SilvaeThemeProvider><MingLibraryExperience /><Location /><Logout /></SilvaeThemeProvider></AuthProvider>
   </MemoryRouter></QueryClientProvider>);
   return {...view, client};
 }
@@ -27,7 +27,7 @@ function message(frame: HTMLIFrameElement, data: object, origin = window.locatio
   act(() => window.dispatchEvent(new MessageEvent('message', {origin, source, data: {channel: MING_LIBRARY_CHANNEL, ...data}})));
 }
 beforeEach(() => {
-  sessionStorage.setItem("bookkin-demo-session", JSON.stringify({ id: "user-owner", username: "owner", displayName: "林", role: "OWNER", mustChangePassword: false }));
+  sessionStorage.setItem("silvae-demo-session", JSON.stringify({ id: "user-owner", username: "owner", displayName: "林", role: "OWNER", mustChangePassword: false }));
   state.refresh.mockReset().mockResolvedValue({pages: [{items: [book]}], pageParams: [undefined]});
   state.publicRefresh.mockReset().mockResolvedValue({pages: [{items: [book]}], pageParams: [undefined]});
 });

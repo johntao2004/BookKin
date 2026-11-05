@@ -27,7 +27,7 @@ function makeBook(overrides: Partial<Book> = {}): Book {
 }
 
 beforeEach(() => {
-  sessionStorage.setItem("bookkin-demo-session", JSON.stringify({ id: "user-owner", username: "owner", displayName: "林", role: "OWNER", mustChangePassword: false }));
+  sessionStorage.setItem("silvae-demo-session", JSON.stringify({ id: "user-owner", username: "owner", displayName: "林", role: "OWNER", mustChangePassword: false }));
   vi.spyOn(api, "listBookUploads").mockResolvedValue([]);
 });
 afterEach(() => { cleanup(); vi.useRealTimers(); vi.restoreAllMocks(); });
@@ -210,7 +210,7 @@ it("polls uploads while processing and stops once they are ready for review", as
 });
 
 it("does not request upload drafts for a member without upload permission", async () => {
-  sessionStorage.setItem("bookkin-demo-session", JSON.stringify({ id: "user-member", username: "member", displayName: "读者", role: "MEMBER", mustChangePassword: false }));
+  sessionStorage.setItem("silvae-demo-session", JSON.stringify({ id: "user-member", username: "member", displayName: "读者", role: "MEMBER", mustChangePassword: false }));
   vi.spyOn(api, "listBooks").mockResolvedValue({ items: [] });
   const listUploads = vi.spyOn(api, "listBookUploads");
   render(<TestProviders initialPath="/library"><LibraryPage /></TestProviders>);

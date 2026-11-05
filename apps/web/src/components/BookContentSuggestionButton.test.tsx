@@ -2,7 +2,7 @@ import { StrictMode } from "react";
 import { MemoryRouter } from "react-router-dom";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { api, request } from "../api/client";
-import { BookKinThemeProvider } from "../theme/BookKinThemeProvider";
+import { SilvaeThemeProvider } from "../theme/SilvaeThemeProvider";
 import type { BookKnowledgeDraft } from "../domain/types";
 import { BookContentSuggestionButton, type ContentMetadataSource } from "./BookContentSuggestionButton";
 
@@ -28,9 +28,9 @@ const knowledge: BookKnowledgeDraft = {
   providerId: "provider-test",
 };
 const ready = { enabled: true, hasConfiguredProvider: true, hasEnabledProvider: true };
-const view = (props: Partial<React.ComponentProps<typeof BookContentSuggestionButton>> = {}) => <MemoryRouter><BookKinThemeProvider>
+const view = (props: Partial<React.ComponentProps<typeof BookContentSuggestionButton>> = {}) => <MemoryRouter><SilvaeThemeProvider>
   <BookContentSuggestionButton mode="subjects" source={source} value={["PS"]} onApply={vi.fn()} {...props} />
-</BookKinThemeProvider></MemoryRouter>;
+</SilvaeThemeProvider></MemoryRouter>;
 beforeEach(() => { vi.mocked(api.ensureMetadataTerms).mockReset().mockResolvedValue({ items: [] }); vi.mocked(api.getAiServiceAvailability).mockReset().mockResolvedValue(ready); access.canConfigure = true; identity.user = { id: "metadata-reader" }; vi.mocked(request).mockReset().mockResolvedValue(result); });
 
 it.each(["BOOK", "UPLOAD"] as const)("sends only the %s file identity and shows suggestions without reference material", async type => {

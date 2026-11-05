@@ -1,14 +1,14 @@
 spring:
   application:
-    name: bookkin
+    name: silvae
   profiles:
     default: api
   datasource:
-    url: ${BOOKKIN_DATABASE_URL:jdbc:postgresql://localhost:5432/bookkin}
-    username: ${BOOKKIN_DATABASE_USER:bookkin}
-    password: ${BOOKKIN_DATABASE_PASSWORD:bookkin-local-dev}
+    url: ${SILVAE_DATABASE_URL:jdbc:postgresql://localhost:5432/silvae}
+    username: ${SILVAE_DATABASE_USER:silvae}
+    password: ${SILVAE_DATABASE_PASSWORD:silvae-local-dev}
     hikari:
-      maximum-pool-size: ${BOOKKIN_DB_POOL_SIZE:16}
+      maximum-pool-size: ${SILVAE_DB_POOL_SIZE:16}
       minimum-idle: 2
       connection-timeout: 5000
   flyway:
@@ -42,11 +42,11 @@ server:
   servlet:
     session:
       cookie:
-        name: BOOKKIN_SESSION
+        name: SILVAE_SESSION
         max-age: 30d
         http-only: true
         same-site: strict
-        secure: ${BOOKKIN_COOKIE_SECURE:false}
+        secure: ${SILVAE_COOKIE_SECURE:false}
 
 management:
   endpoints:
@@ -59,9 +59,9 @@ management:
         enabled: true
       show-details: when_authorized
 
-bookkin:
-  two-factor-encryption-key: ${BOOKKIN_TWO_FACTOR_ENCRYPTION_KEY:}
-  public-base-url: ${BOOKKIN_PUBLIC_BASE_URL:http://localhost:8080}
+silvae:
+  two-factor-encryption-key: ${SILVAE_TWO_FACTOR_ENCRYPTION_KEY:}
+  public-base-url: ${SILVAE_PUBLIC_BASE_URL:http://localhost:8080}
   file-operation-preview-ttl: 5m
   file-lease-timeout: 30s
   retention:
@@ -73,82 +73,82 @@ bookkin:
   storage:
     roots: []
   upload:
-    max-file-size: ${BOOKKIN_UPLOAD_MAX_FILE_SIZE:2147483648}
-    max-batch-files: ${BOOKKIN_UPLOAD_MAX_BATCH_FILES:20}
-    retention: ${BOOKKIN_UPLOAD_RETENTION:24h}
-    max-cover-size: ${BOOKKIN_UPLOAD_MAX_COVER_SIZE:20971520}
+    max-file-size: ${SILVAE_UPLOAD_MAX_FILE_SIZE:2147483648}
+    max-batch-files: ${SILVAE_UPLOAD_MAX_BATCH_FILES:20}
+    retention: ${SILVAE_UPLOAD_RETENTION:24h}
+    max-cover-size: ${SILVAE_UPLOAD_MAX_COVER_SIZE:20971520}
   fonts:
-    storage-path: ${BOOKKIN_FONT_STORAGE_PATH:/var/lib/bookkin/fonts}
-    max-file-size: ${BOOKKIN_FONT_MAX_FILE_SIZE:26214400}
+    storage-path: ${SILVAE_FONT_STORAGE_PATH:/var/lib/silvae/fonts}
+    max-file-size: ${SILVAE_FONT_MAX_FILE_SIZE:26214400}
   metadata-providers:
-    open-library-enabled: ${BOOKKIN_METADATA_OPEN_LIBRARY_ENABLED:true}
-    google-api-key: ${BOOKKIN_METADATA_GOOGLE_API_KEY:}
+    open-library-enabled: ${SILVAE_METADATA_OPEN_LIBRARY_ENABLED:true}
+    google-api-key: ${SILVAE_METADATA_GOOGLE_API_KEY:}
   ai:
-    enabled: ${BOOKKIN_AI_ENABLED:false}
-    auto-match: ${BOOKKIN_AI_AUTO_MATCH:true}
-    max-candidates: ${BOOKKIN_AI_MAX_CANDIDATES:4}
-    timeout: ${BOOKKIN_AI_TIMEOUT:20s}
+    enabled: ${SILVAE_AI_ENABLED:false}
+    auto-match: ${SILVAE_AI_AUTO_MATCH:true}
+    max-candidates: ${SILVAE_AI_MAX_CANDIDATES:4}
+    timeout: ${SILVAE_AI_TIMEOUT:20s}
     # Deliberately has no fallback: when AI is enabled, production must provide
     # a stable, instance-specific key through the environment.
-    settings-encryption-key: ${BOOKKIN_AI_SETTINGS_ENCRYPTION_KEY:}
+    settings-encryption-key: ${SILVAE_AI_SETTINGS_ENCRYPTION_KEY:}
     # Keys stay on the server. Enable one or more entries to use fallback/ensemble matching.
     providers:
       - id: openai
         label: OpenAI
         type: OPENAI_COMPATIBLE
-        enabled: ${BOOKKIN_AI_OPENAI_ENABLED:false}
-        base-url: ${BOOKKIN_AI_OPENAI_BASE_URL:https://api.openai.com/v1}
-        api-key: ${BOOKKIN_AI_OPENAI_API_KEY:}
-        model: ${BOOKKIN_AI_OPENAI_MODEL:gpt-4o-mini}
+        enabled: ${SILVAE_AI_OPENAI_ENABLED:false}
+        base-url: ${SILVAE_AI_OPENAI_BASE_URL:https://api.openai.com/v1}
+        api-key: ${SILVAE_AI_OPENAI_API_KEY:}
+        model: ${SILVAE_AI_OPENAI_MODEL:gpt-4o-mini}
       - id: deepseek
         label: DeepSeek
         type: OPENAI_COMPATIBLE
-        enabled: ${BOOKKIN_AI_DEEPSEEK_ENABLED:false}
-        base-url: ${BOOKKIN_AI_DEEPSEEK_BASE_URL:https://api.deepseek.com}
-        api-key: ${BOOKKIN_AI_DEEPSEEK_API_KEY:}
-        model: ${BOOKKIN_AI_DEEPSEEK_MODEL:deepseek-v4-flash}
+        enabled: ${SILVAE_AI_DEEPSEEK_ENABLED:false}
+        base-url: ${SILVAE_AI_DEEPSEEK_BASE_URL:https://api.deepseek.com}
+        api-key: ${SILVAE_AI_DEEPSEEK_API_KEY:}
+        model: ${SILVAE_AI_DEEPSEEK_MODEL:deepseek-v4-flash}
       - id: zhipu
         label: 智谱
         type: OPENAI_COMPATIBLE
-        enabled: ${BOOKKIN_AI_ZHIPU_ENABLED:false}
-        base-url: ${BOOKKIN_AI_ZHIPU_BASE_URL:https://open.bigmodel.cn/api/paas/v4/}
-        api-key: ${BOOKKIN_AI_ZHIPU_API_KEY:}
-        model: ${BOOKKIN_AI_ZHIPU_MODEL:glm-4.7-flash}
+        enabled: ${SILVAE_AI_ZHIPU_ENABLED:false}
+        base-url: ${SILVAE_AI_ZHIPU_BASE_URL:https://open.bigmodel.cn/api/paas/v4/}
+        api-key: ${SILVAE_AI_ZHIPU_API_KEY:}
+        model: ${SILVAE_AI_ZHIPU_MODEL:glm-4.7-flash}
       - id: qwen
         label: 通义千问
         type: OPENAI_COMPATIBLE
-        enabled: ${BOOKKIN_AI_QWEN_ENABLED:false}
-        base-url: ${BOOKKIN_AI_QWEN_BASE_URL:https://dashscope.aliyuncs.com/compatible-mode/v1}
-        api-key: ${BOOKKIN_AI_QWEN_API_KEY:}
-        model: ${BOOKKIN_AI_QWEN_MODEL:qwen-plus}
+        enabled: ${SILVAE_AI_QWEN_ENABLED:false}
+        base-url: ${SILVAE_AI_QWEN_BASE_URL:https://dashscope.aliyuncs.com/compatible-mode/v1}
+        api-key: ${SILVAE_AI_QWEN_API_KEY:}
+        model: ${SILVAE_AI_QWEN_MODEL:qwen-plus}
       - id: siliconflow
         label: SiliconFlow
         type: OPENAI_COMPATIBLE
-        enabled: ${BOOKKIN_AI_SILICONFLOW_ENABLED:false}
-        base-url: ${BOOKKIN_AI_SILICONFLOW_BASE_URL:https://api.siliconflow.cn/v1}
-        api-key: ${BOOKKIN_AI_SILICONFLOW_API_KEY:}
-        model: ${BOOKKIN_AI_SILICONFLOW_MODEL:Qwen/Qwen3-32B}
+        enabled: ${SILVAE_AI_SILICONFLOW_ENABLED:false}
+        base-url: ${SILVAE_AI_SILICONFLOW_BASE_URL:https://api.siliconflow.cn/v1}
+        api-key: ${SILVAE_AI_SILICONFLOW_API_KEY:}
+        model: ${SILVAE_AI_SILICONFLOW_MODEL:Qwen/Qwen3-32B}
       - id: anthropic
         label: Anthropic
         type: ANTHROPIC
-        enabled: ${BOOKKIN_AI_ANTHROPIC_ENABLED:false}
-        base-url: ${BOOKKIN_AI_ANTHROPIC_BASE_URL:https://api.anthropic.com}
-        api-key: ${BOOKKIN_AI_ANTHROPIC_API_KEY:}
-        model: ${BOOKKIN_AI_ANTHROPIC_MODEL:claude-sonnet-4-6}
+        enabled: ${SILVAE_AI_ANTHROPIC_ENABLED:false}
+        base-url: ${SILVAE_AI_ANTHROPIC_BASE_URL:https://api.anthropic.com}
+        api-key: ${SILVAE_AI_ANTHROPIC_API_KEY:}
+        model: ${SILVAE_AI_ANTHROPIC_MODEL:claude-sonnet-4-6}
       - id: gemini
         label: Google Gemini
         type: GEMINI
-        enabled: ${BOOKKIN_AI_GEMINI_ENABLED:false}
-        base-url: ${BOOKKIN_AI_GEMINI_BASE_URL:https://generativelanguage.googleapis.com/v1beta}
-        api-key: ${BOOKKIN_AI_GEMINI_API_KEY:}
-        model: ${BOOKKIN_AI_GEMINI_MODEL:gemini-3.5-flash}
+        enabled: ${SILVAE_AI_GEMINI_ENABLED:false}
+        base-url: ${SILVAE_AI_GEMINI_BASE_URL:https://generativelanguage.googleapis.com/v1beta}
+        api-key: ${SILVAE_AI_GEMINI_API_KEY:}
+        model: ${SILVAE_AI_GEMINI_MODEL:gemini-3.5-flash}
       - id: ollama
         label: Ollama（本地）
         type: OPENAI_COMPATIBLE
-        enabled: ${BOOKKIN_AI_OLLAMA_ENABLED:false}
-        base-url: ${BOOKKIN_AI_OLLAMA_BASE_URL:http://127.0.0.1:11434/v1}
-        api-key: ${BOOKKIN_AI_OLLAMA_API_KEY:}
-        model: ${BOOKKIN_AI_OLLAMA_MODEL:qwen3}
+        enabled: ${SILVAE_AI_OLLAMA_ENABLED:false}
+        base-url: ${SILVAE_AI_OLLAMA_BASE_URL:http://127.0.0.1:11434/v1}
+        api-key: ${SILVAE_AI_OLLAMA_API_KEY:}
+        model: ${SILVAE_AI_OLLAMA_MODEL:qwen3}
 
 logging:
   pattern:

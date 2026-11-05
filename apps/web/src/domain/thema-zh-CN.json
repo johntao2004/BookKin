@@ -3,9 +3,9 @@
   "source": "https://ns.editeur.org/thema/en",
   "translation": {
     "locale": "zh-CN",
-    "provider": "Google Translate, with BookKin terminology corrections",
+    "provider": "Google Translate, with Silvae terminology corrections",
     "retrievedAt": "2026-10-22",
-    "notice": "BookKin Chinese display translations, with manual corrections to root categories and selected terminology; not an official EDItEUR Chinese edition. English source labels and standard codes are retained unchanged."
+    "notice": "Silvae Chinese display translations, with manual corrections to root categories and selected terminology; not an official EDItEUR Chinese edition. English source labels and standard codes are retained unchanged."
   },
   "labels": {
     "A": "艺术",

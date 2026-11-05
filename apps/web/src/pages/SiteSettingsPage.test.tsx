@@ -9,7 +9,7 @@ import { SiteSettingsPage } from './SiteSettingsPage';
 
 afterEach(()=>vi.restoreAllMocks());
 it('saves personalization and immediately updates site brand, metadata and footer',async()=>{
-  sessionStorage.setItem("bookkin-demo-session", JSON.stringify({ id: "owner", username: "owner", displayName: "主人", role: "OWNER", mustChangePassword: false }));
+  sessionStorage.setItem("silvae-demo-session", JSON.stringify({ id: "owner", username: "owner", displayName: "主人", role: "OWNER", mustChangePassword: false }));
   vi.spyOn(api,'siteSettings').mockResolvedValue({...DEFAULT_SITE_SETTINGS});
   const save=vi.spyOn(api,'saveSiteSettings').mockImplementation(async input=>({...input}));
   render(<TestProviders initialPath="/settings#personalization"><AppShell><SiteSettingsPage /></AppShell></TestProviders>);

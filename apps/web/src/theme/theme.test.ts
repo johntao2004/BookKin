@@ -1,13 +1,13 @@
 // 验证阅读主题映射到整站语义 token，避免颜色模式只影响阅读正文。
 // Checks reader themes map to whole-site semantic tokens rather than only reading content.
 import { tokens } from "./generated-tokens";
-import { createBookKinTheme } from "./theme";
+import { createSilvaeTheme } from "./theme";
 
-describe("createBookKinTheme", () => {
+describe("createSilvaeTheme", () => {
   it("maps the reader's three visual themes onto the whole-site palette", () => {
-    const paper = createBookKinTheme("PAPER");
-    const white = createBookKinTheme("WHITE");
-    const night = createBookKinTheme("NIGHT");
+    const paper = createSilvaeTheme("PAPER");
+    const white = createSilvaeTheme("WHITE");
+    const night = createSilvaeTheme("NIGHT");
 
     expect(paper.palette.background.default).toBe(tokens.color.semantic.canvas);
     expect(white.palette.background.default).toBe(tokens.color.primitive.white);

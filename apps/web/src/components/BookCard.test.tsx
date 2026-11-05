@@ -29,7 +29,7 @@ describe("BookCard", () => {
     const book = demoBooks[0];
     const editMetadata = vi.fn();
     const fileOperation = vi.fn();
-    sessionStorage.setItem("bookkin-demo-session", JSON.stringify({ id: "owner", username: "owner", displayName: "主人", role: "OWNER", mustChangePassword: false }));
+    sessionStorage.setItem("silvae-demo-session", JSON.stringify({ id: "owner", username: "owner", displayName: "主人", role: "OWNER", mustChangePassword: false }));
 
     render(
       <TestProviders>

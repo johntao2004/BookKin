@@ -1,6 +1,6 @@
 spring:
   main:
     web-application-type: none
-bookkin:
+silvae:
   worker:
     poll-delay: 1s

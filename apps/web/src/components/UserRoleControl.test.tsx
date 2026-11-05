@@ -2,7 +2,7 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { beforeEach, expect, it, vi } from "vitest";
 import { UserRoleControl } from "./UserRoleControl";
-import { BookKinThemeProvider } from "../theme/BookKinThemeProvider";
+import { SilvaeThemeProvider } from "../theme/SilvaeThemeProvider";
 import { request } from "../api/client";
 import type { ManagedUser } from "../domain/types";
 const access = vi.hoisted(() => ({ owner: true }));
@@ -12,7 +12,7 @@ vi.mock("../api/client", () => ({ api: { isDemo: false }, request: vi.fn() }));
 const user: ManagedUser = { id: "member-1", username: "reader", displayName: "成员", role: "MEMBER", status: "ACTIVE", mustChangePassword: false, createdAt: "2026-10-22T00:00:00Z" };
 function setup(value = user) {
   const client = new QueryClient(); client.setQueryData(["users"], [value]);
-  render(<QueryClientProvider client={client}><BookKinThemeProvider><UserRoleControl user={value} /></BookKinThemeProvider></QueryClientProvider>); return client;
+  render(<QueryClientProvider client={client}><SilvaeThemeProvider><UserRoleControl user={value} /></SilvaeThemeProvider></QueryClientProvider>); return client;
 }
 beforeEach(() => { access.owner = true; vi.mocked(request).mockReset(); });
 it("hides role assignment from delegated roles and never offers to change the owner", () => {

@@ -77,7 +77,7 @@ it('keeps the pending setup check alive while session restoration resolves first
   expect(getSetupStatus).toHaveBeenCalledTimes(1);
 });
 it('ignores demo identity in storage during a real session check', async () => {
-  sessionStorage.setItem('bookkin-demo-session', JSON.stringify(user));
+  sessionStorage.setItem('silvae-demo-session', JSON.stringify(user));
   vi.mocked(api.getSession).mockResolvedValue(null);
   mount();
   await screen.findByRole("heading", {level: 1, name: "401"});

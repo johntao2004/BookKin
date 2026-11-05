@@ -767,9 +767,9 @@ export function createPlaqueTexture(title: string, subtitle: string) {
   context.strokeRect(52, 52, 920, 316);
   context.textAlign = 'center';
   context.fillStyle = '#d8b86f';
-  context.font = '700 86px BookKin Serif, Noto Serif SC, serif';
+  context.font = '700 86px Silvae Serif, Noto Serif SC, serif';
   context.fillText(title, 512, 195);
-  context.font = '400 34px BookKin Serif, Noto Serif SC, serif';
+  context.font = '400 34px Silvae Serif, Noto Serif SC, serif';
   context.letterSpacing = '8px';
   context.fillText(subtitle, 512, 273);
   const texture = new THREE.CanvasTexture(canvas);

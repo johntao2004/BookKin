@@ -38,7 +38,7 @@ describe("CategoriesPage", () => {
   });
 
   it("没有分类时页头提供唯一创建入口并打开简洁表单", async () => {
-    sessionStorage.setItem("bookkin-demo-session", JSON.stringify(owner));
+    sessionStorage.setItem("silvae-demo-session", JSON.stringify(owner));
     vi.spyOn(api, "listCategories").mockResolvedValue({ items: [], editable: true });
     render(<TestProviders initialPath="/categories"><CategoriesPage /></TestProviders>);
 
@@ -57,7 +57,7 @@ describe("CategoriesPage", () => {
   });
 
   it("旧manage=1空分类链接直接进入创建表单，创建成功后关闭并保留其他查询参数", async () => {
-    sessionStorage.setItem("bookkin-demo-session", JSON.stringify(owner));
+    sessionStorage.setItem("silvae-demo-session", JSON.stringify(owner));
     const category: CategorySummary = {
       id: "category-created",
       name: "新分类",
@@ -91,7 +91,7 @@ describe("CategoriesPage", () => {
   });
 
   it("主人尚未读到分类时保留禁用的管理入口而不显示创建空态", () => {
-    sessionStorage.setItem("bookkin-demo-session", JSON.stringify(owner));
+    sessionStorage.setItem("silvae-demo-session", JSON.stringify(owner));
     vi.spyOn(api, "listCategories").mockImplementation(() => new Promise(() => undefined));
     render(<TestProviders initialPath="/categories"><CategoriesPage /></TestProviders>);
 
@@ -101,7 +101,7 @@ describe("CategoriesPage", () => {
   });
 
   it("分类读取失败时保留禁用的管理入口", async () => {
-    sessionStorage.setItem("bookkin-demo-session", JSON.stringify(owner));
+    sessionStorage.setItem("silvae-demo-session", JSON.stringify(owner));
     vi.spyOn(api, "listCategories").mockRejectedValue(new Error("offline"));
     render(<TestProviders initialPath="/categories"><CategoriesPage /></TestProviders>);
 
@@ -111,7 +111,7 @@ describe("CategoriesPage", () => {
   });
 
   it("分类搜索无匹配书目时使用统一空态并保留清筛选操作", async () => {
-    sessionStorage.setItem("bookkin-demo-session", JSON.stringify(owner));
+    sessionStorage.setItem("silvae-demo-session", JSON.stringify(owner));
     const category: CategorySummary = {
       id: "category-test",
       name: "测试分类",
@@ -131,7 +131,7 @@ describe("CategoriesPage", () => {
   });
 
   it("可切换分类并从顶部进入全局搜索", async () => {
-    sessionStorage.setItem("bookkin-demo-session", JSON.stringify(owner));
+    sessionStorage.setItem("silvae-demo-session", JSON.stringify(owner));
     render(<TestProviders initialPath="/categories"><AppShell><CategoriesPage /><RouteSearch /></AppShell></TestProviders>);
 
     const readingCategory = await screen.findByRole("button", { name: /^阅读生活，\d+ 本$/ });
@@ -146,7 +146,7 @@ describe("CategoriesPage", () => {
   });
 
   it("主人在分类页唯一位置进入管理，并看到安全删除提示", async () => {
-    sessionStorage.setItem("bookkin-demo-session", JSON.stringify(owner));
+    sessionStorage.setItem("silvae-demo-session", JSON.stringify(owner));
     const category: CategorySummary = {
       id: "category-managed",
       name: "现有分类",

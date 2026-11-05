@@ -52,13 +52,13 @@ function VaultContent() {
     setSelected(null); setMaster(null);
     key.current?.fill(0); key.current = null;
     setItems([]); setQuery(""); setBusy(false);
-    window.dispatchEvent(new Event("bookkin:vault-lock"));
+    window.dispatchEvent(new Event("silvae:vault-lock"));
   }, []);
   useEffect(() => {
-    window.addEventListener("bookkin:session-expired", lock);
+    window.addEventListener("silvae:session-expired", lock);
     window.addEventListener("pagehide", lock);
     return () => {
-      window.removeEventListener("bookkin:session-expired", lock);
+      window.removeEventListener("silvae:session-expired", lock);
       window.removeEventListener("pagehide", lock);
     };
   }, [lock]);

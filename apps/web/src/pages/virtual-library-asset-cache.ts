@@ -1,12 +1,12 @@
 // Only public, content-addressed architectural assets enter persistent storage.
 // Catalogue APIs, personal reading data and book covers always retain their existing authorization path.
-const CACHE_NAME = 'bookkin-library-assets-v1';
+const CACHE_NAME = 'silvae-library-assets-v1';
 const MAX_BYTES = 96 * 1024 * 1024;
 export const libraryAssetCacheStats = { hits: 0, misses: 0, reusedBytes: 0 };
 
 export function staticLibraryAssetHash(path: string): string | undefined {
-  const url = new URL(path, 'https://bookkin.invalid');
-  if (url.origin !== 'https://bookkin.invalid' || url.hash) return undefined;
+  const url = new URL(path, 'https://silvae.invalid');
+  if (url.origin !== 'https://silvae.invalid' || url.hash) return undefined;
   const texture = url.pathname.match(/^\/assets\/hogwarts-library\/textures\/([a-f\d]{64})\.png$/);
   if (texture && !url.search) return texture[1];
   if (!/^\/assets\/hogwarts-library\/(?:modules\/[\w-]+\.glb|materials\.gltf)$/.test(url.pathname)) return undefined;
@@ -28,7 +28,7 @@ const pending = new Map<string, {bytes: ArrayBuffer; headers: Headers}>();
 function store(cache: Cache, url: string, bytes: ArrayBuffer, headers: Headers) {
   // Storage is a best-effort write-behind operation, never part of the first-frame dependency chain.
   if (pendingBytes + bytes.byteLength > MAX_BYTES / 3) return;
-  headers.set('x-bookkin-asset-bytes', String(bytes.byteLength));
+  headers.set('x-silvae-asset-bytes', String(bytes.byteLength));
   pendingBytes += bytes.byteLength; pending.set(url, {bytes, headers});
   void cache.put(url, new Response(bytes, {headers})).catch(() => undefined).finally(() => {
     pendingBytes -= bytes.byteLength; pending.delete(url);
@@ -41,7 +41,7 @@ async function trim(cache: Cache) {
   trimming = true;
   try {
     const keys = await cache.keys();
-    const sizes = await Promise.all(keys.map(async key => Number((await cache.match(key))?.headers.get('x-bookkin-asset-bytes') ?? 0)));
+    const sizes = await Promise.all(keys.map(async key => Number((await cache.match(key))?.headers.get('x-silvae-asset-bytes') ?? 0)));
     let used = 0;
     for (let i = keys.length - 1; i >= 0; i--) {
       used += sizes[i];

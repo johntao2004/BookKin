@@ -13,7 +13,7 @@ describe("LoginPage", () => {
   afterEach(() => vi.restoreAllMocks());
 
   it.each([false, true])("redirects an existing session on /login/ (temporary=%s)", async (temporary) => {
-    sessionStorage.setItem("bookkin-demo-session", JSON.stringify({id:"entry-test",username:"owner",displayName:"Owner",role:"OWNER",mustChangePassword:temporary}));
+    sessionStorage.setItem("silvae-demo-session", JSON.stringify({id:"entry-test",username:"owner",displayName:"Owner",role:"OWNER",mustChangePassword:temporary}));
     render(<TestProviders initialPath="/login/"><Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/library" element={<div>已进入首页</div>} />
@@ -38,7 +38,7 @@ describe("LoginPage", () => {
       password: "",
       hint: "",
     });
-    expect(getLoginDefaults(true).password).toBe("bookkin-demo");
+    expect(getLoginDefaults(true).password).toBe("silvae-demo");
   });
 
   it("logs into the demo owner account", async () => {
@@ -54,7 +54,7 @@ describe("LoginPage", () => {
     expect(screen.queryByText("登录后继续阅读、整理藏书，或管理家庭成员。")).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "登录" }));
     await waitFor(() => expect(screen.getByText("书库已打开")).toBeInTheDocument());
-    expect(sessionStorage.getItem("bookkin-demo-session")).toContain('"role":"OWNER"');
+    expect(sessionStorage.getItem("silvae-demo-session")).toContain('"role":"OWNER"');
   });
 
   it("does not offer owner initialization after setup has completed", async () => {

@@ -4,7 +4,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   try { return await sharedRequest<T>(path, init); }
   catch (error) {
     if (error instanceof ApiRequestError && (error.status === 403 || error.code === "TWO_FACTOR_UNCONFIGURED" || error.code === "TWO_FACTOR_KEY_UNAVAILABLE"))
-      window.dispatchEvent(new Event("bookkin:vault-access-required"));
+      window.dispatchEvent(new Event("silvae:vault-access-required"));
     throw error;
   }
 }

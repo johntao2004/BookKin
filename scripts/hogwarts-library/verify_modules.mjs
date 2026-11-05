@@ -4,7 +4,7 @@ import fs from 'node:fs/promises';import path from 'node:path';import crypto fro
 const ROOT=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../..');
 const source=path.resolve(process.argv[2]??path.join(ROOT,'scripts/hogwarts-library/deliverables/architecture-uncompressed.glb'));
 const out=path.join(ROOT,'apps/web/public/assets/hogwarts-library');
-const scratch=await fs.mkdtemp(path.join(os.tmpdir(),'bookkin-exact-modules-'));
+const scratch=await fs.mkdtemp(path.join(os.tmpdir(),'silvae-exact-modules-'));
 const sourceHashesPath=path.join(scratch,'source.bin'),moduleHashesPath=path.join(scratch,'modules.bin');
 const {MeshoptDecoder}=await import('../../apps/web/node_modules/three/examples/jsm/libs/meshopt_decoder.module.js');await MeshoptDecoder.ready;
 const sha=b=>crypto.createHash('sha256').update(b).digest('hex');

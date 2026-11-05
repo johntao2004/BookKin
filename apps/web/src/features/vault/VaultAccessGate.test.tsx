@@ -19,7 +19,7 @@ it("blocks an unconfigured or disabled feature without mounting vault content", 
 });
 it("guides an unbound user through password, QR, confirmation and saved backup codes", async () => {
   const status = vi.spyOn(vaultAccessApi, "status").mockResolvedValue(state({ bound: false }));
-  const begin = vi.spyOn(vaultAccessApi, "begin").mockResolvedValue({ id: "pending", secret: "MANUALSECRET", uri: "otpauth://totp/BookKin?secret=MANUALSECRET", expiresAt: Date.now() + 600_000 });
+  const begin = vi.spyOn(vaultAccessApi, "begin").mockResolvedValue({ id: "pending", secret: "MANUALSECRET", uri: "otpauth://totp/Silvae?secret=MANUALSECRET", expiresAt: Date.now() + 600_000 });
   const confirm = vi.spyOn(vaultAccessApi, "confirm").mockResolvedValue({ recoveryCodes: ["BACKUP-ONE", "BACKUP-TWO"] });
   vi.stubGlobal("URL", Object.assign(URL, { createObjectURL: vi.fn(() => "blob:test"), revokeObjectURL: vi.fn() }));
   vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
@@ -42,14 +42,14 @@ it("keeps the gate closed for invalid codes and opens only after server confirma
 it("unmounts decrypted content and revokes server access on lock", async () => {
   const status = vi.spyOn(vaultAccessApi, "status").mockResolvedValue(state({ verified: true })); show();
   expect(await screen.findByText("加密书库内容")).toBeVisible(); status.mockResolvedValue(state());
-  fireEvent(window, new Event("bookkin:vault-lock"));
+  fireEvent(window, new Event("silvae:vault-lock"));
   await waitFor(() => expect(screen.queryByText("加密书库内容")).not.toBeInTheDocument()); expect(vaultAccessApi.lock).toHaveBeenCalled(); await waitFor(() => expect(screen.getByRole("group", { name: "6 位动态码" })).toBeVisible());
 });
 it("does not reopen from a verification response arriving after lock", async () => {
   vi.spyOn(vaultAccessApi, "status").mockResolvedValue(state()); let finish!: (value: TwoFactorStatus) => void;
   vi.spyOn(vaultAccessApi, "verify").mockImplementation(() => new Promise(resolve => { finish = resolve; })); show();
   await fillCode("123456");
-  await waitFor(() => expect(vaultAccessApi.verify).toHaveBeenCalled()); fireEvent(window, new Event("bookkin:vault-lock")); finish(state({ verified: true }));
+  await waitFor(() => expect(vaultAccessApi.verify).toHaveBeenCalled()); fireEvent(window, new Event("silvae:vault-lock")); finish(state({ verified: true }));
   await waitFor(() => expect(within(screen.getByRole("group", { name: "6 位动态码" })).getAllByRole("textbox")[0]).toBeEnabled()); expect(screen.queryByText("加密书库内容")).not.toBeInTheDocument();
 });
 it("offers one-use recovery and authenticated rebinding", async () => {

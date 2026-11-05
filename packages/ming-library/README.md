@@ -1,9 +1,9 @@
-# BookKin 明式书楼模型
+# Silvae 明式书楼模型
 
 来源：用户云端 Sites「观文藏阁 · 明代宫殿图书馆」，应用版本 2.14.0、第 16 次发布，Git 提交 `76c77a6027918bbd86240eda76211633ffae40e1`。
 
-- `src/` 保留可编辑 Three.js 源码；42 个原始源文件保持字节一致，`app.js` 仅增加本地宿主接入与阅读视角恢复，新增 `bookkin-host.js` 连接真实目录。
-- 原始 Three.js 0.180.0 单独锁定，避免与 BookKin 其他功能依赖的版本互相影响。
+- `src/` 保留可编辑 Three.js 源码；42 个原始源文件保持字节一致，`app.js` 仅增加本地宿主接入与阅读视角恢复，新增 `silvae-host.js` 连接真实目录。
+- 原始 Three.js 0.180.0 单独锁定，避免与 Silvae 其他功能依赖的版本互相影响。
 - 13 张无损 WebP 建筑/天空贴图与字体位于 `apps/web/public/assets/ming-library/assets`；贴图逐文件 SHA-256 与云端源码一致。
 - 完整云端原始检出保存在忽略目录 `.local/cloud-ming-latest`；替换前本地场景和未提交改动位于 `.local/backups/ming-replacement-20261026`。这些本机恢复路径不进入发布包。
 
@@ -15,7 +15,7 @@
 pnpm install
 pnpm generate:tokens
 pnpm build:ming-library
-pnpm --filter @bookkin/ming-library verify:interaction
+pnpm --filter @silvae/ming-library verify:interaction
 pnpm start:preview
 ```
 

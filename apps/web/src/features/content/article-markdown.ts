@@ -1,4 +1,4 @@
-import { marked } from "marked";
+import { marked, Renderer } from "marked";
 import TurndownService from "turndown";
 import { safeHtml } from "./import";
 
@@ -36,13 +36,24 @@ htmlToMarkdown.addRule("custom-element-content", {
   replacement: (content) => content,
 });
 
+// 文章策略禁止保存 <input>，任务列表的勾选状态因此会丢失；改用带无障碍标签的静态符号保存，再次编辑时还原为 [ ] / [x]。
+// The article policy forbids <input>, which silently dropped task-list state; keep it as an accessible static glyph and restore [ ] / [x] when editing again.
+const articleRenderer = new Renderer();
+articleRenderer.checkbox = ({ checked }) => checked
+  ? '<span aria-label="已完成">☑</span> '
+  : '<span aria-label="未完成">☐</span> ';
+
+function restoreTaskMarkers(markdown: string): string {
+  return markdown.replace(/^(\s*(?:[-*+]|\d+\.)\s+)([☐☑])\s+/gmu, (_match, prefix: string, glyph: string) => `${prefix}${glyph === "☑" ? "[x]" : "[ ]"} `);
+}
+
 /** Convert sanitized article HTML into editable Markdown, retaining article images. */
 export function articleHtmlToMarkdown(html: string): string {
-  return htmlToMarkdown.turndown(safeHtml(html));
+  return restoreTaskMarkers(htmlToMarkdown.turndown(safeHtml(html)));
 }
 
 /** Render GFM Markdown and sanitize the resulting HTML using the article policy. */
 export function articleMarkdownToHtml(markdown: string): string {
-  const html = marked.parse(markdown, { async: false, gfm: true });
+  const html = marked.parse(markdown, { async: false, gfm: true, renderer: articleRenderer });
   return safeHtml(html);
 }

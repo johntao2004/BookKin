@@ -31,7 +31,7 @@ export function VaultPolicySettings() {
         finally { setBusy(false); }
       }} />
     </Stack>
-    {!query.data.configured && <Alert severity="warning">尚未配置身份验证器服务。请在服务器配置 BOOKKIN_TWO_FACTOR_ENCRYPTION_KEY 后重启，再启用禁书区。</Alert>}
+    {!query.data.configured && <Alert severity="warning">尚未配置身份验证器服务。请在服务器配置 SILVAE_TWO_FACTOR_ENCRYPTION_KEY 后重启，再启用禁书区。</Alert>}
     {error && <Alert severity="error">{error}</Alert>}
   </Stack>;
 }

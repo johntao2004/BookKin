@@ -1,0 +1,33 @@
+FROM node:22-bookworm-slim AS web-build
+WORKDIR /workspace
+ARG VITE_DEMO_MODE=false
+ENV VITE_DEMO_MODE=${VITE_DEMO_MODE}
+RUN corepack enable
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
+COPY apps/web/package.json apps/web/package.json
+COPY packages/ming-library/package.json packages/ming-library/package.json
+RUN pnpm install --frozen-lockfile
+COPY design design
+COPY scripts scripts
+COPY packages/ming-library packages/ming-library
+COPY apps/web apps/web
+COPY apps/server/src/main/resources/role-permissions.json apps/server/src/main/resources/role-permissions.json
+COPY apps/server/src/main/resources/catalog apps/server/src/main/resources/catalog
+RUN pnpm generate:tokens && pnpm build:ming-library && pnpm --filter @silvae/web build
+
+FROM eclipse-temurin:21-jdk-noble AS server-build
+WORKDIR /workspace
+COPY apps/server apps/server
+COPY docs/openapi docs/openapi
+COPY --from=web-build /workspace/apps/web/dist/client apps/server/src/main/resources/static
+RUN cd apps/server && ./mvnw -q -DskipTests package
+
+FROM eclipse-temurin:21-jre-noble
+RUN apt-get update \
+    && apt-get install --yes --no-install-recommends curl ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+WORKDIR /app
+COPY --chmod=0644 --from=server-build /workspace/apps/server/target/silvae-0.1.0-SNAPSHOT.jar /app/silvae.jar
+EXPOSE 8080
+ENV JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=75 -Djava.io.tmpdir=/tmp/silvae"
+ENTRYPOINT ["java", "-jar", "/app/silvae.jar"]

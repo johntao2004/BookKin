@@ -1,15 +1,15 @@
 #!/bin/sh
 # 导出数据库、书库根目录和字体归档，并生成恢复清单及校验和；派生缓存不纳入备份。
 # Exports the database, library roots and fonts with a recovery manifest and checksums; derived caches are excluded.
-# 为数据库及所有持久化 BookKin 文件根目录创建自包含恢复点。缓存属于派生数据，有意不纳入备份。
+# 为数据库及所有持久化 Silvae 文件根目录创建自包含恢复点。缓存属于派生数据，有意不纳入备份。
 # Create a self-contained recovery point for the database and every persistent
-# BookKin file root. The cache is derived data and is intentionally excluded.
+# Silvae file root. The cache is derived data and is intentionally excluded.
 set -eu
 
-BACKUP_ROOT=${BOOKKIN_BACKUP_DIR:-./.local/backups}
+BACKUP_ROOT=${SILVAE_BACKUP_DIR:-./.local/backups}
 STAMP=$(date -u +%Y%m%dT%H%M%SZ)
 DESTINATION="$BACKUP_ROOT/$STAMP"
-ROOTS_FILE=$(mktemp "${TMPDIR:-/tmp}/bookkin-backup-roots.XXXXXX")
+ROOTS_FILE=$(mktemp "${TMPDIR:-/tmp}/silvae-backup-roots.XXXXXX")
 
 cleanup() {
   rm -f "$ROOTS_FILE"
@@ -26,12 +26,12 @@ canonical_directory() {
   (cd "$1" && pwd -P)
 }
 
-LIBRARY_ROOTS=${BOOKKIN_LIBRARY_BACKUP_ROOTS:-${BOOKKIN_LIBRARY_MAIN:-./.local/library}}
+LIBRARY_ROOTS=${SILVAE_LIBRARY_BACKUP_ROOTS:-${SILVAE_LIBRARY_MAIN:-./.local/library}}
 OLD_IFS=$IFS
 IFS=:
 for configured_root in $LIBRARY_ROOTS; do
   test -n "$configured_root" || {
-    echo "BOOKKIN_LIBRARY_BACKUP_ROOTS contains an empty path" >&2
+    echo "SILVAE_LIBRARY_BACKUP_ROOTS contains an empty path" >&2
     exit 1
   }
   canonical_directory "$configured_root" >> "$ROOTS_FILE"
@@ -47,10 +47,10 @@ test "$ROOT_COUNT" -gt 0 || {
 # 数据库导出前先验证字体挂载；挂载缺失时立即失败，避免生成看似有效却不完整的恢复点。
 # Validate the font mount before starting the database dump so a missing mount
 # fails fast without producing a partial-looking recovery point.
-FONT_ROOT=${BOOKKIN_FONT_BACKUP_ROOT:-${BOOKKIN_FONT_STORAGE:-./.local/fonts}}
+FONT_ROOT=${SILVAE_FONT_BACKUP_ROOT:-${SILVAE_FONT_STORAGE:-./.local/fonts}}
 FONT_REAL=$(canonical_directory "$FONT_ROOT")
-ARTICLE_ROOT=${BOOKKIN_ARTICLE_STORAGE:-./.local/content/articles}
-VAULT_ROOT=${BOOKKIN_VAULT_STORAGE:-./.local/content/vault}
+ARTICLE_ROOT=${SILVAE_ARTICLE_STORAGE:-./.local/content/articles}
+VAULT_ROOT=${SILVAE_VAULT_STORAGE:-./.local/content/vault}
 ARTICLE_REAL=$(canonical_directory "$ARTICLE_ROOT")
 VAULT_REAL=$(canonical_directory "$VAULT_ROOT")
 FONT_EMBEDDED=false
@@ -70,14 +70,14 @@ done
 CHECKSUM_FILES="manifest.txt database.dump"
 
 cat > "$DESTINATION/manifest.txt" <<EOF
-format=bookkin-backup-v3
+format=silvae-backup-v3
 created-at=$STAMP
 library-root-count=$ROOT_COUNT
 EOF
 
 docker compose exec -T postgres pg_dump \
-  --username "${POSTGRES_USER:-bookkin}" \
-  --dbname "${POSTGRES_DB:-bookkin}" \
+  --username "${POSTGRES_USER:-silvae}" \
+  --dbname "${POSTGRES_DB:-silvae}" \
   --format custom > "$DESTINATION/database.dump"
 
 ROOT_INDEX=0
@@ -94,7 +94,7 @@ while IFS= read -r LIBRARY_ROOT; do
   # 归档“.”以包含隐藏目录和根目录中的普通书籍文件。符号链接按链接本身归档，tar 不跟随链接。
   # Archive '.' so hidden directories and the root's regular book files are
   # included. Symlinks are archived as links; tar does not follow them.
-  tar -C "$LIBRARY_ROOT" --exclude='./.bookkin-cache' -czf "$DESTINATION/$ARCHIVE" .
+  tar -C "$LIBRARY_ROOT" --exclude='./.silvae-cache' -czf "$DESTINATION/$ARCHIVE" .
   printf 'library-root-%s=%s\n' "$ROOT_INDEX" "$LIBRARY_ROOT" >> "$DESTINATION/manifest.txt"
   CHECKSUM_FILES="$CHECKSUM_FILES $ARCHIVE"
   ROOT_INDEX=$((ROOT_INDEX + 1))

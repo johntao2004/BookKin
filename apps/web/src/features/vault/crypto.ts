@@ -98,7 +98,7 @@ export type Envelope = PasswordEnvelope | DeviceEnvelope;
 export async function createDeviceEnvelope() {
   const master = random(32), recovery = random(32);
   try {
-    const envelope: DeviceEnvelope = { version: 2, kind: "device", recoveryBox: b64(await seal(recovery, master, "bookkin:vault:master:recovery:v2")) };
+    const envelope: DeviceEnvelope = { version: 2, kind: "device", recoveryBox: b64(await seal(recovery, master, "silvae:vault:master:recovery:v2")) };
     return { master, envelope, recovery: b64(recovery) };
   } finally { recovery.fill(0); }
 }
@@ -120,10 +120,10 @@ export async function createEnvelope(
       kdf: "argon2id-64m-3-1",
       salt: b64(salt),
       passwordBox: b64(
-        await seal(derived, master, "bookkin:vault:master:password:v1"),
+        await seal(derived, master, "silvae:vault:master:password:v1"),
       ),
       recoveryBox: b64(
-        await seal(recovery, master, "bookkin:vault:master:recovery:v1"),
+        await seal(recovery, master, "silvae:vault:master:recovery:v1"),
       ),
     };
     return { master, envelope, recovery: b64(recovery) };
@@ -140,7 +140,7 @@ export async function unlock(
   if (envelope.version === 2) {
     if (!recovery || envelope.kind !== "device") throw new Error("请使用解密恢复密钥授权此浏览器。");
     const bytes = unb64(password.trim());
-    try { return await open(bytes, unb64(envelope.recoveryBox), "bookkin:vault:master:recovery:v2"); }
+    try { return await open(bytes, unb64(envelope.recoveryBox), "silvae:vault:master:recovery:v2"); }
     catch { throw new Error("解密恢复密钥不正确。"); }
     finally { bytes.fill(0); }
   }
@@ -157,7 +157,7 @@ export async function unlock(
     return await open(
       derived,
       unb64(recovery ? envelope.recoveryBox : envelope.passwordBox),
-      `bookkin:vault:master:${recovery ? "recovery" : "password"}:v1`,
+      `silvae:vault:master:${recovery ? "recovery" : "password"}:v1`,
     );
   } catch {
     throw new Error("二次密码或恢复密钥不正确。");
@@ -179,7 +179,7 @@ export async function fileKey(master: Uint8Array, id: string) {
         name: "HKDF",
         hash: "SHA-256",
         salt: encoder.encode(id),
-        info: encoder.encode("bookkin:vault:file:v1"),
+        info: encoder.encode("silvae:vault:file:v1"),
       },
       base,
       256,
@@ -191,4 +191,4 @@ export const chunkAad = (
   index: number,
   count: number,
   size: number,
-) => `bookkin:vault:chunk:v1:${id}:${index}:${count}:${size}`;
+) => `silvae:vault:chunk:v1:${id}:${index}:${count}:${size}`;

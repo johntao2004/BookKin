@@ -65,7 +65,7 @@ function traceRun(hits: string[], label: string, from: Point, to: Point, steps: 
 }
 
 afterAll(() => {
-  if (process.env.BOOKKIN_SHELF_EXPANSION_REPORT) writeFileSync(process.env.BOOKKIN_SHELF_EXPANSION_REPORT,
+  if (process.env.SILVAE_SHELF_EXPANSION_REPORT) writeFileSync(process.env.SILVAE_SHELF_EXPANSION_REPORT,
     `${JSON.stringify({revision: '20261020-lower-gallery-r27', evidence: 'CPU geometry/collision regression; not browser or GPU acceptance',
       body: WALKING_CAMERA_CLEARANCE, eyeHeight: WALKING_EYE_HEIGHT, aisleCenterAbsX: AISLE_CENTER_X,
       laneOffset: AISLE_LANE_OFFSET, ...metrics}, null, 2)}\n`);

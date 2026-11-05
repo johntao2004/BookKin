@@ -80,7 +80,7 @@ const stressBooks = Array.from({ length: stressCount }, (_, index) => {
     title: `${theme.prefix} ${serial}`,
     author: `${theme.authorPrefix}${String(Math.floor(index / stressThemes.length) + 1).padStart(2, "0")}`,
     format: "EPUB",
-    description: `BookKin 压力演示书 ${serial}，用于验证大量真实 EPUB 的扫描、分页、分类和虚拟书库同步。`,
+    description: `Silvae 压力演示书 ${serial}，用于验证大量真实 EPUB 的扫描、分页、分类和虚拟书库同步。`,
     tags: theme.tags,
     cover: stressCovers[index % stressCovers.length],
     series: `压力演示 · ${theme.series}`,
@@ -108,7 +108,7 @@ async function exists(path) {
 
 async function createEpub(book, target) {
   if (await exists(target)) return "kept";
-  const staging = await mkdtemp(join(tmpdir(), "bookkin-demo-epub-"));
+  const staging = await mkdtemp(join(tmpdir(), "silvae-demo-epub-"));
   try {
     await mkdir(join(staging, "META-INF"), { recursive: true });
     await mkdir(join(staging, "OEBPS"), { recursive: true });
@@ -124,7 +124,7 @@ async function createEpub(book, target) {
     <dc:title>${xml(book.title)}</dc:title>
     <dc:creator>${xml(book.author)}</dc:creator>
     <dc:language>zh-CN</dc:language>
-    <dc:publisher>BookKin演示出版</dc:publisher>
+    <dc:publisher>Silvae演示出版</dc:publisher>
     <dc:date>${xml(book.published)}</dc:date>
     <dc:description>${xml(book.description)}</dc:description>
     ${book.tags.map((tag) => `<dc:subject>${xml(tag)}</dc:subject>`).join("\n    ")}
@@ -166,5 +166,5 @@ for (const book of books) {
   const status = await createEpub(book, target);
   result.push({ title: book.title, format: book.format, path: target, status });
 }
-await writeFile(join(targetRoot, ".bookkin-demo-library.json"), `${JSON.stringify({ generatedAt: new Date().toISOString(), books: result }, null, 2)}\n`, "utf8");
+await writeFile(join(targetRoot, ".silvae-demo-library.json"), `${JSON.stringify({ generatedAt: new Date().toISOString(), books: result }, null, 2)}\n`, "utf8");
 process.stdout.write(`演示书库已准备：${result.filter((item) => item.status === "created").length} 本新建，${result.filter((item) => item.status === "kept").length} 本保留。\n${targetRoot}\n`);

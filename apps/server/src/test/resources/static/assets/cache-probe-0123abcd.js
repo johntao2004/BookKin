@@ -1,1 +1,1 @@
-window.bookKinCacheProbe = true;
+window.silvaeCacheProbe = true;

@@ -20,6 +20,23 @@ export type PdfReadingBlock =
   | { kind: "toc-entry"; text: string; pageLabel: string }
   | { kind: "footnote"; marker: string; text: string };
 
+export function shouldJoinPdfPageBoundaryParagraphs(previous: PdfReadingBlock, next: PdfReadingBlock) {
+  if (previous.kind !== "paragraph" || next.kind !== "paragraph") return false;
+  if (isShortTitleOrList(previous.text) || isShortTitleOrList(next.text)) return false;
+  const previousText = previous.text.trim().replace(/["'”’」』】）)]+$/u, "");
+  return !/[。.!！？?；;…⋯]$/u.test(previousText);
+}
+
+export function pdfPageBoundarySeparator(previous: string, next: string) {
+  return /[A-Za-z0-9,.;:!?)]$/u.test(previous.trimEnd()) && /^[A-Za-z0-9]/u.test(next.trimStart()) ? " " : "";
+}
+
+function isShortTitleOrList(value: string) {
+  const text = value.trim();
+  if (text.length <= 12 || /[:：]$/u.test(text)) return true;
+  return /^(?:第.{1,14}[章节篇部卷]|[一二三四五六七八九十]+[、.．]|\d+[.)、]|[（(]\d+[)）]|[•●▪-]\s?)/u.test(text);
+}
+
 export type PdfInlineTextPart =
   | { kind: "text"; text: string }
   | { kind: "footnote-reference"; marker: string };

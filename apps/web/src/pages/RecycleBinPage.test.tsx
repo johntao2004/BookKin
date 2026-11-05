@@ -10,7 +10,7 @@ import { RecycleBinPage } from "./RecycleBinPage";
 
 describe("RecycleBinPage", () => {
   beforeEach(() => {
-    sessionStorage.setItem("bookkin-demo-session", JSON.stringify({ id: "user-owner", username: "owner", displayName: "林", role: "OWNER", mustChangePassword: false }));
+    sessionStorage.setItem("silvae-demo-session", JSON.stringify({ id: "user-owner", username: "owner", displayName: "林", role: "OWNER", mustChangePassword: false }));
     vi.spyOn(api, "listRecycleBin").mockResolvedValue(demoRecycleBin);
   });
 
@@ -43,7 +43,7 @@ describe("RecycleBinPage", () => {
     expect(preview).toHaveBeenCalledWith(demoRecycleBin[0], "PURGE");
     expect(execute).not.toHaveBeenCalled();
     view.unmount();
-    sessionStorage.setItem("bookkin-demo-session", JSON.stringify({ id: "admin", username: "admin", displayName: "管理员", role: "ADMIN", mustChangePassword: false }));
+    sessionStorage.setItem("silvae-demo-session", JSON.stringify({ id: "admin", username: "admin", displayName: "管理员", role: "ADMIN", mustChangePassword: false }));
     render(<TestProviders><RecycleBinPage /></TestProviders>);
     expect(await screen.findByText(demoRecycleBin[0].bookTitle)).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /永久清理/ })).not.toBeInTheDocument();

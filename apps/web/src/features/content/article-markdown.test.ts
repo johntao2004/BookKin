@@ -92,3 +92,17 @@ describe("article Markdown conversion", () => {
     expect(converted).toContain("unsafe link");
   });
 });
+
+describe("article task lists", () => {
+  it("keeps checked and unchecked task state through render and edit round trips", () => {
+    const html = articleMarkdownToHtml("- [ ] 待办\n- [x] 已办\n- 普通项");
+    expect(html).not.toContain("<input");
+    expect(html).toContain("☐");
+    expect(html).toContain("☑");
+    const markdown = articleHtmlToMarkdown(html);
+    expect(markdown).toMatch(/^-\s+\[ \] 待办$/m);
+    expect(markdown).toMatch(/^-\s+\[x\] 已办$/m);
+    expect(markdown).toMatch(/^-\s+普通项$/m);
+    expect(articleMarkdownToHtml(markdown)).toBe(html);
+  });
+});

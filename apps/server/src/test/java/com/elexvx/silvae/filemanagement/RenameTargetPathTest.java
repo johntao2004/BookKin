@@ -1,0 +1,40 @@
+// 验证重命名只改变文件名并保留目录与格式，拒绝路径片段和冲突扩展名。
+// Checks filename-only renames preserve directory/format and reject path segments or conflicting extensions.
+package com.elexvx.silvae.filemanagement;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
+import com.elexvx.silvae.catalog.BookFile;
+import com.elexvx.silvae.catalog.BookFileStatus;
+import com.elexvx.silvae.catalog.BookFormat;
+import com.elexvx.silvae.common.ApiException;
+import java.time.OffsetDateTime;
+import java.util.UUID;
+import org.junit.jupiter.api.Test;
+
+class RenameTargetPathTest {
+    private final PathPolicy pathPolicy = new PathPolicy();
+
+    @Test
+    void keepsTheOriginalDirectoryAndAutomaticallyRestoresTheFormat() {
+        BookFile file = file("作者/论文.pdf", BookFormat.PDF);
+
+        assertEquals("作者/新书名.pdf", RenameTargetPath.resolve(file, "新书名", pathPolicy));
+        assertEquals("作者/新版.epub", RenameTargetPath.resolve(file("作者/论文.epub", BookFormat.EPUB), "新版.EPUB", pathPolicy));
+    }
+
+    @Test
+    void rejectsPathSegmentsAndAConflictingBookExtension() {
+        BookFile file = file("作者/论文.pdf", BookFormat.PDF);
+
+        assertThrows(ApiException.class, () -> RenameTargetPath.resolve(file, "../越界", pathPolicy));
+        assertThrows(ApiException.class, () -> RenameTargetPath.resolve(file, "其他目录/新书名", pathPolicy));
+        assertThrows(ApiException.class, () -> RenameTargetPath.resolve(file, "新书名.epub", pathPolicy));
+    }
+
+    private BookFile file(String relativePath, BookFormat format) {
+        return new BookFile(UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), relativePath, format,
+                BookFileStatus.AVAILABLE, 1, OffsetDateTime.now(), "sha256:test", false, false, false);
+    }
+}

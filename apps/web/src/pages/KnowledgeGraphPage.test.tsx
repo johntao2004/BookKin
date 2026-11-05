@@ -16,7 +16,7 @@ vi.mock('./KnowledgeNetwork', () => ({ KnowledgeNetwork: ({ options: props }: { 
 const book = (id: string): Book => ({id, title: `书籍${id}`, author: '作者', description: '', tags: ['普通标签'], format: 'PDF', coverUrl: '/cover.jpg', progress: 0, addedAt: '', libraryRoot: '', relativePath: '', fingerprint: '', status: 'AVAILABLE'});
 const points: BookKnowledge[] = [{bookId: 'a', status: 'READY', providerId: 'local', sampledSections: 1, totalSections: 10, generatedAt: '', points: [{name: '认知偏差', quote: '认知偏差会影响人们处理信息时的判断和决策。', locator: 'page:3'}]}];
 beforeEach(() => {
-  sessionStorage.setItem('bookkin-demo-session', JSON.stringify({id: 'owner', username: 'owner', displayName: '主人', role: 'OWNER'}));
+  sessionStorage.setItem('silvae-demo-session', JSON.stringify({id: 'owner', username: 'owner', displayName: '主人', role: 'OWNER'}));
   vi.spyOn(api, 'listBooks').mockResolvedValue({items: [book('a'), book('b')]});
   vi.spyOn(api, 'listBookKnowledge').mockResolvedValue(points);
   vi.spyOn(api, 'getAiServiceAvailability').mockResolvedValue({enabled: true, hasConfiguredProvider: true, hasEnabledProvider: true});
@@ -103,7 +103,7 @@ it('shows an honest empty state and surfaces provider errors without fake nodes'
   await waitFor(() => expect(api.generateBookKnowledge).toHaveBeenCalledWith('a'));
 });
 it('members can explore knowledge but cannot invoke paid generation', async () => {
-  sessionStorage.setItem('bookkin-demo-session', JSON.stringify({id: 'member', role: 'MEMBER'}));
+  sessionStorage.setItem('silvae-demo-session', JSON.stringify({id: 'member', role: 'MEMBER'}));
   render(<TestProviders><KnowledgeGraphPage /></TestProviders>);
   await screen.findByTestId('knowledge-canvas');
   expect(screen.queryByRole('button', {name: '分析书籍'})).not.toBeInTheDocument();

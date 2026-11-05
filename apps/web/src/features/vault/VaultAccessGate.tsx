@@ -34,13 +34,13 @@ export function VaultAccessGate({ children }: { children: ReactNode }) {
   useEffect(() => {
     mounted.current = true;
     const lock = () => close();
-    window.addEventListener("bookkin:vault-lock", lock);
-    window.addEventListener("bookkin:vault-access-required", lock);
+    window.addEventListener("silvae:vault-lock", lock);
+    window.addEventListener("silvae:vault-access-required", lock);
     return () => {
       mounted.current = false;
       epoch.current++;
-      window.removeEventListener("bookkin:vault-lock", lock);
-      window.removeEventListener("bookkin:vault-access-required", lock);
+      window.removeEventListener("silvae:vault-lock", lock);
+      window.removeEventListener("silvae:vault-access-required", lock);
       void vaultAccessApi.lock().catch(() => undefined);
     };
   }, [close]);
@@ -108,8 +108,8 @@ export function VaultAccessGate({ children }: { children: ReactNode }) {
             <p>这些备用码仅显示一次，每个只能使用一次。请保存在安全位置；它们用于身份验证，不替代书籍的加密恢复密钥。</p>
             <Input.TextArea aria-label="2FA 备用码" readOnly value={codes.join("\n")} autoSize={{ minRows: 10 }} />
             <div><Button onClick={() => {
-              const url = URL.createObjectURL(new Blob([`BookKin 2FA 备用码\n每个仅可使用一次。\n${codes.join("\n")}\n与书籍加密恢复密钥分别保存。`], { type: "text/plain" }));
-              const anchor = document.createElement("a"); anchor.href = url; anchor.download = "bookkin-2fa-backup-codes.txt"; anchor.click(); URL.revokeObjectURL(url); setSaved(true);
+              const url = URL.createObjectURL(new Blob([`Silvae 2FA 备用码\n每个仅可使用一次。\n${codes.join("\n")}\n与书籍加密恢复密钥分别保存。`], { type: "text/plain" }));
+              const anchor = document.createElement("a"); anchor.href = url; anchor.download = "silvae-2fa-backup-codes.txt"; anchor.click(); URL.revokeObjectURL(url); setSaved(true);
             }}>下载备用码</Button></div>
             <Button type="primary" disabled={!saved} loading={busy} onClick={() => void run(async () => { setCodes([]); setSaved(false); await refresh(); })}>已保存，继续进入</Button>
           </div>

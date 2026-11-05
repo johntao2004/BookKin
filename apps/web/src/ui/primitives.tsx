@@ -269,7 +269,7 @@ export function sxClassName(sx: SxProps | undefined, theme: UiTheme) {
   const name = `bk-sx-${Math.abs(hash)}`;
   if (typeof document !== "undefined" && !styleCache.has(name)) {
     const tag = document.createElement("style");
-    tag.dataset.bookkinSx = name;
+    tag.dataset.silvaeSx = name;
     tag.textContent = buildSxCss(`.${name}`, style);
     document.head.appendChild(tag);
     styleCache.add(name);
@@ -600,7 +600,7 @@ export function keyframes(frames: Record<string, CSSProperties>) {
   const name = `bk-keyframes-${keyframeCounter += 1}`;
   if (typeof document !== "undefined") {
     const tag = document.createElement("style");
-    tag.dataset.bookkinKeyframes = name;
+    tag.dataset.silvaeKeyframes = name;
     tag.textContent = `@keyframes ${name}{${Object.entries(frames).map(([key, value]) => `${key}{${Object.entries(value).map(([property, propertyValue]) => `${kebabCase(property)}:${propertyValue};`).join("")}}`).join("")}}`;
     document.head.appendChild(tag);
   }

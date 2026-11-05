@@ -1,7 +1,7 @@
 # A-end gallery artwork provenance
 
 The four flanking paintings were generated with the built-in imagegen tool for
-BookKin's original library exhibition wall. They are original compositions,
+Silvae's original library exhibition wall. They are original compositions,
 not extracted reference-game images or copies of identified paintings.
 
 Authoring input: `apps/web/public/assets/hogwarts-library/textures/gallery-paintings-original-r7.png`.

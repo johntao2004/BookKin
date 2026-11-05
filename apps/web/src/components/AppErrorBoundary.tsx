@@ -3,7 +3,7 @@ import { Button } from "../ui/buttons";
 import { ApiRequestError } from "../api/errors";
 import { HttpErrorPage, pageFailure, type PageFailure } from "../pages/HttpErrorPage";
 
-const chunkReloadKey = "bookkin:chunk-reload-at";
+const chunkReloadKey = "silvae:chunk-reload-at";
 const chunkReloadWindowMs = 60_000;
 
 function isDynamicImportError(error: unknown) {

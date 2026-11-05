@@ -6,7 +6,7 @@
 `palace_detail_helpers.fragment` 与 `palace_ornament.fragment` 提供曲面斗拱、卷草、莲瓣和浅浮雕。
 `palace_furniture.fragment` 与 `palace_doors.fragment` 重建硬木书案、长凳、木框台灯及带铜环的分格门墙。
 `source-textures.json` 保留建模输入图片的稳定映射，避免当前材质清单移除肖像材质后破坏重建。
-新建筑采用原创几何，未导入外部建筑模型。匾额转为网格；设置 `BOOKKIN_CJK_FONT`
+新建筑采用原创几何，未导入外部建筑模型。匾额转为网格；设置 `SILVAE_CJK_FONT`
 可指定中文字体，默认支持 macOS STHeiti 或 Linux Noto Sans CJK。
 
 ```sh
@@ -38,7 +38,7 @@ Previous r32: `20261020-foreground-globe-r32`. The foreground table, two benches
 
 Previous r31: `20261020-open-upper-balcony-r31`. The B-end upper balcony omits its six decorative piers and central/side arch screens, including their pier collisions. Rear wall, upper panels, cornices, balcony and stair geometry remain.
 
-# BookKin high-detail modular library
+# Silvae high-detail modular library
 
 Retained stair crosswalk (`20261020-stair-crosswalk-r30`): The A-end center deck and its front guard extend from z=-15.6 to z=-13.5, flush with both stair outlets. The former internal longitudinal guards are removed so the platform is continuous. Both spiral edges have profiled timber handrails, tread-mounted balusters and supported upper returns; inner guard collision arcs retain the radius-1.3 walking lane. `verify_stair_crosswalk_extension.py` measures exported floor support, timber rails and exit clearance against the previous model.
 

@@ -14,7 +14,7 @@ import {createBookTapGesture} from './book-interaction-v16.js';
 import {createEntranceZoom} from './entrance-zoom-v16.js';
 import {bindEntranceZoomInput} from './entrance-input-v16.js';
 
-import {connectBookKin} from './bookkin-host.js';
+import {connectSilvae} from './silvae-host.js';
 import {shelfCategories,shelfCategoryPose} from './shelf-category-navigation.js';
 const $=s=>document.querySelector(s);
 const state={mode:'orbit',view:'gate',cutaway:false,night:false,quality:'auto',selected:null,source:'custom',busy:false};
@@ -53,7 +53,7 @@ async function loadBookFont(books){
   const text=books.map(b=>(b.title||'')+(b.author||'')+(b.category||'')+(b.description||'')).join('');
   if(text){
     await document.fonts.ready;
-    await document.fonts.load('500 24px "BookKin Serif"',text.slice(0,200000));
+    await document.fonts.load('500 24px "Silvae Serif"',text.slice(0,200000));
     await document.fonts.load('400 24px "Noto Serif SC"',text.slice(0,200000));
   }
 }
@@ -117,7 +117,7 @@ async function init(){
     // Wait for imported font stylesheets before requesting fonts used by canvas textures.
     if(document.readyState!=='complete')await new Promise(resolve=>window.addEventListener('load',resolve,{once:true}));
     // This fixed inscription is completely covered by the bundled interface subset.
-    await document.fonts.load('500 32px "BookKin Serif"',inscriptionText);
+    await document.fonts.load('500 32px "Silvae Serif"',inscriptionText);
     renderer=makeRenderer();
     adaptiveResolution=new AdaptiveResolution({coarse:matchMedia('(pointer: coarse)').matches,fallback:renderer.isFallback});
     applyResolution();renderer.setSize(innerWidth,innerHeight);
@@ -715,7 +715,7 @@ window.GuanwenLibrary={ready,
   async standFromThrone(){await ready;leaveSeat(true);return getState();},
   async setGateOpen(open){await ready;return setGateOpen(open);},
 };
-connectBookKin(window.GuanwenLibrary, {captureView, restoreView});
+connectSilvae(window.GuanwenLibrary, {captureView, restoreView});
 frameLoop=createDemandLoop(animate);init();
 
 // Reader navigation restores a validated camera pose through the existing collision guards.

@@ -4,8 +4,8 @@ import chineseCatalog from './thema-zh-CN.json';
 export const THEMA_VERSION = catalog.version;
 export const THEMA_SUBJECTS = catalog.subjects;
 const subjects = new Map(THEMA_SUBJECTS.map(item => [item.code, item]));
-// 中文为 BookKin 展示译名；标准代码及英文原名保留用于检索和数据互通。
-// BookKin display translations do not replace the canonical codes or English headings.
+// 中文为 Silvae 展示译名；标准代码及英文原名保留用于检索和数据互通。
+// Silvae display translations do not replace the canonical codes or English headings.
 const chinese: Record<string, string> = chineseCatalog.labels;
 export function themaLabel(code: string) {
   const item = subjects.get(code);

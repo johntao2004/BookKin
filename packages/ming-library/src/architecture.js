@@ -67,7 +67,7 @@ function inkPainting() {
       ctx.strokeStyle='rgba(35,46,33,.67)';ctx.lineWidth=3*s;ctx.beginPath();ctx.moveTo(x,y+85*s);ctx.lineTo(x-4*s,y);ctx.stroke();
       for(let j=0;j<4;j++){ctx.beginPath();ctx.moveTo(x,y+j*17*s);ctx.lineTo(x-22*s+j*2,y+(j+1)*17*s);ctx.lineTo(x+21*s-j*2,y+(j+1)*17*s);ctx.fillStyle='rgba(35,46,33,.45)';ctx.fill();}
     }
-    ctx.fillStyle='#4f4c38';ctx.font='28px BookKin Serif, Noto Serif SC, serif';ctx.textAlign='center';
+    ctx.fillStyle='#4f4c38';ctx.font='28px Silvae Serif, Noto Serif SC, serif';ctx.textAlign='center';
     [...'雲山藏秀'].forEach((s,i)=>ctx.fillText(s,420,80+i*38));
     ctx.fillStyle='#9b4838';ctx.fillRect(406,253,27,27);ctx.strokeStyle='#c9b98f';ctx.lineWidth=2;ctx.strokeRect(410,257,19,19);
   });
@@ -77,7 +77,7 @@ function plaqueTexture(text, w=1024, h=256, vertical=false) {
   return canvasTexture(w, h, (ctx) => {
     ctx.fillStyle='#253a35';ctx.fillRect(0,0,w,h);ctx.strokeStyle='#bd9b58';ctx.lineWidth=10;ctx.strokeRect(15,15,w-30,h-30);
     ctx.lineWidth=2;ctx.strokeRect(28,28,w-56,h-56);ctx.fillStyle='#d9bd7e';ctx.textAlign='center';ctx.textBaseline='middle';
-    const chars=[...text];ctx.font=`${vertical?Math.min(w*.62,h/(chars.length+1)*.8):h*.58}px BookKin Serif, Noto Serif SC, serif`;
+    const chars=[...text];ctx.font=`${vertical?Math.min(w*.62,h/(chars.length+1)*.8):h*.58}px Silvae Serif, Noto Serif SC, serif`;
     chars.forEach((c,i)=>ctx.fillText(c,vertical?w/2:w*(i+1)/(chars.length+1),vertical?h*(i+1)/(chars.length+1):h*.53));
   });
 }

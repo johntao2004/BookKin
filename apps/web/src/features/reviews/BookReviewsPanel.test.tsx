@@ -15,7 +15,7 @@ function renderPanel() { return render(<TestProviders><BookReviewsPanel bookId="
 
 describe("BookReviewsPanel", () => {
   beforeEach(() => {
-    sessionStorage.setItem("bookkin-demo-session", JSON.stringify({ id: "owner", username: "owner", displayName: "作者", role: "OWNER", mustChangePassword: false }));
+    sessionStorage.setItem("silvae-demo-session", JSON.stringify({ id: "owner", username: "owner", displayName: "作者", role: "OWNER", mustChangePassword: false }));
     vi.spyOn(bookReviews, "list").mockResolvedValue([]);
   });
   afterEach(() => { cleanup(); vi.restoreAllMocks(); sessionStorage.clear(); });
@@ -63,7 +63,7 @@ describe("BookReviewsPanel", () => {
   });
 
   it("does not request or render reviews for anonymous users", () => {
-    sessionStorage.removeItem("bookkin-demo-session");
+    sessionStorage.removeItem("silvae-demo-session");
     renderPanel();
     expect(bookReviews.list).not.toHaveBeenCalled();
     expect(screen.queryByRole("heading", { name: "读后随笔" })).not.toBeInTheDocument();
