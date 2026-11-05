@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="100%" height="100%" role="img" aria-label="Silvae · 书林 Logo（如意卷轴 · 藏书方印）">
+  <!-- Full-Bleed Edge-to-Edge Warm Cream Background (Zero Outer White Border) -->
+  <rect width="1024" height="1024" fill="#F5F0E8" />
+
+  <!-- Option 3: Guofeng "如意卷轴 · 藏书方印" (Ruyi Cloud-Scroll S-Monogram & Solid Cinnabar Seal) -->
+  <!-- 180° Rotationally Symmetric around Center (512, 512), 84% Canvas Fill -->
+  <g transform="translate(512, 512)">
+    <!-- Top Ruyi Scroll Curve (Starts near center-left, sweeps around top, curls into Ruyi scroll head on top-right) -->
+    <path d="M -138 -36
+             C -265 -36, -336 -125, -336 -226
+             C -336 -336, -248 -384, -120 -384
+             H 176
+             C 288 -384, 344 -312, 344 -226
+             C 344 -148, 282 -112, 224 -128
+             C 188 -138, 178 -176, 208 -196"
+          fill="none" stroke="#1F1E1B" stroke-width="82" stroke-linecap="round" stroke-linejoin="round" />
+
+    <!-- Bottom Ruyi Scroll Curve (180° Rotationally Symmetric) -->
+    <path d="M 138 36
+             C 265 36, 336 125, 336 226
+             C 336 336, 248 384, 120 384
+             H -176
+             C -288 384, -344 312, -344 226
+             C -344 148, -282 112, -224 128
+             C -188 138, -178 176, -208 196"
+          fill="none" stroke="#1F1E1B" stroke-width="82" stroke-linecap="round" stroke-linejoin="round" />
+
+    <!-- Top & Bottom Inner Ruyi C-Scroll Accents -->
+    <path d="M -206 -236 C -162 -236, -162 -140, -206 -140"
+          fill="none" stroke="#1F1E1B" stroke-width="72" stroke-linecap="round" />
+    <path d="M 206 236 C 162 236, 162 140, 206 140"
+          fill="none" stroke="#1F1E1B" stroke-width="72" stroke-linecap="round" />
+
+    <!-- Top & Bottom Horizontal Bamboo-Slip Pill Bars -->
+    <line x1="-82" y1="-168" x2="82" y2="-168" stroke="#1F1E1B" stroke-width="68" stroke-linecap="round" />
+    <line x1="-82" y1="168" x2="82" y2="168" stroke="#1F1E1B" stroke-width="68" stroke-linecap="round" />
+
+    <!-- Center Solid Rounded-Square Cinnabar Library Seal (藏书朱印, #CC785C) -->
+    <rect x="-102" y="-102" width="204" height="204" rx="38" fill="#CC785C" />
+  </g>
+</svg>

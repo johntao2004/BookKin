@@ -1,56 +1,48 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 260" width="100%" height="100%" role="img" aria-label="Silvae 三大核心支柱：典藏入林、观文藏阁、各得其所">
-  <defs>
-    <linearGradient id="cardBg" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#FFFDF8" />
-      <stop offset="100%" stop-color="#F5F0E8" />
-    </linearGradient>
-  </defs>
-
-  <!-- Background Canvas -->
-  <rect width="1200" height="260" rx="16" fill="#FAF9F5" />
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 226" width="100%" height="100%" role="img" aria-label="Silvae 三大核心支柱：典藏入林、观文藏阁、各得其所">
+  <!-- Transparent outer background so cards adapt cleanly to both GitHub Light and Dark Mode -->
 
   <!-- Card 1: 典藏入林 -->
-  <g transform="translate(20, 18)">
-    <rect width="368" height="224" rx="14" fill="url(#cardBg)" stroke="#E6DFD8" stroke-width="1.2" />
-    <rect x="24" y="24" width="38" height="24" rx="6" fill="#253B32" />
-    <text x="43" y="40" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" font-weight="600" fill="#FAF9F5">01</text>
-    <text x="74" y="41" font-family="'Noto Serif SC', 'Songti SC', Georgia, serif" font-size="13" font-weight="600" letter-spacing="1.5" fill="#914832">CURATED ARCHIVE · 典藏入林</text>
+  <g transform="translate(4, 4)">
+    <rect width="384" height="218" rx="18" fill="#FAF9F5" stroke="#E6DFD8" stroke-width="1.5" />
+    <rect x="24" y="24" width="38" height="24" rx="12" fill="#CC785C" />
+    <text x="43" y="40" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" font-weight="600" fill="#FFFDF8">01</text>
+    <text x="74" y="41" font-family="'Noto Serif SC', 'Songti SC', Georgia, serif" font-size="13" font-weight="600" letter-spacing="1.5" fill="#CC785C">CURATED ARCHIVE · 典藏入林</text>
 
-    <text x="24" y="82" font-family="'Noto Serif SC', 'Songti SC', 'PingFang SC', serif" font-size="21" font-weight="600" fill="#141413">受控 NAS 馆藏与书目编排</text>
-    <line x1="24" y1="98" x2="344" y2="98" stroke="#E6DFD8" stroke-width="1" />
+    <text x="24" y="80" font-family="'Noto Serif SC', 'Songti SC', 'PingFang SC', serif" font-size="20" font-weight="600" fill="#141413">受控 NAS 馆藏与书目编排</text>
+    <line x1="24" y1="96" x2="360" y2="96" stroke="#E6DFD8" stroke-width="1" />
 
-    <text x="24" y="128" font-family="-apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="13.5" fill="#3D3D3A">• 原生支持 EPUB 与 PDF，含 Thema 1.6 学科分类体系</text>
-    <text x="24" y="156" font-family="-apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="13.5" fill="#3D3D3A">• 流式暂存入库、SHA-256 去重与 2:3 封面裁切校对</text>
-    <text x="24" y="184" font-family="-apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="13.5" fill="#3D3D3A">• 写操作强制预览指纹与版本回滚，绝不静默改写原件</text>
+    <text x="24" y="126" font-family="-apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="13.5" fill="#3D3D3A">• 原生支持 EPUB 与 PDF，含 Thema 1.6 学科分类体系</text>
+    <text x="24" y="154" font-family="-apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="13.5" fill="#3D3D3A">• 流式暂存入库、SHA-256 去重与 2:3 封面裁切校对</text>
+    <text x="24" y="182" font-family="-apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="13.5" fill="#3D3D3A">• 写操作强制预览指纹与版本回滚，绝不静默改写原件</text>
   </g>
 
   <!-- Card 2: 观文藏阁 -->
-  <g transform="translate(416, 18)">
-    <rect width="368" height="224" rx="14" fill="url(#cardBg)" stroke="#E6DFD8" stroke-width="1.2" />
-    <rect x="24" y="24" width="38" height="24" rx="6" fill="#914832" />
-    <text x="43" y="40" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" font-weight="600" fill="#FAF9F5">02</text>
-    <text x="74" y="41" font-family="'Noto Serif SC', 'Songti SC', Georgia, serif" font-size="13" font-weight="600" letter-spacing="1.5" fill="#914832">MING PAVILION · 观文藏阁</text>
+  <g transform="translate(408, 4)">
+    <rect width="384" height="218" rx="18" fill="#FAF9F5" stroke="#E6DFD8" stroke-width="1.5" />
+    <rect x="24" y="24" width="38" height="24" rx="12" fill="#1F1E1B" />
+    <text x="43" y="40" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" font-weight="600" fill="#FFFDF8">02</text>
+    <text x="74" y="41" font-family="'Noto Serif SC', 'Songti SC', Georgia, serif" font-size="13" font-weight="600" letter-spacing="1.5" fill="#1F1E1B">MING PAVILION · 观文藏阁</text>
 
-    <text x="24" y="82" font-family="'Noto Serif SC', 'Songti SC', 'PingFang SC', serif" font-size="21" font-weight="600" fill="#141413">三维明式书楼与沉浸阅读</text>
-    <line x1="24" y1="98" x2="344" y2="98" stroke="#E6DFD8" stroke-width="1" />
+    <text x="24" y="80" font-family="'Noto Serif SC', 'Songti SC', 'PingFang SC', serif" font-size="20" font-weight="600" fill="#141413">三维明式书楼与沉浸阅读</text>
+    <line x1="24" y1="96" x2="360" y2="96" stroke="#E6DFD8" stroke-width="1" />
 
-    <text x="24" y="128" font-family="-apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="13.5" fill="#3D3D3A">• 内置 Three.js 明代双层藏书阁，真实馆藏 1:1 映射上架</text>
-    <text x="24" y="156" font-family="-apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="13.5" fill="#3D3D3A">• 出版级 Web 阅读器，支持自定义字体、书签与多色划线</text>
-    <text x="24" y="184" font-family="-apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="13.5" fill="#3D3D3A">• 网页文章抓取剪藏、文集归档与全馆知识图谱网络</text>
+    <text x="24" y="126" font-family="-apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="13.5" fill="#3D3D3A">• 内置 Three.js 明代双层藏书阁，真实馆藏 1:1 映射上架</text>
+    <text x="24" y="154" font-family="-apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="13.5" fill="#3D3D3A">• 出版级 Web 阅读器，支持自定义字体、书签与多色划线</text>
+    <text x="24" y="182" font-family="-apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="13.5" fill="#3D3D3A">• 网页文章抓取剪藏、文集归档与全馆知识图谱网络</text>
   </g>
 
   <!-- Card 3: 各得其所 -->
-  <g transform="translate(812, 18)">
-    <rect width="368" height="224" rx="14" fill="url(#cardBg)" stroke="#E6DFD8" stroke-width="1.2" />
-    <rect x="24" y="24" width="38" height="24" rx="6" fill="#AE8C57" />
-    <text x="43" y="40" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" font-weight="600" fill="#FAF9F5">03</text>
-    <text x="74" y="41" font-family="'Noto Serif SC', 'Songti SC', Georgia, serif" font-size="13" font-weight="600" letter-spacing="1.5" fill="#914832">PRIVATE SANCTUARY · 各得其所</text>
+  <g transform="translate(812, 4)">
+    <rect width="384" height="218" rx="18" fill="#FAF9F5" stroke="#E6DFD8" stroke-width="1.5" />
+    <rect x="24" y="24" width="38" height="24" rx="12" fill="#CC785C" />
+    <text x="43" y="40" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" font-weight="600" fill="#FFFDF8">03</text>
+    <text x="74" y="41" font-family="'Noto Serif SC', 'Songti SC', Georgia, serif" font-size="13" font-weight="600" letter-spacing="1.5" fill="#CC785C">PRIVATE SANCTUARY · 各得其所</text>
 
-    <text x="24" y="82" font-family="'Noto Serif SC', 'Songti SC', 'PingFang SC', serif" font-size="21" font-weight="600" fill="#141413">家庭共享与私密阅读主权</text>
-    <line x1="24" y1="98" x2="344" y2="98" stroke="#E6DFD8" stroke-width="1" />
+    <text x="24" y="80" font-family="'Noto Serif SC', 'Songti SC', 'PingFang SC', serif" font-size="20" font-weight="600" fill="#141413">家庭共享与私密阅读主权</text>
+    <line x1="24" y1="96" x2="360" y2="96" stroke="#E6DFD8" stroke-width="1" />
 
-    <text x="24" y="128" font-family="-apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="13.5" fill="#3D3D3A">• 主人 / 管理员 / 成员三级权限，全家共享同一套藏书库</text>
-    <text x="24" y="156" font-family="-apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="13.5" fill="#3D3D3A">• 阅读进度、划线与私人笔记严格按账号隔离，默认不可互窥</text>
-    <text x="24" y="184" font-family="-apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="13.5" fill="#3D3D3A">• 独立加密禁书区（Vault），配备 TOTP 二次验证与审计</text>
+    <text x="24" y="126" font-family="-apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="13.5" fill="#3D3D3A">• 主人 / 管理员 / 成员三级权限，全家共享同一套藏书库</text>
+    <text x="24" y="154" font-family="-apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="13.5" fill="#3D3D3A">• 阅读进度、划线与私人笔记严格按账号隔离，默认不可互窥</text>
+    <text x="24" y="182" font-family="-apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="13.5" fill="#3D3D3A">• 独立加密禁书区（Vault），配备 TOTP 二次验证与审计</text>
   </g>
 </svg>

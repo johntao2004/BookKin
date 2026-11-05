@@ -10,9 +10,9 @@
 [![React 19](https://img.shields.io/badge/React-19%20%2B%20TypeScript-5D7D87.svg?style=flat-square)](apps/web/package.json)
 [![3D Ming Library](https://img.shields.io/badge/3D%20Scene-Three.js%20%E6%98%8E%E5%BC%8F%E4%B9%A6%E6%A5%BC-AE8C57.svg?style=flat-square)](packages/ming-library/README.md)
 [![PostgreSQL 18](https://img.shields.io/badge/PostgreSQL-18-3B2F2F.svg?style=flat-square)](compose.yaml)
-[![Formats](https://img.shields.io/badge/Formats-EPUB%20%7C%20PDF-CC785C.svg?style=flat-square)](#核心特性)
+[![Formats](https://img.shields.io/badge/Formats-EPUB%20%7C%20PDF-CC785C.svg?style=flat-square)](#核心特性与界面预览)
 
-**[项目理念](#名称溯源--why-silvae) · [核心特性](#核心特性) · [系统架构](#系统架构) · [快速开始](#快速开始) · [安全与隐私](#安全边界与运维配置) · [目录结构](#目录结构) · [开发验证](#开发与验证)**
+**[项目理念](#名称溯源--why-silvae) · [核心特性与预览](#核心特性与界面预览) · [系统架构](#系统架构) · [快速开始](#快速开始) · [安全与隐私](#安全边界与运维配置) · [目录结构](#目录结构) · [开发验证](#开发与验证)**
 
 </div>
 
@@ -32,7 +32,7 @@
 >
 > **Silvae · 书林** 将散落在家庭 NAS 中的 EPUB 与 PDF 化作一座静谧的数字藏书阁：全家人共享同一片丰茂的书林，而每个人的阅读进度、划线批注与私人笔记则严格归于自己。
 
-## 核心特性
+## 核心特性与界面预览
 
 | 领域模块 | 核心能力说明 |
 | :--- | :--- |
@@ -43,6 +43,52 @@
 | **👨‍👩‍👧 家庭共享与隐私隔离** | 划分 **主人（Owner）**、**管理员（Admin）** 与 **成员（Member）** 三级角色；全家共享同一套藏书目录，但每名成员的阅读位置、书签、划线与私人笔记严格按账号隔离，**默认对主人和管理员不可见**。 |
 | **🔐 加密禁书区（Vault）** | 针对受限或私密馆藏提供独立 **禁书区**，采用身份验证器 **TOTP 二次验证** 与密钥信封加密保护，与日常书架权限严格解耦。 |
 | **🛡️ 受控 NAS 文件安全** | 上传文件先流式写入 `.silvae-staging/uploads` 暂存，经 SHA-256 哈希去重、解析与人工确认后方才落盘；任何 NAS 写操作均需经过预览、校验 `expectedFingerprint` 与幂等键，配备版本备份、回收站与完整审计日志，**扫描任务绝不静默改写或移动 NAS 原文件**。 |
+
+### 1. 书林总览 · 馆藏编目与多维检索
+
+支持按阅读状态、Thema 学科分类、文件格式与标签快速筛选，自动汇总在读进度与最近阅读记录：
+
+<p align="center">
+  <img src="docs/assets/screenshots/catalog-shelf.png" width="96%" alt="Silvae 书架与馆藏编目界面" />
+</p>
+
+### 2. 沉浸式双引擎阅读器 · EPUB 目录导读与 PDF 双页展阅
+
+提供纸感暖调排版、左侧章节目录抽屉、版面缩放与 PDF 双页并排展阅体验：
+
+<table>
+  <tr>
+    <td width="50%" align="center">
+      <img src="docs/assets/screenshots/reader-toc.png" width="100%" alt="EPUB 章节目录导读" />
+      <br />
+      <sub><b>章节目录抽屉与纸感排版</b></sub>
+    </td>
+    <td width="50%" align="center">
+      <img src="docs/assets/screenshots/reader-pdf-spread.png" width="100%" alt="PDF 双页展阅模式" />
+      <br />
+      <sub><b>PDF 原版版式双页并排展阅</b></sub>
+    </td>
+  </tr>
+</table>
+
+### 3. 私人批注与文章精读工作台
+
+支持选中文本多色高亮、右侧批注面板同步回溯，以及网页文章采集净化与 Markdown 在线编辑：
+
+<table>
+  <tr>
+    <td width="50%" align="center">
+      <img src="docs/assets/screenshots/reader-annotations.png" width="100%" alt="高亮划线与私人批注面板" />
+      <br />
+      <sub><b>多色高亮划线与个人隔离批注</b></sub>
+    </td>
+    <td width="50%" align="center">
+      <img src="docs/assets/screenshots/articles-editor.png" width="100%" alt="文章采集与 Markdown 精读编辑" />
+      <br />
+      <sub><b>文章文集归档与双栏精读批注</b></sub>
+    </td>
+  </tr>
+</table>
 
 ## 系统架构
 

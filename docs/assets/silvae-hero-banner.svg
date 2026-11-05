@@ -1,135 +1,62 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 400" width="100%" height="100%" role="img" aria-label="Silvae · 书林 — 让好书相聚，让阅读归于自己">
-  <defs>
-    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#162620" />
-      <stop offset="52%" stop-color="#1F352D" />
-      <stop offset="100%" stop-color="#14221C" />
-    </linearGradient>
-    <radialGradient id="amberGlow" cx="50%" cy="38%" r="48%">
-      <stop offset="0%" stop-color="#D4AF7A" stop-opacity="0.22" />
-      <stop offset="55%" stop-color="#AE8C57" stop-opacity="0.07" />
-      <stop offset="100%" stop-color="#162620" stop-opacity="0" />
-    </radialGradient>
-    <linearGradient id="goldLine" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#AE8C57" stop-opacity="0" />
-      <stop offset="20%" stop-color="#AE8C57" stop-opacity="0.65" />
-      <stop offset="50%" stop-color="#E6C994" stop-opacity="0.95" />
-      <stop offset="80%" stop-color="#AE8C57" stop-opacity="0.65" />
-      <stop offset="100%" stop-color="#AE8C57" stop-opacity="0" />
-    </linearGradient>
-    <linearGradient id="paperGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#FFFDF8" />
-      <stop offset="100%" stop-color="#EAE0CE" />
-    </linearGradient>
-    <linearGradient id="eaveGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#E8D2A6" />
-      <stop offset="100%" stop-color="#B99660" />
-    </linearGradient>
-    <pattern id="latticeGrid" width="40" height="40" patternUnits="userSpaceOnUse">
-      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#EAE0CE" stroke-width="0.6" stroke-opacity="0.045" />
-    </pattern>
-  </defs>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 272" width="100%" height="100%" role="img" aria-label="Silvae · 书林 — 让好书相聚，让阅读归于自己">
+  <!-- 100% Pure Flat Warm Paper Canvas (cream100: #FAF9F5, hairline: #E6DFD8) -->
+  <rect width="1200" height="272" rx="22" fill="#FAF9F5" stroke="#E6DFD8" stroke-width="1.5" />
 
-  <!-- Outer Card Background -->
-  <rect width="1200" height="400" rx="20" fill="url(#bgGrad)" />
-  <rect width="1200" height="400" rx="20" fill="url(#latticeGrid)" />
-  <rect width="1200" height="400" rx="20" fill="url(#amberGlow)" />
+  <!-- Option 3 Emblem: Guofeng "如意卷轴 · 藏书方印" (Ruyi Cloud-Scroll & Solid Cinnabar Seal) -->
+  <g transform="translate(600, 74)">
+    <!-- Flat Cream-200 Squircle Tile -->
+    <rect x="-44" y="-44" width="88" height="88" rx="20" fill="#F5F0E8" stroke="#E6DFD8" stroke-width="1.5" />
 
-  <!-- Subtle Inner Frame -->
-  <rect x="18" y="18" width="1164" height="364" rx="14" fill="none" stroke="#AE8C57" stroke-opacity="0.28" stroke-width="1" />
-  <rect x="24" y="24" width="1152" height="352" rx="11" fill="none" stroke="#AE8C57" stroke-opacity="0.12" stroke-width="0.75" />
+    <g transform="scale(0.086)">
+      <!-- Top Ruyi Scroll Curve -->
+      <path d="M -138 -36
+               C -265 -36, -336 -125, -336 -226
+               C -336 -336, -248 -384, -120 -384
+               H 176
+               C 288 -384, 344 -312, 344 -226
+               C 344 -148, 282 -112, 224 -128
+               C 188 -138, 178 -176, 208 -196"
+            fill="none" stroke="#1F1E1B" stroke-width="82" stroke-linecap="round" stroke-linejoin="round" />
 
-  <!-- Corner Classical Fretwork Accents -->
-  <g stroke="#AE8C57" stroke-opacity="0.45" stroke-width="1.2" fill="none">
-    <path d="M 32 52 L 32 32 L 52 32" />
-    <path d="M 1168 52 L 1168 32 L 1148 32" />
-    <path d="M 32 348 L 32 368 L 52 368" />
-    <path d="M 1168 348 L 1168 368 L 1148 368" />
-  </g>
+      <!-- Bottom Ruyi Scroll Curve (180° Rotationally Symmetric) -->
+      <path d="M 138 36
+               C 265 36, 336 125, 336 226
+               C 336 336, 248 384, 120 384
+               H -176
+               C -288 384, -344 312, -344 226
+               C -344 148, -282 112, -224 128
+               C -188 138, -178 176, -208 196"
+            fill="none" stroke="#1F1E1B" stroke-width="82" stroke-linecap="round" stroke-linejoin="round" />
 
-  <!-- Background Classical Bookcases Silhouette (Left & Right) -->
-  <g stroke="#AE8C57" stroke-opacity="0.1" stroke-width="1" fill="none">
-    <!-- Left shelves -->
-    <rect x="56" y="70" width="180" height="260" rx="2" />
-    <line x1="56" y1="122" x2="236" y2="122" />
-    <line x1="56" y1="174" x2="236" y2="174" />
-    <line x1="56" y1="226" x2="236" y2="226" />
-    <line x1="56" y1="278" x2="236" y2="278" />
-    <!-- Left book spines -->
-    <rect x="70" y="84" width="10" height="38" fill="#AE8C57" fill-opacity="0.08" />
-    <rect x="84" y="88" width="12" height="34" fill="#AE8C57" fill-opacity="0.06" />
-    <rect x="100" y="80" width="9" height="42" fill="#CC785C" fill-opacity="0.1" />
-    <rect x="114" y="86" width="14" height="36" fill="#AE8C57" fill-opacity="0.07" />
-    <rect x="76" y="136" width="12" height="38" fill="#AE8C57" fill-opacity="0.07" />
-    <rect x="92" y="132" width="10" height="42" fill="#AE8C57" fill-opacity="0.09" />
-    <rect x="106" y="140" width="15" height="34" fill="#AE8C57" fill-opacity="0.05" />
-    <rect x="150" y="188" width="11" height="38" fill="#AE8C57" fill-opacity="0.08" />
-    <rect x="165" y="184" width="13" height="42" fill="#CC785C" fill-opacity="0.09" />
-    <rect x="182" y="190" width="10" height="36" fill="#AE8C57" fill-opacity="0.06" />
+      <!-- Top & Bottom Inner Ruyi C-Scroll Accents -->
+      <path d="M -206 -236 C -162 -236, -162 -140, -206 -140"
+            fill="none" stroke="#1F1E1B" stroke-width="72" stroke-linecap="round" />
+      <path d="M 206 236 C 162 236, 162 140, 206 140"
+            fill="none" stroke="#1F1E1B" stroke-width="72" stroke-linecap="round" />
 
-    <!-- Right shelves -->
-    <rect x="964" y="70" width="180" height="260" rx="2" />
-    <line x1="964" y1="122" x2="1144" y2="122" />
-    <line x1="964" y1="174" x2="1144" y2="174" />
-    <line x1="964" y1="226" x2="1144" y2="226" />
-    <line x1="964" y1="278" x2="1144" y2="278" />
-    <!-- Right book spines -->
-    <rect x="1002" y="84" width="11" height="38" fill="#AE8C57" fill-opacity="0.07" />
-    <rect x="1017" y="80" width="13" height="42" fill="#AE8C57" fill-opacity="0.09" />
-    <rect x="1034" y="88" width="10" height="34" fill="#CC785C" fill-opacity="0.1" />
-    <rect x="1068" y="134" width="12" height="40" fill="#AE8C57" fill-opacity="0.08" />
-    <rect x="1084" y="138" width="14" height="36" fill="#AE8C57" fill-opacity="0.06" />
-    <rect x="990" y="186" width="12" height="40" fill="#AE8C57" fill-opacity="0.08" />
-    <rect x="1006" y="190" width="10" height="36" fill="#AE8C57" fill-opacity="0.06" />
-  </g>
+      <!-- Top & Bottom Horizontal Bamboo-Slip Pill Bars -->
+      <line x1="-82" y1="-168" x2="82" y2="-168" stroke="#1F1E1B" stroke-width="68" stroke-linecap="round" />
+      <line x1="-82" y1="168" x2="82" y2="168" stroke="#1F1E1B" stroke-width="68" stroke-linecap="round" />
 
-  <!-- Central Emblem: Ming Pavilion Eave + Lattice + Open Thread-Bound Book -->
-  <g transform="translate(600, 96)">
-    <!-- Ming Pavilion Curved Eave -->
-    <path d="M 0 -58 C -28 -30, -68 -10, -108 -2 C -98 5, -88 6, -78 4 C -48 -4, -22 -20, 0 -42 C 22 -20, 48 -4, 78 4 C 88 6, 98 5, 108 -2 C 68 -10, 28 -30, 0 -58 Z" fill="url(#eaveGrad)" />
-    <!-- Lattice Window Frame -->
-    <g stroke="#D8C29D" stroke-width="2.2" stroke-opacity="0.82" fill="none">
-      <line x1="-68" y1="-2" x2="-68" y2="36" />
-      <line x1="68" y1="-2" x2="68" y2="36" />
-      <line x1="-26" y1="-22" x2="-26" y2="38" />
-      <line x1="26" y1="-22" x2="26" y2="38" />
-      <line x1="0" y1="-42" x2="0" y2="-16" />
-      <line x1="-68" y1="14" x2="68" y2="14" />
-      <rect x="-20" y="-14" width="40" height="24" rx="1" stroke-width="1.6" />
-    </g>
-    <!-- Open Book Pages -->
-    <path d="M -4 48 C -30 30, -66 22, -96 20 L -96 68 C -66 70, -30 78, -4 94 Z" fill="url(#paperGrad)" opacity="0.96" />
-    <path d="M 4 48 C 30 30, 66 22, 96 20 L 96 68 C 66 70, 30 78, 4 94 Z" fill="url(#paperGrad)" opacity="0.96" />
-    <!-- Book Spine & Thread Bindings -->
-    <rect x="-4.5" y="45" width="9" height="50" rx="3" fill="#D5C2A3" />
-    <line x1="-4.5" y1="55" x2="4.5" y2="55" stroke="#7A5C3E" stroke-width="1.4" />
-    <line x1="-4.5" y1="68" x2="4.5" y2="68" stroke="#7A5C3E" stroke-width="1.4" />
-    <line x1="-4.5" y1="81" x2="4.5" y2="81" stroke="#7A5C3E" stroke-width="1.4" />
-    <!-- Cinnabar Seal on Right Page -->
-    <rect x="64" y="48" width="14" height="14" rx="2" fill="#B54932" />
-    <rect x="66.5" y="50.5" width="9" height="9" rx="1" fill="none" stroke="#FAF4E8" stroke-width="0.9" stroke-opacity="0.85" />
-  </g>
-
-  <!-- Brand Title & Chinese Seal Badge -->
-  <g transform="translate(600, 246)" text-anchor="middle">
-    <text x="0" y="0" font-family="Georgia, 'Times New Roman', 'Noto Serif SC', 'Songti SC', serif" font-size="54" font-weight="600" letter-spacing="6" fill="#FAF9F5">SILVAE</text>
-    <!-- Cinnabar Seal Stamp next to Title -->
-    <g transform="translate(152, -38)">
-      <rect x="0" y="0" width="56" height="28" rx="5" fill="#9E422D" stroke="#D8A88C" stroke-width="0.8" stroke-opacity="0.6" />
-      <text x="28" y="19" font-family="'Noto Serif SC', 'Songti SC', 'STSong', serif" font-size="15" font-weight="600" letter-spacing="3" fill="#FFFDF8" text-anchor="middle">书林</text>
+      <!-- Center Solid Rounded-Square Cinnabar Library Seal (藏书朱印, #CC785C) -->
+      <rect x="-102" y="-102" width="204" height="204" rx="38" fill="#CC785C" />
     </g>
   </g>
 
-  <!-- Divider Line -->
-  <line x1="340" y1="272" x2="860" y2="272" stroke="url(#goldLine)" stroke-width="1.2" />
+  <!-- Flat Editorial Wordmark & Rounded Coral Seal Badge -->
+  <g transform="translate(600, 174)" text-anchor="middle">
+    <text x="-22" y="0" font-family="'Iowan Old Style', 'Palatino Linotype', Georgia, 'Noto Serif SC', serif" font-size="48" font-weight="500" letter-spacing="5" fill="#141413">Silvae</text>
+    <g transform="translate(102, -31)">
+      <rect x="0" y="0" width="48" height="24" rx="7" fill="#CC785C" />
+      <text x="24" y="16.5" font-family="'Noto Serif SC', 'Songti SC', 'PingFang SC', serif" font-size="13" font-weight="600" letter-spacing="2" fill="#FFFDF8" text-anchor="middle">书林</text>
+    </g>
+  </g>
 
-  <!-- Tagline -->
-  <text x="600" y="308" text-anchor="middle" font-family="'Noto Serif SC', 'Songti SC', 'PingFang SC', 'Microsoft YaHei', serif" font-size="22" font-weight="500" letter-spacing="4" fill="#F5F0E8">
+  <!-- Flat 1px Hairline Divider -->
+  <line x1="440" y1="200" x2="760" y2="200" stroke="#E6DFD8" stroke-width="1.5" stroke-linecap="round" />
+
+  <!-- Editorial Chinese Tagline -->
+  <text x="600" y="236" text-anchor="middle" font-family="'Noto Serif SC', 'Songti SC', 'PingFang SC', serif" font-size="19.5" font-weight="500" letter-spacing="3" fill="#252523">
     让好书相聚，让阅读归于自己
-  </text>
-
-  <!-- Subtitle Pills -->
-  <text x="600" y="344" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif" font-size="12.5" font-weight="500" letter-spacing="2.2" fill="#C4B59B">
-    SELF-HOSTED FAMILY LIBRARY   ·   3D MING PAVILION   ·   EPUB &amp; PDF   ·   PRIVATE READING NOTES
   </text>
 </svg>
